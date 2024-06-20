@@ -18,10 +18,11 @@ cluster: Cluster
 
 //for testing purposes todo: remove later
 main::proc() {
-	os.make_directory("../../../bin") //Todo make this an actual proc in the engine
-	OST_CREATE_CACHE_FILE()
-	OST_CREATE_CLUSTER_FILE("test")
+	// os.make_directory("../../../bin") //Todo make this an actual proc in the engine
+	// OST_CREATE_CACHE_FILE()
+	// OST_CREATE_CLUSTER_FILE("test")
 	OST_GENERATE_CLUSTER_ID()
+	// OST_CHECK_CACHE_FOR_ID()
 }
 
 
@@ -54,10 +55,10 @@ OST_CREATE_CLUSTER_FILE :: proc(fileName: string) -> int {
 		return 1
 	}
 	//CHECK#3: check if the file name is valid
-	validChars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+-="
 	for c:=0; c<len(fileName); c+=1
 	{
-		if !strings.contains(validChars, fileName)
+		if strings.contains(invalidChars, fileName)
 		{
 			fmt.printfln("Invalid character in file name: %s", fileName)
 			return 1
@@ -93,28 +94,56 @@ return 0
 
 /*
 Generates the unique cluster id for a new cluster
-then returns it to the caller, relies on OST_ADD_ID_TO_BIN_DIR() to store the retuned id in a file
+then returns it to the caller, relies on OST_ADD_ID_TO_CACHE_FILE() to store the retuned id in a file
 */
 OST_GENERATE_CLUSTER_ID :: proc() -> i64
 {
 	//ensure the generated id length is 16 digits
-		ID:=rand.int63_max(1e16 + 1)
-		fmt.printfln("ID: %d", ID) //todo remove later
+	ID:=rand.int63_max(1e16 + 1)
+	idExistsAlready:= OST_CHECK_CACHE_FOR_ID(ID)
 
-		// todo: need to check if the id already exists in the bin directory
+	if idExistsAlready == true
+	{
+		OST_GENERATE_CLUSTER_ID()
+	}
+
     OST_ADD_ID_TO_CACHE_FILE(ID)
 		return ID
 }
 
 
-// checks if a cluster exists within a specific .ost file
-//can be checked by cluster name or cluster id
-// Params - fileName: the name of the .ost file, param: the cluster name or id
-OST_CHECK_CLUSTER_EXISTS:: proc(fileName: string, param: ..any) -> bool
+/*
+checks the cluster id cache file to see if the id already exists
+*/
+OST_CHECK_CACHE_FOR_ID:: proc(id:i64) -> bool 
 {
-	result:= false
+	buf: [32]byte
+	result: bool
+	openCacheFile,err:=os.open("../../../bin/cluster_id_cache", os.O_RDONLY, 0o666)
 
-	return result
+	//step#1 convert the passed in i64 id number to a string
+	idStr := strconv.append_int(buf[:], id, 10) 
+
+	
+	//step#2 read the cache file and compare the id to the cache file
+	readCacheFile,ok:=os.read_entire_file(openCacheFile)
+
+
+	// step#3 convert all file contents to a string because...OdinLang go brrrr??
+	contentToStr:= transmute(string)readCacheFile
+
+	//step#4 check if the string version of the id is contained in the cache file
+		if strings.contains(contentToStr, idStr)
+		{
+			fmt.printfln("ID already exists in cache file")
+			result = true
+		}
+		else
+		{
+			fmt.printfln("ID does not exist in cache file")
+			result = false
+		}
+		return result
 }
 
 
