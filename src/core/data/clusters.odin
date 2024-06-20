@@ -10,7 +10,7 @@ OST_FILE_EXTENSION ::".ost" //todo: maybe change to .cluster???
 
 @(private)  
 	MAX_ID_LENGTH:: 32 //made private because...reasons
-	
+
 	Cluster :: struct {
 	_id:     []u8, //unique identifier for the record cannot be duplicated
 	// Records: []Record, //allows for multiple records to be stored in a cluster
@@ -19,7 +19,7 @@ OST_FILE_EXTENSION ::".ost" //todo: maybe change to .cluster???
 //for testing purposes todo: remove later
 main::proc() {
 	os.make_directory("../../../bin")
-	// OST_CREATE_CLUSTER_FILE("test")
+	OST_CREATE_CLUSTER_FILE("test")
 	OST_GENERATE_CLUSTER_ID()
 }
 
@@ -30,8 +30,8 @@ Params: fileName - the desired file(cluster) name
 */
 /*
 todo need to add the following checks:
-1. check if the file name is too long
-2. check if the file name is already in use
+1. check if the file name is too long/DONE
+2. check if the file name is already in use/DONE
 3. check if the file name is valid
 */
 OST_CREATE_CLUSTER_FILE :: proc(fileName: string) -> int {
@@ -42,19 +42,50 @@ OST_CREATE_CLUSTER_FILE :: proc(fileName: string) -> int {
 	fmt.printfln("Path Name Extension: %s", pathNameExtension)
 
 
-	//create the cluster file
-	clusterFile, ok := os.open(pathNameExtension, os.O_CREATE)
-	if ok == 1 {
+	//CHECK#1: check if the file name is too long
+	if len(fileName) > MAX_FILE_NAME_LENGTH 
+	{
+		fmt.printfln("Given file name is too long, Cannot be longer than %d characters", MAX_FILE_NAME_LENGTH)
 		return 1
 	}
-	os.close(clusterFile)
+
+	//CHECK#2: check if the file already exists
+	
+	existenceCheck,exists := os.read_entire_file_from_filename(pathNameExtension)
+	if exists {
+		fmt.printfln("File already exists")
+		return 1
+	}
+
+	//CHECK#3: check if the file name is valid
+	validChars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+	for c:=0; c<len(fileName); c+=1
+	{
+		if !strings.contains(validChars, fileName)
+		{
+			fmt.printfln("Invalid character in file name: %s", fileName)
+			return 1
+		}
+	}
+
+	// If all checks pass then create the file with read/write permissions
+	//on Linux the permissions are octal. 0o666 is read/write
+	createFile, creationErr := os.open(pathNameExtension, os.O_CREATE, 0o666 )
+	if creationErr == 1 {
+		fmt.printfln("Error creating file: %d", fileName)
+		return 1
+	}
+	os.close(createFile)
 	return 0
 }
+
+
 
 
 /*
 Creates and appends a new cluster to the specified .ost file
 */
+
 OST_CREATE_CLUSTER ::proc (fileName: string, clusterName: string) -> int
 {
 
