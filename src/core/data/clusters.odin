@@ -5,47 +5,63 @@ import "core:strings"
 import "core:math/rand"
 import "core:strconv"
 
-MAX_FILE_NAME_LENGTH :int: 64 //maximum length of a file/cluster name
+MAX_FILE_NAME_LENGTH_AS_BYTES :[512]byte
 OST_CLUSTER_PATH :: "../../../bin/"
-OST_FILE_EXTENSION ::".ost" //todo: maybe change to .cluster???
-
-	Cluster :: struct {
-	_id:     int, //unique identifier for the record cannot be duplicated
-	// Records: []Record, //allows for multiple records to be stored in a cluster
-}
-
+OST_FILE_EXTENSION ::".ost"
 cluster: Cluster
+Cluster :: struct {
+	_id:     int, //unique identifier for the record cannot be duplicated
+	record: struct{}, //allows for multiple records to be stored in a cluster
+}
 
 //for testing purposes todo: remove later
 main::proc() {
+	input:[265]byte
+
+	fmt.printfln("What would you like to name your DB file?: ")
+	fmt.printfln("Dont worry about the file extension, we will add that for you")
+	fileName,ok:= os.read(os.stdin, input[:])
+
+	
+	str:= string(input[:])
+	new:=strings.trim_right(str, "\r\n")
+	
+
+	OST_CREATE_OST_FILE(new)
+
 	// os.make_directory("../../../bin") //Todo make this an actual proc in the engine
-	// OST_CREATE_CACHE_FILE()
-	// OST_CREATE_CLUSTER_FILE("test")
+	OST_CREATE_CACHE_FILE()
 	OST_GENERATE_CLUSTER_ID()
-	// OST_CHECK_CACHE_FOR_ID()
+	// OST_CREATE_CLUSTER_BLOCK("../../../bin/test.ost", "2")
 }
 
 
+//todo move this to engine
 //creates a file in the bin directory used to store the all used cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
 	cacheFile,err := os.open("../../../bin/cluster_id_cache", os.O_CREATE, 0o666)
 }
+
+
 
 /*
 Create a new empty Cluster file within the DB
 Clusters are collections of records stored in a .ost file
 Params: fileName - the desired file(cluster) name
 */
-OST_CREATE_CLUSTER_FILE :: proc(fileName: string) -> int {
-// concat the path and the file name into a string 
-	pathAndName:= strings.concatenate([]string{OST_CLUSTER_PATH, fileName })
-	//concat the new string with the file extension
-	pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
-	
-	//CHECK#1: check if the file name is too long
-	if len(fileName) > MAX_FILE_NAME_LENGTH 
+OST_CREATE_OST_FILE :: proc(fileName: string) -> int {
+		// concat the path and the file name into a string 
+
+  	fileName := strings.trim_right(fileName, "\r\n")
+    pathAndName:= strings.concatenate([]string{OST_CLUSTER_PATH, fileName })
+    fmt.printfln("pathAndName: %s", pathAndName)
+    pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
+    fmt.printfln("pathNameExtension: %s", pathNameExtension)
+    
+	nameAsBytes:= transmute([]byte)fileName
+	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH_AS_BYTES)
 	{
-		fmt.printfln("Given file name is too long, Cannot be longer than %d characters", MAX_FILE_NAME_LENGTH)
+		fmt.printfln("Given file name is too long, Cannot exceed 512 bytes")
 		return 1
 	}
 	//CHECK#2: check if the file already exists
@@ -75,22 +91,6 @@ OST_CREATE_CLUSTER_FILE :: proc(fileName: string) -> int {
 	os.close(createFile)
 	return 0
 }
-
-
-
-
-/*
-Creates and appends a new cluster to the specified .ost file
-*/
-
-OST_CREATE_CLUSTER ::proc (fileName: string, clusterName: string) -> int
-{
-
-
-
-return 0
-}
-
 
 /*
 Generates the unique cluster id for a new cluster
@@ -164,6 +164,41 @@ OST_ADD_ID_TO_CACHE_FILE::proc(id:i64) -> int
 	os.close(cacheFile)
 	return 0
 }
+
+
+/*
+Creates and appends a new cluster to the specified .ost file
+*/
+
+OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64) -> int
+{
+	C_BLOCK: []string = {"{\t\n\t_id : %s\n\t\n},\n"}//defines the base structure of a cluster block in a .ost file
+	buf: [32]byte
+
+	//step#1: open the file
+	clusterFile, err:= os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
+
+	//step#2: iterate over the C_BLOCK array and replace the %s with the passed in clusterID
+	for i:=0; i<len(C_BLOCK); i+=1
+	{
+		//step#3: check if the string contains the %s placeholder if it does replace it with the clusterID
+		if strings.contains(C_BLOCK[i], "%s")
+		{
+			//step#4: replace the %s with the clusterID that is now being converted to a string
+			newBlock,ok:= strings.replace(C_BLOCK[i], "%s", strconv.append_int(buf[:], clusterID,10), -1)
+			writeBlock,okay:= os.write(clusterFile, transmute([]u8)newBlock)
+		}
+	}
+
+//todo might need to make sure there can be no duplicates
+	
+	fmt.printfln("File: %s, Cluster ID: %s", fileName, clusterID)
+	//step#FINAL: close the file
+	os.close(clusterFile)
+
+	return 0	
+}
+
 
 
 /*
