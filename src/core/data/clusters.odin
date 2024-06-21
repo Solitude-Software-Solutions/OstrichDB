@@ -13,30 +13,27 @@ Cluster :: struct {
 	_id:     int, //unique identifier for the record cannot be duplicated
 	record: struct{}, //allows for multiple records to be stored in a cluster
 }
-
-//for testing purposes todo: remove later
+//todo this proc will change once engine is built
 main::proc() {
-	input:[265]byte
-
-	fmt.printfln("What would you like to name your DB file?: ")
-	fmt.printfln("Dont worry about the file extension, we will add that for you")
-	fileName,ok:= os.read(os.stdin, input[:])
-
+	buf:[256]byte
+	fmt.printfln("What would you like to name your DB file?: ")	
+	n, err := os.read(os.stdin, buf[:])
 	
-	str:= string(input[:])
-	new:=strings.trim_right(str, "\r\n")
-	
+	//if the number of bytes entered is greater than 0 then assign the entered bytes to a string
+	if n > 0 {
+        enteredStr := string(buf[:n]) 
+				//trim the string of any whitespace or newline characters 
 
-	OST_CREATE_OST_FILE(new)
+				//Shoutout to the OdinLang Discord for helping me with this...
+        enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
+            return r == '\r' || r == '\n'
+        })
 
-	// os.make_directory("../../../bin") //Todo make this an actual proc in the engine
-	OST_CREATE_CACHE_FILE()
-	OST_GENERATE_CLUSTER_ID()
-	// OST_CREATE_CLUSTER_BLOCK("../../../bin/test.ost", "2")
+        OST_CREATE_OST_FILE(enteredStr)
+    }
 }
 
 
-//todo move this to engine
 //creates a file in the bin directory used to store the all used cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
 	cacheFile,err := os.open("../../../bin/cluster_id_cache", os.O_CREATE, 0o666)
@@ -49,15 +46,10 @@ Create a new empty Cluster file within the DB
 Clusters are collections of records stored in a .ost file
 Params: fileName - the desired file(cluster) name
 */
-OST_CREATE_OST_FILE :: proc(fileName: string) -> int {
+OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 		// concat the path and the file name into a string 
-
-  	fileName := strings.trim_right(fileName, "\r\n")
-    pathAndName:= strings.concatenate([]string{OST_CLUSTER_PATH, fileName })
-    fmt.printfln("pathAndName: %s", pathAndName)
-    pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
-    fmt.printfln("pathNameExtension: %s", pathNameExtension)
-    
+  pathAndName:= strings.concatenate([]string{OST_CLUSTER_PATH, fileName })
+  pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
 	nameAsBytes:= transmute([]byte)fileName
 	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH_AS_BYTES)
 	{
@@ -85,10 +77,14 @@ OST_CREATE_OST_FILE :: proc(fileName: string) -> int {
 	//on Linux the permissions are octal. 0o666 is read/write
 	createFile, creationErr := os.open(pathNameExtension, os.O_CREATE, 0o666 )
 	if creationErr == 1 {
-		fmt.printfln("Error creating file: %d", fileName)
 		return 1
 	}
 	os.close(createFile)
+
+	//generate a unique cluster id and create a new cluster block in the file
+	ID:=OST_GENERATE_CLUSTER_ID()
+	OST_CREATE_CLUSTER_BLOCK(pathNameExtension, ID)
+	
 	return 0
 }
 
@@ -140,7 +136,6 @@ OST_CHECK_CACHE_FOR_ID:: proc(id:i64) -> bool
 		}
 		else
 		{
-			fmt.printfln("ID does not exist in cache file")
 			result = false
 		}
 		return result
@@ -191,8 +186,7 @@ OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64) -> int
 	}
 
 //todo might need to make sure there can be no duplicates
-	
-	fmt.printfln("File: %s, Cluster ID: %s", fileName, clusterID)
+
 	//step#FINAL: close the file
 	os.close(clusterFile)
 
