@@ -1,5 +1,6 @@
 package logging
 
+import "../errors"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -20,7 +21,12 @@ main:: proc()
 
 create_logs_dir:: proc() -> int 
 {
-  logsDir:= os.make_directory(LOG_DIR_PATH)
+  err:= os.make_directory(LOG_DIR_PATH)
+  if err != 0
+  {
+    errors.throw_utilty_error(1, "Error creating logs directory", "create_logs_dir")
+    return -1
+  }
   return 0
 }
 
@@ -28,20 +34,27 @@ create_log_files:: proc() -> int
 {
   fullRuntimePath := strings.concatenate([]string{LOG_DIR_PATH, RUNTIME_LOG} )
   runtimeFile,err:= os.open(fullRuntimePath, os.O_CREATE, 0o666)
+  if err != 0
+  {
+    errors.throw_utilty_error(1, "Error creating runtime log file", "create_log_files")
+    return -1
+  }
+  
   defer os.close(runtimeFile)
 
   fullErrorPath:= strings.concatenate([]string{LOG_DIR_PATH, ERROR_LOG})
   errorFile,er:= os.open(fullErrorPath, os.O_CREATE, 0o666)
+  if er != 0
+  {
+    errors.throw_utilty_error(1, "Error creating error log file", "create_log_files")
+    return -1
+  }
 
   os.close(errorFile) 
   return 0 
 }
 
 //###############################|RUNTIME LOGGING|############################################
-
-
-//eventDesc will be passed from the generate_event_description proc
-// eventDateTime will come from the time package and be assined to a string variable with string formatting
 log_runtime_event :: proc(eventName:string, eventDesc: string)
 {
   buf:[256]byte
@@ -58,6 +71,7 @@ log_runtime_event :: proc(eventName:string, eventDesc: string)
   Month:= strconv.append_int(buf[:], M, 10)
   Day:= strconv.append_int(buf[:], D, 10)
 
+  //TODO need figure out why year is coming out incorrectly
 
   switch(mAsInt)
   {
@@ -103,17 +117,28 @@ log_runtime_event :: proc(eventName:string, eventDesc: string)
   Date:= strings.concatenate([]string{Month, " ", Day, ", ", Year, "\n"})
   paramsAsMessage:= strings.concatenate([]string{"Event: ",eventName,"\n","Desc: ", eventDesc, "\n"})
   fullLogMessage:= strings.concatenate([]string{paramsAsMessage,"Logged @:", Date})
-  
   fullPath:= strings.concatenate([]string{LOG_DIR_PATH, RUNTIME_LOG})
-  runtimeFile,e:=os.open(fullPath, os.O_APPEND | os.O_RDWR, 0o666)
   LogMessage:= transmute([]u8)fullLogMessage
+
+  runtimeFile,e:=os.open(fullPath, os.O_APPEND | os.O_RDWR, 0o666)
+  if e != 0
+  {
+    errors.throw_utilty_error(1, "Error opening runtime log file", "log_runtime_event")
+    return
+  }
+
+  
   _,ee:=os.write(runtimeFile, LogMessage)
-  //TODO for some od reason the log message is not being written to the file
+  if ee != 0
+  {
+    errors.throw_utilty_error(1, "Error writing to runtime log file", "log_runtime_event")
+    return  
+  }
+
   //every thing seems to have been converted correctly and passed correctly. The file does exist, the path is correct, the file is being opened correctly
   os.close(runtimeFile)
 
-  
 } 
 
 
-// generate_event_description
+//###############################|ERROR LOGGING|############################################
