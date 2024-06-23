@@ -1,5 +1,6 @@
 package data
 import "core:fmt"
+import "../../utils/errors"
 import "core:os"
 import "core:strings"
 import "core:math/rand"
@@ -37,6 +38,10 @@ main::proc() {
 //creates a file in the bin directory used to store the all used cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
 	cacheFile,err := os.open("../../../bin/cluster_id_cache", os.O_CREATE, 0o666)
+	if err != 0{
+		errors.throw_utilty_error(1, "Error creating cluster id cache file", "OST_CREATE_CACHE_FILE")
+	}
+	os.close(cacheFile)
 }
 
 
@@ -59,7 +64,7 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 	//CHECK#2: check if the file already exists
 	existenceCheck,exists := os.read_entire_file_from_filename(pathNameExtension)
 	if exists {
-		fmt.printfln("File already exists")
+		errors.throw_utilty_error(1, ".ost file already exists", "OST_CREATE_OST_FILE")
 		return 1
 	}
 	//CHECK#3: check if the file name is valid
@@ -76,7 +81,8 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 	// If all checks pass then create the file with read/write permissions
 	//on Linux the permissions are octal. 0o666 is read/write
 	createFile, creationErr := os.open(pathNameExtension, os.O_CREATE, 0o666 )
-	if creationErr == 1 {
+	if creationErr != 0{
+		errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
 		return 1
 	}
 	os.close(createFile)
@@ -100,6 +106,7 @@ OST_GENERATE_CLUSTER_ID :: proc() -> i64
 
 	if idExistsAlready == true
 	{
+		errors.throw_utilty_error(1, "ID already exists in cache file", "OST_GENERATE_CLUSTER_ID")
 		OST_GENERATE_CLUSTER_ID()
 	}
 
@@ -116,14 +123,20 @@ OST_CHECK_CACHE_FOR_ID:: proc(id:i64) -> bool
 	buf: [32]byte
 	result: bool
 	openCacheFile,err:=os.open("../../../bin/cluster_id_cache", os.O_RDONLY, 0o666)
-
+	if err != 0
+	{
+		errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+	}
 	//step#1 convert the passed in i64 id number to a string
 	idStr := strconv.append_int(buf[:], id, 10) 
 
 	
 	//step#2 read the cache file and compare the id to the cache file
 	readCacheFile,ok:=os.read_entire_file(openCacheFile)
-
+	if ok == false
+	{
+		errors.throw_utilty_error(1, "Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+	}
 
 	// step#3 convert all file contents to a string because...OdinLang go brrrr??
 	contentToStr:= transmute(string)readCacheFile
@@ -138,6 +151,7 @@ OST_CHECK_CACHE_FOR_ID:: proc(id:i64) -> bool
 		{
 			result = false
 		}
+	os.close(openCacheFile)
 		return result
 }
 
@@ -148,6 +162,10 @@ OST_ADD_ID_TO_CACHE_FILE::proc(id:i64) -> int
 {
 	buf: [32]byte
 	cacheFile,err := os.open("../../../bin/cluster_id_cache",os.O_APPEND | os.O_WRONLY, 0o666)
+	if err != 0
+	{
+		errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_ADD_ID_TO_CACHE_FILE")
+	}
 	
 	idStr := strconv.append_int(buf[:], id, 10) //the 10 is the base of the number
 	//there are several bases, 10 is decimal, 2 is binary, 16 is hex, 16 is octal, 32 is base32, 64 is base64, computer science is fun
@@ -155,6 +173,10 @@ OST_ADD_ID_TO_CACHE_FILE::proc(id:i64) -> int
 	//converting stirng to byte array then writing to file
 	transStr:= transmute([]u8)idStr
 	writter, ok:= os.write(cacheFile, transStr)
+	if ok != 0
+	{
+		errors.throw_utilty_error(1, "Error writing to cluster id cache file", "OST_ADD_ID_TO_CACHE_FILE")
+	}
 	OST_NEWLINE_CHAR()
 	os.close(cacheFile)
 	return 0
@@ -172,6 +194,10 @@ OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64) -> int
 
 	//step#1: open the file
 	clusterFile, err:= os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
+	if err != 0
+	{
+		errors.throw_utilty_error(1, "Error opening cluster file", "OST_CREATE_CLUSTER_BLOCK")
+	}
 
 	//step#2: iterate over the C_BLOCK array and replace the %s with the passed in clusterID
 	for i:=0; i<len(C_BLOCK); i+=1
@@ -181,7 +207,15 @@ OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64) -> int
 		{
 			//step#4: replace the %s with the clusterID that is now being converted to a string
 			newBlock,ok:= strings.replace(C_BLOCK[i], "%s", strconv.append_int(buf[:], clusterID,10), -1)
+			if ok == false
+			{
+				errors.throw_utilty_error(1, "Error placing id into cluster template", "OST_CREATE_CLUSTER_BLOCK")
+			}
 			writeBlock,okay:= os.write(clusterFile, transmute([]u8)newBlock)
+			if okay != 0
+			{
+				errors.throw_utilty_error(1, "Error writing cluster block to file", "OST_CREATE_CLUSTER_BLOCK")
+			}
 		}
 	}
 
@@ -189,7 +223,6 @@ OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64) -> int
 
 	//step#FINAL: close the file
 	os.close(clusterFile)
-
 	return 0	
 }
 
@@ -202,7 +235,16 @@ See usage in OST_ADD_ID_TO_CACHE_FILE()
 OST_NEWLINE_CHAR ::proc () 
 {
 	cacheFile, err:= os.open("../../../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
+	if err != 0
+	{
+		errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_NEWLINE_CHAR")
+	}
 	newLineChar:string= "\n"
 	transStr:= transmute([]u8)newLineChar
 	writter,ok:=os.write(cacheFile, transStr)
+	if ok != 0
+	{
+		errors.throw_utilty_error(1, "Error writing newline character to cluster id cache file", "OST_NEWLINE_CHAR")
+	}
+	os.close(cacheFile)
 }
