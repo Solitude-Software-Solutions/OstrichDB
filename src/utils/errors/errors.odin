@@ -3,9 +3,6 @@ package errors
 import "core:fmt"
 import "core:os"
 
-
-
-
 utils_error:Utility_Error
 Utility_Error:: struct
 {
