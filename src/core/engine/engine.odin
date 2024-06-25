@@ -4,8 +4,10 @@ import "core:fmt"
 import "core:os"
 import "core:time"
 import "../data"
-
-
+import "../../utils/misc"
+import "../../utils/errors"
+import "../../utils/logging"
+import "../security"
 ost_engine: Ost_Engine
 
 // Flags specifically for the tasking system
@@ -43,6 +45,7 @@ Ost_Engine :: struct {
 	EngineRuntime:   time.Duration, // The amount of time the engine has been running
 	Status:          int, // 0, 1, 2
 	StatusName:      string, // Idle, Running, Stopped mostly for logging purposes
+	Initialized:     bool, // if the engine has been initialized , important for first run and user setup
 
 	// Records are individual data items within a Cluster
 	RecordsCreated:  int,
@@ -98,4 +101,59 @@ OST_START_ENGINE :: proc() -> int {
 		break
 	}
 	return 0
+}
+
+
+
+//used to check if the program has been initialized. if it has been then the init file will exist
+OST_CHECK_INIT_FILE :: proc() -> bool {
+	fileExists,e := os.open("../../../bin/init.bin")
+	if fileExists == 0 {
+		return false
+	}
+	return true
+}
+
+// used to initialize the program this will create the init file allowing for user setup
+OST_INIT:: proc() -> bool {
+
+	createFile, creationErr := os.open("../../../bin/init.bin", os.O_CREATE, 0o666 )
+	if creationErr != 0{
+		errors.throw_utilty_error(1, "Error creating init file", "OST_INIT")
+		logging.log_utils_error("Error creating init file", "OST_INIT")
+		ost_engine.Initialized = false
+		return ost_engine.Initialized
+	}
+	ost_engine.Initialized = true
+	os.close(createFile)
+	return ost_engine.Initialized
+}
+
+main::proc()
+{
+	
+	OST_START_ENGINE() 
+		
+	fmt.printfln(misc.ostrich_art)
+	versionStr:= transmute(string)misc.get_ost_version()
+	fmt.printfln("%sVersion: %s%s%s", misc.BOLD,misc.GREEN,versionStr, misc.RESET)
+	
+	engineInitialized := OST_CHECK_INIT_FILE()
+
+	switch (engineInitialized) 
+	{
+		case false:
+			security.OST_INIT_USER_SETUP(OST_INIT())
+			break
+		case true:
+
+
+
+	}
+	
+	for ost_engine.Status == 1 && ost_engine.StatusName == "Running" 
+	{
+		
+	}
+
 }
