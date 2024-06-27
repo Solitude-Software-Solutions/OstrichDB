@@ -6,14 +6,15 @@ import "core:strings"
 import "core:strconv"
 import "core:crypto/hash"
 import "core:math/rand"
-
+import "core:crypto" 
 
 salt:string  
 
 
 main:: proc()
 {
-  OST_GENERATE_SALT()
+  // OST_GENERATE_SALT()
+  OST_HASH_PASSWORD("password")
 }
 
 OST_USER_CREDENTIALS :: struct 
@@ -25,7 +26,6 @@ OST_USER_CREDENTIALS :: struct
 
 OST_GENERATE_SALT :: proc () -> []u8
 {
-  
   salt:string
   randC:string //random char
   randN:int //random number
@@ -65,11 +65,54 @@ OST_GENERATE_SALT :: proc () -> []u8
 
 
 
+OST_HASH_PASSWORD :: proc (p:string) -> []u8
+{
+  //generate the salt
+  salt:[]u8= OST_GENERATE_SALT()
+  hashedP:[]u8
+
+
+  //concatenate the salt and password before hashing
+  pWithSalt:=strings.concatenate([]string{string(salt),p}) 
+
+  //generate a random number to determine which hashing algorithm to use
+  x:=rand.choice([]int{1,2,3,4,5,6,7,8,9,0})
+  switch(x)
+  {
+    case 1,5:
+      for i:=0; i<1; i+=1
+      {
+        hashedP=hash.hash_string(hash.Algorithm.SHA3_224, pWithSalt)
+      }
+      break
+    case 2,6:
+      for i:=0; i<1; i+=1
+      {
+        hashedP=hash.hash_string(hash.Algorithm.SHA3_256, pWithSalt)
+      }
+      break
+    case 3,7:
+      for i:=0; i<1; i+=1
+      {
+        hashedP=hash.hash_string(hash.Algorithm.SHA3_384, pWithSalt)
+      }
+      break
+    case 4,9:
+      for i:=0; i<1; i+=1
+      {
+        hashedP=hash.hash_string(hash.Algorithm.SHA3_512, pWithSalt)
+      }
+      break
+    case 0,8:
+      for i:=0; i<1; i+=1
+      {
+        hashedP=hash.hash_string(hash.Algorithm.SHA512_256, pWithSalt)
+      }
+  }
   
 
 
-// OST_HASH_PASSWORD :: proc (p:string) -> string
-// {
-
   
-// }
+
+  return hashedP  
+}
