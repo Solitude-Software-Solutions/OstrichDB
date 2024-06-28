@@ -9,12 +9,6 @@ import "core:math/rand"
 import "core:crypto" 
 
 
-main:: proc()
-{
-  // OST_GENERATE_SALT()
-  // OST_HASH_PASSWORD("password")
-  OST_GEN_SECURE_DIR_FILE()
-}
 
 OST_GENERATE_SALT :: proc () -> []u8
 {
@@ -50,14 +44,13 @@ OST_GENERATE_SALT :: proc () -> []u8
    saltSlice:[]byte
    saltSlice=transmute([]byte)salt
    rand.shuffle(saltSlice, nil)
-   fmt.printfln("Salt After shuffling: %s", saltSlice)
    
    return saltSlice  
 }
 
 
 
-OST_HASH_PASSWORD :: proc (p:string) -> []u8
+OST_HASH_PASSWORD :: proc (p:string, action:int) -> []u8
 {
   //generate the salt
   salt:[]u8= OST_GENERATE_SALT()
@@ -121,7 +114,15 @@ OST_HASH_PASSWORD :: proc (p:string) -> []u8
       ost_user.algo_method= 5
       break
   } 
-  return hashPWithSalt  
+  //the action is dependent on which hash is needed
+  switch(action)
+  {
+    case 1:
+      return hashPWithoutSalt
+    case 2:
+      return hashPWithSalt
+  }
+  return []u8{}  
 }
 
 //todo store salt and hashed password in a "user" cluster in a secure .ost file
@@ -153,3 +154,4 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int
 
   return 0
 }
+
