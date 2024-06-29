@@ -8,7 +8,10 @@ import "core:crypto/hash"
 import "core:math/rand"
 import "core:crypto" 
 
-
+main::proc()
+{
+  OST_GEN_SECURE_DIR_FILE()
+}
 
 OST_GENERATE_SALT :: proc () -> []u8
 {
@@ -43,7 +46,8 @@ OST_GENERATE_SALT :: proc () -> []u8
    //convert the string to a byte array then shuffle the array
    saltSlice:[]byte
    saltSlice=transmute([]byte)salt
-   rand.shuffle(saltSlice, nil)
+  //  rand.shuffle(saltSlice, nil)
+   rand.shuffle(saltSlice) //todo according to compiler this is the correct way to call the function
    
    return saltSlice  
 }
@@ -143,9 +147,9 @@ exmaple
 OST_GEN_SECURE_DIR_FILE :: proc() -> int
 {
   //make directory locked
-  err:=os.make_directory("../../bin/secure") //this will change when building entire project from cmd line
+  err:=os.make_directory("../bin/secure") //this will change when building entire project from cmd line
   
-  file,e:=os.open("../../bin/secure/_secure_.ost", os.O_CREATE, 0o600)
+  file,e:=os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o600)
   if e !=0
   {
     fmt.printfln("Error creating secure file")

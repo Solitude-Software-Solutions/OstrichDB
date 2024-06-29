@@ -7,19 +7,16 @@ import "core:strings"
 import "core:time"
 import "core:strconv"
 
-LOG_DIR_PATH:string: "../../../bin/logs/" //todo: might not need
+LOG_DIR_PATH:string: "../bin/logs/" //todo: might not need
 RUNTIME_LOG:string: "runtime.log"
 ERROR_LOG:string: "errors.log"
 
-
-main:: proc() 
+main:: proc()
 {
-  // log_utils_error("Test","Testing logging")
-  // errors.throw_utilty_error(1, "Test", "Testing logging")
-  // log_runtime_event("Test","Testing logging")
-  // create_logs_dir()
-  // create_log_files()
+  create_logs_dir()
+  create_log_files()
 }
+
 
 create_logs_dir:: proc() -> int 
 {

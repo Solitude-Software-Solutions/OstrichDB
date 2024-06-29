@@ -129,31 +129,31 @@ OST_INIT:: proc() -> bool {
 	return ost_engine.Initialized
 }
 
-main::proc()
-{
+// main::proc()
+// {
 	
-	OST_START_ENGINE() 
+// 	OST_START_ENGINE() 
 		
-	fmt.printfln(misc.ostrich_art)
-	versionStr:= transmute(string)misc.get_ost_version()
-	fmt.printfln("%sVersion: %s%s%s", misc.BOLD,misc.GREEN,versionStr, misc.RESET)
+// 	fmt.printfln(misc.ostrich_art)
+// 	versionStr:= transmute(string)misc.get_ost_version()
+// 	fmt.printfln("%sVersion: %s%s%s", misc.BOLD,misc.GREEN,versionStr, misc.RESET)
 	
-	engineInitialized := OST_CHECK_INIT_FILE()
+// 	engineInitialized := OST_CHECK_INIT_FILE()
 
-	switch (engineInitialized) 
-	{
-		case false:
-			security.OST_INIT_USER_SETUP(OST_INIT())
-			break
-		case true:
+// 	switch (engineInitialized) 
+// 	{
+// 		case false:
+// 			security.OST_INIT_USER_SETUP(OST_INIT())
+// 			break
+// 		case true:
 
 
 
-	}
+// 	}
 	
-	for ost_engine.Status == 1 && ost_engine.StatusName == "Running" 
-	{
+// 	for ost_engine.Status == 1 && ost_engine.StatusName == "Running" 
+// 	{
 		
-	}
+// 	}
 
-}
+// }

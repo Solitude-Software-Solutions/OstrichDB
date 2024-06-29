@@ -8,40 +8,46 @@ import "core:math/rand"
 import "core:strconv"
 
 MAX_FILE_NAME_LENGTH_AS_BYTES :[512]byte
-OST_CLUSTER_PATH :: "../../../bin/"
+OST_CLUSTER_PATH :: "../bin/clusters/"
 OST_FILE_EXTENSION ::".ost"
 cluster: Cluster
 Cluster :: struct {
 	_id:     int, //unique identifier for the record cannot be duplicated
 	record: struct{}, //allows for multiple records to be stored in a cluster
 }
-//todo this proc will change once engine is built
-main::proc() {
-	buf:[256]byte
-	fmt.printfln("What would you like to name your DB file?: ")	
-	n, err := os.read(os.stdin, buf[:])
-	if err != 0 {
-		errors.throw_utilty_error(1, "Error reading input", "main")
-		logging.log_utils_error("Error reading input", "main")
-	}
-	
-	//if the number of bytes entered is greater than 0 then assign the entered bytes to a string
-	if n > 0 {
-        enteredStr := string(buf[:n]) 
-				//trim the string of any whitespace or newline characters 
 
-				//Shoutout to the OdinLang Discord for helping me with this...
-        enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
-            return r == '\r' || r == '\n'
-        })
-        OST_CREATE_OST_FILE(enteredStr)
-    }
+main:: proc() {
+	OST_CREATE_CACHE_FILE()
+	os.make_directory(OST_CLUSTER_PATH)
+
 }
+//todo this proc will change once engine is built
+// main::proc() {
+// 	buf:[256]byte
+// 	fmt.printfln("What would you like to name your DB file?: ")	
+// 	n, err := os.read(os.stdin, buf[:])
+// 	if err != 0 {
+// 		errors.throw_utilty_error(1, "Error reading input", "main")
+// 		logging.log_utils_error("Error reading input", "main")
+// 	}
+	
+// 	//if the number of bytes entered is greater than 0 then assign the entered bytes to a string
+// 	if n > 0 {
+//         enteredStr := string(buf[:n]) 
+// 				//trim the string of any whitespace or newline characters 
+
+// 				//Shoutout to the OdinLang Discord for helping me with this...
+//         enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
+//             return r == '\r' || r == '\n'
+//         })
+//         OST_CREATE_OST_FILE(enteredStr)
+//     }
+// }
 
 
 //creates a file in the bin directory used to store the all used cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
-	cacheFile,err := os.open("../../../bin/cluster_id_cache", os.O_CREATE, 0o666)
+	cacheFile,err := os.open("../bin/cluster_id_cache", os.O_CREATE, 0o666)
 	if err != 0{
 		errors.throw_utilty_error(1, "Error creating cluster id cache file", "OST_CREATE_CACHE_FILE")
 		logging.log_utils_error("Error creating cluster id cache file", "OST_CREATE_CACHE_FILE")
@@ -83,7 +89,6 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 			return 1
 		}
 	}
-
 	// If all checks pass then create the file with read/write permissions
 	//on Linux the permissions are octal. 0o666 is read/write
 	createFile, creationErr := os.open(pathNameExtension, os.O_CREATE, 0o666 )
@@ -130,7 +135,7 @@ OST_CHECK_CACHE_FOR_ID:: proc(id:i64) -> bool
 {
 	buf: [32]byte
 	result: bool
-	openCacheFile,err:=os.open("../../../bin/cluster_id_cache", os.O_RDONLY, 0o666)
+	openCacheFile,err:=os.open("../bin/cluster_id_cache", os.O_RDONLY, 0o666)
 	if err != 0
 	{
 		errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
@@ -171,7 +176,7 @@ OST_CHECK_CACHE_FOR_ID:: proc(id:i64) -> bool
 OST_ADD_ID_TO_CACHE_FILE::proc(id:i64) -> int
 {
 	buf: [32]byte
-	cacheFile,err := os.open("../../../bin/cluster_id_cache",os.O_APPEND | os.O_WRONLY, 0o666)
+	cacheFile,err := os.open("../bin/cluster_id_cache",os.O_APPEND | os.O_WRONLY, 0o666)
 	if err != 0
 	{
 		errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_ADD_ID_TO_CACHE_FILE")
@@ -201,7 +206,7 @@ Creates and appends a new cluster to the specified .ost file
 
 OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64) -> int
 {
-	C_BLOCK: []string = {"{\t\n\t_id : %s\n\t\n},\n"}//defines the base structure of a cluster block in a .ost file
+	C_BLOCK: []string = {"{\t\n\tcluster_id : %s\n\t\n},\n"}//defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
 
 	//step#1: open the file

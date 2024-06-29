@@ -12,8 +12,6 @@ import "../../utils/misc"
 import "../data"
 
 
-USER_CREDINTIALS_FILE :string= "../../../../bin/users.bin" 
-
 
 ost_user:OST_USER
 
@@ -42,18 +40,16 @@ OST_USER :: struct {
 }
 
 
-main ::proc() //for testing purposes
-{
-  OST_INIT_USER_SETUP(true) 
-}
+// main ::proc() //for testing purposes
+// {
+//   OST_INIT_USER_SETUP(true) 
+// }
 
 
 //This will handle initial setup of the admin account on first run of the program
-OST_INIT_USER_SETUP ::proc(engineInit: bool) -> int
+OST_INIT_USER_SETUP ::proc() -> int
 {
 
-  if engineInit == true
-  {
     OST_GEN_USER_ID()
     ost_user.role=OST_User_Role.ADMIN
     fmt.printfln("Welcome to the Ostrich Database Engine")
@@ -72,7 +68,7 @@ OST_INIT_USER_SETUP ::proc(engineInit: bool) -> int
     fmt.printfln("Algo Method: %d", ost_user.algo_method) //!remove this line after testing
   
     
-  }
+
   return 0
 }
 
@@ -95,6 +91,7 @@ OST_CHECK_IF_USER_ID_EXISTS ::proc(id:i64) -> bool
 {
 	buf: [32]byte
 	result: bool
+  // data.OST_CREATE_OST_FILE("_secure_") todo: uncomment and moe this line to the main function
 	openCacheFile,err:=os.open("../../../bin/secure/_secure_.ost", os.O_RDONLY, 0o666)
 	if err != 0
 	{
@@ -267,3 +264,4 @@ OST_CONFIRM_PASSWORD:: proc(p:string) -> string
 //6. implement a proc wipes the user credentials file after a certain number of failed login attempts....will probably max out at 5
 //7. send user creds to encryption module to encrypt the creds before storing them in the .bin file
 //8. implement a proc that will decrypt the user creds before checking them against the stored creds
+

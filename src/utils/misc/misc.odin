@@ -40,7 +40,7 @@ RESET:: "\033[0m"
 get_ost_version :: proc() -> []u8
 {
     buf:[256]byte
-    version_file,err := os.open("../../../version")
+    version_file,err := os.open("../version")
     if err !=0
     {
       logging.log_utils_error("Could not open version file", "get_ost_version")
