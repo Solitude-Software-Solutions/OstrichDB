@@ -266,18 +266,14 @@ OST_STORE_USER_CREDS::proc() -> int
 
   return 0
 
-  
+  // todo: currently I am working on records. I need to finish basic set up of records  before I can store the user credentials since technically the user credentials are each a record...
 
 }
 
 
 //todos
-//1. implement a proc that on inital startup of th eprogram to request the user to create an admin account DONE
-//2. create procs that create a .bin file to store all the user credentials DONE
-//3. create a proc that will add a new user to the .bin file
-//4. implement a proc that will check the user credentials against the stored user credentials
-//5. implement a proc that will check the user credentials file for the existence of a user
-//6. implement a proc wipes the user credentials file after a certain number of failed login attempts....will probably max out at 5
-//7. send user creds to encryption module to encrypt the creds before storing them in the .bin file DONE 
-//8. implement a proc that will decrypt the user creds before checking them against the stored creds DONT NEED TO DO THIS
+//1. create a proc that will add a new user to the _secure_.ost file ALMOST DONE
+//2. implement a proc that will check the user credentials against the stored user credentials
+//3.. implement a proc that will check the user credentials file for the existence of a user
+//4. implement a proc wipes the user credentials file after a certain number of failed login attempts....will probably max out at 5
 
