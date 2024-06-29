@@ -7,6 +7,13 @@ import "core:strings"
 import "core:math/rand"
 import "core:strconv"
 
+//=========================================================//
+//Author: Marshall Burns aka @SchoolyB
+//Desc: This file handles the creation and manipulation of
+//			cluster files and their data within the db engine
+//=========================================================//
+
+
 MAX_FILE_NAME_LENGTH_AS_BYTES :[512]byte
 OST_CLUSTER_PATH :: "../bin/clusters/"
 OST_FILE_EXTENSION ::".ost"
@@ -75,7 +82,6 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 	//CHECK#2: check if the file already exists
 	existenceCheck,exists := os.read_entire_file_from_filename(pathNameExtension)
 	if exists {
-		errors.throw_utilty_error(1, ".ost file already exists", "OST_CREATE_OST_FILE")
 		logging.log_utils_error(".ost file already exists", "OST_CREATE_OST_FILE")
 		return 1
 	}
@@ -254,7 +260,7 @@ See usage in OST_ADD_ID_TO_CACHE_FILE()
 */
 OST_NEWLINE_CHAR ::proc () 
 {
-	cacheFile, err:= os.open("../../../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
+	cacheFile, err:= os.open("../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
 	if err != 0
 	{
 		errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_NEWLINE_CHAR")

@@ -7,28 +7,22 @@ import "core:strings"
 import "core:time"
 import "core:strconv"
 
+//=========================================================//
+//Author: Marshall Burns aka @SchoolyB
+//Desc: This file contains helper functions for logging
+//=========================================================//
+
+
 LOG_DIR_PATH:string: "../bin/logs/" //todo: might not need
 RUNTIME_LOG:string: "runtime.log"
 ERROR_LOG:string: "errors.log"
 
 main:: proc()
 {
-  create_logs_dir()
+  os.make_directory(LOG_DIR_PATH)
   create_log_files()
 }
 
-
-create_logs_dir:: proc() -> int 
-{
-  err:= os.make_directory(LOG_DIR_PATH)
-  if err != 0
-  {
-    errors.throw_utilty_error(1, "Error creating logs directory", "create_logs_dir")
-    log_utils_error("Error creating logs directory", "create_logs_dir")
-    return -1
-  }
-  return 0
-}
 
 create_log_files:: proc() -> int 
 {

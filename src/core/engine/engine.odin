@@ -8,6 +8,13 @@ import "../../utils/misc"
 import "../../utils/errors"
 import "../../utils/logging"
 import "../security"
+
+//=========================================================//
+//Author: Marshall Burns aka @SchoolyB
+//Desc: This file handles the main engine of the db
+//=========================================================//
+
+
 ost_engine: Ost_Engine
 
 // Flags specifically for the tasking system

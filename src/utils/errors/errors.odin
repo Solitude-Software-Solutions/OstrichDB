@@ -3,6 +3,12 @@ package errors
 import "core:fmt"
 import "core:os"
 
+//=========================================================//
+//Author: Marshall Burns aka @SchoolyB
+//Desc: This file contains helper functions for error handling
+//=========================================================//
+
+
 utils_error:Utility_Error
 Utility_Error:: struct
 {

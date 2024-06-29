@@ -8,6 +8,11 @@ import "core:crypto/hash"
 import "core:math/rand"
 import "core:crypto" 
 
+//=========================================================//
+//Author: Marshall Burns aka @SchoolyB
+//Desc: This file handles the encryption of user credentials
+//=========================================================//
+
 main::proc()
 {
   OST_GEN_SECURE_DIR_FILE()

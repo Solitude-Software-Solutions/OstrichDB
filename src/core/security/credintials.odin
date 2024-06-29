@@ -11,6 +11,11 @@ import "../../utils/logging"
 import "../../utils/misc"
 import "../data"
 
+//=========================================================//
+//Author: Marshall Burns aka @SchoolyB
+//Desc: This file handles the creation and storage of user
+//      credentials
+//=========================================================//
 
 
 ost_user:OST_USER
@@ -66,6 +71,7 @@ OST_INIT_USER_SETUP ::proc() -> int
     fmt.printfln("Hashed Password: %s", ost_user.hashedPassword) //!remove this line after testing
     fmt.printfln("Salt: %s", ost_user.salt)
     fmt.printfln("Algo Method: %d", ost_user.algo_method) //!remove this line after testing
+    OST_STORE_USER_CREDS()
   
     
 
@@ -77,9 +83,7 @@ OST_GEN_USER_ID ::proc() -> i64
 	userID:=rand.int63_max(1e16 + 1)
   if OST_CHECK_IF_USER_ID_EXISTS(userID) == true
   {
-    //todo logging and errors wont work until i build the project as a whole not just packages
-    // errors.throw_utilty_error(1, "ID already exists in user file", "OST_GEN_USER_ID")
-    // logging.log_utils_error("ID already exists in user file", "OST_GEN_USER_ID")
+    logging.log_utils_error("ID already exists in user file", "OST_GEN_USER_ID")
     OST_GEN_USER_ID()
   }
   ost_user.user_id=userID
@@ -91,13 +95,11 @@ OST_CHECK_IF_USER_ID_EXISTS ::proc(id:i64) -> bool
 {
 	buf: [32]byte
 	result: bool
-  // data.OST_CREATE_OST_FILE("_secure_") todo: uncomment and moe this line to the main function
-	openCacheFile,err:=os.open("../../../bin/secure/_secure_.ost", os.O_RDONLY, 0o666)
+  openCacheFile,err:=os.open("../bin/secure/_secure_.ost", os.O_RDONLY, 0o666)
 	if err != 0
 	{
-    //todo logging and errors wont work until i build the project as a whole not just packages
-		// errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
-		// logging.log_utils_error("Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		logging.log_utils_error("Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
 	}
 	//step#1 convert the passed in i64 id number to a string
 	idStr := strconv.append_int(buf[:], id, 10) 
@@ -107,9 +109,8 @@ OST_CHECK_IF_USER_ID_EXISTS ::proc(id:i64) -> bool
 	readCacheFile,ok:=os.read_entire_file(openCacheFile)
 	if ok == false
 	{
-    //todo logging and errors wont work until i build the project as a whole not just packages
-		// errors.throw_utilty_error(1, "Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
-		// logging.log_utils_error("Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		errors.throw_utilty_error(1, "Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		logging.log_utils_error("Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
 	}
 
 	// step#3 convert all file contents to a string because...OdinLang go brrrr??
@@ -137,9 +138,9 @@ OST_GET_USERNAME :: proc() -> string
     n,err:=os.read(os.stdin, buf[:])
 
     if err != 0 {
-      //todo logging and errors wont work until i build the project as a whole not just packages
-		// errors.throw_utilty_error(1, "Error reading input", "OST_GET_USERNAME")
-		// logging.log_utils_error("Error reading input", "OST_GET_USERNAME")
+
+		errors.throw_utilty_error(1, "Error reading input", "OST_GET_USERNAME")
+		logging.log_utils_error("Error reading input", "OST_GET_USERNAME")
 	  }
   	if n > 0 {
         enteredStr := string(buf[:n]) 
@@ -177,9 +178,9 @@ OST_GET_PASSWORD :: proc() -> string
     n,err:=os.read(os.stdin, buf[:])
     enteredStr: string
     if err != 0 {
-      //todo logging and errors wont work until i build the project as a whole not just packages
-    // errors.throw_utilty_error(1, "Error reading input", "OST_GET_PASSWORD")
-    // logging.log_utils_error("Error reading input", "OST_GET_PASSWORD")
+
+    errors.throw_utilty_error(1, "Error reading input", "OST_GET_PASSWORD")
+    logging.log_utils_error("Error reading input", "OST_GET_PASSWORD")
     }
     if n > 0 {
         enteredStr = string(buf[:n]) 
@@ -210,7 +211,7 @@ OST_GET_PASSWORD :: proc() -> string
     return enteredStr
   }
 
-  //tales in the plain text password and confirms it with the user
+  //taKes in the plain text password and confirms it with the user
 OST_CONFIRM_PASSWORD:: proc(p:string) -> string
 {
   misc.show_current_step("Confirm Password", "3", "3")
@@ -221,9 +222,8 @@ OST_CONFIRM_PASSWORD:: proc(p:string) -> string
   confirmation: string
 
   if err != 0 {
-    //todo logging and errors wont work until i build the project as a whole not just packages
-    // errors.throw_utilty_error(1, "Error reading input", "OST_CONFIRM_PASSWORD")
-    // logging.log_utils_error("Error reading input", "OST_CONFIRM_PASSWORD")
+    errors.throw_utilty_error(1, "Error reading input", "OST_CONFIRM_PASSWORD")
+    logging.log_utils_error("Error reading input", "OST_CONFIRM_PASSWORD")
   }
   if n > 0 {
     confirmation = string(buf[:n]) 
@@ -249,19 +249,35 @@ OST_CONFIRM_PASSWORD:: proc(p:string) -> string
   return ost_user.password.Value
 }
 
-// OST_STORE_USER_CREDS::proc(user:OST_USER) -> int 
-// {
+// i- user id, u- username, r- role, s- salt, hp- hashed password
+// OST_STORE_USER_CREDS::proc(i:i64,u:string,r:int,s:string,hp:string) -> int 
+OST_STORE_USER_CREDS::proc() -> int 
+{
+  data.OST_CREATE_OST_FILE("_secure_")
+  ID:=data.OST_GENERATE_CLUSTER_ID()
+  file,e:= os.open("../bin/secure/_secure_.ost", os.O_APPEND | os.O_WRONLY, 0o666)
+  if e != 0
+  {
+    errors.throw_utilty_error(1, "Error opening user credentials file", "OST_STORE_USER_CREDS")
+    logging.log_utils_error("Error opening user credentials file", "OST_STORE_USER_CREDS")
+  }
+  defer os.close(file)
+  data.OST_CREATE_CLUSTER_BLOCK("../bin/secure/_secure_.ost", ID)
 
-// }
+  return 0
+
+  
+
+}
 
 
 //todos
-//1. implement a proc that on inital startup of th eprogram to request the user to create an admin account
-//2. create procs that create a .bin file to store all the user credentials
+//1. implement a proc that on inital startup of th eprogram to request the user to create an admin account DONE
+//2. create procs that create a .bin file to store all the user credentials DONE
 //3. create a proc that will add a new user to the .bin file
 //4. implement a proc that will check the user credentials against the stored user credentials
 //5. implement a proc that will check the user credentials file for the existence of a user
 //6. implement a proc wipes the user credentials file after a certain number of failed login attempts....will probably max out at 5
-//7. send user creds to encryption module to encrypt the creds before storing them in the .bin file
-//8. implement a proc that will decrypt the user creds before checking them against the stored creds
+//7. send user creds to encryption module to encrypt the creds before storing them in the .bin file DONE 
+//8. implement a proc that will decrypt the user creds before checking them against the stored creds DONT NEED TO DO THIS
 

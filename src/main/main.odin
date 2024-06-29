@@ -9,6 +9,12 @@ import "../utils/errors"
 import "../utils/logging"
 import "../utils/misc"
 
+
+//=========================================================//
+//Author: Marshall Burns aka @SchoolyB
+//Desc: The main entry point for the Ostrich Database Engine
+//=========================================================//
+
 main :: proc ()
 {
   //Start the logging system
