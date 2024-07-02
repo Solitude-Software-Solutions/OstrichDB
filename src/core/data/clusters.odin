@@ -107,7 +107,7 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 
 	//generate a unique cluster id and create a new cluster block in the file
 	ID:=OST_GENERATE_CLUSTER_ID()
-	OST_CREATE_CLUSTER_BLOCK(pathNameExtension, ID)
+	// OST_CREATE_CLUSTER_BLOCK(pathNameExtension, ID)
 	
 	return 0
 }
@@ -210,11 +210,11 @@ OST_ADD_ID_TO_CACHE_FILE::proc(id:i64) -> int
 Creates and appends a new cluster to the specified .ost file
 */
 
-OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64) -> int
+OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64, clusterName:string) -> int
 {
-	C_BLOCK: []string = {"{\t\n\tcluster_id : %s\n\t\n},\n"}//defines the base structure of a cluster block in a .ost file
+	FIRST_HALF:[]string = {"{\n\tcluster_name : %n"}
+	LAST_HALF:[]string= {"\n\tcluster_id : %i\n\t\n},\n"}//defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
-
 	//step#1: open the file
 	clusterFile, err:= os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
 	if err != 0
@@ -223,21 +223,31 @@ OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64) -> int
 		logging.log_utils_error("Error opening cluster file", "OST_CREATE_CLUSTER_BLOCK")
 	}
 
-	//step#2: iterate over the C_BLOCK array and replace the %s with the passed in clusterID
-	for i:=0; i<len(C_BLOCK); i+=1
+
+	for i:=0; i<len(FIRST_HALF); i+=1
+	{
+		if(strings.contains(FIRST_HALF[i], "%n"))
+		{
+			//step#5: replace the %n with the cluster name
+		newClusterName,alright:= strings.replace(FIRST_HALF[i], "%n",clusterName,-1)	
+		writeClusterName,ight:= os.write(clusterFile, transmute([]u8)newClusterName)
+		}
+	}
+	//step#2: iterate over the FIRST_HALF array and replace the %s with the passed in clusterID
+	for i:=0; i<len(LAST_HALF); i+=1
 	{
 		//step#3: check if the string contains the %s placeholder if it does replace it with the clusterID
-		if strings.contains(C_BLOCK[i], "%s")
+		if strings.contains(LAST_HALF[i], "%i")
 		{
 			//step#4: replace the %s with the clusterID that is now being converted to a string
-			newBlock,ok:= strings.replace(C_BLOCK[i], "%s", strconv.append_int(buf[:], clusterID,10), -1)
+			newClusterID,ok:= strings.replace(LAST_HALF[i], "%i", strconv.append_int(buf[:], clusterID,10), -1)
 			if ok == false
 			{
-				errors.throw_utilty_error(1, "Error placing id into cluster template", "OST_CREATE_CLUSTER_BLOCK")
+				errors.throw_utilty_error(1, "Error placing id and name into cluster template", "OST_CREATE_CLUSTER_BLOCK")
 				logging.log_utils_error("Error placing id into cluster template", "OST_CREATE_CLUSTER_BLOCK")
 			}
-			writeBlock,okay:= os.write(clusterFile, transmute([]u8)newBlock)
-			if okay != 0
+			writeClusterID,okay:= os.write(clusterFile, transmute([]u8)newClusterID)
+			if okay!= 0
 			{
 				errors.throw_utilty_error(1, "Error writing cluster block to file", "OST_CREATE_CLUSTER_BLOCK")
 				logging.log_utils_error("Error writing cluster block to file", "OST_CREATE_CLUSTER_BLOCK")
@@ -276,3 +286,19 @@ OST_NEWLINE_CHAR ::proc ()
 	}
 	os.close(cacheFile)
 }
+
+//look through the cluster dir for the passed in database name(file name) then
+// fn- file name, cn- cluster name, id- cluster id
+// OST_FIND_CLUSTER::proc(fn:string,cn:string,id:i64) -> int 
+// {
+// 	fullPath: strings.concatenate([]string{OST_CLUSTER_PATH, fn, OST_FILE_EXTENSION})
+// 	file,e:=os.open(fullPath, os.O_RDONLY, 0o666)
+// 	if e != 0
+// 	{
+// 		errors.throw_utilty_error(1, "Error opening cluster file", "OST_FIND_CLUSTER")
+// 		logging.log_utils_error("Error opening cluster file", "OST_FIND_CLUSTER")
+// 		return 1
+// 	}
+// 	os.read_entire_file(file)
+
+// }

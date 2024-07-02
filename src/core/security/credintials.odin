@@ -262,7 +262,7 @@ OST_STORE_USER_CREDS::proc() -> int
     logging.log_utils_error("Error opening user credentials file", "OST_STORE_USER_CREDS")
   }
   defer os.close(file)
-  data.OST_CREATE_CLUSTER_BLOCK("../bin/secure/_secure_.ost", ID)
+  data.OST_CREATE_CLUSTER_BLOCK("../bin/secure/_secure_.ost", ID, "user_credentials")
 
   return 0
 
