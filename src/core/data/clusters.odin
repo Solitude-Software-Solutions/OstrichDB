@@ -26,6 +26,7 @@ Cluster :: struct {
 main:: proc() {
 	OST_CREATE_CACHE_FILE()
 	os.make_directory(OST_CLUSTER_PATH)
+	OST_CHOOSE_DB()
 
 }
 //todo this proc will change once engine is built
@@ -263,7 +264,6 @@ OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64, clusterName:s
 }
 
 
-
 /*
 Used to add a newline character to the end of each id entry in the cluster cache file.
 See usage in OST_ADD_ID_TO_CACHE_FILE()
@@ -287,18 +287,141 @@ OST_NEWLINE_CHAR ::proc ()
 	os.close(cacheFile)
 }
 
-//look through the cluster dir for the passed in database name(file name) then
-// fn- file name, cn- cluster name, id- cluster id
-// OST_FIND_CLUSTER::proc(fn:string,cn:string,id:i64) -> int 
-// {
-// 	fullPath: strings.concatenate([]string{OST_CLUSTER_PATH, fn, OST_FILE_EXTENSION})
-// 	file,e:=os.open(fullPath, os.O_RDONLY, 0o666)
-// 	if e != 0
-// 	{
-// 		errors.throw_utilty_error(1, "Error opening cluster file", "OST_FIND_CLUSTER")
-// 		logging.log_utils_error("Error opening cluster file", "OST_FIND_CLUSTER")
-// 		return 1
-// 	}
-// 	os.read_entire_file(file)
 
-// }
+// =====================================DATA INTERACTION=====================================//
+//This section holds procs that deal with user/data interation within the Ostrich Engine
+
+//handle logic for choosing which .ost file the user wants to interact with
+OST_CHOOSE_DB:: proc() 
+{
+	buf:[256]byte
+	input:string
+	fmt.printfln("Enter the name of database that you would like to interact with")
+	n, err := os.read(os.stdin, buf[:])
+	
+	if n > 0 {
+		fmt.printfln("What would you like to name your cluster?")
+
+		//todo add option for user to enter a command that lists current dbs
+        input := string(buf[:n]) 
+				//trim the string of any whitespace or newline characters 
+
+				//Shoutout to the OdinLang Discord for helping me with this...
+        input = strings.trim_right_proc(input, proc(r: rune) -> bool {
+            return r == '\r' || r == '\n'
+					})
+					fmt.printfln("you entered: %s", input)
+			
+
+		dbExists:=OST_CHECK_IF_DB_EXISTS(input,1)
+		switch(dbExists)
+		{
+			case true:
+				fmt.printfln("DB EXISTS") //remove this after testing
+				OST_CHOOSE_CLUSTER_NAME(input)
+				break
+			case false:
+				fmt.println("DB DOESNT EXIST") //remove this after testing
+				//do more stuff
+				break
+		}
+	}
+
+}
+
+//checks if the passed in ost file exists in "../bin/clusters". see usage in OST_CHOOSE_DB()
+//todo this only finds files with the exact name and extension... need to make it so that the .ost extension is implied as a search parameter
+//type 0 is for standard cluster files, type 1 is for secure files
+OST_CHECK_IF_DB_EXISTS::proc(fn:string, type:int) -> bool
+{
+	dbExists:bool
+	//need to cwd into bin
+  os.set_current_directory("../bin/")
+	dir:string
+	switch(type)
+	{
+		case 0:
+			dir="clusters/"
+			break
+		case 1:
+			dir="secure/"
+			break
+	}
+	
+  clusterDir, errOpen := os.open(dir)
+	
+  defer os.close(clusterDir)
+  foundFiles, errRead := os.read_dir(clusterDir, -1)
+  for file in foundFiles {
+		if(file.name == fn)
+		{
+			dbExists = true
+		}
+		else
+		{
+			dbExists =false
+		}
+  }
+
+	return dbExists
+}
+
+//handles logic whehn the user chooses to interact with a specific cluster in a .ost file
+OST_CHOOSE_CLUSTER_NAME :: proc(fn:string)
+{
+	buf:[256]byte
+	n, err := os.read(os.stdin, buf[:])
+	if n > 0 {
+		fmt.printfln("Which cluster would you like to interact with?")
+        input := string(buf[:n]) 
+				//trim the string of any whitespace or newline characters 
+
+				//Shoutout to the OdinLang Discord for helping me with this...
+        input = strings.trim_right_proc(input, proc(r: rune) -> bool {
+            return r == '\r' || r == '\n'
+        })
+			
+			cluserExists:= OST_CHECK_IF_CLUSTER_EXISTS(fn, input)
+			switch(cluserExists)
+			{
+				case true:
+
+					break
+					case false:
+						fmt.printfln("Cluster with name: %s does not exist in database: %s", input, fn)
+						fmt.printfln("Please try again")
+					//todo add a commands the lists all available cluster in the current db file.
+					break
+		}
+	}
+	}
+
+//exclusivley used for checking if the name of a cluster exists...NOT the ID
+//fn- filename, cn- clustername
+OST_CHECK_IF_CLUSTER_EXISTS:: proc(fn:string, cn:string) -> bool
+{
+	clusterFound:bool
+  pathAndFileName:= strings.concatenate([]string{OST_CLUSTER_PATH, fn })
+  fullPath:= strings.concatenate([]string{pathAndFileName, OST_FILE_EXTENSION})
+	file,e:= os.open(fullPath, os.O_RDONLY, 0o666)
+
+	if (e != 0)
+	{
+		errors.throw_utilty_error(1, "Error opening cluster file", "OST_FIND_CLUSTER")
+		logging.log_utils_error("Error opening cluster file", "OST_FIND_CLUSTER")
+		
+	}
+
+	os.read_entire_file(file)
+	if strings.contains(cn, fn)
+	{
+		clusterFound= true
+	}
+	else
+	{
+		clusterFound = false
+	}
+	return clusterFound
+	
+}
+
