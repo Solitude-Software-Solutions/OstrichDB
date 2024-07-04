@@ -27,7 +27,7 @@ Cluster :: struct {
 main:: proc() {
 	OST_CREATE_CACHE_FILE()
 	os.make_directory(OST_CLUSTER_PATH)
-	OST_CHOOSE_DB()
+	// OST_CHOOSE_DB()
 
 }
 //todo this proc will change once engine is built
@@ -91,9 +91,9 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+-="
 	for c:=0; c<len(fileName); c+=1
 	{
-		if strings.contains_any(fileName, invalidChars) //todo test this. previously had :strings.contains(invalidChars, fileName)
+		if strings.contains_any(fileName, invalidChars)
 		{
-			fmt.printfln("Invalid character in file name: %s", fileName)
+			fmt.printfln("Invalid character(s) found in file name: %s", fileName)
 			return 1
 		}
 	}
@@ -109,8 +109,6 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 
 	//generate a unique cluster id and create a new cluster block in the file
 	ID:=OST_GENERATE_CLUSTER_ID()
-	// OST_CREATE_CLUSTER_BLOCK(pathNameExtension, ID)
-	
 	return 0
 }
 
@@ -214,6 +212,15 @@ Creates and appends a new cluster to the specified .ost file
 
 OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64, clusterName:string) -> int
 {
+
+	clusterExists:= OST_CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
+
+	if clusterExists == true
+	{
+		errors.throw_utilty_error(1, "Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
+		logging.log_utils_error("Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
+		return 1
+	}
 	FIRST_HALF:[]string = {"{\n\tcluster_name : %n"}
 	LAST_HALF:[]string= {"\n\tcluster_id : %i\n\t\n},\n"}//defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
@@ -394,7 +401,6 @@ OST_CHOOSE_CLUSTER_NAME :: proc(fn:string)
 		}
 }
 
-//todo need to call this proc when creating a cluster not just when choosing whic one to interact with
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
 OST_CHECK_IF_CLUSTER_EXISTS:: proc(fn:string, cn:string) -> bool
