@@ -91,7 +91,7 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+-="
 	for c:=0; c<len(fileName); c+=1
 	{
-		if strings.contains(invalidChars, fileName)
+		if strings.contains_any(fileName, invalidChars) //todo test this. previously had :strings.contains(invalidChars, fileName)
 		{
 			fmt.printfln("Invalid character in file name: %s", fileName)
 			return 1
@@ -394,6 +394,7 @@ OST_CHOOSE_CLUSTER_NAME :: proc(fn:string)
 		}
 }
 
+//todo need to call this proc when creating a cluster not just when choosing whic one to interact with
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
 OST_CHECK_IF_CLUSTER_EXISTS:: proc(fn:string, cn:string) -> bool
@@ -423,3 +424,41 @@ OST_CHECK_IF_CLUSTER_EXISTS:: proc(fn:string, cn:string) -> bool
 	
 }
 
+//.appends the passed in data to the passed in cluster
+//fn-filename, cn-clustername,id-cluster id, dn-dataname, d-data
+OST_APPEND_DATA_TO_CLUSTER::proc(fn:string,cn:string,id:i64,dn:string,d:string)
+{
+	buf:[64]byte
+	//need to open a cluster file
+	// read over the file
+	//find the cluster with the passed in cluster name/id
+	//append the data name and the data with a newline character into the cluster
+	file,e:= os.open(fn, os.O_RDONLY, 0o666)
+	if (e != 0)
+	{
+		errors.throw_utilty_error(1, "Error opening cluster file", "OST_APPEND_DATA_TO_CLUSTER")
+		logging.log_utils_error("Error opening cluster file", "OST_APPEND_DATA_TO_CLUSTER")
+		
+	}
+	//convert the id to a string
+	idStr:= strconv.append_int(buf[:], id, 10)
+	fmt.printfln("ID as string: %s", idStr)
+	rawData ,ok:= os.read_entire_file(file)
+	dataAsStr:= cast(string)rawData
+	// && strings.contains(dataAsStr, cn)
+	if strings.contains(dataAsStr, idStr) && strings.contains(dataAsStr, dn)
+	{
+		fmt.printfln("Cluster with name: %s and ID: %i found", cn, id)
+		//append the data to the cluster
+	
+		
+	}
+	else
+	{
+		fmt.printfln("Cluster with name: %s and ID: %i NOT found", cn, id)
+	}
+	
+	
+	//todo find the cluster
+	//todo append the data
+}

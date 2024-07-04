@@ -261,7 +261,8 @@ OST_STORE_USER_CREDS::proc() -> int
     logging.log_utils_error("Error opening user credentials file", "OST_STORE_USER_CREDS")
   }
   defer os.close(file)
-  data.OST_CREATE_CLUSTER_BLOCK("../bin/secure/_secure_.ost", ID, "user_credentials")
+  // data.OST_CREATE_CLUSTER_BLOCK("../bin/secure/_secure_.ost", ID, "user_credentials")
+  data.OST_APPEND_DATA_TO_CLUSTER("../bin/secure/_secure_.ost","user_credentials", 3581445065921312, "test", "test data")
 
   return 0
 
@@ -342,7 +343,7 @@ OST_CHECK_PASSWORD_STRENGTH::proc(p:string) -> bool
       strong = false
       break
   }
-  fmt.printfln("Password Strength: %t", strong)
+
   return strong
 }
 
@@ -351,4 +352,3 @@ OST_CHECK_PASSWORD_STRENGTH::proc(p:string) -> bool
 //2. implement a proc that will check the user credentials against the stored user credentials
 //3.. implement a proc that will check the user credentials file for the existence of a user
 //4. implement a proc wipes the user credentials file after a certain number of failed login attempts....will probably max out at 5
-
