@@ -193,19 +193,18 @@ OST_GET_PASSWORD :: proc() -> string
         ost_user.password.Value = enteredStr
         //todo implement a check to see if the password is strong enough
       } 
-      if len(enteredStr) > 32
+      
+      strongPassword:= OST_CHECK_PASSWORD_STRENGTH(enteredStr)
+
+      switch strongPassword
       {
-        fmt.printfln("Password is too long. Please enter a password that is 32 characters or less")
-        OST_GET_PASSWORD()
-      }
-      else if len(enteredStr) < 8
-      {
-        fmt.printfln("Password is too short. Please enter a password that is 8 characters or more")
-        OST_GET_PASSWORD()
-      }
-      else
-      {
-        OST_CONFIRM_PASSWORD(enteredStr)
+        case true:
+          OST_CONFIRM_PASSWORD(enteredStr)
+          break
+        case false:
+          fmt.printfln("Please enter a stronger password")
+          OST_GET_PASSWORD()
+          break
       }
       
     return enteredStr
@@ -270,6 +269,82 @@ OST_STORE_USER_CREDS::proc() -> int
 
 }
 
+// checks if the passed in password is strong enough returns true or false.
+OST_CHECK_PASSWORD_STRENGTH::proc(p:string) -> bool
+{
+  specialChars:[]string={"!","@","#","$","%","^","&","*"}
+  charsLow:[]string={"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z",}
+  charsUp:[]string={"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z",}
+  nums:[]string={"0","1","2","3","4","5","6","7","8","9",}
+  strong:bool
+
+  check1:=0
+  check2:=0
+  check3:=0
+
+  //check for the length of the password
+  if len(p) > 32
+  {
+    fmt.printfln("Password is too long. Please enter a password that is 32 characters or less")
+    OST_GET_PASSWORD()
+  }
+  else if len(p) < 8
+  {
+    fmt.printfln("Password is too short. Please enter a password that is 8 characters or more")
+    OST_GET_PASSWORD()
+  }
+  
+  //check for the presence of numbers
+  for i:=0; i<len(nums); i+=1
+  {
+    if strings.contains(p, nums[i])
+    {
+      check1+=1
+    }
+  }
+  
+  // check for the presence of special characters
+  for i:=0; i<len(specialChars); i+=1
+  {
+    if strings.contains(p, specialChars[i])
+    {
+      check2+=1
+    }
+  }
+  //check for the presence of uppercase letters
+  for i:=0; i<len(charsUp); i+=1
+  {
+    if strings.contains(p, charsUp[i])
+    {
+      check3+=1
+    }
+  }
+  //add the results of the checks together
+  checkResults:int
+  checkResults = check1 + check2 + check3
+  
+  switch checkResults
+  {
+    //because i iterate through the arrays, the program adds 1 to the checkResults variable for each type of character found in the password so if the user enters 2 numbers, then 3 special characters the check2 variable will be 2 and the check1 variable will be 3. so basically, as long as the checkResults variable is greater or equal to 3, the password is strong enough. Kinda hacky but maybe someone can come up with a better way to do this one day. Cannot be more than 36 because the password is only 32 characters long
+    case 3..<32:
+      strong = true
+      break
+    case 2:
+      fmt.printfln("Password is weak. Please include at least one uppercase letter")
+      strong = false
+      break
+    case 1:
+      fmt.printfln("Password is weak. Please include at least one number")
+      strong = false
+      break
+    case 0:
+      fmt.printfln("Password is weak. Please include at least one special character")
+      strong = false
+      break
+  }
+  fmt.printfln("Password Strength: %t", strong)
+  return strong
+}
 
 //todos
 //1. create a proc that will add a new user to the _secure_.ost file ALMOST DONE

@@ -2,6 +2,7 @@ package data
 import "core:fmt"
 import "../../utils/errors"
 import "../../utils/logging"
+import "../../utils/misc"
 import "core:os"
 import "core:strings"
 import "core:math/rand"
@@ -256,8 +257,6 @@ OST_CREATE_CLUSTER_BLOCK ::proc (fileName: string, clusterID: i64, clusterName:s
 		}
 	}
 
-//todo might need to make sure there can be no duplicates
-
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0	
@@ -296,12 +295,12 @@ OST_CHOOSE_DB:: proc()
 {
 	buf:[256]byte
 	input:string
-	fmt.printfln("Enter the name of database that you would like to interact with")
-	n, err := os.read(os.stdin, buf[:])
-	
-	if n > 0 {
-		fmt.printfln("What would you like to name your cluster?")
+	ext:=".ost" //concat this to end of input to prevent user from having to type it each time
 
+	fmt.printfln("Enter the name of database that you would like to interact with")
+
+	n, err := os.read(os.stdin, buf[:])
+	if n > 0 {
 		//todo add option for user to enter a command that lists current dbs
         input := string(buf[:n]) 
 				//trim the string of any whitespace or newline characters 
@@ -310,27 +309,25 @@ OST_CHOOSE_DB:: proc()
         input = strings.trim_right_proc(input, proc(r: rune) -> bool {
             return r == '\r' || r == '\n'
 					})
-					fmt.printfln("you entered: %s", input)
-			
-
-		dbExists:=OST_CHECK_IF_DB_EXISTS(input,1)
-		switch(dbExists)
-		{
-			case true:
-				fmt.printfln("DB EXISTS") //remove this after testing
-				OST_CHOOSE_CLUSTER_NAME(input)
-				break
-			case false:
-				fmt.println("DB DOESNT EXIST") //remove this after testing
-				//do more stuff
-				break
-		}
-	}
-
+				dbName:= strings.concatenate([]string{input,ext})
+				dbExists:=OST_CHECK_IF_DB_EXISTS(dbName,1)
+				switch(dbExists)
+				{
+					case true:
+						fmt.printfln("%sFound database%s: %s%s%s",misc.GREEN,misc.RESET,misc.BOLD, input, misc.RESET) 
+						//do stuff
+						//todo what would the user like to do with this database?
+						break
+					case false:
+						fmt.printfln("Database with name:%s%s%s does not exist", misc.BOLD,input, misc.RESET) 
+						fmt.printfln("please try again")
+						OST_CHOOSE_DB()
+						break
+				}
+			}
 }
 
 //checks if the passed in ost file exists in "../bin/clusters". see usage in OST_CHOOSE_DB()
-//todo this only finds files with the exact name and extension... need to make it so that the .ost extension is implied as a search parameter
 //type 0 is for standard cluster files, type 1 is for secure files
 OST_CHECK_IF_DB_EXISTS::proc(fn:string, type:int) -> bool
 {
@@ -385,16 +382,17 @@ OST_CHOOSE_CLUSTER_NAME :: proc(fn:string)
 			switch(cluserExists)
 			{
 				case true:
-
+						//todo what would the user like to do with this cluster?
 					break
-					case false:
-						fmt.printfln("Cluster with name: %s does not exist in database: %s", input, fn)
-						fmt.printfln("Please try again")
-					//todo add a commands the lists all available cluster in the current db file.
+				case false:
+					fmt.printfln("Cluster with name:%s%s%s does not exist in database: %s",misc.BOLD, input,misc.RESET, fn)
+					fmt.printfln("Please try again")
+					OST_CHOOSE_CLUSTER_NAME(fn)
+				//todo add a commands the lists all available cluster in the current db file.
 					break
+			}
 		}
-	}
-	}
+}
 
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
