@@ -428,8 +428,10 @@ OST_CHECK_IF_CLUSTER_EXISTS:: proc(fn:string, cn:string) -> bool
 //fn-filename, cn-clustername,id-cluster id, dn-dataname, d-data
 OST_APPEND_DATA_TO_CLUSTER::proc(fn:string,cn:string,id:i64,dn:string,d:string)
 {
-	clusterBlock:[]string = {"{\n\tcluster_name : %n\n\tcluster_id : %i\n\t\n},\n"}
-	dataTemplate:[]string = {"\t%dn : %d\n"}
+	//If I didnt break the original slice into two like I do here,strings.replace() will not work as intended...maybe a better way???
+	dataNameTemplate:[]string={"\t%dataName : "}
+	dataTemplate:[]string = {"%data\n"}
+	
 	buf:[64]byte
 	//need to open a cluster file
 	// read over the file
@@ -452,28 +454,25 @@ OST_APPEND_DATA_TO_CLUSTER::proc(fn:string,cn:string,id:i64,dn:string,d:string)
 	{
 		fmt.printfln("Cluster with name: %s and ID: %i found", cn, id)
 	
-		//todo whererver  the id is found; add a newline character
-		//todo then append string formatters for the data name and data
-		//todo then replace the string formatters with the passed in data name and data
-
 		os.close(file) //need to close the file before reopening it in append mode
 		os.open(fn, os.O_APPEND | os.O_WRONLY, 0o666)
 
-		for i:=0; i<len(dataTemplate); i+=1
+		for i:=0; i<len(dataNameTemplate); i+=1
 		{
-			if(strings.contains(dataTemplate[i], "%dn")) 
+			if(strings.contains(dataNameTemplate[i], "%dataName")) 
 			{
-				newDataName,alright:= strings.replace(dataTemplate[i], "%dn", dn,-1)	
+				newDataName,alright:= strings.replace(dataNameTemplate[i], "%dataName", dn,-1)	
 				writeDataName,ight:= os.write(file, transmute([]u8)newDataName)
-
 			}
 
-			// if(strings.contains(dataTemplate[i], "%d"))
-			// {
-			// 	newData,alright:= strings.replace(dataTemplate[i], "%d", d,-1)	
-			// 	writeData,ight:= os.write(file, transmute([]u8)newData)
-
-			// }
+			//todo currently trying to figure out how to make sure data is appended safely within a cluster block
+				
+			
+			if(strings.contains(dataTemplate[i], "%data"))
+			{
+				newData,alright:= strings.replace(dataTemplate[i], "%data", d,-1)	
+				writeData,ight:= os.write(file, transmute([]u8)newData)	
+			}
 		}
 	}
 	else
@@ -482,7 +481,6 @@ OST_APPEND_DATA_TO_CLUSTER::proc(fn:string,cn:string,id:i64,dn:string,d:string)
 		//do stuff
 	}
 	
-	
-	//todo find the cluster
-	//todo append the data
+
+	//todo append the data almost done
 }
