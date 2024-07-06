@@ -1,13 +1,13 @@
 package data
-import "core:fmt"
+import "./metadata"
 import "../../utils/errors"
 import "../../utils/logging"
 import "../../utils/misc"
+import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:math/rand"
 import "core:strconv"
-
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
 //Desc: This file handles the creation and manipulation of
@@ -28,31 +28,12 @@ main:: proc() {
 	OST_CREATE_CACHE_FILE()
 	os.make_directory(OST_CLUSTER_PATH)
 	// OST_CHOOSE_DB()
+	// metadata.OST_APPEND_METADATA_TEMPLATE("../bin/secure/_secure_.ost")
+// metadata.OST_GET_FS("../bin/secure/_secure_.ost")
+// metadata.OST_SET_FFV()
+metadata.OST_UPDATE_METADATA("../bin/secure/_secure_.ost",metadata.OST_SET_TIME(),metadata.OST_GET_FS("../bin/secure/_secure_.ost"))
 
 }
-//todo this proc will change once engine is built
-// main::proc() {
-// 	buf:[256]byte
-// 	fmt.printfln("What would you like to name your DB file?: ")	
-// 	n, err := os.read(os.stdin, buf[:])
-// 	if err != 0 {
-// 		errors.throw_utilty_error(1, "Error reading input", "main")
-// 		logging.log_utils_error("Error reading input", "main")
-// 	}
-	
-// 	//if the number of bytes entered is greater than 0 then assign the entered bytes to a string
-// 	if n > 0 {
-//         enteredStr := string(buf[:n]) 
-// 				//trim the string of any whitespace or newline characters 
-
-// 				//Shoutout to the OdinLang Discord for helping me with this...
-//         enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
-//             return r == '\r' || r == '\n'
-//         })
-//         OST_CREATE_OST_FILE(enteredStr)
-//     }
-// }
-
 
 //creates a file in the bin directory used to store the all used cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
