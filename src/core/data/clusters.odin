@@ -472,7 +472,8 @@ OST_APPEND_DATA_TO_CLUSTER::proc(fn:string,cn:string,id:i64,dn:string,d:string)
 			}
 
 			//todo currently trying to figure out how to make sure data is appended safely within a cluster block
-				
+			//todo one possible solution is to rather than adding clusters to the same file, possibly create a new file for each cluster???
+			//not sure how this will affect memory usage. Basically a .ost file would no loger be considered a databse. a collection of .ost files within a directory would be a database				
 			
 			if(strings.contains(dataTemplate[i], "%data"))
 			{
