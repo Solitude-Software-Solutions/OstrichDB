@@ -9,6 +9,7 @@ import "core:math/rand"
 import "../../utils/errors"
 import "../../utils/logging"
 import "../../utils/misc"
+import "../data/metadata"
 import "../data"
 
 //=========================================================//
@@ -54,7 +55,7 @@ OST_USER :: struct {
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_USER_SETUP ::proc() -> int
 {
-
+    data.OST_CREATE_OST_FILE("_secure_",1)
     OST_GEN_USER_ID()
     ost_user.role=OST_User_Role.ADMIN
     fmt.printfln("Welcome to the Ostrich Database Engine")
@@ -252,7 +253,6 @@ OST_CONFIRM_PASSWORD:: proc(p:string) -> string
 // OST_STORE_USER_CREDS::proc(i:i64,u:string,r:int,s:string,hp:string) -> int 
 OST_STORE_USER_CREDS::proc() -> int 
 {
-  data.OST_CREATE_OST_FILE("_secure_")
   ID:=data.OST_GENERATE_CLUSTER_ID()
   file,e:= os.open("../bin/secure/_secure_.ost", os.O_APPEND | os.O_WRONLY, 0o666)
   if e != 0
@@ -262,8 +262,10 @@ OST_STORE_USER_CREDS::proc() -> int
   }
   defer os.close(file)
   // data.OST_CREATE_CLUSTER_BLOCK("../bin/secure/_secure_.ost", ID, "user_credentials") //todo uncomment this line after testing
-  data.OST_APPEND_DATA_TO_CLUSTER("../bin/secure/_secure_.ost","user_credentials", 3581445065921312, "test", "test data")
+  data.OST_APPEND_DATA_TO_CLUSTER("../bin/secure/_secure_.ost","user_credentials", 3581445065921312, "test", "this is a test") //todo remove this line after testing
 
+
+  os.close(file)
   return 0
 
   // todo: currently I am working on records. I need to finish basic set up of records  before I can store the user credentials since technically the user credentials are each a record...

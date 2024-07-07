@@ -1,13 +1,13 @@
 package data
-import "core:fmt"
+import "./metadata"
 import "../../utils/errors"
 import "../../utils/logging"
 import "../../utils/misc"
+import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:math/rand"
 import "core:strconv"
-
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
 //Desc: This file handles the creation and manipulation of
@@ -17,6 +17,7 @@ import "core:strconv"
 
 MAX_FILE_NAME_LENGTH_AS_BYTES :[512]byte
 OST_CLUSTER_PATH :: "../bin/clusters/"
+OST_SECURE_CLUSTER_PATH :: "../bin/secure/"
 OST_FILE_EXTENSION ::".ost"
 cluster: Cluster
 Cluster :: struct {
@@ -27,32 +28,10 @@ Cluster :: struct {
 main:: proc() {
 	OST_CREATE_CACHE_FILE()
 	os.make_directory(OST_CLUSTER_PATH)
+	// OST_CREATE_OST_FILE("test",0)
 	// OST_CHOOSE_DB()
 
 }
-//todo this proc will change once engine is built
-// main::proc() {
-// 	buf:[256]byte
-// 	fmt.printfln("What would you like to name your DB file?: ")	
-// 	n, err := os.read(os.stdin, buf[:])
-// 	if err != 0 {
-// 		errors.throw_utilty_error(1, "Error reading input", "main")
-// 		logging.log_utils_error("Error reading input", "main")
-// 	}
-	
-// 	//if the number of bytes entered is greater than 0 then assign the entered bytes to a string
-// 	if n > 0 {
-//         enteredStr := string(buf[:n]) 
-// 				//trim the string of any whitespace or newline characters 
-
-// 				//Shoutout to the OdinLang Discord for helping me with this...
-//         enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
-//             return r == '\r' || r == '\n'
-//         })
-//         OST_CREATE_OST_FILE(enteredStr)
-//     }
-// }
-
 
 //creates a file in the bin directory used to store the all used cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
@@ -67,51 +46,91 @@ OST_CREATE_CACHE_FILE :: proc() {
 
 
 /*
-Create a new empty Cluster file within the DB
+Creates a new Cluster file with metadata within the DB 
 Clusters are collections of records stored in a .ost file
 Params: fileName - the desired file(cluster) name
+				type - the type of file to create, 0 is standard, 1 is secure
 */
-OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
-		// concat the path and the file name into a string 
-  pathAndName:= strings.concatenate([]string{OST_CLUSTER_PATH, fileName })
-  pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
-	nameAsBytes:= transmute([]byte)fileName
-	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH_AS_BYTES)
-	{
-		fmt.printfln("Given file name is too long, Cannot exceed 512 bytes")
-		return 1
-	}
-	//CHECK#2: check if the file already exists
-	existenceCheck,exists := os.read_entire_file_from_filename(pathNameExtension)
-	if exists {
-		logging.log_utils_error(".ost file already exists", "OST_CREATE_OST_FILE")
-		return 1
-	}
-	//CHECK#3: check if the file name is valid
-	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+-="
-	for c:=0; c<len(fileName); c+=1
-	{
-		if strings.contains_any(fileName, invalidChars)
+OST_CREATE_OST_FILE :: proc(fileName:string, type:int) -> int {
+	// concat the path and the file name into a string depending on the type of file to create
+	pathAndName:string
+	switch(type)
 		{
-			fmt.printfln("Invalid character(s) found in file name: %s", fileName)
-			return 1
+		case 0: //standard cluster file
+			pathAndName:= strings.concatenate([]string{OST_CLUSTER_PATH, fileName })
+			if OST_PREFORM_CLUSTER_NAME_CHECK(fileName) == 1
+			{
+				return 1
+			}
+			pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
+			createFile, creationErr := os.open(pathNameExtension, os.O_CREATE, 0o666 )
+			metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
+			if creationErr != 0
+			{
+				errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
+				logging.log_utils_error("Error creating .ost file", "OST_CREATE_OST_FILE")
+				return 1
+			}
+			metadata.OST_METADATA_ON_CREATE(pathNameExtension)
+			defer os.close(createFile)
+			break 
+		case 1: //secure file
+			pathAndName:= strings.concatenate([]string{OST_SECURE_CLUSTER_PATH, fileName })
+			if OST_PREFORM_CLUSTER_NAME_CHECK(fileName) == 1
+			{
+				return 1
+			}
+  		pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
+			createFile, creationErr := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o666 )
+			metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
+			if creationErr != 0
+			{
+				errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
+				logging.log_utils_error("Error creating .ost file", "OST_CREATE_OST_FILE")
+				return 1
+			}
+			metadata.OST_METADATA_ON_CREATE(pathNameExtension)
+			defer os.close(createFile)
+
 		}
-	}
 	// If all checks pass then create the file with read/write permissions
 	//on Linux the permissions are octal. 0o666 is read/write
-	createFile, creationErr := os.open(pathNameExtension, os.O_CREATE, 0o666 )
-	if creationErr != 0{
-		errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
-		logging.log_utils_error("Error creating .ost file", "OST_CREATE_OST_FILE")
-		return 1
-	}
-	os.close(createFile)
+	
+	//append and set the metadata header for the file
+	
 
 	//generate a unique cluster id and create a new cluster block in the file
 	ID:=OST_GENERATE_CLUSTER_ID()
 	return 0
 }
 
+
+OST_PREFORM_CLUSTER_NAME_CHECK::proc(fn:string) ->int
+{
+	nameAsBytes:= transmute([]byte)fn
+	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH_AS_BYTES)
+	{
+		fmt.printfln("Given file name is too long, Cannot exceed 512 bytes")
+		return 1
+	}
+	//CHECK#2: check if the file already exists
+	existenceCheck,exists := os.read_entire_file_from_filename(fn)
+	if exists {
+		logging.log_utils_error(".ost file already exists", "OST_CREATE_OST_FILE")
+		return 1
+	}
+	//CHECK#3: check if the file name is valid
+	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+-="
+	for c:=0; c<len(fn); c+=1
+	{
+		if strings.contains_any(fn, invalidChars)
+		{
+			fmt.printfln("Invalid character(s) found in file name: %s", fn)
+			return 1
+		}
+	}
+	return 0
+}
 /*
 Generates the unique cluster id for a new cluster
 then returns it to the caller, relies on OST_ADD_ID_TO_CACHE_FILE() to store the retuned id in a file

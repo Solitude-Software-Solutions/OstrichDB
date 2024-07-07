@@ -110,7 +110,7 @@ log_runtime_event :: proc(eventName:string, eventDesc: string)
   }
 
   
-  Date:= strings.concatenate([]string{Month, " ", Day, ", ", Year, "\n"})
+  Date:= strings.concatenate([]string{Day, "/", Month, "/", Year, "\n"})
   paramsAsMessage:= strings.concatenate([]string{"Event: ",eventName,"\n","Desc: ", eventDesc, "\n"})
   fullLogMessage:= strings.concatenate([]string{paramsAsMessage,"Logged @:", Date})
   fullPath:= strings.concatenate([]string{LOG_DIR_PATH, RUNTIME_LOG})
@@ -200,7 +200,7 @@ log_utils_error:: proc(message:string,location:string) ->int
   }
 
   
-  Date:= strings.concatenate([]string{Month, " ", Day, ", ", Year, "\n"})
+  Date:= strings.concatenate([]string{Day, "/", Month, "/", Year, "\n"})
   paramsAsMessage:= strings.concatenate([]string{"UTILS Error: ",message,"\n","Location: ", location, "\n"})
   fullLogMessage:= strings.concatenate([]string{paramsAsMessage,"Logged @:", Date})
   fullPath:= strings.concatenate([]string{LOG_DIR_PATH, ERROR_LOG})
