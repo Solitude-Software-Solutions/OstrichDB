@@ -10,7 +10,6 @@ import "core:math/rand"
 import "core:strconv"
 import "core:time"
 import "core:crypto/hash"
-import "core:c/libc"
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
 //Desc: This file handles the metadata for .ost files within
@@ -19,7 +18,7 @@ import "core:c/libc"
 
 
 @(private="file")
-METADATA_TEMPLATE:[]string= {
+METADATA_HEADER:[]string= {
   "[Ostrich File Header Start]\n\n","#File Format Version: %ffv\n","#Time of Creation: %ftoc\n","#Last Time Modified: %fltm\n","#File Size: %fs Bytes\n","#Checksum: %cs\n\n[Ostrich File Header End]\n\n\n\n"
 }
 
@@ -104,65 +103,26 @@ OST_GET_SCHEMA_INFO ::proc (fn:string,rn:string, d:string)
 
 
 //!Only used when to append the meta template upon .ost file creation NOT modification
-OST_APPEND_METADATA_TEMPLATE:: proc(fn:string) -> bool
+//this appends the metadata header to the file as well as sets the time of creation
+OST_APPEND_METADATA_HEADER:: proc(fn:string) -> bool
 {
 
   file,e:=os.open(fn,os.O_APPEND | os.O_WRONLY, 0o666)
   defer os.close(file)
 
   if e != 0{
-    errors.throw_utilty_error(1,"Error opening file" ,"OST_APPEND_METADATA_TEMPLATE")
+    errors.throw_utilty_error(1,"Error opening file" ,"OST_APPEND_METADATA_HEADER")
   }
 
-  blockAsBytes:= transmute([]u8)strings.concatenate(METADATA_TEMPLATE)
- 
+  blockAsBytes:= transmute([]u8)strings.concatenate(METADATA_HEADER)
+  
   writter,ok:=os.write(file, blockAsBytes)
   return true
 } 
 
 
-
-// //does not work yet
-// //only updates data that changes, not the entire metadata block
-// OST_UPDATE_METADATA:: proc(fn:string,fltm:string,fs:i64) -> int
-// {
-//   buf:[256]byte
-//   file,e:=os.open(fn,os.O_APPEND | os.O_WRONLY, 0o666)
-//   defer os.close(file)
-//   if e != 0{
-//     errors.throw_utilty_error(1,"Error opening file" ,"OST_UPDATE_METADATA")
-//   }
-
-  
-//   rawData,ok:= os.read_entire_file(fn)
-//   dataToStr:= cast(string)rawData
-  
-//   if strings.contains(dataToStr, "#Last Time Modified: %fltm")
-//   {
-//     fmt.println("Found the last time modified")
-//     newFLTM,alright:= strings.replace_all(dataToStr, "%fltm",fltm)
-//     writeFLTM,ight:= os.write(file, transmute([]u8)newFLTM)
-//   }
-  
-  
-//   // f:=strings.concatenate(METADATA_TEMPLATE)
-// 	// for i:=0; i<len(METADATA_TEMPLATE); i+=1
-// 	// {
-// 	// 	if(strings.contains(f, "#Last Time Modified: %fltm"))
-//   //   {
-//   //     //step#1: replace the %fltm with the new last time modified
-//   //     newFLTM,alright:= strings.replace_all(METADATA_TEMPLATE[i], "%fltm",fltm)
-//   //     writeFLTM,ight:= os.write(file, transmute([]u8)newFLTM)
-// 	//   }
-//   // }
-// return 1
-// }
-
-
-
-//fn = file name, , mdn = metadata name, mdv = metadata value
-// OST_UPDATE_METADATA ::proc(fn:string, mdn:string, mdv:string)
-OST_UPDATE_METADATA ::proc(fn:string)
+//fn = file name, param = distiguish between which metadata value to set 1 = time of creation, 2 = last time modified, 3 = file size, 4 = file format version, 5 = checksum 
+OST_UPDATE_METADATA_VALUE ::proc(fn:string,param:int)
 {
     data, success := os.read_entire_file(fn)
     if !success {
@@ -179,13 +139,28 @@ OST_UPDATE_METADATA ::proc(fn:string)
     
     new_content := strings.clone(content)
     ok:bool
-    // new_content,ok = strings.replace(new_content, "#Time of Creation: %ftoc", fmt.tprintf("#Time of Creation: %s", current_time), -1) //todo will only need to add this on file creation, so need to move it 
-    new_content,ok = strings.replace(new_content, "#Last Time Modified: %fltm", fmt.tprintf("#Last Time Modified: %v", current_time), -1)
-    new_content,ok = strings.replace(new_content, "#File Size: %fs Bytes", fmt.tprintf("#File Size: %d Bytes", file_size), -1)
-    
-    // Note: Updating the checksum would require implementing a checksum algorithm
-    // new_content = strings.replace(new_content, "#Checksum: %cs", fmt.tprintf("#Checksum: %s", calculate_checksum(new_content)))
-    
-    err := os.write_entire_file(fn, transmute([]byte)new_content)
-}
 
+    switch(param)
+    {
+      case 1: //set time of creation
+        new_content,ok = strings.replace(new_content, "#Time of Creation: %ftoc", fmt.tprintf("#Time of Creation: %s", current_time), -1)
+        err := os.write_entire_file(fn, transmute([]byte)new_content)
+        break
+      case 2: //set last time modified
+        new_content,ok = strings.replace(new_content, "#Last Time Modified: %fltm", fmt.tprintf("#Last Time Modified: %s", current_time), -1)
+        err := os.write_entire_file(fn, transmute([]byte)new_content)
+        break
+      case 3: //set file size
+        new_content,ok = strings.replace(new_content, "#File Size: %fs Bytes", fmt.tprintf("#File Size: %d Bytes", file_size), -1)
+        err := os.write_entire_file(fn, transmute([]byte)new_content)
+        break
+      case 4: //set file format version
+        new_content,ok = strings.replace(new_content, "#File Format Version: %ffv", fmt.tprintf("#File Format Version: %s", OST_SET_FFV()), -1)
+        err := os.write_entire_file(fn, transmute([]byte)new_content)
+        break
+      case 5: //set checksum
+        new_content,ok = strings.replace(new_content, "#Checksum: %cs", fmt.tprintf("#Checksum: %s", OST_GENERATE_CHECKSUM()), -1)
+        err := os.write_entire_file(fn, transmute([]byte)new_content)
+        break
+    }
+}

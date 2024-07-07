@@ -27,11 +27,8 @@ Cluster :: struct {
 main:: proc() {
 	OST_CREATE_CACHE_FILE()
 	os.make_directory(OST_CLUSTER_PATH)
+	OST_CREATE_OST_FILE("test")
 	// OST_CHOOSE_DB()
-	// metadata.OST_APPEND_METADATA_TEMPLATE("../bin/secure/_secure_.ost")
-// metadata.OST_GET_FS("../bin/secure/_secure_.ost")
-// metadata.OST_SET_FFV()
-metadata.OST_UPDATE_METADATA("../bin/secure/_secure_.ost")
 
 }
 
@@ -86,6 +83,12 @@ OST_CREATE_OST_FILE :: proc(fileName:string) -> int {
 		logging.log_utils_error("Error creating .ost file", "OST_CREATE_OST_FILE")
 		return 1
 	}
+	//append and set the metadata header for the file
+	metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
+	metadata.OST_UPDATE_METADATA_VALUE(pathNameExtension,1) //setting the time of creation
+	metadata.OST_UPDATE_METADATA_VALUE(pathNameExtension,3) //setting the file size
+	metadata.OST_UPDATE_METADATA_VALUE(pathNameExtension,4) //setting the file format version
+	
 	os.close(createFile)
 
 	//generate a unique cluster id and create a new cluster block in the file
