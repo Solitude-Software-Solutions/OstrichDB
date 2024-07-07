@@ -164,3 +164,13 @@ OST_UPDATE_METADATA_VALUE ::proc(fn:string,param:int)
         break
     }
 }
+
+OST_METADATA_ON_CREATE :: proc(fn:string)
+{
+  fmt.println("Creating metadata for file: ", fn)
+  OST_APPEND_METADATA_HEADER(fn)
+  OST_UPDATE_METADATA_VALUE(fn, 1)
+  OST_UPDATE_METADATA_VALUE(fn, 3)
+  OST_UPDATE_METADATA_VALUE(fn, 4)
+  OST_UPDATE_METADATA_VALUE(fn, 5)
+}
