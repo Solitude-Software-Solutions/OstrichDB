@@ -31,7 +31,7 @@ main:: proc() {
 	// metadata.OST_APPEND_METADATA_TEMPLATE("../bin/secure/_secure_.ost")
 // metadata.OST_GET_FS("../bin/secure/_secure_.ost")
 // metadata.OST_SET_FFV()
-metadata.OST_UPDATE_METADATA("../bin/secure/_secure_.ost",metadata.OST_SET_TIME(),metadata.OST_GET_FS("../bin/secure/_secure_.ost"))
+metadata.OST_UPDATE_METADATA("../bin/secure/_secure_.ost")
 
 }
 

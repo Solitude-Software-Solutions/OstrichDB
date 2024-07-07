@@ -10,7 +10,7 @@ import "core:math/rand"
 import "core:strconv"
 import "core:time"
 import "core:crypto/hash"
-
+import "core:c/libc"
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
 //Desc: This file handles the metadata for .ost files within
@@ -50,9 +50,9 @@ OST_SET_FFV :: proc() -> string {
 
 //sets the files size(FS)
 //this will be called when a file is read or modified through the engine to ensure the file size is accurate
-OST_GET_FS :: proc(file: string) -> i64 {
+OST_GET_FS :: proc(file: string) -> os.File_Info{
   //get the file size
-  fileSize:=os.file_size_from_path(file)
+  fileSize,_:=os.stat(file)
   return fileSize
 }
 
@@ -122,38 +122,70 @@ OST_APPEND_METADATA_TEMPLATE:: proc(fn:string) -> bool
 
 
 
-//does not work yet
-//only updates data that changes, not the entire metadata block
-OST_UPDATE_METADATA:: proc(fn:string,fltm:string,fs:i64) -> int
-{
-  buf:[256]byte
-  file,e:=os.open(fn,os.O_APPEND | os.O_WRONLY, 0o666)
-  defer os.close(file)
-  if e != 0{
-    errors.throw_utilty_error(1,"Error opening file" ,"OST_UPDATE_METADATA")
-  }
+// //does not work yet
+// //only updates data that changes, not the entire metadata block
+// OST_UPDATE_METADATA:: proc(fn:string,fltm:string,fs:i64) -> int
+// {
+//   buf:[256]byte
+//   file,e:=os.open(fn,os.O_APPEND | os.O_WRONLY, 0o666)
+//   defer os.close(file)
+//   if e != 0{
+//     errors.throw_utilty_error(1,"Error opening file" ,"OST_UPDATE_METADATA")
+//   }
 
   
-  rawData,ok:= os.read_entire_file(fn)
-  dataToStr:= cast(string)rawData
+//   rawData,ok:= os.read_entire_file(fn)
+//   dataToStr:= cast(string)rawData
   
-  if strings.contains(dataToStr, "#Last Time Modified: %fltm")
-  {
-    fmt.println("Found the last time modified")
-    newFLTM,alright:= strings.replace_all(dataToStr, "%fltm",fltm)
-    writeFLTM,ight:= os.write(file, transmute([]u8)newFLTM)
-  }
+//   if strings.contains(dataToStr, "#Last Time Modified: %fltm")
+//   {
+//     fmt.println("Found the last time modified")
+//     newFLTM,alright:= strings.replace_all(dataToStr, "%fltm",fltm)
+//     writeFLTM,ight:= os.write(file, transmute([]u8)newFLTM)
+//   }
   
   
-  // f:=strings.concatenate(METADATA_TEMPLATE)
-	// for i:=0; i<len(METADATA_TEMPLATE); i+=1
-	// {
-	// 	if(strings.contains(f, "#Last Time Modified: %fltm"))
-  //   {
-  //     //step#1: replace the %fltm with the new last time modified
-  //     newFLTM,alright:= strings.replace_all(METADATA_TEMPLATE[i], "%fltm",fltm)
-  //     writeFLTM,ight:= os.write(file, transmute([]u8)newFLTM)
-	//   }
-  // }
-return 1
+//   // f:=strings.concatenate(METADATA_TEMPLATE)
+// 	// for i:=0; i<len(METADATA_TEMPLATE); i+=1
+// 	// {
+// 	// 	if(strings.contains(f, "#Last Time Modified: %fltm"))
+//   //   {
+//   //     //step#1: replace the %fltm with the new last time modified
+//   //     newFLTM,alright:= strings.replace_all(METADATA_TEMPLATE[i], "%fltm",fltm)
+//   //     writeFLTM,ight:= os.write(file, transmute([]u8)newFLTM)
+// 	//   }
+//   // }
+// return 1
+// }
+
+
+
+//fn = file name, , mdn = metadata name, mdv = metadata value
+// OST_UPDATE_METADATA ::proc(fn:string, mdn:string, mdv:string)
+OST_UPDATE_METADATA ::proc(fn:string)
+{
+    data, success := os.read_entire_file(fn)
+    if !success {
+        fmt.println("Failed to read file")
+        return
+    }
+    
+    content := string(data)
+    
+    // Update the header values
+    current_time := OST_SET_TIME()
+    file_info := OST_GET_FS(fn)
+    file_size := file_info.size
+    
+    new_content := strings.clone(content)
+    ok:bool
+    // new_content,ok = strings.replace(new_content, "#Time of Creation: %ftoc", fmt.tprintf("#Time of Creation: %s", current_time), -1) //todo will only need to add this on file creation, so need to move it 
+    new_content,ok = strings.replace(new_content, "#Last Time Modified: %fltm", fmt.tprintf("#Last Time Modified: %v", current_time), -1)
+    new_content,ok = strings.replace(new_content, "#File Size: %fs Bytes", fmt.tprintf("#File Size: %d Bytes", file_size), -1)
+    
+    // Note: Updating the checksum would require implementing a checksum algorithm
+    // new_content = strings.replace(new_content, "#Checksum: %cs", fmt.tprintf("#Checksum: %s", calculate_checksum(new_content)))
+    
+    err := os.write_entire_file(fn, transmute([]byte)new_content)
 }
+
