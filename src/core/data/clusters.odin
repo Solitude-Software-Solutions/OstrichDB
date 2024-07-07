@@ -425,19 +425,15 @@ OST_CHOOSE_CLUSTER_NAME :: proc(fn:string)
 OST_CHECK_IF_CLUSTER_EXISTS:: proc(fn:string, cn:string) -> bool
 {
 	clusterFound:bool
-  pathAndFileName:= strings.concatenate([]string{OST_CLUSTER_PATH, fn })
-  fullPath:= strings.concatenate([]string{pathAndFileName, OST_FILE_EXTENSION})
-	file,e:= os.open(fullPath, os.O_RDONLY, 0o666)
-
-	if (e != 0)
-	{
-		errors.throw_utilty_error(1, "Error opening cluster file", "OST_FIND_CLUSTER")
-		logging.log_utils_error("Error opening cluster file", "OST_FIND_CLUSTER")
-		
+	data, success :=os.read_entire_file(fn)
+	if !success {
+		fmt.println("Failed to read file:", fn)
+		return false
 	}
+	defer delete(data)
 
-	os.read_entire_file(file)
-	if strings.contains(cn, fn)
+	content := string(data)
+	if strings.contains(content, cn)
 	{
 		clusterFound= true
 	}
@@ -454,59 +450,29 @@ OST_CHECK_IF_CLUSTER_EXISTS:: proc(fn:string, cn:string) -> bool
 OST_APPEND_DATA_TO_CLUSTER::proc(fn:string,cn:string,id:i64,dn:string,d:string)
 {
 	//If I didnt break the original slice into two like I do here,strings.replace() will not work as intended...maybe a better way???
-	dataNameTemplate:[]string={"\t%dataName : "}
-	dataTemplate:[]string = {"%data\n"}
-	
-	buf:[64]byte
-	//need to open a cluster file
-	// read over the file
-	//find the cluster with the passed in cluster name/id
-	//append the data name and the data with a newline character into the cluster
-	file,e:= os.open(fn, os.O_RDONLY, 0o666)
-	if (e != 0)
-	{
-		errors.throw_utilty_error(1, "Error opening cluster file", "OST_APPEND_DATA_TO_CLUSTER")
-		logging.log_utils_error("Error opening cluster file", "OST_APPEND_DATA_TO_CLUSTER")
-		
-	}
-	//convert the id to a string
-	idStr:= strconv.append_int(buf[:], id, 10)
-	fmt.printfln("ID as string: %s", idStr)
-	rawData ,ok:= os.read_entire_file(file)
-	dataAsStr:= cast(string)rawData
-	
-	if strings.contains(dataAsStr, idStr) && strings.contains(dataAsStr, cn)
-	{
-		fmt.printfln("Cluster with name: %s and ID: %i found", cn, id)
-	
-		os.close(file) //need to close the file before reopening it in append mode
-		os.open(fn, os.O_APPEND | os.O_WRONLY, 0o666)
+	fmt.printfln("Appending data to cluster: %s", cn)
+	fmt.printfln("Data: %s", d)
+	fmt.printfln("Data Name: %s", dn)
+	fmt.printfln("Cluster ID: %i", id)
+	fmt.printfln("File Name: %s", fn)
+	data, success := os.read_entire_file(fn)
+    if !success {
+        fmt.println("Failed to read file:", fn)
+        return
+    }
+    defer delete(data)
 
-		for i:=0; i<len(dataNameTemplate); i+=1
-		{
-			if(strings.contains(dataNameTemplate[i], "%dataName")) 
-			{
-				newDataName,alright:= strings.replace(dataNameTemplate[i], "%dataName", dn,-1)	
-				writeDataName,ight:= os.write(file, transmute([]u8)newDataName)
-			}
-
-			//todo currently trying to figure out how to make sure data is appended safely within a cluster block
-			//todo one possible solution is to rather than adding clusters to the same file, possibly create a new file for each cluster???
-			//not sure how this will affect memory usage. Basically a .ost file would no loger be considered a databse. a collection of .ost files within a directory would be a database				
-			
-			if(strings.contains(dataTemplate[i], "%data"))
-			{
-				newData,alright:= strings.replace(dataTemplate[i], "%data", d,-1)	
-				writeData,ight:= os.write(file, transmute([]u8)newData)	
-			}
-		}
-	}
-	else
-	{
-		fmt.printfln("Cluster with name: %s and ID: %i NOT found", cn, id)
-		//do stuff
-	}
-	
-
+    content := string(data)
+    lines := strings.split(content, "\n")
+    defer delete(lines)
+    updated := false
+    for line, i in lines{ 
+            if strings.has_prefix(line, "test : ")
+							{
+                lines[i] = fmt.tprintf("%s%s", dn, d)
+                updated = true
+            	}
+						}
+					
 	//todo append the data almost done
 }

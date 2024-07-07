@@ -253,16 +253,29 @@ OST_CONFIRM_PASSWORD:: proc(p:string) -> string
 // OST_STORE_USER_CREDS::proc(i:i64,u:string,r:int,s:string,hp:string) -> int 
 OST_STORE_USER_CREDS::proc() -> int 
 {
+  secureFilePath:= "../bin/secure/_secure_.ost"
+  credClusterName:= "user_credentials"
+
   ID:=data.OST_GENERATE_CLUSTER_ID()
-  file,e:= os.open("../bin/secure/_secure_.ost", os.O_APPEND | os.O_WRONLY, 0o666)
+  file,e:= os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
   if e != 0
   {
     errors.throw_utilty_error(1, "Error opening user credentials file", "OST_STORE_USER_CREDS")
     logging.log_utils_error("Error opening user credentials file", "OST_STORE_USER_CREDS")
   }
   defer os.close(file)
-  // data.OST_CREATE_CLUSTER_BLOCK("../bin/secure/_secure_.ost", ID, "user_credentials") //todo uncomment this line after testing
-  data.OST_APPEND_DATA_TO_CLUSTER("../bin/secure/_secure_.ost","user_credentials", 3581445065921312, "test", "this is a test") //todo remove this line after testing
+  
+  if data.OST_CHECK_IF_CLUSTER_EXISTS(secureFilePath, credClusterName) == true
+  {
+    fmt.printfln("Cluster with name:%s%s%s already exists in database:%s%s%s",misc.BOLD,credClusterName,misc.RESET,misc.BOLD,secureFilePath,misc.RESET)
+    return 1
+  }
+  else
+  {
+    fmt.printfln("Cluster does not exist")
+    data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, ID, credClusterName) //todo uncomment this line after testing
+    data.OST_APPEND_DATA_TO_CLUSTER("../bin/secure/_secure_.ost","user_credentials", 3581445065921312, "test", "this is a test") //todo remove this line after testing
+  } 
 
 
   os.close(file)
