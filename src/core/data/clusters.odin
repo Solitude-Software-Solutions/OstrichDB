@@ -56,15 +56,15 @@ OST_CREATE_OST_FILE :: proc(fileName:string, type:int) -> int {
 	pathAndName:string
 	switch(type)
 		{
-		case 0:
+		case 0: //standard cluster file
 			pathAndName:= strings.concatenate([]string{OST_CLUSTER_PATH, fileName })
-			fmt.printfln("Path and name: %s", pathAndName)
 			if OST_PREFORM_CLUSTER_NAME_CHECK(fileName) == 1
 			{
 				return 1
 			}
 			pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
 			createFile, creationErr := os.open(pathNameExtension, os.O_CREATE, 0o666 )
+			metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
 			if creationErr != 0
 			{
 				errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
@@ -73,16 +73,16 @@ OST_CREATE_OST_FILE :: proc(fileName:string, type:int) -> int {
 			}
 			metadata.OST_METADATA_ON_CREATE(pathNameExtension)
 			defer os.close(createFile)
-			break
-		case 1:
+			break 
+		case 1: //secure file
 			pathAndName:= strings.concatenate([]string{OST_SECURE_CLUSTER_PATH, fileName })
-			fmt.printfln("Path and name: %s", pathAndName)
 			if OST_PREFORM_CLUSTER_NAME_CHECK(fileName) == 1
 			{
 				return 1
 			}
   		pathNameExtension:= strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
 			createFile, creationErr := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o666 )
+			metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
 			if creationErr != 0
 			{
 				errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
