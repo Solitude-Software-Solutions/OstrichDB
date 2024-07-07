@@ -447,15 +447,8 @@ OST_CHECK_IF_CLUSTER_EXISTS:: proc(fn:string, cn:string) -> bool
 
 //.appends the passed in data to the passed in cluster
 //fn-filename, cn-clustername,id-cluster id, dn-dataname, d-data
-OST_APPEND_DATA_TO_CLUSTER::proc(fn:string,cn:string,id:i64,dn:string,d:string)
-{
-	//If I didnt break the original slice into two like I do here,strings.replace() will not work as intended...maybe a better way???
-	fmt.printfln("Appending data to cluster: %s", cn)
-	fmt.printfln("Data: %s", d)
-	fmt.printfln("Data Name: %s", dn)
-	fmt.printfln("Cluster ID: %i", id)
-	fmt.printfln("File Name: %s", fn)
-	data, success := os.read_entire_file(fn)
+OST_APPEND_DATA_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, dn: string, d: string) {
+    data, success := os.read_entire_file(fn)
     if !success {
         fmt.println("Failed to read file:", fn)
         return
@@ -465,14 +458,43 @@ OST_APPEND_DATA_TO_CLUSTER::proc(fn:string,cn:string,id:i64,dn:string,d:string)
     content := string(data)
     lines := strings.split(content, "\n")
     defer delete(lines)
-    updated := false
-    for line, i in lines{ 
-            if strings.has_prefix(line, "test : ")
-							{
-                lines[i] = fmt.tprintf("%s%s", dn, d)
-                updated = true
-            	}
-						}
-					
-	//todo append the data almost done
+
+    cluster_start := -1
+    closing_brace := -1
+
+    // Find the cluster and its closing brace
+    for i := 0; i < len(lines); i += 1 {
+        if strings.contains(lines[i], cn) {
+            cluster_start = i
+        }
+        if cluster_start != -1 && strings.contains(lines[i], "}") {
+            closing_brace = i
+            break
+        }
+    }
+
+    if cluster_start == -1 || closing_brace == -1 {
+        fmt.println("Cluster not found or invalid structure")
+        return
+    }
+
+    // Create the new line
+    new_line := fmt.tprintf("\t%s : %s,", dn, d)
+
+    // Insert the new line and adjust the closing brace
+    new_lines := make([dynamic]string, len(lines) + 1)
+    copy(new_lines[:closing_brace], lines[:closing_brace])
+    new_lines[closing_brace] = new_line
+    new_lines[closing_brace + 1] = "}"
+    if closing_brace + 1 < len(lines) {
+        copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
+    }
+
+    new_content := strings.join(new_lines[:], "\n")
+    err := os.write_entire_file(fn, transmute([]byte)new_content)
+    if err != true {
+        fmt.println("Failed to write file:", fn, "Error:", err)
+    } else {
+        fmt.println("Successfully updated file")
+    }
 }

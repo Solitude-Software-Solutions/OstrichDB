@@ -65,14 +65,14 @@ OST_INIT_USER_SETUP ::proc() -> int
     inituserName:=OST_GET_USERNAME()
     fmt.printfln("Please enter a password for the admin account")
     initpassword:=OST_GET_PASSWORD()
-    fmt.printfln("User ID: %d", ost_user.user_id)
-    fmt.printfln("Username: %s", ost_user.username.Value) //!remove this line after testing
-    fmt.printfln("Password: %s", ost_user.password.Value) //!remove this line after testing
-
-    fmt.printfln("Hashed Password: %s", ost_user.hashedPassword) //!remove this line after testing
-    fmt.printfln("Salt: %s", ost_user.salt)
-    fmt.printfln("Algo Method: %d", ost_user.algo_method) //!remove this line after testing
-    OST_STORE_USER_CREDS()
+    saltAsString:=string(ost_user.salt)
+    hashAsString:=string(ost_user.hashedPassword)
+    
+    OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "role", "admin") 
+    OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "user_name",ost_user.username.Value)
+    OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "salt",saltAsString)
+    OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash",hashAsString)
+    // OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "algo_method", "1") //todo need get which algo was used to hash the password 
   
     
 
@@ -251,7 +251,7 @@ OST_CONFIRM_PASSWORD:: proc(p:string) -> string
 
 // i- user id, u- username, r- role, s- salt, hp- hashed password
 // OST_STORE_USER_CREDS::proc(i:i64,u:string,r:int,s:string,hp:string) -> int 
-OST_STORE_USER_CREDS::proc() -> int 
+OST_STORE_USER_CREDS::proc(cn:string, id:i64, dn:string,d:string) -> int 
 {
   secureFilePath:= "../bin/secure/_secure_.ost"
   credClusterName:= "user_credentials"
@@ -267,18 +267,14 @@ OST_STORE_USER_CREDS::proc() -> int
   
   if data.OST_CHECK_IF_CLUSTER_EXISTS(secureFilePath, credClusterName) == true
   {
-    fmt.printfln("Cluster with name:%s%s%s already exists in database:%s%s%s",misc.BOLD,credClusterName,misc.RESET,misc.BOLD,secureFilePath,misc.RESET)
+    data.OST_APPEND_DATA_TO_CLUSTER(secureFilePath,credClusterName, ID, dn, d)
     return 1
   }
   else
   {
-    fmt.printfln("Cluster does not exist")
-    data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, ID, credClusterName) //todo uncomment this line after testing
-    data.OST_APPEND_DATA_TO_CLUSTER("../bin/secure/_secure_.ost","user_credentials", 3581445065921312, "test", "this is a test") //todo remove this line after testing
+    data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, ID, credClusterName)
+    data.OST_APPEND_DATA_TO_CLUSTER(secureFilePath,credClusterName, ID, dn, d)
   } 
-
-
-  os.close(file)
   return 0
 
   // todo: currently I am working on records. I need to finish basic set up of records  before I can store the user credentials since technically the user credentials are each a record...
