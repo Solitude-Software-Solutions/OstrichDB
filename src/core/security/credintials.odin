@@ -42,7 +42,7 @@ OST_USER :: struct {
   //below this line is for encryption purposes
   salt: []u8,
   hashedPassword: []u8, //this is the hashed password without the salt 
-  algo_method:int //todo might not use. if I do, a single int will represent the hashing algorithm used...also could make this an enum
+  store_method:int
 }
 
 
@@ -54,7 +54,7 @@ OST_USER :: struct {
 
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_USER_SETUP ::proc() -> int
-{
+{  buf:[256]byte
     data.OST_CREATE_OST_FILE("_secure_",1)
     OST_GEN_USER_ID()
     ost_user.role=OST_User_Role.ADMIN
@@ -67,15 +67,12 @@ OST_INIT_USER_SETUP ::proc() -> int
     initpassword:=OST_GET_PASSWORD()
     saltAsString:=string(ost_user.salt)
     hashAsString:=string(ost_user.hashedPassword)
-    
+    algoMethodAsString:=strconv.itoa(buf[:],ost_user.store_method)
     OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "role", "admin") 
     OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "user_name",ost_user.username.Value)
     OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "salt",saltAsString)
     OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash",hashAsString)
-    // OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "algo_method", "1") //todo need get which algo was used to hash the password 
-  
-    
-
+    OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "store_method", algoMethodAsString )
   return 0
 }
 
@@ -192,7 +189,6 @@ OST_GET_PASSWORD :: proc() -> string
             return r == '\r' || r == '\n'
         })
         ost_user.password.Value = enteredStr
-        //todo implement a check to see if the password is strong enough
       } 
       
       strongPassword:= OST_CHECK_PASSWORD_STRENGTH(enteredStr)
@@ -267,21 +263,20 @@ OST_STORE_USER_CREDS::proc(cn:string, id:i64, dn:string,d:string) -> int
   
   if data.OST_CHECK_IF_CLUSTER_EXISTS(secureFilePath, credClusterName) == true
   {
-    data.OST_APPEND_DATA_TO_CLUSTER(secureFilePath,credClusterName, ID, dn, d)
+    data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath,credClusterName, ID, dn, d)
     return 1
   }
   else
   {
     data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, ID, credClusterName)
-    data.OST_APPEND_DATA_TO_CLUSTER(secureFilePath,credClusterName, ID, dn, d)
+    data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath,credClusterName, ID, dn, d)
   } 
+  
   return 0
-
-  // todo: currently I am working on records. I need to finish basic set up of records  before I can store the user credentials since technically the user credentials are each a record...
-
 }
 
 // checks if the passed in password is strong enough returns true or false.
+//todo need to rework this proc. Its not working as intended
 OST_CHECK_PASSWORD_STRENGTH::proc(p:string) -> bool
 {
   specialChars:[]string={"!","@","#","$","%","^","&","*"}

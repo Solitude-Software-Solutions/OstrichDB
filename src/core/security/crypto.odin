@@ -64,6 +64,7 @@ OST_HASH_PASSWORD :: proc (p:string, action:int) -> []u8
   //generate the salt
   salt:[]u8= OST_GENERATE_SALT()
   
+  
   ost_user.salt=salt //store the salt into the user struct
   
   pWithoutSalt:=p //store the password without the salt
@@ -84,7 +85,7 @@ OST_HASH_PASSWORD :: proc (p:string, action:int) -> []u8
         hashPWithoutSalt=hash.hash_string(hash.Algorithm.SHA3_224,pWithoutSalt) 
       }
       ost_user.hashedPassword=hashPWithoutSalt
-      ost_user.algo_method=1
+      ost_user.store_method=1
       break
     case 2,6:
       for i:=0; i<1; i+=1
@@ -93,7 +94,7 @@ OST_HASH_PASSWORD :: proc (p:string, action:int) -> []u8
         hashPWithoutSalt=hash.hash_string(hash.Algorithm.SHA3_224,pWithoutSalt)
       }
       ost_user.hashedPassword=hashPWithoutSalt
-      ost_user.algo_method= 2
+      ost_user.store_method= 2
       break
     case 3,7:
       for i:=0; i<1; i+=1
@@ -102,7 +103,7 @@ OST_HASH_PASSWORD :: proc (p:string, action:int) -> []u8
         hashPWithoutSalt=hash.hash_string(hash.Algorithm.SHA3_224,pWithoutSalt)
       }
       ost_user.hashedPassword=hashPWithoutSalt
-      ost_user.algo_method= 3
+      ost_user.store_method= 3
       break
     case 4,9:
       for i:=0; i<1; i+=1
@@ -111,7 +112,7 @@ OST_HASH_PASSWORD :: proc (p:string, action:int) -> []u8
         hashPWithoutSalt=hash.hash_string(hash.Algorithm.SHA3_224,pWithoutSalt)
       }
       ost_user.hashedPassword=hashPWithoutSalt
-      ost_user.algo_method= 4
+      ost_user.store_method= 4
       break
     case 0,8:
       for i:=0; i<1; i+=1
@@ -120,7 +121,7 @@ OST_HASH_PASSWORD :: proc (p:string, action:int) -> []u8
         hashPWithoutSalt=hash.hash_string(hash.Algorithm.SHA3_224,pWithoutSalt)
       }
       ost_user.hashedPassword=hashPWithoutSalt
-      ost_user.algo_method= 5
+      ost_user.store_method= 5
       break
   } 
   //the action is dependent on which hash is needed
