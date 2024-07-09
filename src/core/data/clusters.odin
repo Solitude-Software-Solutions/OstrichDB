@@ -380,12 +380,7 @@ OST_CHECK_IF_DB_EXISTS::proc(fn:string, type:int) -> bool
 		{
 			dbExists = true
 		}
-		else
-		{
-			dbExists =false
-		}
   }
-
 	return dbExists
 }
 
