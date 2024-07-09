@@ -82,7 +82,7 @@ Ost_Engine :: struct {
 
 main:: proc()
 {
-	configFound:=config.OST_CHECK_IF_CONFIG_EXISTS()
+	configFound:=config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
 	switch(configFound)
 	{
 		case true:
@@ -90,7 +90,7 @@ main:: proc()
 			break
 		case false:
 			fmt.println("Config file not found.\n Generating config file")
-			config.OST_CREATE_OST_CONFIG()
+			config.OST_CREATE_CONFIG_FILE()
 			break
 	}
 
