@@ -30,8 +30,11 @@ main ::proc()
 		OST_CREATE_CONFIG_FILE()
 	}
 
-	if( OST_FIND_CONFIG("ENGINE_INIT") == false)
+	if( OST_FIND_CONFIG("ENGINE_INIT") == false) && (OST_FIND_CONFIG("ENGINE_LOGGING") == false)
 	{
+		OST_APPEND_CONFIG_NAME("ENGINE_INIT")
+		OST_APPEND_CONFIG_NAME("ENGINE_LOGGING")
+		
 //todo currently working on assigning the value read from ostrich.config file to the engine.ost_engine.Initialized variable.
 	}
 
@@ -54,7 +57,6 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS ::proc() -> bool
 			configExists = true
 		}
   }
-	fmt.println(configExists)
 	return configExists
 }
 
@@ -123,3 +125,6 @@ OST_APPEND_CONFIG_NAME::proc(c:string) -> int
 		writter,ee:= os.write(file, str)
 	return 0
 }
+
+
+
