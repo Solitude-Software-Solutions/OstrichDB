@@ -11,6 +11,7 @@ import "../../utils/logging"
 import "../../utils/misc"
 import "../data/metadata"
 import "../data"
+import "../config"
 
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
@@ -46,10 +47,11 @@ OST_USER :: struct {
 }
 
 
-// main ::proc() //for testing purposes
-// {
-//   OST_INIT_USER_SETUP(true) 
-// }
+main ::proc()
+{ 
+  OST_GEN_SECURE_DIR_FILE() //from crypto.odin
+  OST_INIT_USER_SETUP() 
+}
 
 
 //This will handle initial setup of the admin account on first run of the program
@@ -73,7 +75,9 @@ OST_INIT_USER_SETUP ::proc() -> int
     OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "salt",saltAsString)
     OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash",hashAsString)
     OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "store_method", algoMethodAsString )
-  return 0
+    config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
+
+    return 0
 }
 
 OST_GEN_USER_ID ::proc() -> i64

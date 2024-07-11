@@ -117,25 +117,63 @@ OST_APPEND_AND_SET_CONFIG::proc(c:string, value:string) -> int
 }
 
 
-OST_CHECK_CONFIG_VALUE::proc(c:string, value:string) -> bool
-{
-		data, err := os.read_entire_file("../bin/ostrich.config")
-		if err != false {
-				return false
-		}
-		defer delete(data)
-		
-		content := string(data)
-		lines := strings.split(content, "\n")
-		defer delete(lines)
-		
-		for line in lines {
-				if strings.contains(line, c) {
-						if strings.contains(line, value) {
-								return true
-						}
-				}
-		}
-		return false
+
+OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
+    data, err := os.read_entire_file("../bin/ostrich.config")
+    
+    defer delete(data)
+
+    content := string(data)
+    lines := strings.split(content, "\n")
+    defer delete(lines)
+
+    for line in lines {
+        if strings.contains(line, config) {
+            parts := strings.split(line, " : ")
+            if len(parts) >= 2 {
+                return strings.trim_space(parts[1])
+            }
+            break  // Found the config, but it's malformed
+        }
+    }
+
+    return ""  // Config not found
 }
 
+
+
+OST_TOGGLE_CONFIG :: proc(config: string) -> bool {
+    updated := false
+		foo:bool
+    data, err := os.read_entire_file("../bin/ostrich.config")
+
+    defer delete(data)
+
+    content := string(data)
+    lines := strings.split(content, "\n")
+    defer delete(lines)
+
+    new_lines := make([dynamic]string, 0, len(lines))
+    defer delete(new_lines)
+
+    for line in lines {
+        new_line := line
+        if strings.contains(line, config) {
+            if strings.contains(line, "true") {
+                new_line,foo = strings.replace(line, "true", "false", 1)
+                updated = true
+            } else if strings.contains(line, "false") {
+                new_line,foo = strings.replace(line, "false", "true", 1)
+                updated = true
+            }
+        }
+        append(&new_lines, new_line)
+    }
+
+    if updated {
+        new_content := strings.join(new_lines[:], "\n")
+        os.write_entire_file("../bin/ostrich.config", transmute([]byte)new_content)
+    }
+
+    return updated
+	}

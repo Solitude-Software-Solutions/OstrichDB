@@ -13,10 +13,7 @@ import "core:crypto"
 //Desc: This file handles the encryption of user credentials
 //=========================================================//
 
-main::proc()
-{
-  OST_GEN_SECURE_DIR_FILE()
-}
+
 
 OST_GENERATE_SALT :: proc () -> []u8
 {

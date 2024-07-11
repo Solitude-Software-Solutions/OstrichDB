@@ -21,23 +21,32 @@ main :: proc ()
   logging.main()
   //Create the cluster id cache file and clusters directory
   data.main()
-  security.main()
-
+  
 
   //Print the Ostrich logo and version
   fmt.printfln(misc.ostrich_art)
 	version:= transmute(string)misc.get_ost_version()
 	fmt.printfln("%sVersion: %s%s%s", misc.BOLD,misc.GREEN,version, misc.RESET)
-    
+
+  if config.OST_READ_CONFIG_VALUE("ENGINE_INIT") == "true"
+  {
+    engine.ost_engine.Initialized = true
+  }
+  else
+  {
+    engine.ost_engine.Initialized = false
+  }
+
+     
   switch(engine.ost_engine.Initialized)
   {
     case false:
-      // security.OST_INIT_USER_SETUP()
       config.main()
+      security.main() 
+      break
 
-    break
     case true:
-      // do stuff
+      break
   }
 
 }
