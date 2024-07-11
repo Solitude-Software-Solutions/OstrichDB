@@ -1,15 +1,15 @@
 package engine
 
-import "core:fmt"
-import "core:os"
-import "core:time"
-import "core:strings"
-import "../data"
-import "../../utils/misc"
 import "../../utils/errors"
 import "../../utils/logging"
-import "../security"
+import "../../utils/misc"
 import "../config"
+import "../data"
+import "../security"
+import "core:fmt"
+import "core:os"
+import "core:strings"
+import "core:time"
 
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
@@ -36,7 +36,7 @@ Ost_Engine_Error :: struct {
 		InvalidAction = 3,
 	},
 	Message:   string,
-	Acion:     string, // the action/operation that caused the error 
+	Acion:     string, // the action/operation that caused the error
 	Procedure: string, // the specific procedure that the error occurred in
 }
 /*Commands that will be used to interact with the engine by way of the API
@@ -55,7 +55,7 @@ Ost_Engine :: struct {
 	Status:          int, // 0, 1, 2
 	StatusName:      string, // Idle, Running, Stopped mostly for logging purposes
 	Initialized:     bool, // if the engine has been initialized , important for first run and user setup
-
+	UserLoggedIn:    bool, // if a user is logged in...NO ACTION CAN BE PERFORMED WITHOUT A USER LOGGED IN
 	// Records are individual data items within a Cluster
 	RecordsCreated:  int,
 	RecordsDeleted:  int,
@@ -80,18 +80,17 @@ Ost_Engine :: struct {
 }
 
 
-main:: proc()
-{
-	configFound:=config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch(configFound)
+main :: proc() {
+	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
+	switch (configFound) 
 	{
-		case true:
-			//do stuff
-			break
-		case false:
-			fmt.println("Config file not found.\n Generating config file")
-			config.OST_CREATE_CONFIG_FILE()
-			break
+	case true:
+		//do stuff
+		break
+	case false:
+		fmt.println("Config file not found.\n Generating config file")
+		config.OST_CREATE_CONFIG_FILE()
+		break
 	}
 
 }
