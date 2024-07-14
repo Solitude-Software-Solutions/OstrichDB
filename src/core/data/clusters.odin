@@ -57,7 +57,6 @@ Params: fileName - the desired file(cluster) name
 OST_CREATE_OST_FILE :: proc(fileName: string, type: int) -> int {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	fmt.printfln("Creating .ost file: %s", fileName)
 	switch (type) 
 	{
 	case 0:

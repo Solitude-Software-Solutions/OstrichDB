@@ -59,3 +59,20 @@ show_current_step:: proc(n:string,c:string,t:string)
 {
   fmt.printfln("Step %s/%s:\n%s%s%s\n", c, t,BOLD, n, RESET)
 }
+
+
+get_input :: proc() -> string
+{
+    buf:[256]bytes
+    
+    //n - number of bytes read
+    n, err := os.read(os.stdin, buf[:])
+	  if n > 0 {
+		input := string(buf[:n])
+		//trim the string of any whitespace or newline characters
+		input = strings.trim_right_proc(input, proc(r: rune) -> bool {
+			return r == '\r' || r == '\n'
+		})
+    return string(buf)
+  }
+}

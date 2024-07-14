@@ -70,7 +70,7 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 	return 0
 }
 
-
+//todo move all of this to main proc above
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR_FILE()
@@ -100,6 +100,8 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash", hashAsString)
 	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "store_method", algoMethodAsString)
 	config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
+	user_login_status = true
+
 
 	return 0
 }

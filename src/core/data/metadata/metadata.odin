@@ -75,9 +75,6 @@ OST_GENERATE_CHECKSUM :: proc() -> string {
       randN:=rand.choice(possibleNums)
       checksum=strings.concatenate([]string{checksum, randN})
     }
-
-    fmt.println("Checksum generated: ", checksum)
-  
   return checksum
 }
 

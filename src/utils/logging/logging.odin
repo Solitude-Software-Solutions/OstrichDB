@@ -13,12 +13,13 @@ import "core:strconv"
 //=========================================================//
 
 
-LOG_DIR_PATH:string: "../bin/logs/" //todo: might not need
+LOG_DIR_PATH:string: "../bin/logs/"
 RUNTIME_LOG:string: "runtime.log"
 ERROR_LOG:string: "errors.log"
 
 main:: proc()
 {
+  os.make_directory("../bin/")
   os.make_directory(LOG_DIR_PATH)
   create_log_files()
 }

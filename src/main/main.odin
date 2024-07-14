@@ -15,7 +15,7 @@ import "core:fmt"
 //=========================================================//
 
 main :: proc() {
-	//Start the logging system
+	//Create /bin dir and start the logging system
 	logging.main()
 	//Create the cluster id cache file and clusters directory
 	data.main()
@@ -40,6 +40,7 @@ main :: proc() {
 		break
 
 	case true:
+		security.signin()
 		break
 	}
 

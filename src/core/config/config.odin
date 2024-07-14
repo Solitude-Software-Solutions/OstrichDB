@@ -45,10 +45,10 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool
 	configPath:= "../bin/ostrich.config"
 	file,e:= os.open(configPath, os.O_CREATE, 0o666)
 	os.close(file)
-	if  e != 0
+    if  e != 0
 	{
-			errors.throw_utilty_error(1, "Error creating config file", "OST_GENERATE_CONFIG")
-			logging.log_utils_error("Error creating config file", "OST_GENERATE_CONFIG")
+			errors.throw_utilty_error(1, "Error creating config file", "OST_CREATE_CONFIG_FILE")
+			logging.log_utils_error("Error creating config file", "OST_CREATE_CONFIG_FILE")
 			return false
 		}
 		msg:= transmute([]u8)ostConfigHeader
@@ -57,16 +57,14 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool
 		writter,ok:= os.write(file,msg)
 		if ok != 0
 		{
-			errors.throw_utilty_error(1, "Error writing to config file", "OST_GENERATE_CONFIG")
-			logging.log_utils_error("Error writing to config file", "OST_GENERATE_CONFIG")
+			errors.throw_utilty_error(1, "Error writing to config file", "OST_CREATE_CONFIG_FILE")
+			logging.log_utils_error("Error writing to config file", "OST_CREATE_CONFIG_FILE")
 			return false
 		}
 
-		if !OST_FIND_ALL_CONFIGS(configOne, configTwo, configThree)
-		{
-			errors.throw_utilty_error(1, "Error writing to config file", "OST_GENERATE_CONFIG")
-			logging.log_utils_error("Error writing to config file", "OST_GENERATE_CONFIG")
-			
+        configsFound := OST_FIND_ALL_CONFIGS(configOne, configTwo, configThree)
+		if !configsFound
+		{	
 			OST_APPEND_AND_SET_CONFIG(configOne, "false")
 			OST_APPEND_AND_SET_CONFIG(configTwo, "simple")
 			OST_APPEND_AND_SET_CONFIG(configThree, "true")	
