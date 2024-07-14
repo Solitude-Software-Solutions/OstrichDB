@@ -1,3 +1,8 @@
-bin
+.bin
+/bin
 ols.json
+.ost
+.log
+.exe
+.out
 .vscode
