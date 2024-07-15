@@ -21,7 +21,6 @@ SEC_CLUSTER_NAME :: "user_credentials"
 
 OST_RUN_SIGNIN :: proc() {
 	//get the username input from the user
-
 	buf: [1024]byte
     n, err := os.read(os.stdin, buf[:])
 
@@ -32,11 +31,13 @@ OST_RUN_SIGNIN :: proc() {
     userName := strings.trim_right(string(buf[:n]), "\r\n")
 
 
-    fmt.printfln("userName: %s\n", userName)
-	//check if the username exists in the secure.ost file
-	//!todo working on figuring out why this is returning the wrong record value
 	userNameFound := data.OST_READ_RECORD_VALUE(SEC_FILE_PATH, SEC_CLUSTER_NAME, userName)
-	fmt.printfln("usernameFound: %s\n", userNameFound)
+	if (userNameFound != userName)
+	{
+        fmt.printfln("Username not found. Please try again.")
+        OST_RUN_SIGNIN()
+    return
+    }
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
@@ -49,12 +50,10 @@ OST_RUN_SIGNIN :: proc() {
 
 
     preMesh:= OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
-    fmt.printfln("preMesh: %s\n", preMesh)
     //PRE-MESHING END=========================================================================================================
 
 	//todo cant remember if im looking for "algo_method" something else
 	algoMethod := data.OST_READ_RECORD_VALUE(SEC_FILE_PATH, SEC_CLUSTER_NAME, "store_method")
-	fmt.printfln("algoMethod: %s\n", algoMethod)
 	//POST-MESHING START=======================================================================================================
 
 	//get the password input from the user
@@ -63,36 +62,27 @@ OST_RUN_SIGNIN :: proc() {
         return
     }
     enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
-    fmt.printfln("enteredPassword %s", enteredPassword)
 
     //conver the return algo method string to an int
 	algoAsInt := strconv.atoi(algoMethod)
-	fmt.printfln("algoAsInt: %d\n", algoAsInt)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash:=OST_HASH_PASSWORD(enteredPassword, algoAsInt)
-
+	newHash:=OST_HASH_PASSWORD(enteredPassword, algoAsInt, true)
 	encodedHash:= OST_ENCODE_HASHED_PASSWORD(newHash)
-	bar:=encodedHash
-	foo:= transmute(string)bar
-	fmt.printfln("new hash: %s:", foo)
-
 	postMesh:= OST_MESH_SALT_AND_HASH(salt,encodedHash)
-
 	//POST-MESHING END=========================================================================================================
 
-	fmt.printfln("postMesh: %s\n", postMesh)
+
 	authPassed:=OST_CROSS_CHECK_MESH(preMesh, postMesh)
 
 	switch authPassed {
         case true:
             fmt.printfln("Auth Passed! User has been signed in!")
             USER_SIGNIN_STATUS = true
-            // ost_engine.UserLoggedIn = USER_SIGNIN_STATUS
         case false:
-            fmt.printfln("Auth Failed. User has not been signed in!")
+            fmt.printfln("Auth Failed. Password was incorrect please try again.")
             USER_SIGNIN_STATUS = false
-            // ost_engine.UserLoggedIn = USER_SIGNIN_STATUS
+            os.exit(0)
     }
 
 }
@@ -103,7 +93,6 @@ OST_MESH_SALT_AND_HASH :: proc(s: string, hp: []u8) -> string {
 	mesh: string
 	hpStr:= transmute(string)hp
 	mesh = strings.concatenate([]string{s, hpStr})
-	// fmt.printfln("mesh: %s\n", mesh)
 	return mesh
 }
 
@@ -111,7 +100,6 @@ OST_MESH_SALT_AND_HASH :: proc(s: string, hp: []u8) -> string {
 //cn- cluster name, un- username, s-salt , hp- hashed password
 OST_CROSS_CHECK_MESH :: proc(preMesh:string, postMesh:string ) -> bool {
     if preMesh == postMesh {
-        fmt.printfln("Entered password matches the stored password!")
         return true
 		}
 

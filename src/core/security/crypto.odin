@@ -77,80 +77,79 @@ OST_GENERATE_SALT :: proc() -> []u8 {
 	return saltSlice
 }
 
-
-OST_HASH_PASSWORD :: proc(p: string, action: int) -> []u8 {
+// p - password, hMethod - store/hashing method, isAuth - is the user authenticating or creating an account
+OST_HASH_PASSWORD :: proc(p: string, sMethod:int, isAuth:bool) -> []u8 {
 	//generate the salt
 	salt: []u8 = OST_GENERATE_SALT()
-
-
 	ost_user.salt = salt //store the salt into the user struct
+	hashedPassword: []u8
 
-	pWithoutSalt := p //store the password without the salt
-	hashPWithoutSalt: []u8 //store the hashed password without the salt
-	hashPWithSalt: []u8 //store the hashed password with the salt
 
-	//concatenate the salt and password before hashing
-	pWithSalt := strings.concatenate([]string{string(salt), p})
 
-	//generate a random number to determine which hashing algorithm to use
-	x := rand.choice([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 0})
-	switch (x)
+	//if this password is being hashed during authentication then we already have the hashing method provided
+	//see auth.odin
+	if (isAuth)
 	{
-	case 1, 5:
-		for i := 0; i < 1; i += 1 {
-			hashPWithSalt = hash.hash_string(hash.Algorithm.SHA3_224, pWithSalt)
-			hashPWithoutSalt = hash.hash_string(hash.Algorithm.SHA3_224, pWithoutSalt)
-		}
-		ost_user.hashedPassword = hashPWithoutSalt
-		ost_user.store_method = 1
-		break
-	case 2, 6:
-		for i := 0; i < 1; i += 1 {
-			hashPWithSalt = hash.hash_string(hash.Algorithm.SHA3_256, pWithSalt)
-			hashPWithoutSalt = hash.hash_string(hash.Algorithm.SHA3_224, pWithoutSalt)
-		}
-		ost_user.hashedPassword = hashPWithoutSalt
-		ost_user.store_method = 2
-		break
-	case 3, 7:
-		for i := 0; i < 1; i += 1 {
-			hashPWithSalt = hash.hash_string(hash.Algorithm.SHA3_384, pWithSalt)
-			hashPWithoutSalt = hash.hash_string(hash.Algorithm.SHA3_224, pWithoutSalt)
-		}
-		ost_user.hashedPassword = hashPWithoutSalt
-		ost_user.store_method = 3
-		break
-	case 4, 9:
-		for i := 0; i < 1; i += 1 {
-			hashPWithSalt = hash.hash_string(hash.Algorithm.SHA3_512, pWithSalt)
-			hashPWithoutSalt = hash.hash_string(hash.Algorithm.SHA3_224, pWithoutSalt)
-		}
-		ost_user.hashedPassword = hashPWithoutSalt
-		ost_user.store_method = 4
-		break
-	case 0, 8:
-		for i := 0; i < 1; i += 1 {
-			hashPWithSalt = hash.hash_string(hash.Algorithm.SHA512_256, pWithSalt)
-			hashPWithoutSalt = hash.hash_string(hash.Algorithm.SHA3_224, pWithoutSalt)
-		}
-		ost_user.hashedPassword = hashPWithoutSalt
-		ost_user.store_method = 5
-		break
+	  x:= sMethod
+	 hashedPassword = OST_CHOOSE_ALGORITHM(x,p)
 	}
-	//the action is dependent on which hash is needed
-	switch (action)
+	else
 	{
-	case 1:
-		return hashPWithoutSalt
-	case 2:
-		return hashPWithSalt
+	  x:= rand.choice([]int{1,2,3,4,5})
+	  hashedPassword = OST_CHOOSE_ALGORITHM(x,p)
 	}
-	return []u8{}
+	return hashedPassword
 }
 
+// choice - hashing method, p - password
+OST_CHOOSE_ALGORITHM ::proc(choice:int, p:string) -> []u8
+{
+    x := choice
+    hashedPassword:[]u8
+    switch (x)
+     {
+     case 1:
+          for i := 0; i < 1; i += 1 {
+                hashedPassword = hash.hash_string(hash.Algorithm.SHA3_224, p)
+          }
+          ost_user.hashedPassword = hashedPassword
+          ost_user.store_method = 1
+          break
+     case 2:
+          for i := 0; i < 1; i += 1 {
+                hashedPassword = hash.hash_string(hash.Algorithm.SHA3_256, p)
+          }
+          ost_user.hashedPassword = hashedPassword
+          ost_user.store_method = 2
+          break
+     case 3:
+          for i := 0; i < 1; i += 1 {
+                hashedPassword = hash.hash_string(hash.Algorithm.SHA3_384, p)
+          }
+          ost_user.hashedPassword = hashedPassword
+          ost_user.store_method = 3
+          break
+     case 4:
+          for i := 0; i < 1; i += 1 {
+                hashedPassword = hash.hash_string(hash.Algorithm.SHA3_512, p)
+          }
+          ost_user.hashedPassword = hashedPassword
+          ost_user.store_method = 4
+          break
+     case 5:
+          for i := 0; i < 1; i += 1 {
+                hashedPassword = hash.hash_string(hash.Algorithm.SHA512_256, p)
+          }
+          ost_user.hashedPassword = hashedPassword
+          ost_user.store_method = 5
+     }
+    return hashedPassword
+}
 
 // hp - hashed password
 OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 encodedHash:= hex.encode(hp)
+str:= transmute(string)encodedHash
+fmt.printfln("encoder produced this encoded hash: %s", str)
 return  encodedHash
 }

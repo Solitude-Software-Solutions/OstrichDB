@@ -94,11 +94,8 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 
 
 	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "salt", saltAsString)
-
-	foobar:=transmute(string)ost_user.hashedPassword
-	//Bug: this proc call causes _secure_.ost file to be unreadable. see issue https://github.com/Solitude-Software-Solutions/OstrichDB/issues/14
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash", foobar)
-
+	hashAsStr:=transmute(string)ost_user.hashedPassword
+	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash", hashAsStr)
 	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "store_method", algoMethodAsString)
 	config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
 	USER_SIGNIN_STATUS = true
@@ -264,7 +261,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 
 		ost_user.password.Length = len(p)
 		ost_user.password.Value = strings.clone(ost_user.password.Value)
-		ost_user.hashedPassword = OST_HASH_PASSWORD(p, 1)
+		ost_user.hashedPassword = OST_HASH_PASSWORD(p, 0,false)
 
 		encodedPassword:= OST_ENCODE_HASHED_PASSWORD(ost_user.hashedPassword)
 		ost_user.hashedPassword = encodedPassword
