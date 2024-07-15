@@ -1,13 +1,15 @@
 package engine
 
-import "core:fmt"
-import "core:os"
-import "core:time"
-import "../data"
-import "../../utils/misc"
 import "../../utils/errors"
 import "../../utils/logging"
+import "../../utils/misc"
+import "../config"
+import "../data"
 import "../security"
+import "core:fmt"
+import "core:os"
+import "core:strings"
+import "core:time"
 
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
@@ -34,7 +36,7 @@ Ost_Engine_Error :: struct {
 		InvalidAction = 3,
 	},
 	Message:   string,
-	Acion:     string, // the action/operation that caused the error 
+	Acion:     string, // the action/operation that caused the error
 	Procedure: string, // the specific procedure that the error occurred in
 }
 /*Commands that will be used to interact with the engine by way of the API
@@ -53,7 +55,7 @@ Ost_Engine :: struct {
 	Status:          int, // 0, 1, 2
 	StatusName:      string, // Idle, Running, Stopped mostly for logging purposes
 	Initialized:     bool, // if the engine has been initialized , important for first run and user setup
-
+	UserLoggedIn:    bool, // if a user is logged in...NO ACTION CAN BE PERFORMED WITHOUT A USER LOGGED IN
 	// Records are individual data items within a Cluster
 	RecordsCreated:  int,
 	RecordsDeleted:  int,
@@ -78,6 +80,22 @@ Ost_Engine :: struct {
 }
 
 
+main :: proc() {
+	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
+	switch (configFound) 
+	{
+	case true:
+		//do stuff
+		break
+	case false:
+		fmt.println("Config file not found.\n Generating config file")
+		config.OST_CREATE_CONFIG_FILE()
+		break
+	}
+
+}
+
+//todo wtf is this lol
 OST_GET_ENGINE_STATUS :: proc() -> int {
 	switch (ost_engine.Status) 
 	{
@@ -111,56 +129,8 @@ OST_START_ENGINE :: proc() -> int {
 }
 
 
-
-//used to check if the program has been initialized. if it has been then the init file will exist
-OST_CHECK_INIT_FILE :: proc() -> bool {
-	fileExists,e := os.open("../../../bin/init.bin")
-	if fileExists == 0 {
-		return false
-	}
-	return true
-}
-
-// used to initialize the program this will create the init file allowing for user setup
-OST_INIT:: proc() -> bool {
-
-	createFile, creationErr := os.open("../../../bin/init.bin", os.O_CREATE, 0o666 )
-	if creationErr != 0{
-		errors.throw_utilty_error(1, "Error creating init file", "OST_INIT")
-		logging.log_utils_error("Error creating init file", "OST_INIT")
-		ost_engine.Initialized = false
-		return ost_engine.Initialized
-	}
-	ost_engine.Initialized = true
-	os.close(createFile)
-	return ost_engine.Initialized
-}
-
-// main::proc()
+//check the config file for the init flag, if it is false then we need to run the initial user setup
+// OST_CHECK_FOR_INIT:: proc() -> bool
 // {
-	
-// 	OST_START_ENGINE() 
-		
-// 	fmt.printfln(misc.ostrich_art)
-// 	versionStr:= transmute(string)misc.get_ost_version()
-// 	fmt.printfln("%sVersion: %s%s%s", misc.BOLD,misc.GREEN,versionStr, misc.RESET)
-	
-// 	engineInitialized := OST_CHECK_INIT_FILE()
-
-// 	switch (engineInitialized) 
-// 	{
-// 		case false:
-// 			security.OST_INIT_USER_SETUP(OST_INIT())
-// 			break
-// 		case true:
-
-
-
-// 	}
-	
-// 	for ost_engine.Status == 1 && ost_engine.StatusName == "Running" 
-// 	{
-		
-// 	}
 
 // }

@@ -75,9 +75,6 @@ OST_GENERATE_CHECKSUM :: proc() -> string {
       randN:=rand.choice(possibleNums)
       checksum=strings.concatenate([]string{checksum, randN})
     }
-
-    fmt.println("Checksum generated: ", checksum)
-  
   return checksum
 }
 
@@ -195,9 +192,7 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 
     new_content := strings.join(lines, "\n")
     err := os.write_entire_file(fn, transmute([]byte)new_content)
-
-    // fmt.println("File updated successfully")
-}
+ }
 
 //!Only used on .ost file creation whether secure or not
 OST_METADATA_ON_CREATE :: proc(fn:string)

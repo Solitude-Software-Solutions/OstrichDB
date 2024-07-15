@@ -9,17 +9,17 @@ import "../errors"
 import "../logging"
 // This file contains miscellaneous entities that are used throughout the program
 
-ostrich_version:string 
-ostrich_art := 
+ostrich_version:string
+ostrich_art :=
 `  _______               __                __             __
-  /       \             /  |              /  |           /  |      
-  /$$$$$$  |  _______  _$$ |_     ______  $$/   _______ $$ |____  
-  $$ |  $$ | /       |/ $$   |   /      \ /  | /       |$$      \ 
+  /       \             /  |              /  |           /  |
+  /$$$$$$  |  _______  _$$ |_     ______  $$/   _______ $$ |____
+  $$ |  $$ | /       |/ $$   |   /      \ /  | /       |$$      \
   $$ |  $$ |/$$$$$$$/ $$$$$$/   /$$$$$$  |$$ |/$$$$$$$/ $$$$$$$  |
   $$ |  $$ |$$      \   $$ | __ $$ |  $$/ $$ |$$ |      $$ |  $$ |
   $$ \__$$ | $$$$$$  |  $$ |/  |$$ |      $$ |$$ \_____ $$ |  $$ |
   $$    $$/ /     $$/   $$  $$/ $$ |      $$ |$$       |$$ |  $$ |
-   $$$$$$/  $$$$$$$/     $$$$/  $$/       $$/  $$$$$$$/ $$/   $$/ 
+   $$$$$$/  $$$$$$$/     $$$$/  $$/       $$/  $$$$$$$/ $$/   $$/
   ===============================================================`
 
 
@@ -58,4 +58,18 @@ get_ost_version :: proc() -> []u8
 show_current_step:: proc(n:string,c:string,t:string)
 {
   fmt.printfln("Step %s/%s:\n%s%s%s\n", c, t,BOLD, n, RESET)
+}
+
+
+get_input :: proc() -> string {
+    buf: [1024]byte
+    n, err := os.read(os.stdin, buf[:])
+    // fmt.printf("Debug: Read %d bytes, err = %v\n", n, err)
+    if err != 0 {
+        fmt.println("Debug: Error occurred")
+        return ""
+    }
+    result := strings.trim_right(string(buf[:n]), "\r\n")
+    // fmt.printf("Debug: Returning result: '%s'\n", result)
+    return result
 }
