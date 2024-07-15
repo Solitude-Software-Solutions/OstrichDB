@@ -9,17 +9,17 @@ import "../errors"
 import "../logging"
 // This file contains miscellaneous entities that are used throughout the program
 
-ostrich_version:string 
-ostrich_art := 
+ostrich_version:string
+ostrich_art :=
 `  _______               __                __             __
-  /       \             /  |              /  |           /  |      
-  /$$$$$$  |  _______  _$$ |_     ______  $$/   _______ $$ |____  
-  $$ |  $$ | /       |/ $$   |   /      \ /  | /       |$$      \ 
+  /       \             /  |              /  |           /  |
+  /$$$$$$  |  _______  _$$ |_     ______  $$/   _______ $$ |____
+  $$ |  $$ | /       |/ $$   |   /      \ /  | /       |$$      \
   $$ |  $$ |/$$$$$$$/ $$$$$$/   /$$$$$$  |$$ |/$$$$$$$/ $$$$$$$  |
   $$ |  $$ |$$      \   $$ | __ $$ |  $$/ $$ |$$ |      $$ |  $$ |
   $$ \__$$ | $$$$$$  |  $$ |/  |$$ |      $$ |$$ \_____ $$ |  $$ |
   $$    $$/ /     $$/   $$  $$/ $$ |      $$ |$$       |$$ |  $$ |
-   $$$$$$/  $$$$$$$/     $$$$/  $$/       $$/  $$$$$$$/ $$/   $$/ 
+   $$$$$$/  $$$$$$$/     $$$$/  $$/       $$/  $$$$$$$/ $$/   $$/
   ===============================================================`
 
 
@@ -61,18 +61,15 @@ show_current_step:: proc(n:string,c:string,t:string)
 }
 
 
-get_input :: proc() -> string
-{
-    buf:[256]bytes
-    
-    //n - number of bytes read
+get_input :: proc() -> string {
+    buf: [1024]byte
     n, err := os.read(os.stdin, buf[:])
-	  if n > 0 {
-		input := string(buf[:n])
-		//trim the string of any whitespace or newline characters
-		input = strings.trim_right_proc(input, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
-    return string(buf)
-  }
+    // fmt.printf("Debug: Read %d bytes, err = %v\n", n, err)
+    if err != 0 {
+        fmt.println("Debug: Error occurred")
+        return ""
+    }
+    result := strings.trim_right(string(buf[:n]), "\r\n")
+    // fmt.printf("Debug: Returning result: '%s'\n", result)
+    return result
 }

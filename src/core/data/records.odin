@@ -65,7 +65,7 @@ OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) ->
 
     // If the cluster is not found or the structure is invalid, return false
     if cluster_start == -1 || closing_brace == -1 {
-        fmt.printf("%sCluster of name: %s%s not found or is of invalid structure%s\n", 
+        fmt.printf("%sCluster of name: %s%s not found or is of invalid structure%s\n",
                    misc.BOLD, cn, misc.RESET, misc.RESET)
         return false
     }
@@ -125,7 +125,7 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
 
     // If the cluster is not found or the structure is invalid, return false
     if cluster_start == -1 || closing_brace == -1 {
-        fmt.printf("%sCluster of name: %s%s not found or is of invalid structure%s\n", 
+        fmt.printf("%sCluster of name: %s%s not found or is of invalid structure%s\n",
                    misc.BOLD, cn, misc.RESET, misc.RESET)
         return false
     }
@@ -140,7 +140,7 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
     return false
 }
 
-//so Im trying to get the type of the data that is passed in. but I cannot use type_of on anything that is of type "any" 
+//so Im trying to get the type of the data that is passed in. but I cannot use type_of on anything that is of type "any"
 
 // todo
 //need to create a proc that takes in the users input on which cluster they want to store the record in
@@ -182,7 +182,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string
 		if record_exists == true
 		{
 			return
-		} 
+		}
 		//if the cluster is not found or the structure is invalid, return
     if cluster_start == -1 || closing_brace == -1 {
         fmt.println("Cluster not found or invalid structure")
@@ -206,4 +206,52 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string
     if err != true {
         fmt.println("Failed to write file:", fn, "Error:", err)
     }
+}
+
+// get the value from the right side of a key value
+OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rn: string) -> string {
+    data, ok := os.read_entire_file(fn)
+    if !ok {
+        fmt.println("Failed to read file:", fn)
+        return ""
+    }
+    defer delete(data)
+
+    content := string(data)
+    lines := strings.split(content, "\n")
+    defer delete(lines)
+
+    cluster_start := -1
+    closing_brace := -1
+
+    // Find the cluster and its closing brace
+    for line, i in lines {
+        if strings.contains(line, cn) {
+            cluster_start = i
+        }
+        if cluster_start != -1 && strings.contains(line, "}") {
+            closing_brace = i
+            break
+        }
+    }
+
+    // If the cluster is not found or the structure is invalid, return an empty string
+    if cluster_start == -1 || closing_brace == -1 {
+        fmt.printf("%sCluster of name: %s%s not found or is of invalid structure%s\n",
+                   misc.BOLD, cn, misc.RESET, misc.RESET)
+        return ""
+    }
+
+    // Check if the record exists within the cluster
+    for i in cluster_start..=closing_brace {
+        if strings.contains(lines[i], rn) {
+            record := strings.split(lines[i], ":")
+            if len(record) > 1 {
+                return strings.trim_space(record[1])
+            }
+            return ""
+        }
+    }
+
+    return ""
 }

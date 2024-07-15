@@ -7,6 +7,7 @@ import "core:math/rand"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+import "core:encoding/hex"
 
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
@@ -93,7 +94,7 @@ OST_HASH_PASSWORD :: proc(p: string, action: int) -> []u8 {
 
 	//generate a random number to determine which hashing algorithm to use
 	x := rand.choice([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 0})
-	switch (x) 
+	switch (x)
 	{
 	case 1, 5:
 		for i := 0; i < 1; i += 1 {
@@ -137,7 +138,7 @@ OST_HASH_PASSWORD :: proc(p: string, action: int) -> []u8 {
 		break
 	}
 	//the action is dependent on which hash is needed
-	switch (action) 
+	switch (action)
 	{
 	case 1:
 		return hashPWithoutSalt
@@ -147,14 +148,9 @@ OST_HASH_PASSWORD :: proc(p: string, action: int) -> []u8 {
 	return []u8{}
 }
 
-//todo store salt and hashed password in a "user" cluster in a secure .ost file
-/*
-exmaple
-{
-  username: "john doe",
-  role: "admin",
-  hashedPassword: "hashedPassword",
-  salt: "salt"
-  hashedMethod: "SHA3_224" ??? Not sure if I should do this. see below
+
+// hp - hashed password
+OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
+encodedHash:= hex.encode(hp)
+return  encodedHash
 }
-*/

@@ -57,7 +57,7 @@ Params: fileName - the desired file(cluster) name
 OST_CREATE_OST_FILE :: proc(fileName: string, type: int) -> int {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (type) 
+	switch (type)
 	{
 	case 0:
 		//standard cluster file
@@ -83,7 +83,7 @@ OST_CREATE_OST_FILE :: proc(fileName: string, type: int) -> int {
 			return 1
 		}
 		pathNameExtension := strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
-		createFile, creationErr := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o666)
+		createFile, creationErr := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
 		if creationErr != 0 {
 			errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
@@ -355,7 +355,7 @@ OST_CHOOSE_DB :: proc() {
 		})
 		dbName := strings.concatenate([]string{input, ext})
 		dbExists := OST_CHECK_IF_DB_EXISTS(dbName, 1)
-		switch (dbExists) 
+		switch (dbExists)
 		{
 		case true:
 			fmt.printfln(
@@ -385,7 +385,7 @@ OST_CHECK_IF_DB_EXISTS :: proc(fn: string, type: int) -> bool {
 	//need to cwd into bin
 	os.set_current_directory("../bin/")
 	dir: string
-	switch (type) 
+	switch (type)
 	{
 	case 0:
 		dir = "clusters/"
@@ -422,7 +422,7 @@ OST_CHOOSE_CLUSTER_NAME :: proc(fn: string) {
 		})
 
 		cluserExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, input)
-		switch (cluserExists) 
+		switch (cluserExists)
 		{
 		case true:
 			//todo what would the user like to do with this cluster?

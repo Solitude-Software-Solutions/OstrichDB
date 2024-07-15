@@ -52,16 +52,13 @@ OST_USER :: struct {
 }
 
 
-main :: proc() {
-	OST_INIT_USER_SETUP()
-}
-
-
 OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 	//make directory locked
 	err := os.make_directory("../bin/secure") //this will change when building entire project from cmd line
 
-	file, e := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o600)
+	file, e := os.open("../bin/secure/_secure_.ost", 0o666)
+	// file, e := os.open("", os.O_CREATE, 0o666)
+
 	if e != 0 {
 		fmt.printfln("Error creating secure file")
 		return 1
@@ -97,10 +94,14 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 
 
 	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "salt", saltAsString)
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash", hashAsString)
+
+	foobar:=transmute(string)ost_user.hashedPassword
+	//Bug: this proc call causes _secure_.ost file to be unreadable. see issue https://github.com/Solitude-Software-Solutions/OstrichDB/issues/14
+	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash", foobar)
+
 	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "store_method", algoMethodAsString)
 	config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
-	user_login_status = true
+	USER_SIGNIN_STATUS = true
 
 
 	return 0
@@ -220,7 +221,7 @@ OST_GET_PASSWORD :: proc() -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword 
+	switch strongPassword
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr)
@@ -264,12 +265,15 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 		ost_user.password.Length = len(p)
 		ost_user.password.Value = strings.clone(ost_user.password.Value)
 		ost_user.hashedPassword = OST_HASH_PASSWORD(p, 1)
+
+		encodedPassword:= OST_ENCODE_HASHED_PASSWORD(ost_user.hashedPassword)
+		ost_user.hashedPassword = encodedPassword
 	}
 	return ost_user.password.Value
 }
 
-// i- user id, u- username, r- role, s- salt, hp- hashed password
-// OST_STORE_USER_CREDS::proc(i:i64,u:string,r:int,s:string,hp:string) -> int
+// cn- cluster name, id- cluster id, dn- data name, d- data
+// //made data type any so that the encoded hash of type []u8 can be transmuted and passed as an arg
 OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int {
 	secureFilePath := "../bin/secure/_secure_.ost"
 	credClusterName := "user_credentials"
@@ -392,7 +396,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 	checkResults: int
 	checkResults = check1 + check2 + check3
 
-	switch checkResults 
+	switch checkResults
 	{
 	//because i iterate through the arrays, the program adds 1 to the checkResults variable for each type of character found in the password so if the user enters 2 numbers, then 3 special characters the check2 variable will be 2 and the check1 variable will be 3. so basically, as long as the checkResults variable is greater or equal to 3, the password is strong enough. Kinda hacky but maybe someone can come up with a better way to do this one day. Cannot be more than 36 because the password is only 32 characters long
 	case 3 ..< 32:

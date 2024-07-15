@@ -32,15 +32,15 @@ main :: proc() {
 		engine.ost_engine.Initialized = false
 	}
 
-	switch (engine.ost_engine.Initialized) 
+	switch (engine.ost_engine.Initialized)
 	{
 	case false:
 		config.main()
-		security.main()
+		security.OST_INIT_USER_SETUP()
 		break
 
 	case true:
-		security.signin()
+		security.OST_RUN_SIGNIN()
 		break
 	}
 
