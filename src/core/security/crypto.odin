@@ -150,6 +150,5 @@ OST_CHOOSE_ALGORITHM ::proc(choice:int, p:string) -> []u8
 OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 encodedHash:= hex.encode(hp)
 str:= transmute(string)encodedHash
-fmt.printfln("encoder produced this encoded hash: %s", str)
 return  encodedHash
 }

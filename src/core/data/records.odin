@@ -4,7 +4,8 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:strconv"
-import "../../utils/misc"
+import "../../misc"
+import "../../errors"
 //A record is Ostrich is essentially an entry into the database. It is a struct that contains the data and the type of the data.
 
 record:Record
@@ -26,14 +27,13 @@ Record :: struct {
 }
 */
 
-//this will take in data and prepare it to be stored in a record
-
-
 //can be used to check if several records exist within a cluster
 OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) -> bool {
-    data, success := os.read_entire_file(fn)
-    if !success {
-        fmt.println("Error reading file")
+    data, readSuccess := os.read_entire_file(fn)
+    if !readSuccess {
+    error1 := errors.new_err(.CANNOT_READ_FILE,
+			errors.get_err_msg(.CANNOT_READ_FILE),#procedure,)
+			errors.throw_err(error1)
         return false
     }
     defer delete(data)
@@ -41,7 +41,7 @@ OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) ->
     // Check if the cluster exists
     clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, cn)
     if !clusterExists {
-        fmt.println("Cluster does not exist")
+    error2:= errors.new_err(.CANNOT_FIND_CLUSTER, errors.get_err_msg(.CANNOT_FIND_CLUSTER), #procedure)
         return false
     }
 
@@ -65,8 +65,9 @@ OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) ->
 
     // If the cluster is not found or the structure is invalid, return false
     if cluster_start == -1 || closing_brace == -1 {
-        fmt.printf("%sCluster of name: %s%s not found or is of invalid structure%s\n",
-                   misc.BOLD, cn, misc.RESET, misc.RESET)
+        error3 := errors.new_err(.CANNOT_FIND_CLUSTER, errors.get_err_msg(.CANNOT_FIND_CLUSTER), #procedure)
+        errors.throw_err(error3)
+
         return false
     }
 
@@ -91,9 +92,10 @@ OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) ->
 
 //can be used to check if a single record exists within a cluster
 OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bool {
-    data, success := os.read_entire_file(fn)
-    if !success {
-        fmt.println("Error reading file")
+    data, readSuccess := os.read_entire_file(fn)
+    if !readSuccess {
+        error1:= errors.new_err(.CANNOT_READ_FILE, errors.get_err_msg(.CANNOT_READ_FILE), #procedure)
+        errors.throw_err(error1)
         return false
     }
     defer delete(data)
@@ -101,7 +103,8 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
     // Check if the cluster exists
     clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, cn)
     if !clusterExists {
-        fmt.println("Cluster does not exist")
+        error2:= errors.new_err(.CANNOT_FIND_CLUSTER, errors.get_err_msg(.CANNOT_FIND_CLUSTER), #procedure)
+        errors.throw_err(error2)
         return false
     }
 
@@ -125,8 +128,8 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
 
     // If the cluster is not found or the structure is invalid, return false
     if cluster_start == -1 || closing_brace == -1 {
-        fmt.printf("%sCluster of name: %s%s not found or is of invalid structure%s\n",
-                   misc.BOLD, cn, misc.RESET, misc.RESET)
+        error3:= errors.new_err(.CANNOT_FIND_CLUSTER, errors.get_err_msg(.CANNOT_FIND_CLUSTER), #procedure)
+        errors.throw_err(error3)
         return false
     }
 
@@ -152,9 +155,10 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
 //.appends the passed in record to the passed in cluster
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string, rd: string) {
-    data, success := os.read_entire_file(fn)
-    if !success {
-        fmt.println("Failed to read file:", fn)
+    data, readSuccess := os.read_entire_file(fn)
+    if !readSuccess {
+        error1 := errors.new_err(.CANNOT_READ_FILE, errors.get_err_msg(.CANNOT_READ_FILE), #procedure)
+        errors.throw_err(error1)
         return
     }
     defer delete(data)
@@ -185,7 +189,8 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string
 		}
 		//if the cluster is not found or the structure is invalid, return
     if cluster_start == -1 || closing_brace == -1 {
-        fmt.println("Cluster not found or invalid structure")
+        error2 := errors.new_err(.CANNOT_FIND_CLUSTER, errors.get_err_msg(.CANNOT_FIND_CLUSTER), #procedure)
+        errors.throw_err(error2)
         return
     }
 
@@ -202,17 +207,19 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string
     }
 
     new_content := strings.join(new_lines[:], "\n")
-    err := os.write_entire_file(fn, transmute([]byte)new_content)
-    if err != true {
-        fmt.println("Failed to write file:", fn, "Error:", err)
+    writeSuccess := os.write_entire_file(fn, transmute([]byte)new_content)
+    if writeSuccess != true {
+        error3 := errors.new_err(.CANNOT_WRITE_TO_FILE, errors.get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure)
+        errors.throw_err(error3)
     }
 }
 
 // get the value from the right side of a key value
 OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rn: string) -> string {
-    data, ok := os.read_entire_file(fn)
-    if !ok {
-        fmt.println("Failed to read file:", fn)
+    data, readSuccess := os.read_entire_file(fn)
+    if !readSuccess {
+        error1:= errors.new_err(.CANNOT_READ_FILE, errors.get_err_msg(.CANNOT_READ_FILE), #procedure)
+        errors.throw_err(error1)
         return ""
     }
     defer delete(data)
@@ -237,8 +244,8 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rn: string) -> string {
 
     // If the cluster is not found or the structure is invalid, return an empty string
     if cluster_start == -1 || closing_brace == -1 {
-        fmt.printf("%sCluster of name: %s%s not found or is of invalid structure%s\n",
-                   misc.BOLD, cn, misc.RESET, misc.RESET)
+        error2:= errors.new_err(.CANNOT_FIND_CLUSTER, errors.get_err_msg(.CANNOT_FIND_CLUSTER), #procedure)
+        errors.throw_err(error2)
         return ""
     }
 

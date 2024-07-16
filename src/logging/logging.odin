@@ -1,6 +1,5 @@
 package logging
 
-import "../errors"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -25,30 +24,30 @@ main:: proc()
 }
 
 
-create_log_files:: proc() -> int 
+create_log_files:: proc() -> int
 {
   fullRuntimePath := strings.concatenate([]string{LOG_DIR_PATH, RUNTIME_LOG} )
   runtimeFile,err:= os.open(fullRuntimePath, os.O_CREATE, 0o666)
   if err != 0
   {
-    errors.throw_utilty_error(1, "Error creating runtime log file", "create_log_files")
     log_utils_error("Error creating runtime log file", "create_log_files")
+    // errors.throw_utilty_error(1, "Error creating runtime log file", "create_log_files")
     return -1
   }
-  
+
   defer os.close(runtimeFile)
 
   fullErrorPath:= strings.concatenate([]string{LOG_DIR_PATH, ERROR_LOG})
   errorFile,er:= os.open(fullErrorPath, os.O_CREATE, 0o666)
   if er != 0
   {
-    errors.throw_utilty_error(1, "Error creating error log file", "create_log_files")
+    // errors.throw_utilty_error(1, "Error creating error log file", "create_log_files")
     log_utils_error("Error creating error log file", "create_log_files")
     return -1
   }
 
-  os.close(errorFile) 
-  return 0 
+  os.close(errorFile)
+  return 0
 }
 
 //###############################|RUNTIME LOGGING|############################################
@@ -56,14 +55,14 @@ log_runtime_event :: proc(eventName:string, eventDesc: string)
 {
   buf:[256]byte
   y,m,d:= time.date(time.now())
-  
+
   // Conversions because everything in Odin needs to be converted... :)
   mAsInt:=transmute(int)m //month comes base as a type "Month" so need to convert
-  
+
   Y:= transmute(i64)y
   M:= transmute(i64)m
   D:= transmute(i64)d
-  
+
   Year:= strconv.append_int(buf[:], Y, 10)
   Month:= strconv.append_int(buf[:], M, 10)
   Day:= strconv.append_int(buf[:], D, 10)
@@ -110,7 +109,7 @@ log_runtime_event :: proc(eventName:string, eventDesc: string)
       break
   }
 
-  
+
   Date:= strings.concatenate([]string{Day, "/", Month, "/", Year, "\n"})
   paramsAsMessage:= strings.concatenate([]string{"Event: ",eventName,"\n","Desc: ", eventDesc, "\n"})
   fullLogMessage:= strings.concatenate([]string{paramsAsMessage,"Logged @:", Date})
@@ -120,24 +119,24 @@ log_runtime_event :: proc(eventName:string, eventDesc: string)
   runtimeFile,e:=os.open(fullPath, os.O_APPEND | os.O_RDWR, 0o666)
   if e != 0
   {
-    errors.throw_utilty_error(1, "Error opening runtime log file", "log_runtime_event")
+    // errors.throw_utilty_error(1, "Error opening runtime log file", "log_runtime_event")
     log_utils_error("Error opening runtime log file", "log_runtime_event")
     return
   }
 
-  
+
   _,ee:=os.write(runtimeFile, LogMessage)
   if ee != 0
   {
-    errors.throw_utilty_error(1, "Error writing to runtime log file", "log_runtime_event")
+    // errors.throw_utilty_error(1, "Error writing to runtime log file", "log_runtime_event")
     log_utils_error("Error writing to runtime log file", "log_runtime_event")
-    return  
+    return
   }
 
   //every thing seems to have been converted correctly and passed correctly. The file does exist, the path is correct, the file is being opened correctly
   os.close(runtimeFile)
 
-} 
+}
 
 
 //###############################|ERROR LOGGING|############################################
@@ -146,14 +145,14 @@ log_utils_error:: proc(message:string,location:string) ->int
 {
   buf:[256]byte
   y,m,d:= time.date(time.now())
-  
+
   // Conversions because everything in Odin needs to be converted... :)
   mAsInt:=transmute(int)m //month comes base as a type "Month" so need to convert
-  
+
   Y:= transmute(i64)y
   M:= transmute(i64)m
   D:= transmute(i64)d
-  
+
   Year:= strconv.append_int(buf[:], Y, 10)
   Month:= strconv.append_int(buf[:], M, 10)
   Day:= strconv.append_int(buf[:], D, 10)
@@ -200,7 +199,7 @@ log_utils_error:: proc(message:string,location:string) ->int
       break
   }
 
-  
+
   Date:= strings.concatenate([]string{Day, "/", Month, "/", Year, "\n"})
   paramsAsMessage:= strings.concatenate([]string{"UTILS Error: ",message,"\n","Location: ", location, "\n"})
   fullLogMessage:= strings.concatenate([]string{paramsAsMessage,"Logged @:", Date})
@@ -210,16 +209,16 @@ log_utils_error:: proc(message:string,location:string) ->int
   errorFile,e:=os.open(fullPath, os.O_APPEND | os.O_RDWR, 0o666)
   if e != 0
   {
-    errors.throw_utilty_error(1, "Error opening error log file", "log_utils_error")
+    // errors.throw_utilty_error(1, "Error opening error log file", "log_utils_error")
     log_utils_error("Error opening error log file", "log_utils_error")
     return -1
   }
 
-  
+
   _,ee:=os.write(errorFile, LogMessage)
   if ee != 0
   {
-    errors.throw_utilty_error(1, "Error writing to error log file", "log_utils_error")
+    // errors.throw_utilty_error(1, "Error writing to error log file", "log_utils_error")
     log_utils_error("Error writing to error log file", "log_utils_error")
   }
   return 0
