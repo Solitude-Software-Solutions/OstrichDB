@@ -1,8 +1,8 @@
 package engine
 
-import "../../utils/errors"
-import "../../utils/logging"
-import "../../utils/misc"
+import "../../errors"
+import "../../logging"
+import "../../misc"
 import "../config"
 import "../data"
 import "../security"

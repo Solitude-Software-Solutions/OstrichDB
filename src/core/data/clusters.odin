@@ -1,7 +1,7 @@
 package data
-import "../../utils/errors"
-import "../../utils/logging"
-import "../../utils/misc"
+import "../../errors"
+import "../../logging"
+import "../../misc"
 import "./metadata"
 import "core:fmt"
 import "core:math/rand"
@@ -28,20 +28,19 @@ Cluster :: struct {
 main :: proc() {
 	OST_CREATE_CACHE_FILE()
 	os.make_directory(OST_CLUSTER_PATH)
-	// OST_CREATE_OST_FILE("test",0)
-	// OST_CHOOSE_DB()
 
 }
 
 //creates a file in the bin directory used to store the all used cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
-	cacheFile, err := os.open("../bin/cluster_id_cache", os.O_CREATE, 0o666)
-	if err != 0 {
-		errors.throw_utilty_error(
-			1,
-			"Error creating cluster id cache file",
-			"OST_CREATE_CACHE_FILE",
+	cacheFile, createSuccess := os.open("../bin/cluster_id_cache", os.O_CREATE, 0o666)
+	if createSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_CREATE_FILE,
+			errors.get_err_msg(.CANNOT_CREATE_FILE),
+			#procedure,
 		)
+		errors.throw_err(error1)
 		logging.log_utils_error("Error creating cluster id cache file", "OST_CREATE_CACHE_FILE")
 	}
 	os.close(cacheFile)
@@ -66,10 +65,15 @@ OST_CREATE_OST_FILE :: proc(fileName: string, type: int) -> int {
 			return 1
 		}
 		pathNameExtension := strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
-		createFile, creationErr := os.open(pathNameExtension, os.O_CREATE, 0o666)
+		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o666)
 		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
-		if creationErr != 0 {
-			errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
+		if createSuccess != 0 {
+			error1 := errors.new_err(
+				.CANNOT_CREATE_FILE,
+				errors.get_err_msg(.CANNOT_CREATE_FILE),
+				#procedure,
+			)
+			errors.throw_err(error1)
 			logging.log_utils_error("Error creating .ost file", "OST_CREATE_OST_FILE")
 			return 1
 		}
@@ -83,10 +87,15 @@ OST_CREATE_OST_FILE :: proc(fileName: string, type: int) -> int {
 			return 1
 		}
 		pathNameExtension := strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
-		createFile, creationErr := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o644)
+		createFile, createSuccess := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
-		if creationErr != 0 {
-			errors.throw_utilty_error(1, "Error creating .ost file", "OST_CREATE_OST_FILE")
+		if createSuccess != 0 {
+			error1 := errors.new_err(
+				.CANNOT_CREATE_FILE,
+				errors.get_err_msg(.CANNOT_CREATE_FILE),
+				#procedure,
+			)
+			errors.throw_err(error1)
 			logging.log_utils_error("Error creating .ost file", "OST_CREATE_OST_FILE")
 			return 1
 		}
@@ -113,8 +122,14 @@ OST_PREFORM_CLUSTER_NAME_CHECK :: proc(fn: string) -> int {
 		return 1
 	}
 	//CHECK#2: check if the file already exists
-	existenceCheck, exists := os.read_entire_file_from_filename(fn)
-	if exists {
+	existenceCheck, readSuccess := os.read_entire_file_from_filename(fn)
+	if readSuccess {
+		error1 := errors.new_err(
+			.FILE_ALREADY_EXISTS,
+			errors.get_err_msg(.FILE_ALREADY_EXISTS),
+			#procedure,
+		)
+		errors.throw_err(error1)
 		logging.log_utils_error(".ost file already exists", "OST_CREATE_OST_FILE")
 		return 1
 	}
@@ -138,7 +153,7 @@ OST_GENERATE_CLUSTER_ID :: proc() -> i64 {
 	idExistsAlready := OST_CHECK_CACHE_FOR_ID(ID)
 
 	if idExistsAlready == true {
-		errors.throw_utilty_error(1, "ID already exists in cache file", "OST_GENERATE_CLUSTER_ID")
+		//dont need to throw error for ID existing already
 		logging.log_utils_error("ID already exists in cache file", "OST_GENERATE_CLUSTER_ID")
 		OST_GENERATE_CLUSTER_ID()
 	}
@@ -154,13 +169,14 @@ checks the cluster id cache file to see if the id already exists
 OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
 	buf: [32]byte
 	result: bool
-	openCacheFile, err := os.open("../bin/cluster_id_cache", os.O_RDONLY, 0o666)
-	if err != 0 {
-		errors.throw_utilty_error(
-			1,
-			"Error opening cluster id cache file",
-			"OST_CHECK_CACHE_FOR_ID",
+	openCacheFile, openSuccess := os.open("../bin/cluster_id_cache", os.O_RDONLY, 0o666)
+	if openSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_OPEN_FILE,
+			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			#procedure,
 		)
+		errors.throw_err(error1)
 		logging.log_utils_error("Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
 	}
 	//step#1 convert the passed in i64 id number to a string
@@ -168,13 +184,14 @@ OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
 
 
 	//step#2 read the cache file and compare the id to the cache file
-	readCacheFile, ok := os.read_entire_file(openCacheFile)
-	if ok == false {
-		errors.throw_utilty_error(
-			1,
-			"Error reading cluster id cache file",
-			"OST_CHECK_CACHE_FOR_ID",
+	readCacheFile, readSuccess := os.read_entire_file(openCacheFile)
+	if readSuccess == false {
+		error2 := errors.new_err(
+			.CANNOT_READ_FILE,
+			errors.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
 		)
+		errors.throw_err(error2)
 		logging.log_utils_error("Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
 	}
 
@@ -197,13 +214,14 @@ OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
 */
 OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
 	buf: [32]byte
-	cacheFile, err := os.open("../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
-	if err != 0 {
-		errors.throw_utilty_error(
-			1,
-			"Error opening cluster id cache file",
-			"OST_ADD_ID_TO_CACHE_FILE",
+	cacheFile, openSuccess := os.open("../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
+	if openSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_OPEN_FILE,
+			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			#procedure,
 		)
+		errors.throw_err(error1)
 		logging.log_utils_error("Error opening cluster id cache file", "OST_ADD_ID_TO_CACHE_FILE")
 	}
 
@@ -212,13 +230,14 @@ OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
 
 	//converting stirng to byte array then writing to file
 	transStr := transmute([]u8)idStr
-	writter, ok := os.write(cacheFile, transStr)
-	if ok != 0 {
-		errors.throw_utilty_error(
-			1,
-			"Error writing to cluster id cache file",
-			"OST_ADD_ID_TO_CACHE_FILE",
+	writter, writeSuccess := os.write(cacheFile, transStr)
+	if writeSuccess != 0 {
+		error2 := errors.new_err(
+			.CANNOT_WRITE_TO_FILE,
+			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#procedure,
 		)
+		errors.throw_err(error2)
 		logging.log_utils_error(
 			"Error writing to cluster id cache file",
 			"OST_ADD_ID_TO_CACHE_FILE",
@@ -235,11 +254,9 @@ Creates and appends a new cluster to the specified .ost file
 */
 
 OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: string) -> int {
-
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
-
 	if clusterExists == true {
-		errors.throw_utilty_error(1, "Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
+		// errors.throw_utilty_error(1, "Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
 		logging.log_utils_error("Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
 		return 1
 	}
@@ -247,9 +264,14 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 	LAST_HALF: []string = {"\n\tcluster_id : %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
 	//step#1: open the file
-	clusterFile, err := os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
-	if err != 0 {
-		errors.throw_utilty_error(1, "Error opening cluster file", "OST_CREATE_CLUSTER_BLOCK")
+	clusterFile, openSuccess := os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
+	if openSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_OPEN_FILE,
+			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
 		logging.log_utils_error("Error opening cluster file", "OST_CREATE_CLUSTER_BLOCK")
 	}
 
@@ -266,30 +288,32 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 		//step#3: check if the string contains the %s placeholder if it does replace it with the clusterID
 		if strings.contains(LAST_HALF[i], "%i") {
 			//step#4: replace the %s with the clusterID that is now being converted to a string
-			newClusterID, ok := strings.replace(
+			newClusterID, replaceSuccess := strings.replace(
 				LAST_HALF[i],
 				"%i",
 				strconv.append_int(buf[:], clusterID, 10),
 				-1,
 			)
-			if ok == false {
-				errors.throw_utilty_error(
-					1,
-					"Error placing id and name into cluster template",
-					"OST_CREATE_CLUSTER_BLOCK",
+			if replaceSuccess == false {
+				error2 := errors.new_err(
+					.CANNOT_UPDATE_CLUSTER,
+					errors.get_err_msg(.CANNOT_UPDATE_CLUSTER),
+					#procedure,
 				)
+				errors.throw_err(error2)
 				logging.log_utils_error(
 					"Error placing id into cluster template",
 					"OST_CREATE_CLUSTER_BLOCK",
 				)
 			}
-			writeClusterID, okay := os.write(clusterFile, transmute([]u8)newClusterID)
-			if okay != 0 {
-				errors.throw_utilty_error(
-					1,
-					"Error writing cluster block to file",
-					"OST_CREATE_CLUSTER_BLOCK",
+			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
+			if writeSuccess != 0 {
+				error2 := errors.new_err(
+					.CANNOT_WRITE_TO_FILE,
+					errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+					#procedure,
 				)
+
 				logging.log_utils_error(
 					"Error writing cluster block to file",
 					"OST_CREATE_CLUSTER_BLOCK",
@@ -309,20 +333,26 @@ Used to add a newline character to the end of each id entry in the cluster cache
 See usage in OST_ADD_ID_TO_CACHE_FILE()
 */
 OST_NEWLINE_CHAR :: proc() {
-	cacheFile, err := os.open("../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
-	if err != 0 {
-		errors.throw_utilty_error(1, "Error opening cluster id cache file", "OST_NEWLINE_CHAR")
+	cacheFile, openSuccess := os.open("../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
+	if openSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_OPEN_FILE,
+			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
 		logging.log_utils_error("Error opening cluster id cache file", "OST_NEWLINE_CHAR")
 	}
 	newLineChar: string = "\n"
 	transStr := transmute([]u8)newLineChar
-	writter, ok := os.write(cacheFile, transStr)
-	if ok != 0 {
-		errors.throw_utilty_error(
-			1,
-			"Error writing newline character to cluster id cache file",
-			"OST_NEWLINE_CHAR",
+	writter, writeSuccess := os.write(cacheFile, transStr)
+	if writeSuccess != 0 {
+		error2 := errors.new_err(
+			.CANNOT_WRITE_TO_FILE,
+			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#procedure,
 		)
+		errors.throw_err(error2)
 		logging.log_utils_error(
 			"Error writing newline character to cluster id cache file",
 			"OST_NEWLINE_CHAR",
@@ -343,7 +373,15 @@ OST_CHOOSE_DB :: proc() {
 
 	fmt.printfln("Enter the name of database that you would like to interact with")
 
-	n, err := os.read(os.stdin, buf[:])
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_READ_INPUT,
+			errors.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		errors.throw_err(error1)
+	}
 	if n > 0 {
 		//todo add option for user to enter a command that lists current dbs
 		input := string(buf[:n])
@@ -410,7 +448,15 @@ OST_CHECK_IF_DB_EXISTS :: proc(fn: string, type: int) -> bool {
 //handles logic whehn the user chooses to interact with a specific cluster in a .ost file
 OST_CHOOSE_CLUSTER_NAME :: proc(fn: string) {
 	buf: [256]byte
-	n, err := os.read(os.stdin, buf[:])
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_READ_INPUT,
+			errors.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		errors.throw_err(error1)
+	}
 	if n > 0 {
 		fmt.printfln("Which cluster would you like to interact with?")
 		input := string(buf[:n])
@@ -447,9 +493,14 @@ OST_CHOOSE_CLUSTER_NAME :: proc(fn: string) {
 //fn- filename, cn- clustername
 OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 	clusterFound: bool
-	data, success := os.read_entire_file(fn)
-	if !success {
-		fmt.println("Failed to read file:", fn)
+	data, readSuccess := os.read_entire_file(fn)
+	if !readSuccess {
+		error1 := errors.new_err(
+			.CANNOT_READ_FILE,
+			errors.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
 		return false
 	}
 	defer delete(data)
@@ -461,5 +512,4 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 		clusterFound = false
 	}
 	return clusterFound
-
 }

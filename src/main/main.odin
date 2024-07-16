@@ -5,9 +5,9 @@ import "../core/data"
 import "../core/data/metadata"
 import "../core/engine"
 import "../core/security"
-import "../utils/errors"
-import "../utils/logging"
-import "../utils/misc"
+import "../errors"
+import "../logging"
+import "../misc"
 import "core:fmt"
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
