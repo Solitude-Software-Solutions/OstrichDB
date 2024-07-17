@@ -91,6 +91,38 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 }
 
 
+OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
+	//check if the file exists
+	fileWithExt := strings.concatenate([]string{fileName, const.OST_FILE_EXTENSION})
+	fmt.printfln("Deleting database: %s%s%s", misc.BOLD, fileWithExt, misc.RESET)
+	if !OST_CHECK_IF_COLLECTION_EXISTS(fileName, 0) {
+		fmt.printfln(
+			"Database with name:%s%s%s does not exist",
+			misc.BOLD,
+			fileWithExt,
+			misc.RESET,
+		)
+		return false
+	}
+	//delete the file
+	pathAndName := strings.concatenate([]string{const.OST_COLLECTION_PATH, fileName})
+	pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
+	deleteSuccess := os.remove(pathNameExtension)
+	if deleteSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_DELETE_FILE,
+			errors.get_err_msg(.CANNOT_DELETE_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
+		logging.log_utils_error("Error deleting .ost file", "OST_ERASE_COLLECTION")
+		return false
+	}
+	fmt.printfln("Database with name:%s%s%s has been deleted", misc.BOLD, fileName, misc.RESET)
+	return true
+}
+
+
 OST_PREFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 	nameAsBytes := transmute([]byte)fn
 	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH_AS_BYTES) {
@@ -138,13 +170,15 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 		break
 	}
 
-	clusterDir, errOpen := os.open(dir)
+	fileWithExt := strings.concatenate([]string{fn, const.OST_FILE_EXTENSION})
+	collectionsDir, errOpen := os.open(dir)
 
-	defer os.close(clusterDir)
-	foundFiles, errRead := os.read_dir(clusterDir, -1)
+	defer os.close(collectionsDir)
+	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	for file in foundFiles {
-		if (file.name == fn) {
+		if (file.name == fileWithExt) {
 			dbExists = true
+			return dbExists
 		}
 	}
 	return dbExists

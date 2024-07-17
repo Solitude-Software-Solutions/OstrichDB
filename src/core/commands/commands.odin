@@ -55,39 +55,6 @@ RENAME RECORD Chevy TO Chevrolet WITHIN COLLECTION car companies //renames recor
 */
 
 
-//used to creeate records and clusters and dbs depending on arg passed in
-OST_CREATE_ :: proc(n: string) -> bool {
-	result: bool
-	switch (n) 
-	{
-	case "record":
-		fmt.print("Creating record")
-		//todo need to get what db and cluster the record is going to be in
-		break
-
-	case "cluster":
-		fmt.print("Creating cluster")
-		//todo need to get what db the cluster is going to be in
-		break
-
-	case "collection":
-		fmt.print("Creating collection")
-		//todo need to get what db the collection is going to be in
-		break
-
-	}
-	return result
-}
-
-
-// //EZ
-// OST_EXIT :: proc() {
-// 	fmt.print("Exiting")
-// 	fmt.print("Thank you for using OstrichDB")
-// 	os.exit(0)
-// }
-
-
 OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 
 	incompleteCommandErr := errors.new_err(
@@ -106,7 +73,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 			if !modifierFound {
 				errors.throw_custom_err(
 					incompleteCommandErr,
-					"WITHIN token mmust be used with NEW RECORD tokens",
+					"WITHIN token must be used with NEW RECORD tokens",
 				)
 				return 1
 			}
@@ -117,7 +84,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 			if !modifierFound {
 				errors.throw_custom_err(
 					incompleteCommandErr,
-					"WITHIN token mmust be used with NEW CLUSTER tokens",
+					"WITHIN token must be used with NEW CLUSTER tokens",
 				)
 				return 1
 			}
@@ -128,6 +95,39 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 			}
 			break
 		}
+		break
+	//ERASE/DELETE
+	case ERASE:
+		switch (cmd.o_token) 
+		{
+		case RECORD:
+			cluster, modifierFound := cmd.m_token[WITHIN]
+			if !modifierFound {
+				errors.throw_custom_err(
+					incompleteCommandErr,
+					"WITHIN token must be used with ERASE RECORD tokens",
+				)
+				return 1
+			}
+			break
+
+		case CLUSTER:
+			collection, modifierFound := cmd.m_token[WITHIN]
+			if !modifierFound {
+				errors.throw_custom_err(
+					incompleteCommandErr,
+					"WITHIN token must be used with ERASE CLUSTER tokens",
+				)
+				return 1
+			}
+			break
+		case COLLECTION:
+			if data.OST_ERASE_COLLECTION(cmd.t_token) {
+				fmt.printfln("Collection %s erased", cmd.t_token)
+			}
+			break
+		}
+		break
 	}
 
 	return 0
