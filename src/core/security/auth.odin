@@ -16,22 +16,29 @@ SEC_FILE_PATH :: "../bin/secure/_secure_.ost"
 SEC_CLUSTER_NAME :: "user_credentials"
 
 
-OST_RUN_SIGNIN :: proc() {
+OST_RUN_SIGNIN :: proc() -> bool {
 	//get the username input from the user
 	buf: [1024]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-	   error1 := errors.new_err(.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),#procedure,)
-			errors.throw_err(error1)
+		error1 := errors.new_err(
+			.CANNOT_READ_INPUT,
+			errors.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		errors.throw_err(error1)
 	}
 
 
 	userName := strings.trim_right(string(buf[:n]), "\r\n")
 	userNameFound := data.OST_READ_RECORD_VALUE(SEC_FILE_PATH, SEC_CLUSTER_NAME, userName)
 	if (userNameFound != userName) {
-	    error2:= errors.new_err(.ENTERED_USERNAME_NOT_FOUND, errors.get_err_msg(.ENTERED_USERNAME_NOT_FOUND), #procedure)
+		error2 := errors.new_err(
+			.ENTERED_USERNAME_NOT_FOUND,
+			errors.get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
+			#procedure,
+		)
 		errors.throw_err(error2)
 		OST_RUN_SIGNIN()
 	}
@@ -52,12 +59,15 @@ OST_RUN_SIGNIN :: proc() {
 	//POST-MESHING START=======================================================================================================
 
 	//get the password input from the user
-	n, inputSuccess= os.read(os.stdin, buf[:])
+	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-	      error3 := errors.new_err(.CANNOT_READ_INPUT,
-                errors.get_err_msg(.CANNOT_READ_INPUT),#procedure,)
-                errors.throw_err(error3)
-		return
+		error3 := errors.new_err(
+			.CANNOT_READ_INPUT,
+			errors.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		errors.throw_err(error3)
+		return false
 	}
 	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
 
@@ -82,6 +92,7 @@ OST_RUN_SIGNIN :: proc() {
 		USER_SIGNIN_STATUS = false
 		os.exit(0)
 	}
+	return USER_SIGNIN_STATUS
 
 }
 

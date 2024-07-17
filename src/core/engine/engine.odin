@@ -3,6 +3,7 @@ package engine
 import "../../errors"
 import "../../logging"
 import "../../misc"
+import "../commands"
 import "../config"
 import "../data"
 import "../security"
@@ -18,7 +19,7 @@ import "core:time"
 
 
 ost_engine: Ost_Engine
-
+ost_carrot :: "OST>>>\n"
 // Flags specifically for the tasking system
 Ost_Task_Flag :: enum {
 	None      = 0,
@@ -129,8 +130,24 @@ OST_START_ENGINE :: proc() -> int {
 }
 
 
-//check the config file for the init flag, if it is false then we need to run the initial user setup
-// OST_CHECK_FOR_INIT:: proc() -> bool
-// {
+OST_ENGINE_COMMAND_LINE :: proc() {
+	fmt.print("Welcome to the OstrichDB Command Line")
+	for {
+		//Command line start
+		buf: [1024]byte
+		fmt.print(ost_carrot)
 
-// }
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error := errors.new_err(
+				.CANNOT_READ_INPUT,
+				errors.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			errors.throw_err(error)
+		}
+
+
+		//Command line end
+	}
+}

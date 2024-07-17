@@ -31,8 +31,7 @@ main :: proc() {
 	} else {
 		engine.ost_engine.Initialized = false
 	}
-
-	switch (engine.ost_engine.Initialized)
+	switch (engine.ost_engine.Initialized) 
 	{
 	case false:
 		config.main()
@@ -40,8 +39,16 @@ main :: proc() {
 		break
 
 	case true:
-		security.OST_RUN_SIGNIN()
-		break
+		userSignedIn := security.OST_RUN_SIGNIN()
+		switch (userSignedIn) 
+		{
+		case true:
+			engine.OST_ENGINE_COMMAND_LINE()
+
+		case false:
+			//to stuff
+			break
+		}
 	}
 
 }

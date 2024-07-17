@@ -124,28 +124,28 @@ OST_FIND_ALL_CONFIGS :: proc(configs: ..string) -> bool {
 OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 	file, openSuccess := os.open("../bin/ostrich.config", os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {
-        error1 := errors.new_err(
-            .CANNOT_OPEN_FILE,
-            errors.get_err_msg(.CANNOT_OPEN_FILE),
-            #procedure,
-        )
-        errors.throw_err(error1)
-        return 1
-    }
+		error1 := errors.new_err(
+			.CANNOT_OPEN_FILE,
+			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
+		return 1
+	}
 	defer os.close(file)
 	concat := strings.concatenate([]string{c, " : ", value, "\n"})
 	str := transmute([]u8)concat
 	writter, writeSuccess := os.write(file, str)
 
 	if writeSuccess != 0 {
-        error2 := errors.new_err(
-            .CANNOT_WRITE_TO_FILE,
-            errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
-            #procedure,
-        )
-        errors.throw_err(error2)
-        return 1
-    }
+		error2 := errors.new_err(
+			.CANNOT_WRITE_TO_FILE,
+			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#procedure,
+		)
+		errors.throw_err(error2)
+		return 1
+	}
 
 	return 0
 }
@@ -153,7 +153,7 @@ OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 
 OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 	data, readSuccess := os.read_entire_file("../bin/ostrich.config")
-	if readSuccess != false {
+	if !readSuccess {
 		error1 := errors.new_err(
 			.CANNOT_READ_FILE,
 			errors.get_err_msg(.CANNOT_READ_FILE),
@@ -187,7 +187,7 @@ OST_TOGGLE_CONFIG :: proc(config: string) -> bool {
 	updated := false
 	replaced: bool
 	data, readSuccess := os.read_entire_file("../bin/ostrich.config")
-	if readSuccess != false {
+	if !readSuccess {
 		error1 := errors.new_err(
 			.CANNOT_READ_FILE,
 			errors.get_err_msg(.CANNOT_READ_FILE),
