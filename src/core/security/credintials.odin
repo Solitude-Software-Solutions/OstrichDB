@@ -22,9 +22,6 @@ import "core:time"
 
 
 ost_user: OST_USER
-
-MAX_SIGN_IN_ATTEMPTS :: 10
-ATTEMPTS_BEFORE_TIMER :: 5
 SIGN_IN_ATTEMPTS: int
 FAILED_SIGN_IN_TIMER := time.MIN_DURATION //this will be used to track the time between failed sign in attempts. this timeer will start after the 5th failed attempt in a row
 
@@ -84,7 +81,7 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR_FILE()
-	data.OST_CREATE_OST_FILE("_secure_", 1)
+	data.OST_CREATE_COLLECTION("_secure_", 1)
 	OST_GEN_USER_ID()
 	ost_user.role = OST_User_Role.ADMIN
 	fmt.printfln("Welcome to the Ostrich Database Engine")
@@ -111,9 +108,8 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash", hashAsStr)
 	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "store_method", algoMethodAsString)
 	configToggled := config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
-	fmt.printfln("Toggled: %v", configToggled)
 
-	switch (configToggled)
+	switch (configToggled) 
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -252,7 +248,7 @@ OST_GET_PASSWORD :: proc() -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword
+	switch strongPassword 
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr)
@@ -437,7 +433,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 	checkResults: int
 	checkResults = check1 + check2 + check3
 
-	switch checkResults
+	switch checkResults 
 	{
 	//because i iterate through the arrays, the program adds 1 to the checkResults variable for each type of character found in the password so if the user enters 2 numbers, then 3 special characters the check2 variable will be 2 and the check1 variable will be 3. so basically, as long as the checkResults variable is greater or equal to 3, the password is strong enough. Kinda hacky but maybe someone can come up with a better way to do this one day. Cannot be more than 36 because the password is only 32 characters long
 	case 3 ..< 32:

@@ -2,6 +2,7 @@ package data
 import "../../errors"
 import "../../logging"
 import "../../misc"
+import "../const"
 import "./metadata"
 import "core:fmt"
 import "core:math/rand"
@@ -15,10 +16,6 @@ import "core:strings"
 //=========================================================//
 
 
-MAX_FILE_NAME_LENGTH_AS_BYTES: [512]byte
-OST_CLUSTER_PATH :: "../bin/clusters/"
-OST_SECURE_CLUSTER_PATH :: "../bin/secure/"
-OST_FILE_EXTENSION :: ".ost"
 cluster: Cluster
 Cluster :: struct {
 	_id:    int, //unique identifier for the record cannot be duplicated
@@ -27,7 +24,7 @@ Cluster :: struct {
 
 main :: proc() {
 	OST_CREATE_CACHE_FILE()
-	os.make_directory(OST_CLUSTER_PATH)
+	os.make_directory(const.OST_COLLECTION_PATH)
 
 }
 
@@ -47,102 +44,6 @@ OST_CREATE_CACHE_FILE :: proc() {
 }
 
 
-/*
-Creates a new Cluster file with metadata within the DB
-Clusters are collections of records stored in a .ost file
-Params: fileName - the desired file(cluster) name
-				type - the type of file to create, 0 is standard, 1 is secure
-*/
-OST_CREATE_OST_FILE :: proc(fileName: string, type: int) -> int {
-	// concat the path and the file name into a string depending on the type of file to create
-	pathAndName: string
-	switch (type)
-	{
-	case 0:
-		//standard cluster file
-		pathAndName := strings.concatenate([]string{OST_CLUSTER_PATH, fileName})
-		if OST_PREFORM_CLUSTER_NAME_CHECK(fileName) == 1 {
-			return 1
-		}
-		pathNameExtension := strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
-		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o666)
-		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
-		if createSuccess != 0 {
-			error1 := errors.new_err(
-				.CANNOT_CREATE_FILE,
-				errors.get_err_msg(.CANNOT_CREATE_FILE),
-				#procedure,
-			)
-			errors.throw_err(error1)
-			logging.log_utils_error("Error creating .ost file", "OST_CREATE_OST_FILE")
-			return 1
-		}
-		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
-		defer os.close(createFile)
-		break
-	case 1:
-		//secure file
-		pathAndName := strings.concatenate([]string{OST_SECURE_CLUSTER_PATH, fileName})
-		if OST_PREFORM_CLUSTER_NAME_CHECK(fileName) == 1 {
-			return 1
-		}
-		pathNameExtension := strings.concatenate([]string{pathAndName, OST_FILE_EXTENSION})
-		createFile, createSuccess := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o644)
-		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
-		if createSuccess != 0 {
-			error1 := errors.new_err(
-				.CANNOT_CREATE_FILE,
-				errors.get_err_msg(.CANNOT_CREATE_FILE),
-				#procedure,
-			)
-			errors.throw_err(error1)
-			logging.log_utils_error("Error creating .ost file", "OST_CREATE_OST_FILE")
-			return 1
-		}
-		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
-		defer os.close(createFile)
-
-	}
-	// If all checks pass then create the file with read/write permissions
-	//on Linux the permissions are octal. 0o666 is read/write
-
-	//append and set the metadata header for the file
-
-
-	//generate a unique cluster id and create a new cluster block in the file
-	ID := OST_GENERATE_CLUSTER_ID()
-	return 0
-}
-
-
-OST_PREFORM_CLUSTER_NAME_CHECK :: proc(fn: string) -> int {
-	nameAsBytes := transmute([]byte)fn
-	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH_AS_BYTES) {
-		fmt.printfln("Given file name is too long, Cannot exceed 512 bytes")
-		return 1
-	}
-	//CHECK#2: check if the file already exists
-	existenceCheck, readSuccess := os.read_entire_file_from_filename(fn)
-	if readSuccess {
-		error1 := errors.new_err(
-			.FILE_ALREADY_EXISTS,
-			errors.get_err_msg(.FILE_ALREADY_EXISTS),
-			#procedure,
-		)
-		errors.throw_err(error1)
-		logging.log_utils_error(".ost file already exists", "OST_CREATE_OST_FILE")
-		return 1
-	}
-	//CHECK#3: check if the file name is valid
-	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+-="
-	for c := 0; c < len(fn); c += 1 {
-		if strings.contains_any(fn, invalidChars) {
-			fmt.printfln("Invalid character(s) found in file name: %s", fn)
-			return 1
-		}
-	}
-	return 0
-}
 /*
 Generates the unique cluster id for a new cluster
 then returns it to the caller, relies on OST_ADD_ID_TO_CACHE_FILE() to store the retuned id in a file
@@ -272,7 +173,7 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			#procedure,
 		)
 		errors.throw_err(error1)
-		logging.log_utils_error("Error opening cluster file", "OST_CREATE_CLUSTER_BLOCK")
+		logging.log_utils_error("Error opening collection file", "OST_CREATE_CLUSTER_BLOCK")
 	}
 
 
@@ -365,85 +266,6 @@ OST_NEWLINE_CHAR :: proc() {
 // =====================================DATA INTERACTION=====================================//
 //This section holds procs that deal with user/data interation within the Ostrich Engine
 
-//handle logic for choosing which .ost file the user wants to interact with
-OST_CHOOSE_DB :: proc() {
-	buf: [256]byte
-	input: string
-	ext := ".ost" //concat this to end of input to prevent user from having to type it each time
-
-	fmt.printfln("Enter the name of database that you would like to interact with")
-
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := errors.new_err(
-			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		errors.throw_err(error1)
-	}
-	if n > 0 {
-		//todo add option for user to enter a command that lists current dbs
-		input := string(buf[:n])
-		//trim the string of any whitespace or newline characters
-
-		//Shoutout to the OdinLang Discord for helping me with this...
-		input = strings.trim_right_proc(input, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
-		dbName := strings.concatenate([]string{input, ext})
-		dbExists := OST_CHECK_IF_DB_EXISTS(dbName, 1)
-		switch (dbExists)
-		{
-		case true:
-			fmt.printfln(
-				"%sFound database%s: %s%s%s",
-				misc.GREEN,
-				misc.RESET,
-				misc.BOLD,
-				input,
-				misc.RESET,
-			)
-			//do stuff
-			//todo what would the user like to do with this database?
-			break
-		case false:
-			fmt.printfln("Database with name:%s%s%s does not exist", misc.BOLD, input, misc.RESET)
-			fmt.printfln("please try again")
-			OST_CHOOSE_DB()
-			break
-		}
-	}
-}
-
-//checks if the passed in ost file exists in "../bin/clusters". see usage in OST_CHOOSE_DB()
-//type 0 is for standard cluster files, type 1 is for secure files
-OST_CHECK_IF_DB_EXISTS :: proc(fn: string, type: int) -> bool {
-	dbExists: bool
-	//need to cwd into bin
-	os.set_current_directory("../bin/")
-	dir: string
-	switch (type)
-	{
-	case 0:
-		dir = "clusters/"
-		break
-	case 1:
-		dir = "secure/"
-		break
-	}
-
-	clusterDir, errOpen := os.open(dir)
-
-	defer os.close(clusterDir)
-	foundFiles, errRead := os.read_dir(clusterDir, -1)
-	for file in foundFiles {
-		if (file.name == fn) {
-			dbExists = true
-		}
-	}
-	return dbExists
-}
 
 //handles logic whehn the user chooses to interact with a specific cluster in a .ost file
 OST_CHOOSE_CLUSTER_NAME :: proc(fn: string) {
@@ -468,7 +290,7 @@ OST_CHOOSE_CLUSTER_NAME :: proc(fn: string) {
 		})
 
 		cluserExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, input)
-		switch (cluserExists)
+		switch (cluserExists) 
 		{
 		case true:
 			//todo what would the user like to do with this cluster?

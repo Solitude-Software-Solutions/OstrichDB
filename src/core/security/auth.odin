@@ -4,6 +4,7 @@ import "../../errors"
 import "../../logging"
 import "../../misc"
 import "../config"
+import "../const"
 import "../data"
 import "../data/metadata"
 import "core:fmt"
@@ -12,9 +13,6 @@ import "core:strconv"
 import "core:strings"
 
 USER_SIGNIN_STATUS: bool
-SEC_FILE_PATH :: "../bin/secure/_secure_.ost"
-SEC_CLUSTER_NAME :: "user_credentials"
-
 
 OST_RUN_SIGNIN :: proc() -> bool {
 	//get the username input from the user
@@ -32,7 +30,11 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 
 	userName := strings.trim_right(string(buf[:n]), "\r\n")
-	userNameFound := data.OST_READ_RECORD_VALUE(SEC_FILE_PATH, SEC_CLUSTER_NAME, userName)
+	userNameFound := data.OST_READ_RECORD_VALUE(
+		const.SEC_FILE_PATH,
+		const.SEC_CLUSTER_NAME,
+		userName,
+	)
 	if (userNameFound != userName) {
 		error2 := errors.new_err(
 			.ENTERED_USERNAME_NOT_FOUND,
@@ -45,9 +47,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
-	salt := data.OST_READ_RECORD_VALUE(SEC_FILE_PATH, SEC_CLUSTER_NAME, "salt")
+	salt := data.OST_READ_RECORD_VALUE(const.SEC_FILE_PATH, const.SEC_CLUSTER_NAME, "salt")
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.OST_READ_RECORD_VALUE(SEC_FILE_PATH, SEC_CLUSTER_NAME, "hash")
+	providedHash := data.OST_READ_RECORD_VALUE(const.SEC_FILE_PATH, const.SEC_CLUSTER_NAME, "hash")
 	pHashAsBytes := transmute([]u8)providedHash
 
 
@@ -55,7 +57,11 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	//PRE-MESHING END=========================================================================================================
 
 	//todo cant remember if im looking for "algo_method" something else
-	algoMethod := data.OST_READ_RECORD_VALUE(SEC_FILE_PATH, SEC_CLUSTER_NAME, "store_method")
+	algoMethod := data.OST_READ_RECORD_VALUE(
+		const.SEC_FILE_PATH,
+		const.SEC_CLUSTER_NAME,
+		"store_method",
+	)
 	//POST-MESHING START=======================================================================================================
 
 	//get the password input from the user

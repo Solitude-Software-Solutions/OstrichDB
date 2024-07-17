@@ -5,13 +5,14 @@ import "../../logging"
 import "../../misc"
 import "../commands"
 import "../config"
+import "../const"
 import "../data"
+import "../parser"
 import "../security"
 import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:time"
-
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
 //Desc: This file handles the main engine of the db
@@ -19,7 +20,7 @@ import "core:time"
 
 
 ost_engine: Ost_Engine
-ost_carrot :: "OST>>>\n"
+
 // Flags specifically for the tasking system
 Ost_Task_Flag :: enum {
 	None      = 0,
@@ -83,7 +84,7 @@ Ost_Engine :: struct {
 
 main :: proc() {
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch (configFound) 
+	switch (configFound)
 	{
 	case true:
 		//do stuff
@@ -98,7 +99,7 @@ main :: proc() {
 
 //todo wtf is this lol
 OST_GET_ENGINE_STATUS :: proc() -> int {
-	switch (ost_engine.Status) 
+	switch (ost_engine.Status)
 	{
 	case 0:
 		ost_engine.StatusName = "Idle"
@@ -135,8 +136,7 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 	for {
 		//Command line start
 		buf: [1024]byte
-		fmt.print(ost_carrot)
-
+		fmt.print(const.ost_carrot)
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
 			error := errors.new_err(
@@ -146,6 +146,9 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 			)
 			errors.throw_err(error)
 		}
+		input := strings.trim_right(string(buf[:n]), "\r\n")
+		cmd := parser.OST_PARSE_COMMAND(input)
+		commands.OST_EXECUTE_COMMAND(cmd)
 
 
 		//Command line end

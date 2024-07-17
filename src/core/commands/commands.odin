@@ -1,34 +1,39 @@
 package commands
 
+import "../../errors"
 import "../data"
+import "../types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
 
-//Non Data Commands
+
+//Standard Command Tokens
 HELP :: "HELP"
 EXIT :: "EXIT"
 LOGOUT :: "LOGOUT"
 
-//Standard Data Commands -- Require a space before and after the prefix and atleast one argument
+//Standard Action Tokens-- Require a space before and after the prefix and atleast one argument
 NEW :: "NEW" //used to create a new record, cluster, or collection
 ERASE :: "ERASE" //used to delete a record, cluster, or collection
 FETCH :: "FETCH" //used to get the data from a record, cluster, or collection
 RENAME :: "RENAME" //used to change the name of a record, cluster, or collection
+
+//Modifier Tokens
 AND :: "AND" //used to specify that there is another record, cluster, or collection to be created
 WITHIN :: "WITHIN" //used to specify where the record, cluster, or collection is going to be created
-
-//Special Data Commands
 OF_TYPE :: "OF_TYPE" //ONLY used to specify the type of data that is going to be stored in a record...see types below
 ALL_OF :: "ALL_OF" //ONLY used with FETCH and ERASE.
 TO :: "TO" //ONLY used with RENAME
-//Target Arguments -- Require a data command to be used
+
+
+//Target Argument Tokens -- Require a data to be used
 COLLECTION :: "COLLECTION" //Targets a collection to be manupulated
 CLUSTER :: "CLUSTER" //Targets a cluster to be manipulated
 RECORD :: "RECORD" //Targets a record to be manipulated
 ALL :: "ALL" //Targets all records, clusters, or collections that are specified
 
-//Types -- Requires a special data commands as a prefix
+//Type Tokens -- Requires a special datas as a prefix
 STRING :: "STRING"
 INT :: "INT"
 FLOAT :: "FLOAT"
@@ -48,6 +53,7 @@ ERASE CLUSTER car companies WITHIN COLLECTION car companies //deletes cluster "c
 RENAME RECORD Chevy TO Chevrolet WITHIN COLLECTION car companies //renames record "Chevy" to "Chevrolet" within "car_companies" cluster in "car_industry.ost
 
 */
+
 
 //used to creeate records and clusters and dbs depending on arg passed in
 OST_CREATE_ :: proc(n: string) -> bool {
@@ -74,9 +80,55 @@ OST_CREATE_ :: proc(n: string) -> bool {
 }
 
 
-//EZ
-OST_EXIT :: proc() {
-	fmt.print("Exiting")
-	fmt.print("Thank you for using OstrichDB")
-	os.exit(0)
+// //EZ
+// OST_EXIT :: proc() {
+// 	fmt.print("Exiting")
+// 	fmt.print("Thank you for using OstrichDB")
+// 	os.exit(0)
+// }
+
+
+OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
+
+	incompleteCommandErr := errors.new_err(
+		.INCOMPLETE_COMMAND,
+		errors.get_err_msg(.INCOMPLETE_COMMAND),
+		#procedure,
+	)
+
+	switch (cmd.a_token) 
+	{
+	case NEW:
+		switch (cmd.o_token) 
+		{
+		case RECORD:
+			cluster, modifierFound := cmd.m_token[WITHIN]
+			if !modifierFound {
+				errors.throw_custom_err(
+					incompleteCommandErr,
+					"WITHIN token mmust be used with NEW RECORD tokens",
+				)
+				return 1
+			}
+			break
+
+		case CLUSTER:
+			collection, modifierFound := cmd.m_token[WITHIN]
+			if !modifierFound {
+				errors.throw_custom_err(
+					incompleteCommandErr,
+					"WITHIN token mmust be used with NEW CLUSTER tokens",
+				)
+				return 1
+			}
+			break
+		case COLLECTION:
+			if data.OST_CREATE_COLLECTION(cmd.t_token, 0) {
+				fmt.printfln("Collection %s created", cmd.t_token)
+			}
+			break
+		}
+	}
+
+	return 0
 }
