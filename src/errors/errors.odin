@@ -17,6 +17,7 @@ ErrorType :: enum {
 	CANNOT_UPDATE_FILE, //rarely used. see 1 usage in metadata.odin
 	CANNOT_WRITE_TO_FILE,
 	CANNOT_CLOSE_FILE,
+	CANNOT_DELETE_FILE,
 	FILE_ALREADY_EXISTS,
 	//Directory Errors
 	CANNOT_OPEN_DIRECTORY,
@@ -70,6 +71,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.CANNOT_UPDATE_FILE         = "Cannot Update File",
 	.CANNOT_WRITE_TO_FILE       = "Cannot Write To File",
 	.CANNOT_CLOSE_FILE          = "Cannot Close File",
+	.CANNOT_DELETE_FILE         = "Cannot Delete File",
 	.FILE_ALREADY_EXISTS        = "File Already Exists",
 	.CANNOT_OPEN_DIRECTORY      = "Cannot Open Directory",
 	.CANNOT_READ_DIRECTORY      = "Cannot Read Files In Directory",
