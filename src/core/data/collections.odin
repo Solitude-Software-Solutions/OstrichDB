@@ -235,3 +235,58 @@ OST_CHOOSE_COLLECTION :: proc() {
 		}
 	}
 }
+
+
+OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
+	oldPath := strings.concatenate([]string{const.OST_COLLECTION_PATH, old})
+	oldPathAndExt := strings.concatenate([]string{oldPath, const.OST_FILE_EXTENSION})
+	file, readSuccess := os.read_entire_file_from_filename(oldPathAndExt)
+	if !readSuccess {
+		error1 := errors.new_err(
+			.CANNOT_READ_FILE,
+			errors.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
+		logging.log_utils_error("Error reading .ost file", "OST_RENAME_COLLECTION")
+		return false
+	}
+
+	newName := strings.concatenate([]string{const.OST_COLLECTION_PATH, new})
+	newNameExt := strings.concatenate([]string{newName, const.OST_FILE_EXTENSION})
+	renamed := os.rename(oldPathAndExt, newNameExt)
+	return true
+}
+
+//reads and retuns everything below the metadata header in the .ost file
+OST_FETCH_COLLECTION :: proc(fn: string) -> string {
+	fileStart := -1
+	startingPoint := "[Ostrich File Header End]"
+	filePath := strings.concatenate([]string{const.OST_COLLECTION_PATH, fn})
+	filePathAndExt := strings.concatenate([]string{filePath, const.OST_FILE_EXTENSION})
+	data, readSuccess := os.read_entire_file(filePathAndExt)
+	if !readSuccess {
+		error1 := errors.new_err(
+			.CANNOT_READ_FILE,
+			errors.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
+		logging.log_utils_error("Error reading .ost file", "OST_FETCH_COLLECTION")
+		return ""
+	}
+	defer delete(data)
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+	for i := 0; i < len(lines); i += 1 {
+		if strings.contains(lines[i], startingPoint) {
+			fileStart = i + 1 // Start from the next line after the header
+			break
+		}
+	}
+	if fileStart == -1 || fileStart >= len(lines) {
+		return "No data found after header"
+	}
+	return strings.join(lines[fileStart:], "\n")
+}

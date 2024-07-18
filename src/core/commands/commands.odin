@@ -65,6 +65,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 		#procedure,
 	)
 
+	invalidCommandErr := errors.new_err(
+		.INVALID_COMMAND,
+		errors.get_err_msg(.INVALID_COMMAND),
+		#procedure,
+	)
+
 	switch (cmd.a_token) 
 	{
 	//ONE WORD BASIC COMMANDS
@@ -163,6 +169,66 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 			break
 		}
 		break
+	//RENAMING
+	case RENAME:
+		switch (cmd.o_token) 
+		{
+		case RECORD:
+			break
+
+		case CLUSTER:
+			break
+
+		case COLLECTION:
+			data.OST_RENAME_COLLECTION(cmd.t_token, cmd.m_token[TO])
+			break
+		}
+		break
+
+	case FETCH:
+		switch (cmd.o_token) 
+		{
+		case RECORD:
+			cluster, modifierFound := cmd.m_token[WITHIN]
+			if !modifierFound {
+				errors.throw_custom_err(
+					incompleteCommandErr,
+					"WITHIN token must be used with FETCH RECORD tokens",
+				)
+				return 1
+			}
+			break
+		case CLUSTER:
+			collection, modifierFound := cmd.m_token[WITHIN]
+			if !modifierFound {
+				errors.throw_custom_err(
+					incompleteCommandErr,
+					"WITHIN token must be used with FETCH CLUSTER tokens",
+				)
+				return 1
+			}
+			break
+		case COLLECTION:
+			response := data.OST_FETCH_COLLECTION(cmd.t_token)
+			if response == "" {
+				fmt.printfln(
+					"No data found in collection %s%s%s",
+					misc.BOLD,
+					cmd.t_token,
+					misc.RESET,
+				)
+			} else {
+				fmt.printfln(
+					"Showing all data in collection %s%s%s",
+					misc.BOLD,
+					cmd.t_token,
+					misc.RESET,
+				)
+				fmt.printfln(response)
+			}
+			break
+		}
+
 	}
 
 	return 0
