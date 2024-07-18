@@ -59,6 +59,7 @@ OST_GENERATE_CLUSTER_ID :: proc() -> i64 {
 		OST_GENERATE_CLUSTER_ID()
 	}
 
+	fmt.printfln("Generated ID: %d", ID)
 	OST_ADD_ID_TO_CACHE_FILE(ID)
 	return ID
 }
@@ -153,7 +154,6 @@ OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
 /*
 Creates and appends a new cluster to the specified .ost file
 */
-
 OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: string) -> int {
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
 	if clusterExists == true {
@@ -222,7 +222,12 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
-
+	fmt.printfln(
+		"Creating cluster with name: %s and id: %i inside collection:%s",
+		clusterName,
+		clusterID,
+		fileName,
+	)
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0
@@ -334,4 +339,164 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 		clusterFound = false
 	}
 	return clusterFound
+}
+
+OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) -> bool {
+
+
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collection_name,
+		const.OST_FILE_EXTENSION,
+	)
+
+	// check if the desired new cluster name already exists
+	if OST_CHECK_IF_CLUSTER_EXISTS(collection_path, new) {
+		fmt.printfln(
+			"Cluster with name:%s%s%s already exists in collection: %s",
+			misc.BOLD,
+			new,
+			misc.RESET,
+			collection_name,
+		)
+		fmt.println("Please try again with a different name")
+		return false
+	}
+
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		errors.throw_err(
+			errors.new_err(.CANNOT_READ_FILE, errors.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		return false
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "}")
+	newContent := make([dynamic]u8)
+	defer delete(newContent)
+
+	clusterFound := false
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name : %s", old)) {
+			// if a cluster with the old name is found, replace the name with the new name
+			clusterFound = true
+			newCluster, e := strings.replace(
+				cluster,
+				fmt.tprintf("cluster_name : %s", old),
+				fmt.tprintf("cluster_name : %s", new),
+				1,
+			)
+			//append the new data to the new content variable
+			append(&newContent, ..transmute([]u8)newCluster)
+			// append the closing brace
+			append(&newContent, '}')
+		} else if len(strings.trim_space(cluster)) > 0 {
+			// For other clusters, just add them back unchanged and add the closing brace
+			append(&newContent, ..transmute([]u8)cluster)
+			append(&newContent, '}')
+		}
+	}
+
+	if !clusterFound {
+		errors.throw_err(
+			errors.new_err(
+				.CANNOT_FIND_CLUSTER,
+				fmt.tprintf("Cluster '%s' not found in collection '%s'", old, collection_name),
+				#procedure,
+			),
+		)
+		return false
+	}
+
+	// write new content to file
+	writeSuccess := os.write_entire_file(collection_path, newContent[:])
+	if !writeSuccess {
+		errors.throw_err(
+			errors.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		return false
+	}
+
+	return true
+}
+
+
+//only used to create a cluster from the COMMAND LINE
+OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, id: i64) -> bool {
+
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collectionName,
+		const.OST_FILE_EXTENSION,
+	)
+	FIRST_HALF: []string = {"{\n\tcluster_name : %n"}
+	LAST_HALF: []string = {"\n\tcluster_id : %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
+	buf: [32]byte
+	//step#1: open the file
+	clusterFile, openSuccess := os.open(collectionName, os.O_APPEND | os.O_WRONLY, 0o666)
+	if openSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_OPEN_FILE,
+			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
+		logging.log_utils_error("Error opening collection file", "OST_CREATE_CLUSTER_BLOCK")
+	}
+
+
+	for i := 0; i < len(FIRST_HALF); i += 1 {
+		if (strings.contains(FIRST_HALF[i], "%n")) {
+			//step#5: replace the %n with the cluster name
+			newClusterName, alright := strings.replace(FIRST_HALF[i], "%n", clusterName, -1)
+			writeClusterName, ight := os.write(clusterFile, transmute([]u8)newClusterName)
+		}
+	}
+	//step#2: iterate over the FIRST_HALF array and replace the %s with the passed in clusterID
+	for i := 0; i < len(LAST_HALF); i += 1 {
+		//step#3: check if the string contains the %s placeholder if it does replace it with the clusterID
+		if strings.contains(LAST_HALF[i], "%i") {
+			//step#4: replace the %s with the clusterID that is now being converted to a string
+			newClusterID, replaceSuccess := strings.replace(
+				LAST_HALF[i],
+				"%i",
+				strconv.append_int(buf[:], id, 10),
+				-1,
+			)
+			if replaceSuccess == false {
+				error2 := errors.new_err(
+					.CANNOT_UPDATE_CLUSTER,
+					errors.get_err_msg(.CANNOT_UPDATE_CLUSTER),
+					#procedure,
+				)
+				errors.throw_err(error2)
+				logging.log_utils_error(
+					"Error placing id into cluster template",
+					"OST_CREATE_CLUSTER_BLOCK",
+				)
+			}
+			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
+			if writeSuccess != 0 {
+				error2 := errors.new_err(
+					.CANNOT_WRITE_TO_FILE,
+					errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+					#procedure,
+				)
+
+				logging.log_utils_error(
+					"Error writing cluster block to file",
+					"OST_CREATE_CLUSTER_BLOCK",
+				)
+			}
+		}
+	}
+	return true
 }
