@@ -1,7 +1,9 @@
 package commands
 
 import "../../errors"
+import "../../misc"
 import "../data"
+import "../security"
 import "../types"
 import "core:fmt"
 import "core:os"
@@ -56,7 +58,6 @@ RENAME RECORD Chevy TO Chevrolet WITHIN COLLECTION car companies //renames recor
 
 
 OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
-
 	incompleteCommandErr := errors.new_err(
 		.INCOMPLETE_COMMAND,
 		errors.get_err_msg(.INCOMPLETE_COMMAND),
@@ -65,6 +66,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 
 	switch (cmd.a_token) 
 	{
+	//ONE WORD BASIC COMMANDS
+	case EXIT:
+		//logout then exit the program
+		security.OST_USER_LOGOUT()
+		fmt.print("Now Exiting OstrichDB See you soon!")
+		os.exit(0)
+
+	case LOGOUT:
+		//only returns user to signin.
+		fmt.printfln("Logging out...")
+		security.OST_USER_LOGOUT()
+		break
+
+	case HELP:
+		//TODO: Implement help command
+		break
+
+	//NEW/CREATE
 	case NEW:
 		switch (cmd.o_token) 
 		{
@@ -91,7 +110,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 			break
 		case COLLECTION:
 			if data.OST_CREATE_COLLECTION(cmd.t_token, 0) {
-				fmt.printfln("Collection %s created", cmd.t_token)
+				fmt.printfln(
+					"Collection %s%s%s successfully created",
+					misc.BOLD,
+					cmd.t_token,
+					misc.RESET,
+				)
 			}
 			break
 		}
@@ -123,7 +147,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 			break
 		case COLLECTION:
 			if data.OST_ERASE_COLLECTION(cmd.t_token) {
-				fmt.printfln("Collection %s erased", cmd.t_token)
+				fmt.printfln(
+					"Collection %s%s%s successfully erased",
+					misc.BOLD,
+					cmd.t_token,
+					misc.RESET,
+				)
 			}
 			break
 		}

@@ -79,6 +79,7 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 		OST_APPEND_AND_SET_CONFIG(configOne, "false")
 		OST_APPEND_AND_SET_CONFIG(configTwo, "simple")
 		OST_APPEND_AND_SET_CONFIG(configThree, "true")
+		OST_APPEND_AND_SET_CONFIG("OST_USER_LOGGED_IN", "false")
 	}
 	return true
 }

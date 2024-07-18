@@ -17,6 +17,7 @@ USER_SIGNIN_STATUS: bool
 OST_RUN_SIGNIN :: proc() -> bool {
 	//get the username input from the user
 	buf: [1024]byte
+	fmt.printfln("Please enter your username:")
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
@@ -65,6 +66,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	//POST-MESHING START=======================================================================================================
 
 	//get the password input from the user
+	fmt.printfln("Please enter your password:")
 	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
 		error3 := errors.new_err(
@@ -93,6 +95,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	case true:
 		fmt.printfln("Auth Passed! User has been signed in!")
 		USER_SIGNIN_STATUS = true
+		config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
 	case false:
 		fmt.printfln("Auth Failed. Password was incorrect please try again.")
 		USER_SIGNIN_STATUS = false
@@ -121,15 +124,32 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 	return false
 }
 
-//todo need to call this, make sure the username exists in the secure.ost file then move on to the password
+OST_USER_LOGOUT :: proc() -> bool {
+	loggedOut := config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+
+	switch loggedOut {
+	case true:
+		USER_SIGNIN_STATUS = false
+		fmt.printfln("You have been logged out.")
+		OST_RUN_SIGNIN()
+		break
+	case false:
+		USER_SIGNIN_STATUS = true
+		fmt.printfln("You have NOT been logged out.")
+		break
+	}
+	return USER_SIGNIN_STATUS
+}
+
+
+//todo delete the follwoing 2 procs...
+//todo delete the follwoing 2 procs...
+//todo delete the follwoing 2 procs...
+//todo delete the follwoing 2 procs...
 OST_AUTH_GET_USERNAME :: proc() -> string {
 	fmt.printfln("Please enter your username:")
 	return misc.get_input()
 }
-
-//todo after searching for the provided username in the _secure_.ost file, and confirming that the username exists, will need to pre-mesh the salt and hashed password within that provided username's cluster BEFORE getting the user to enter their password. Doing this will provide a base to compare the entered password.
-
-//todo after the "pre-meshing" of the salt and hashed password, the user will be prompted to enter their password. The entered password will then be hashed using the provided hashing algo method contained within the cluster of the provided username. once hashed the "post-meshing" of the salt and hashed password will be compared to the "pre-meshing", if both match then the user will be signed in.
 
 OST_AUTH_GET_PASSWORD :: proc() -> string {
 	fmt.printfln("Please enter your password:")

@@ -84,7 +84,7 @@ Ost_Engine :: struct {
 
 main :: proc() {
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch (configFound)
+	switch (configFound) 
 	{
 	case true:
 		//do stuff
@@ -99,7 +99,7 @@ main :: proc() {
 
 //todo wtf is this lol
 OST_GET_ENGINE_STATUS :: proc() -> int {
-	switch (ost_engine.Status)
+	switch (ost_engine.Status) 
 	{
 	case 0:
 		ost_engine.StatusName = "Idle"
@@ -132,7 +132,13 @@ OST_START_ENGINE :: proc() -> int {
 
 
 OST_ENGINE_COMMAND_LINE :: proc() {
-	fmt.print("Welcome to the OstrichDB Command Line")
+	//used to constantly evaluate if the user is signed in
+	if security.USER_SIGNIN_STATUS == false {
+		fmt.println("Please sign in to use the command line")
+		return
+	}
+
+	fmt.println("Welcome to the OstrichDB Command Line")
 	for {
 		//Command line start
 		buf: [1024]byte
