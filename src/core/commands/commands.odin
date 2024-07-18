@@ -11,6 +11,7 @@ import "core:strings"
 
 
 //Standard Command Tokens
+VERSION :: "VERSION"
 HELP :: "HELP"
 EXIT :: "EXIT"
 LOGOUT :: "LOGOUT"
@@ -67,6 +68,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 	switch (cmd.a_token) 
 	{
 	//ONE WORD BASIC COMMANDS
+
+	case VERSION:
+		v := misc.get_ost_version()
+		fmt.printfln("Using OstrichDB Version: %s%s%s", misc.BOLD, v, misc.RESET)
+		break
 	case EXIT:
 		//logout then exit the program
 		security.OST_USER_LOGOUT()
