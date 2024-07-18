@@ -124,14 +124,25 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 	return false
 }
 
-OST_USER_LOGOUT :: proc() -> bool {
+OST_USER_LOGOUT :: proc(param: int) -> bool {
 	loggedOut := config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
 
 	switch loggedOut {
 	case true:
-		USER_SIGNIN_STATUS = false
-		fmt.printfln("You have been logged out.")
-		OST_RUN_SIGNIN()
+		switch (param) 
+		{
+		case 0:
+			USER_SIGNIN_STATUS = false
+			fmt.printfln("You have been logged out.")
+			OST_RUN_SIGNIN()
+			break
+		case 1:
+			//only used when logging out AND THEN exiting.
+			USER_SIGNIN_STATUS = false
+			fmt.printfln("You have been logged out.")
+			fmt.println("Now Exiting OstrichDB See you soon!\n")
+			os.exit(0)
+		}
 		break
 	case false:
 		USER_SIGNIN_STATUS = true

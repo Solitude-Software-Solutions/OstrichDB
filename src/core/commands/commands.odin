@@ -81,14 +81,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: types.OST_Command) -> int {
 		break
 	case EXIT:
 		//logout then exit the program
-		security.OST_USER_LOGOUT()
-		fmt.print("Now Exiting OstrichDB See you soon!")
-		os.exit(0)
+		security.OST_USER_LOGOUT(1)
 
 	case LOGOUT:
 		//only returns user to signin.
 		fmt.printfln("Logging out...")
-		security.OST_USER_LOGOUT()
+		security.OST_USER_LOGOUT(0)
 		break
 
 	case HELP:
