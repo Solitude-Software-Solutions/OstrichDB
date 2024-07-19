@@ -204,14 +204,46 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 			break
 		}
 		break
-	//ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 
-	// case ERASE:
-	//    switch(cmd.t_token)
-	// 			{
-
-	// 			}
-
+	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
+	case ERASE:
+		switch (cmd.t_token) 
+		{
+		case COLLECTION:
+			if data.OST_ERASE_COLLECTION(cmd.o_token[0]) {
+				fmt.printfln(
+					"Collection %s%s%s successfully erased",
+					misc.BOLD,
+					cmd.o_token[0],
+					misc.RESET,
+				)
+			}
+			break
+		case CLUSTER:
+			if len(cmd.o_token) >= 2 && WITHIN in cmd.m_token {
+				collection := cmd.o_token[1]
+				cluster := cmd.o_token[0]
+				if data.OST_ERASE_CLUSTER(collection, cluster) {
+					fmt.printfln(
+						"Cluster %s%s%s successfully erased from collection %s%s%s",
+						misc.BOLD,
+						cluster,
+						misc.RESET,
+						misc.BOLD,
+						collection,
+						misc.RESET,
+					)
+				}
+			} else {
+				errors.throw_custom_err(
+					invalidCommandErr,
+					"Invalid ERASE command structure. Correct Usage: ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				)
+			}
+			break
+		case RECORD:
+			break
+		}
 	}
 	return 0
 }

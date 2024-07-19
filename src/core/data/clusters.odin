@@ -501,3 +501,65 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 	}
 	return true
 }
+
+
+OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		errors.throw_err(
+			errors.new_err(.CANNOT_READ_FILE, errors.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		return false
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "}")
+	newContent := make([dynamic]u8)
+	defer delete(newContent)
+	clusterFound := false
+
+	for i := 0; i < len(clusters); i += 1 {
+		cluster := clusters[i]
+		if strings.contains(cluster, fmt.tprintf("cluster_name : %s", cn)) {
+			clusterFound = true
+		} else if len(strings.trim_space(cluster)) > 0 {
+			append(&newContent, ..transmute([]u8)cluster)
+			// Add closing brace only if it's not the last cluster
+			if i < len(clusters) - 1 {
+				append(&newContent, "}")
+			}
+		}
+	}
+
+	if !clusterFound {
+		errors.throw_err(
+			errors.new_err(
+				.CANNOT_FIND_CLUSTER,
+				fmt.tprintf("Cluster '%s' not found in collection '%s'", cn, fn),
+				#procedure,
+			),
+		)
+		return false
+	}
+
+	writeSuccess := os.write_entire_file(collection_path, newContent[:])
+	if !writeSuccess {
+		errors.throw_err(
+			errors.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		return false
+	}
+
+	return true
+}
