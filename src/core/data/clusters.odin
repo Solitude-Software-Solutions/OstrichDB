@@ -58,8 +58,6 @@ OST_GENERATE_CLUSTER_ID :: proc() -> i64 {
 		logging.log_utils_error("ID already exists in cache file", "OST_GENERATE_CLUSTER_ID")
 		OST_GENERATE_CLUSTER_ID()
 	}
-
-	fmt.printfln("Generated ID: %d", ID)
 	OST_ADD_ID_TO_CACHE_FILE(ID)
 	return ID
 }
@@ -437,11 +435,12 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 		collectionName,
 		const.OST_FILE_EXTENSION,
 	)
-	FIRST_HALF: []string = {"{\n\tcluster_name : %n"}
+	FIRST_HALF: []string = {"\n{\n\tcluster_name : %n"}
 	LAST_HALF: []string = {"\n\tcluster_id : %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
 	//step#1: open the file
-	clusterFile, openSuccess := os.open(collectionName, os.O_APPEND | os.O_WRONLY, 0o666)
+	clusterFile, openSuccess := os.open(collection_path, os.O_APPEND | os.O_WRONLY, 0o666)
+	defer os.close(clusterFile)
 	if openSuccess != 0 {
 		error1 := errors.new_err(
 			.CANNOT_OPEN_FILE,
@@ -450,6 +449,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 		)
 		errors.throw_err(error1)
 		logging.log_utils_error("Error opening collection file", "OST_CREATE_CLUSTER_BLOCK")
+		return false
 	}
 
 
@@ -482,6 +482,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 					"Error placing id into cluster template",
 					"OST_CREATE_CLUSTER_BLOCK",
 				)
+				return false
 			}
 			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
 			if writeSuccess != 0 {
@@ -490,11 +491,11 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 					errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
 					#procedure,
 				)
-
 				logging.log_utils_error(
 					"Error writing cluster block to file",
 					"OST_CREATE_CLUSTER_BLOCK",
 				)
+				return false
 			}
 		}
 	}
