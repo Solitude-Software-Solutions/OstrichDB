@@ -32,6 +32,7 @@ ErrorType :: enum {
 	CANNOT_UPDATE_CLUSTER,
 	CANNOT_APPEND_CLUSTER, //to a file
 	//Record Errors
+	INVALID_RECORD_DATA,
 	CANNOT_CREATE_RECORD,
 	CANNOT_FIND_RECORD,
 	CANNOT_DELETE_RECORD,
@@ -83,6 +84,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.CANNOT_READ_CLUSTER        = "Cannot Read Cluster",
 	.CANNOT_UPDATE_CLUSTER      = "Cannot Update Cluster",
 	.CANNOT_APPEND_CLUSTER      = "Cannot Append Cluster",
+	.INVALID_RECORD_DATA        = "Invalid Record Data",
 	.CANNOT_CREATE_RECORD       = "Cannot Create Record",
 	.CANNOT_FIND_RECORD         = "Cannot Find Record",
 	.CANNOT_DELETE_RECORD       = "Cannot Delete Record",
