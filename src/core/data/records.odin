@@ -2,6 +2,7 @@ package data
 
 import "../../errors"
 import "../../misc"
+import "../const"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -293,4 +294,100 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rn: string) -> string {
 	}
 
 	return ""
+}
+
+
+//used to get the type from the command line EX: NEW RECORD isAlive WITHIN CLUSTER presidents OF_TYPE bool. this would return "bool"
+OST_GET_RECORD_TYPE :: proc(rType: string) -> string {
+	switch (rType) 
+	{
+	case const.STRING:
+		return "string"
+	case const.INT:
+		return "int"
+	case const.FLOAT:
+		return "float"
+	case const.BOOL:
+		return "bool"
+	}
+	return ""
+}
+
+
+//used to set the type of a record within the .ost file
+//rType is the type of record that is being set
+//rd is the data that is being set
+OST_SET_RECORD_TYPE :: proc(rType: string, rd: string) -> (string, any) {
+	type := rType
+	qouteChar := "'"
+	alpha := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	numbers := "0123456789"
+	specialChars := "!@#$%^&*()_+{}|:<>?~" //todo find a way to add double quotes to this
+	periodChar := "."
+	b_true := "true"
+	b_false := "false"
+
+	switch (rType) 
+	{
+	case "string":
+		recordAsStr := fmt.tprintf("%s%s%s", qouteChar, rd, qouteChar)
+		type = "string"
+		return rType, recordAsStr
+
+	case "int":
+		// ints can only be whole numbers or a negative number.Prob dont need last two checks lol
+		if strings.contains(rd, qouteChar) ||
+		   strings.contains(rd, specialChars) ||
+		   strings.contains(rd, periodChar) ||
+		   strings.contains(rd, alpha) ||
+		   strings.contains(rd, b_true) ||
+		   strings.contains(rd, b_false) {
+			error1 := errors.new_err(
+				.INVALID_RECORD_DATA,
+				errors.get_err_msg(.INVALID_RECORD_DATA),
+				#procedure,
+			)
+			errors.throw_err(error1)
+			return "", error1
+		} else {
+			type = "int"
+			return rType, rd
+		}
+		break
+	case "float":
+		// floats can only be numbers or a negative number and must contain a period char. prob dont need last two checks lol
+		if strings.contains(rd, qouteChar) ||
+		   strings.contains(rd, specialChars) ||
+		   strings.contains(rd, alpha) ||
+		   !strings.contains(rd, periodChar) ||
+		   strings.contains(rd, b_true) ||
+		   strings.contains(rd, b_false) {
+			error2 := errors.new_err(
+				.INVALID_RECORD_DATA,
+				errors.get_err_msg(.INVALID_RECORD_DATA),
+				#procedure,
+			)
+			errors.throw_err(error2)
+			return "", error2
+		} else {
+			type = "float"
+			return rType, rd
+		}
+		break
+	case "bool":
+		// bools can only be true or false
+		if !strings.contains(rd, b_true) || !strings.contains(rd, b_false) {
+			error3 := errors.new_err(
+				.INVALID_RECORD_DATA,
+				errors.get_err_msg(.INVALID_RECORD_DATA),
+				#procedure,
+			)
+			errors.throw_err(error3)
+			return "", error3
+		} else {
+			type = "bool"
+			return rType, rd
+		}
+	}
+	return "", rd
 }
