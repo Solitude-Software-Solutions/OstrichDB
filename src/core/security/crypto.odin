@@ -1,13 +1,14 @@
 package security
 
+import "../types"
 import "core:crypto"
 import "core:crypto/hash"
+import "core:encoding/hex"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-import "core:encoding/hex"
 
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
@@ -78,77 +79,72 @@ OST_GENERATE_SALT :: proc() -> []u8 {
 }
 
 // p - password, hMethod - store/hashing method, isAuth - is the user authenticating or creating an account
-OST_HASH_PASSWORD :: proc(p: string, sMethod:int, isAuth:bool) -> []u8 {
+OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool) -> []u8 {
 	//generate the salt
 	salt: []u8 = OST_GENERATE_SALT()
-	ost_user.salt = salt //store the salt into the user struct
+	types.user.salt = salt //store the salt into the user struct
 	hashedPassword: []u8
-
 
 
 	//if this password is being hashed during authentication then we already have the hashing method provided
 	//see auth.odin
-	if (isAuth)
-	{
-	  x:= sMethod
-	 hashedPassword = OST_CHOOSE_ALGORITHM(x,p)
-	}
-	else
-	{
-	  x:= rand.choice([]int{1,2,3,4,5})
-	  hashedPassword = OST_CHOOSE_ALGORITHM(x,p)
+	if (isAuth) {
+		x := sMethod
+		hashedPassword = OST_CHOOSE_ALGORITHM(x, p)
+	} else {
+		x := rand.choice([]int{1, 2, 3, 4, 5})
+		hashedPassword = OST_CHOOSE_ALGORITHM(x, p)
 	}
 	return hashedPassword
 }
 
 // choice - hashing method, p - password
-OST_CHOOSE_ALGORITHM ::proc(choice:int, p:string) -> []u8
-{
-    x := choice
-    hashedPassword:[]u8
-    switch (x)
-     {
-     case 1:
-          for i := 0; i < 1; i += 1 {
-                hashedPassword = hash.hash_string(hash.Algorithm.SHA3_224, p)
-          }
-          ost_user.hashedPassword = hashedPassword
-          ost_user.store_method = 1
-          break
-     case 2:
-          for i := 0; i < 1; i += 1 {
-                hashedPassword = hash.hash_string(hash.Algorithm.SHA3_256, p)
-          }
-          ost_user.hashedPassword = hashedPassword
-          ost_user.store_method = 2
-          break
-     case 3:
-          for i := 0; i < 1; i += 1 {
-                hashedPassword = hash.hash_string(hash.Algorithm.SHA3_384, p)
-          }
-          ost_user.hashedPassword = hashedPassword
-          ost_user.store_method = 3
-          break
-     case 4:
-          for i := 0; i < 1; i += 1 {
-                hashedPassword = hash.hash_string(hash.Algorithm.SHA3_512, p)
-          }
-          ost_user.hashedPassword = hashedPassword
-          ost_user.store_method = 4
-          break
-     case 5:
-          for i := 0; i < 1; i += 1 {
-                hashedPassword = hash.hash_string(hash.Algorithm.SHA512_256, p)
-          }
-          ost_user.hashedPassword = hashedPassword
-          ost_user.store_method = 5
-     }
-    return hashedPassword
+OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string) -> []u8 {
+	x := choice
+	hashedPassword: []u8
+	switch (x) 
+	{
+	case 1:
+		for i := 0; i < 1; i += 1 {
+			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_224, p)
+		}
+		types.user.hashedPassword = hashedPassword
+		types.user.store_method = 1
+		break
+	case 2:
+		for i := 0; i < 1; i += 1 {
+			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_256, p)
+		}
+		types.user.hashedPassword = hashedPassword
+		types.user.store_method = 2
+		break
+	case 3:
+		for i := 0; i < 1; i += 1 {
+			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_384, p)
+		}
+		types.user.hashedPassword = hashedPassword
+		types.user.store_method = 3
+		break
+	case 4:
+		for i := 0; i < 1; i += 1 {
+			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_512, p)
+		}
+		types.user.hashedPassword = hashedPassword
+		types.user.store_method = 4
+		break
+	case 5:
+		for i := 0; i < 1; i += 1 {
+			hashedPassword = hash.hash_string(hash.Algorithm.SHA512_256, p)
+		}
+		types.user.hashedPassword = hashedPassword
+		types.user.store_method = 5
+	}
+	return hashedPassword
 }
 
 // hp - hashed password
 OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
-encodedHash:= hex.encode(hp)
-str:= transmute(string)encodedHash
-return  encodedHash
+	encodedHash := hex.encode(hp)
+	str := transmute(string)encodedHash
+	return encodedHash
 }

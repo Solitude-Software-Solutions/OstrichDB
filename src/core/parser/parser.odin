@@ -5,14 +5,15 @@ import "../types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "../const"
 
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	validModifiers := []string {
-		commands.AND,
-		commands.WITHIN,
-		commands.OF_TYPE,
-		commands.ALL_OF,
-		commands.TO,
+		const.AND,
+		const.WITHIN,
+		const.OF_TYPE,
+		const.ALL_OF,
+		const.TO,
 	}
 	for modifier in validModifiers {
 		if strings.to_upper(token) == modifier {
@@ -23,10 +24,10 @@ OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 }
 
 
-OST_PARSE_COMMAND :: proc(input: string) -> types.OST_Command {
+OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
-	cmd := types.OST_Command {
+	cmd := types.Command {
 		o_token = make([dynamic]string),
 		m_token = make(map[string]string),
 		s_token = make(map[string]string),

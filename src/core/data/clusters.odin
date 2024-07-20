@@ -16,11 +16,7 @@ import "core:strings"
 //=========================================================//
 
 
-cluster: Cluster
-Cluster :: struct {
-	_id:    int, //unique identifier for the record cannot be duplicated
-	record: struct {}, //allows for multiple records to be stored in a cluster
-}
+
 
 main :: proc() {
 	OST_CREATE_CACHE_FILE()
@@ -562,4 +558,49 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	}
 
 	return true
+}
+
+
+OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
+	cluster_content: string
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		errors.throw_err(
+			errors.new_err(.CANNOT_READ_FILE, errors.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		return ""
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "}")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name : %s", cn)) {
+			// Find the start of the cluster (opening brace)
+			start_index := strings.index(cluster, "{")
+			if start_index != -1 {
+				// Extract the content between braces
+				cluster_content = cluster[start_index + 1:]
+				// Trim any leading or trailing whitespace
+				cluster_content = strings.trim_space(cluster_content)
+				return cluster_content
+			}
+		}
+	}
+
+	errors.throw_err(
+		errors.new_err(
+			.CANNOT_FIND_CLUSTER,
+			fmt.tprintf("Cluster '%s' not found in collection '%s'", cn, fn),
+			#procedure,
+		),
+	)
+	return ""
 }

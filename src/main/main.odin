@@ -5,6 +5,7 @@ import "../core/data"
 import "../core/data/metadata"
 import "../core/engine"
 import "../core/security"
+import "../core/types"
 import "../errors"
 import "../logging"
 import "../misc"
@@ -27,11 +28,11 @@ main :: proc() {
 	fmt.printfln("%sVersion: %s%s%s", misc.BOLD, misc.GREEN, version, misc.RESET)
 
 	if config.OST_READ_CONFIG_VALUE("ENGINE_INIT") == "true" {
-		engine.ost_engine.Initialized = true
+		types.engine.Initialized = true
 	} else {
-		engine.ost_engine.Initialized = false
+		types.engine.Initialized = false
 	}
-	switch (engine.ost_engine.Initialized) 
+	switch (types.engine.Initialized) 
 	{
 	case false:
 		config.main()

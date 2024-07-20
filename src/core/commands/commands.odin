@@ -2,6 +2,7 @@ package commands
 
 import "../../errors"
 import "../../misc"
+import "../const"
 import "../data"
 import "../security"
 import "../types"
@@ -9,48 +10,12 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 
-
-//Standard Command Tokens
-VERSION :: "VERSION"
-HELP :: "HELP"
-EXIT :: "EXIT"
-LOGOUT :: "LOGOUT"
-
-//Action Tokens-- Require a space before and after the prefix and atleast one argument
-NEW :: "NEW" //used to create a new record, cluster, or collection
-ERASE :: "ERASE" //used to delete a record, cluster, or collection
-FETCH :: "FETCH" //used to get the data from a record, cluster, or collection
-RENAME :: "RENAME" //used to change the name of a record, cluster, or collection
-
-//Target Tokens -- Require a data to be used
-COLLECTION :: "COLLECTION" //Targets a collection to be manupulated
-CLUSTER :: "CLUSTER" //Targets a cluster to be manipulated
-RECORD :: "RECORD" //Targets a record to be manipulated
-ALL :: "ALL" //Targets all records, clusters, or collections that are specified
-
-//Modifier Tokens
-AND :: "AND" //used to specify that there is another record, cluster, or collection to be created
-OF_TYPE :: "OF_TYPE" //ONLY used to specify the type of data that is going to be stored in a record...see types below
-ALL_OF :: "ALL_OF" //ONLY used with FETCH and ERASE.
-TO :: "TO" //ONLY used with RENAME
-
-//Scope Tokens
-WITHIN :: "WITHIN" //used to specify where the record, cluster, or collection is going to be created
-
-
-//Type Tokens -- Requires a special datas as a prefix
-STRING :: "STRING"
-INT :: "INT"
-FLOAT :: "FLOAT"
-BOOL :: "BOOL"
-//might add more...doubtful though
-
 /*
 EXAMPLE USAGES OF ALL COMMANDS AND ARGS:
 
 NEW COLLECTION car companies //creates file "car_industry.ost"
 NEW CLUSTER car companies WITHIN COLLECTION car companies  //creates cluster called "car_companies" within "car_industry.ost
-NEW RECORD Ford OF_TYPE STRING WITHIN COLLECTION car companies //creates record called "Ford" within the "car_companies" cluster in "car_industry.ost
+NEW RECORD Ford OF_TYPE STRING WITHISTRING WITHIN COLLECTION car companies //creates record called "Ford" within the "car_companies" cluster in "car_industry.ost
 NEW RECORD Chevy AND Ferrarri OF_TYPE STRING WITHIN COLLECTION car companies //creates records called "Chevy" and "Ferrari" within the "car_companies" cluster in "car_industry.ost
 ERASE RECORD Ford WITHIN COLLECTION car companies //deletes record "Ford" within the "car_companies" cluster in "car_industry.ost
 FETCH ALL RECORD WITHIN COLLECTION NAMED car companies //would return all records within ANY cluster in "car_industry.ost
@@ -60,7 +25,7 @@ RENAME RECORD Chevy TO Chevrolet WITHIN COLLECTION car companies //renames recor
 */
 
 
-OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
+OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	incompleteCommandErr := errors.new_err(
 		.INCOMPLETE_COMMAND,
 		errors.get_err_msg(.INCOMPLETE_COMMAND),
@@ -78,7 +43,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 	switch (cmd.a_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
-	case VERSION:
+	case const.VERSION:
 		fmt.printfln(
 			"Using OstrichDB Version: %s%s%s",
 			misc.BOLD,
@@ -86,23 +51,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 			misc.RESET,
 		)
 		break
-	case EXIT:
+	case const.EXIT:
 		//logout then exit the program
 		security.OST_USER_LOGOUT(1)
-	case LOGOUT:
+	case const.LOGOUT:
 		//only returns user to signin.
 		fmt.printfln("Logging out...")
 		security.OST_USER_LOGOUT(0)
 		break
-	case HELP:
+	case const.HELP:
 		//TODO: Implement help command
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 
 	//NEW: Allows for the creation of new records, clusters, or collections
-	case NEW:
+	case const.NEW:
 		switch (cmd.t_token) {
-		case COLLECTION:
+		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
 				fmt.printf("Creating collection '%s'\n", cmd.o_token[0])
 				data.OST_CREATE_COLLECTION(cmd.o_token[0], 0)
@@ -113,8 +78,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 				)
 			}
 			break
-		case CLUSTER:
-			if len(cmd.o_token) >= 2 && WITHIN in cmd.m_token {
+		case const.CLUSTER:
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				cluster_name := cmd.o_token[0]
 				collection_name := cmd.o_token[1]
 				fmt.printf(
@@ -135,8 +100,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 				)
 			}
 			break
-		case RECORD:
-			if len(cmd.o_token) >= 2 && WITHIN in cmd.m_token {
+		case const.RECORD:
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				fmt.printf(
 					"Creating record '%s' within cluster '%s' in collection '%s'\n",
 					cmd.o_token[0],
@@ -154,13 +119,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 		}
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
-	case RENAME:
+	case const.RENAME:
 		switch (cmd.t_token) 
 		{
-		case COLLECTION:
-			if len(cmd.o_token) > 0 && TO in cmd.m_token {
+		case const.COLLECTION:
+			if len(cmd.o_token) > 0 && const.TO in cmd.m_token {
 				old_name := cmd.o_token[0]
-				new_name := cmd.m_token[TO]
+				new_name := cmd.m_token[const.TO]
 				fmt.printf("Renaming collection '%s' to '%s'\n", old_name, new_name)
 				data.OST_RENAME_COLLECTION(old_name, new_name)
 			} else {
@@ -170,11 +135,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 				)
 			}
 			break
-		case CLUSTER:
-			if len(cmd.o_token) >= 2 && WITHIN in cmd.m_token && TO in cmd.m_token {
+		case const.CLUSTER:
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token && const.TO in cmd.m_token {
 				old_name := cmd.o_token[0]
 				collection := cmd.o_token[1]
-				new_name := cmd.m_token[TO]
+				new_name := cmd.m_token[const.TO]
 
 				success := data.OST_RENAME_CLUSTER(collection, old_name, new_name)
 				if success {
@@ -189,10 +154,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 				}
 			}
 			break
-		case RECORD:
-			if len(cmd.o_token) > 0 && TO in cmd.m_token {
+		case const.RECORD:
+			if len(cmd.o_token) > 0 && const.TO in cmd.m_token {
 				old_name := cmd.o_token[0]
-				new_name := cmd.m_token[TO]
+				new_name := cmd.m_token[const.TO]
 				fmt.printf("Renaming record '%s' to '%s'\n", old_name, new_name)
 				// data.OST_RENAME_RECORD(old_name, new_name)
 			} else {
@@ -206,10 +171,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 		break
 
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
-	case ERASE:
+	case const.ERASE:
 		switch (cmd.t_token) 
 		{
-		case COLLECTION:
+		case const.COLLECTION:
 			if data.OST_ERASE_COLLECTION(cmd.o_token[0]) {
 				fmt.printfln(
 					"Collection %s%s%s successfully erased",
@@ -219,8 +184,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 				)
 			}
 			break
-		case CLUSTER:
-			if len(cmd.o_token) >= 2 && WITHIN in cmd.m_token {
+		case const.CLUSTER:
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				collection := cmd.o_token[1]
 				cluster := cmd.o_token[0]
 				if data.OST_ERASE_CLUSTER(collection, cluster) {
@@ -241,9 +206,42 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.OST_Command) -> int {
 				)
 			}
 			break
-		case RECORD:
+		case const.RECORD:
 			break
 		}
+		break
+	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
+	case const.FETCH:
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTION:
+			if len(cmd.o_token) > 0 {
+				collection := cmd.o_token[0]
+				data.OST_FETCH_COLLECTION(collection)
+			} else {
+				errors.throw_custom_err(
+					invalidCommandErr,
+					"Invalid FETCH command structure. Correct Usage: FETCH COLLECTION <collection_name>",
+				)
+			}
+			break
+		case const.CLUSTER:
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
+				collection := cmd.o_token[1]
+				cluster := cmd.o_token[0]
+				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
+				fmt.printfln(clusterContent)
+			} else {
+				errors.throw_custom_err(
+					invalidCommandErr,
+					"Invalid FETCH command structure. Correct Usage: FETCH CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				)
+			}
+			break
+		case const.RECORD:
+			break
+		}
+		break
 	}
 	return 0
 }

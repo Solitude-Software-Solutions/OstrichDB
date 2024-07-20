@@ -6,6 +6,7 @@ import "../../misc"
 import "../config"
 import "../data"
 import "../data/metadata"
+import "../types"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -21,32 +22,8 @@ import "core:time"
 //=========================================================//
 
 
-ost_user: OST_USER
 SIGN_IN_ATTEMPTS: int
 FAILED_SIGN_IN_TIMER := time.MIN_DURATION //this will be used to track the time between failed sign in attempts. this timeer will start after the 5th failed attempt in a row
-
-OST_User_Role :: enum {
-	ADMIN,
-	USER,
-	GUEST,
-}
-
-OST_User_Credential :: struct {
-	Value:  string, //username
-	Length: int, //length of the username
-}
-
-OST_USER :: struct {
-	user_id:        i64, //randomly generated user id
-	role:           OST_User_Role,
-	username:       OST_User_Credential,
-	password:       OST_User_Credential, //will never be stored as plain text
-
-	//below this line is for encryption purposes
-	salt:           []u8,
-	hashedPassword: []u8, //this is the hashed password without the salt
-	store_method:   int,
-}
 
 
 OST_GEN_SECURE_DIR_FILE :: proc() -> int {
@@ -83,7 +60,7 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR_FILE()
 	data.OST_CREATE_COLLECTION("_secure_", 1)
 	OST_GEN_USER_ID()
-	ost_user.role = OST_User_Role.ADMIN
+	types.user.role = types.User_Role.ADMIN
 	fmt.printfln("Welcome to the Ostrich Database Engine")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
@@ -91,22 +68,27 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	inituserName := OST_GET_USERNAME()
 	fmt.printfln("Please enter a password for the admin account")
 	initpassword := OST_GET_PASSWORD()
-	saltAsString := string(ost_user.salt)
-	hashAsString := string(ost_user.hashedPassword)
-	algoMethodAsString := strconv.itoa(buf[:], ost_user.store_method)
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "role", "admin")
+	saltAsString := string(types.user.salt)
+	hashAsString := string(types.user.hashedPassword)
+	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
+	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "role", "admin")
 	OST_STORE_USER_CREDS(
 		"user_credentials",
-		ost_user.user_id,
+		types.user.user_id,
 		"user_name",
-		ost_user.username.Value,
+		types.user.username.Value,
 	)
 
 
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "salt", saltAsString)
-	hashAsStr := transmute(string)ost_user.hashedPassword
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash", hashAsStr)
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "store_method", algoMethodAsString)
+	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "salt", saltAsString)
+	hashAsStr := transmute(string)types.user.hashedPassword
+	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "hash", hashAsStr)
+	OST_STORE_USER_CREDS(
+		"user_credentials",
+		types.user.user_id,
+		"store_method",
+		algoMethodAsString,
+	)
 	configToggled := config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
 
 	switch (configToggled) 
@@ -128,7 +110,7 @@ OST_GEN_USER_ID :: proc() -> i64 {
 		logging.log_utils_error("ID already exists in user file", "OST_GEN_USER_ID")
 		OST_GEN_USER_ID()
 	}
-	ost_user.user_id = userID
+	types.user.user_id = userID
 	return userID
 
 }
@@ -211,12 +193,12 @@ OST_GET_USERNAME :: proc() -> string {
 			)
 			OST_GET_USERNAME()
 		} else {
-			ost_user.username.Value = strings.clone(enteredStr)
-			ost_user.username.Length = len(enteredStr)
+			types.user.username.Value = strings.clone(enteredStr)
+			types.user.username.Length = len(enteredStr)
 		}
 
 	}
-	return ost_user.username.Value
+	return types.user.username.Value
 }
 
 
@@ -243,7 +225,7 @@ OST_GET_PASSWORD :: proc() -> string {
 		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
 			return r == '\r' || r == '\n'
 		})
-		ost_user.password.Value = enteredStr
+		types.user.password.Value = enteredStr
 	}
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
@@ -294,14 +276,14 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 		OST_GET_PASSWORD()
 	} else {
 
-		ost_user.password.Length = len(p)
-		ost_user.password.Value = strings.clone(ost_user.password.Value)
-		ost_user.hashedPassword = OST_HASH_PASSWORD(p, 0, false)
+		types.user.password.Length = len(p)
+		types.user.password.Value = strings.clone(types.user.password.Value)
+		types.user.hashedPassword = OST_HASH_PASSWORD(p, 0, false)
 
-		encodedPassword := OST_ENCODE_HASHED_PASSWORD(ost_user.hashedPassword)
-		ost_user.hashedPassword = encodedPassword
+		encodedPassword := OST_ENCODE_HASHED_PASSWORD(types.user.hashedPassword)
+		types.user.hashedPassword = encodedPassword
 	}
-	return ost_user.password.Value
+	return types.user.password.Value
 }
 
 // cn- cluster name, id- cluster id, dn- data name, d- data
