@@ -94,11 +94,20 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 			errors.throw_err(error)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
-		cmd := parser.OST_PARSE_COMMAND(input)
-		// fmt.printfln("Command: %v", cmd) //debugging
-		commands.OST_EXECUTE_COMMAND(&cmd)
-
-
+		switch(types.focus.flag)
+		{
+		case false:
+    		cmd := parser.OST_PARSE_COMMAND(input)
+            fmt.printfln("Focus mode is off")
+    		fmt.printfln("Command: %v", cmd) //debugging
+    		commands.OST_EXECUTE_COMMAND(&cmd)
+    		break
+        case true:
+            cmd:= parser.OST_PARSE_FOCUS_COMMAND(input)
+            fmt.printfln("Focus mode is on")
+            fmt.printfln("Command: %v", cmd) //debugging
+            commands.OST_EXECUTE_COMMAND(&cmd)
+		}
 		//Command line end
 	}
 }

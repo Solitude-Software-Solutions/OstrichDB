@@ -84,7 +84,7 @@ Desc: Used to define the overall structure of the Ostrich Engine
         be used to control *most* operations within the database
 Usage Locations: NOT YET FULLY IMPLEMENTED but will be used engine.odin
 */
-engine:Engine
+engine: Engine
 Engine :: struct {
 	EngineRuntime:   time.Duration, // The amount of time the engine has been running
 	Status:          int, // 0, 1, 2
@@ -138,7 +138,7 @@ Desc: Used to define the structure of a user within the Ostrich Database
       Users are the entities that interact with the Ostrich Database
 Usage Locations: credentials.odin
 */
-user:User
+user: User
 User :: struct {
 	user_id:        i64, //randomly generated user id
 	role:           User_Role,
@@ -149,4 +149,20 @@ User :: struct {
 	salt:           []u8,
 	hashedPassword: []u8, //this is the hashed password without the salt
 	store_method:   int,
+}
+
+//=================================================/src/core/focus/=================================================//
+/*
+Type: Focus
+Desc: Used to determin which layer of data the user is focusing on to shorten the
+      amount of ATOM tokns that the user needs to enter when executing a command
+Usage Locations: focus.odin
+*/
+focus: Focus
+Focus :: struct {
+    t_: string,        // The primary target (e.g., "CLUSTER" or "COLLECTION")
+    o_: string,        // The primary object (e.g., "myCluster" or "myCollection")
+    parent_t_: string, // The parent target (e.g., "COLLECTION" for a CLUSTER within a COLLECTION)
+    parent_o_: string, // The parent object
+    flag: bool,        // If the focus is active
 }

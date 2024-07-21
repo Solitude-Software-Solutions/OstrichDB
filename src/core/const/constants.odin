@@ -36,6 +36,7 @@ NEW :: "NEW" //used to create a new record, cluster, or collection
 ERASE :: "ERASE" //used to delete a record, cluster, or collection
 FETCH :: "FETCH" //used to get the data from a record, cluster, or collection
 RENAME :: "RENAME" //used to change the name of a record, cluster, or collection
+FOCUS :: "FOCUS" //used cahnge the focus or scope that commands are being executed in
 
 //Target Tokens -- Require a data to be used
 COLLECTION :: "COLLECTION" //Targets a collection to be manupulated

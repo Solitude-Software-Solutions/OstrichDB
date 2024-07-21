@@ -9,7 +9,6 @@ import "../types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-
 /*
 EXAMPLE USAGES OF ALL COMMANDS AND ARGS:
 
@@ -40,7 +39,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	defer delete(cmd.o_token)
 
 
-	switch (cmd.a_token) 
+	switch (cmd.a_token)
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 	case const.VERSION:
@@ -120,7 +119,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case const.RENAME:
-		switch (cmd.t_token) 
+		switch (cmd.t_token)
 		{
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 && const.TO in cmd.m_token {
@@ -172,7 +171,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case const.ERASE:
-		switch (cmd.t_token) 
+		switch (cmd.t_token)
 		{
 		case const.COLLECTION:
 			if data.OST_ERASE_COLLECTION(cmd.o_token[0]) {
@@ -212,7 +211,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case const.FETCH:
-		switch (cmd.t_token) 
+		switch (cmd.t_token)
 		{
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
@@ -242,6 +241,59 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		break
+	//FOCUS and UNFOCUS
+	//Such a cluster fuck enter at own peril
+	case const.FOCUS:
+	    types.focus.flag = true
+		switch (cmd.t_token)
+            {
+            case const.COLLECTION:
+                  if len(cmd.o_token) > 0 {
+                      collection := cmd.o_token[0]
+                      types.focus.t_ = const.COLLECTION
+                      types.focus.o_ = collection
+                      fmt.printf("Focus set to COLLECTION %s\n", collection)
+                  } else {
+                      errors.throw_custom_err(
+                          invalidCommandErr,
+                          "Invalid FOCUS command structure. Correct Usage: FOCUS COLLECTION <collection_name>",
+                      )
+            }
+		break
+		case const.CLUSTER:
+        if len(cmd.o_token) > 0 {
+            cluster := cmd.o_token[0]
+            if within, exists := cmd.m_token["WITHIN"]; exists && within == const.COLLECTION {
+                if collection, exists := cmd.s_token["COLLECTION"]; exists {
+                    types.focus.t_ = const.CLUSTER
+                    types.focus.o_ = cluster
+                    types.focus.parent_t_ = const.COLLECTION
+                    types.focus.parent_o_ = collection
+                    fmt.printf("Focus set to CLUSTER %s WITHIN COLLECTION %s\n", cluster, collection)
+                } else {
+                    errors.throw_custom_err(
+                        invalidCommandErr,
+                        "Invalid FOCUS command structure. Missing COLLECTION name.",
+                    )
+                }
+            } else {
+                types.focus.t_ = const.CLUSTER
+                types.focus.o_ = cluster
+                types.focus.parent_t_ = ""
+                types.focus.parent_o_ = ""
+                fmt.printf("Focus set to CLUSTER %s\n", cluster)
+            }
+        } else {
+            errors.throw_custom_err(
+                invalidCommandErr,
+                "Invalid FOCUS command structure. Correct Usage: FOCUS CLUSTER <cluster_name> [WITHIN COLLECTION <collection_name>]",
+            )
+        }
+        break
+	}
+	break
 	}
 	return 0
 }
+
+//todo still working on focus and unfocus
