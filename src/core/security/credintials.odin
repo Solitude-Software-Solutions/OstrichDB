@@ -6,6 +6,7 @@ import "../../misc"
 import "../config"
 import "../data"
 import "../data/metadata"
+import "../types"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -21,35 +22,8 @@ import "core:time"
 //=========================================================//
 
 
-ost_user: OST_USER
-
-MAX_SIGN_IN_ATTEMPTS :: 10
-ATTEMPTS_BEFORE_TIMER :: 5
 SIGN_IN_ATTEMPTS: int
 FAILED_SIGN_IN_TIMER := time.MIN_DURATION //this will be used to track the time between failed sign in attempts. this timeer will start after the 5th failed attempt in a row
-
-OST_User_Role :: enum {
-	ADMIN,
-	USER,
-	GUEST,
-}
-
-OST_User_Credential :: struct {
-	Value:  string, //username
-	Length: int, //length of the username
-}
-
-OST_USER :: struct {
-	user_id:        i64, //randomly generated user id
-	role:           OST_User_Role,
-	username:       OST_User_Credential,
-	password:       OST_User_Credential, //will never be stored as plain text
-
-	//below this line is for encryption purposes
-	salt:           []u8,
-	hashedPassword: []u8, //this is the hashed password without the salt
-	store_method:   int,
-}
 
 
 OST_GEN_SECURE_DIR_FILE :: proc() -> int {
@@ -60,14 +34,19 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 		error1 := errors.new_err(
 			.CANNOT_CREATE_DIRECTORY,
 			errors.get_err_msg(.CANNOT_CREATE_DIRECTORY),
-			#procedure)
+			#procedure,
+		)
 		errors.throw_err(error1)
 	}
 
 	//use os.open to create a file in the secure directory
 	file, createSuccess := os.open("../bin/secure/_secure_.ost", 0o666)
 	if createSuccess != 0 {
-		error2 := errors.new_err(.CANNOT_CREATE_FILE,errors.get_err_msg(.CANNOT_CREATE_FILE),#procedure)
+		error2 := errors.new_err(
+			.CANNOT_CREATE_FILE,
+			errors.get_err_msg(.CANNOT_CREATE_FILE),
+			#procedure,
+		)
 		errors.throw_err(error2)
 		return 1
 	}
@@ -79,9 +58,9 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR_FILE()
-	data.OST_CREATE_OST_FILE("_secure_", 1)
+	data.OST_CREATE_COLLECTION("_secure_", 1)
 	OST_GEN_USER_ID()
-	ost_user.role = OST_User_Role.ADMIN
+	types.user.role = types.User_Role.ADMIN
 	fmt.printfln("Welcome to the Ostrich Database Engine")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
@@ -89,24 +68,37 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	inituserName := OST_GET_USERNAME()
 	fmt.printfln("Please enter a password for the admin account")
 	initpassword := OST_GET_PASSWORD()
-	saltAsString := string(ost_user.salt)
-	hashAsString := string(ost_user.hashedPassword)
-	algoMethodAsString := strconv.itoa(buf[:], ost_user.store_method)
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "role", "admin")
+	saltAsString := string(types.user.salt)
+	hashAsString := string(types.user.hashedPassword)
+	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
+	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "role", "admin")
 	OST_STORE_USER_CREDS(
 		"user_credentials",
-		ost_user.user_id,
+		types.user.user_id,
 		"user_name",
-		ost_user.username.Value,
+		types.user.username.Value,
 	)
 
 
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "salt", saltAsString)
-	hashAsStr := transmute(string)ost_user.hashedPassword
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "hash", hashAsStr)
-	OST_STORE_USER_CREDS("user_credentials", ost_user.user_id, "store_method", algoMethodAsString)
-	config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
-	USER_SIGNIN_STATUS = true
+	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "salt", saltAsString)
+	hashAsStr := transmute(string)types.user.hashedPassword
+	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "hash", hashAsStr)
+	OST_STORE_USER_CREDS(
+		"user_credentials",
+		types.user.user_id,
+		"store_method",
+		algoMethodAsString,
+	)
+	configToggled := config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
+
+	switch (configToggled) 
+	{
+	case true:
+		USER_SIGNIN_STATUS = true
+	case false:
+		fmt.printfln("Error toggling config")
+		os.exit(1)
+	}
 
 
 	return 0
@@ -118,7 +110,7 @@ OST_GEN_USER_ID :: proc() -> i64 {
 		logging.log_utils_error("ID already exists in user file", "OST_GEN_USER_ID")
 		OST_GEN_USER_ID()
 	}
-	ost_user.user_id = userID
+	types.user.user_id = userID
 	return userID
 
 }
@@ -129,8 +121,12 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	openCacheFile, openSuccess := os.open("../bin/secure/_secure_.ost", os.O_RDONLY, 0o666)
 
 	if openSuccess != 0 {
-	error1:=errors.new_err(.CANNOT_OPEN_FILE,errors.get_err_msg(.CANNOT_OPEN_FILE),#procedure)
-	        errors.throw_err(error1)
+		error1 := errors.new_err(
+			.CANNOT_OPEN_FILE,
+			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
 		logging.log_utils_error("Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
 	}
 	//step#1 convert the passed in i64 id number to a string
@@ -140,8 +136,12 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	//step#2 read the cache file and compare the id to the cache file
 	readCacheFile, readSuccess := os.read_entire_file(openCacheFile)
 	if readSuccess == false {
-	   errors2:=errors.new_err(.CANNOT_READ_FILE,errors.get_err_msg(.CANNOT_READ_FILE),#procedure)
-                    errors.throw_err(errors2)
+		errors2 := errors.new_err(
+			.CANNOT_READ_FILE,
+			errors.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		errors.throw_err(errors2)
 		logging.log_utils_error("Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
 	}
 
@@ -166,8 +166,12 @@ OST_GET_USERNAME :: proc() -> string {
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-	      error1:=errors.new_err(.CANNOT_READ_INPUT,errors.get_err_msg(.CANNOT_READ_INPUT),#procedure)
-                    errors.throw_err(error1)
+		error1 := errors.new_err(
+			.CANNOT_READ_INPUT,
+			errors.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		errors.throw_err(error1)
 		logging.log_utils_error("Error reading input", "OST_GET_USERNAME")
 	}
 	if n > 0 {
@@ -189,12 +193,12 @@ OST_GET_USERNAME :: proc() -> string {
 			)
 			OST_GET_USERNAME()
 		} else {
-			ost_user.username.Value = strings.clone(enteredStr)
-			ost_user.username.Length = len(enteredStr)
+			types.user.username.Value = strings.clone(enteredStr)
+			types.user.username.Length = len(enteredStr)
 		}
 
 	}
-	return ost_user.username.Value
+	return types.user.username.Value
 }
 
 
@@ -205,9 +209,13 @@ OST_GET_PASSWORD :: proc() -> string {
 	enteredStr: string
 	if inputSuccess != 0 {
 
-		  error1:=errors.new_err(.CANNOT_READ_INPUT,errors.get_err_msg(.CANNOT_READ_INPUT),#procedure)
-                    errors.throw_err(error1)
-	logging.log_utils_error("Error reading input", "OST_GET_PASSWORD")
+		error1 := errors.new_err(
+			.CANNOT_READ_INPUT,
+			errors.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		errors.throw_err(error1)
+		logging.log_utils_error("Error reading input", "OST_GET_PASSWORD")
 	}
 	if n > 0 {
 		enteredStr = string(buf[:n])
@@ -217,12 +225,12 @@ OST_GET_PASSWORD :: proc() -> string {
 		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
 			return r == '\r' || r == '\n'
 		})
-		ost_user.password.Value = enteredStr
+		types.user.password.Value = enteredStr
 	}
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword
+	switch strongPassword 
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr)
@@ -246,9 +254,13 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 	confirmation: string
 
 	if inputSuccess != 0 {
-		 error1:=errors.new_err(.CANNOT_READ_INPUT,errors.get_err_msg(.CANNOT_READ_INPUT),#procedure)
-                    errors.throw_err(error1)
-	logging.log_utils_error("Error reading input", "OST_CONFIRM_PASSWORD")
+		error1 := errors.new_err(
+			.CANNOT_READ_INPUT,
+			errors.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		errors.throw_err(error1)
+		logging.log_utils_error("Error reading input", "OST_CONFIRM_PASSWORD")
 	}
 	if n > 0 {
 		confirmation = string(buf[:n])
@@ -264,14 +276,14 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 		OST_GET_PASSWORD()
 	} else {
 
-		ost_user.password.Length = len(p)
-		ost_user.password.Value = strings.clone(ost_user.password.Value)
-		ost_user.hashedPassword = OST_HASH_PASSWORD(p, 0, false)
+		types.user.password.Length = len(p)
+		types.user.password.Value = strings.clone(types.user.password.Value)
+		types.user.hashedPassword = OST_HASH_PASSWORD(p, 0, false)
 
-		encodedPassword := OST_ENCODE_HASHED_PASSWORD(ost_user.hashedPassword)
-		ost_user.hashedPassword = encodedPassword
+		encodedPassword := OST_ENCODE_HASHED_PASSWORD(types.user.hashedPassword)
+		types.user.hashedPassword = encodedPassword
 	}
-	return ost_user.password.Value
+	return types.user.password.Value
 }
 
 // cn- cluster name, id- cluster id, dn- data name, d- data
@@ -283,9 +295,13 @@ OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int 
 	ID := data.OST_GENERATE_CLUSTER_ID()
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {
-	           error1:=errors.new_err(.CANNOT_OPEN_FILE,errors.get_err_msg(.CANNOT_OPEN_FILE),#procedure)
-                    errors.throw_err(error1)
-	logging.log_utils_error("Error opening user credentials file", "OST_STORE_USER_CREDS")
+		error1 := errors.new_err(
+			.CANNOT_OPEN_FILE,
+			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			#procedure,
+		)
+		errors.throw_err(error1)
+		logging.log_utils_error("Error opening user credentials file", "OST_STORE_USER_CREDS")
 	}
 	defer os.close(file)
 
@@ -399,7 +415,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 	checkResults: int
 	checkResults = check1 + check2 + check3
 
-	switch checkResults
+	switch checkResults 
 	{
 	//because i iterate through the arrays, the program adds 1 to the checkResults variable for each type of character found in the password so if the user enters 2 numbers, then 3 special characters the check2 variable will be 2 and the check1 variable will be 3. so basically, as long as the checkResults variable is greater or equal to 3, the password is strong enough. Kinda hacky but maybe someone can come up with a better way to do this one day. Cannot be more than 36 because the password is only 32 characters long
 	case 3 ..< 32:
