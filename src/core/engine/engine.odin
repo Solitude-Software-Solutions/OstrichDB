@@ -25,7 +25,7 @@ import "core:time"
 
 main :: proc() {
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch (configFound)
+	switch (configFound) 
 	{
 	case true:
 		//do stuff
@@ -40,7 +40,7 @@ main :: proc() {
 
 //todo wtf is this lol
 OST_GET_ENGINE_STATUS :: proc() -> int {
-	switch (types.engine.Status)
+	switch (types.engine.Status) 
 	{
 	case 0:
 		types.engine.StatusName = "Idle"
@@ -94,20 +94,44 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 			errors.throw_err(error)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
-		switch(types.focus.flag)
+		cmd := parser.OST_PARSE_COMMAND(input)
+		fmt.printfln("Command: %v", cmd) //debugging
+		commands.OST_EXECUTE_COMMAND(&cmd)
+
+
+		switch (types.focus.flag) 
 		{
-		case false:
-    		cmd := parser.OST_PARSE_COMMAND(input)
-            fmt.printfln("Focus mode is off")
-    		fmt.printfln("Command: %v", cmd) //debugging
-    		commands.OST_EXECUTE_COMMAND(&cmd)
-    		break
-        case true:
-            cmd:= parser.OST_PARSE_FOCUS_COMMAND(input)
-            fmt.printfln("Focus mode is on")
-            fmt.printfln("Command: %v", cmd) //debugging
-            commands.OST_EXECUTE_COMMAND(&cmd)
+		case true:
+			fmt.printfln("Focus mode is on")
+			OST_FOCUSED_COMMAND_LINE()
+			break
 		}
+
 		//Command line end
 	}
+}
+
+
+OST_FOCUSED_COMMAND_LINE :: proc() {
+	fmt.println("NOW USING FOCUS MODE")
+	for types.focus.flag == true {
+		//Command line start
+		buf: [1024]byte
+		fmt.print(const.ost_carrot)
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error := errors.new_err(
+				.CANNOT_READ_INPUT,
+				errors.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			errors.throw_err(error)
+		}
+		input := strings.trim_right(string(buf[:n]), "\r\n")
+		cmd := parser.OST_PARSE_COMMAND(input)
+		fmt.printfln("Command: %v", cmd) //debugging
+		commands.EXECUTE_COMMANDS_WHILE_FOCUSED(&cmd, types.focus.t_, types.focus.o_)
+		//Command line end
+	}
+
 }

@@ -39,7 +39,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	defer delete(cmd.o_token)
 
 
-	switch (cmd.a_token)
+	switch (cmd.a_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 	case const.VERSION:
@@ -60,6 +60,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	case const.HELP:
 		//TODO: Implement help command
+		break
+	case const.UNFOCUS:
+		fmt.printfln("Cannot Unfocus becuase you are currently not in focus mode.")
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 
@@ -119,7 +122,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case const.RENAME:
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 && const.TO in cmd.m_token {
@@ -171,7 +174,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case const.ERASE:
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			if data.OST_ERASE_COLLECTION(cmd.o_token[0]) {
@@ -211,7 +214,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case const.FETCH:
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
@@ -241,59 +244,189 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		break
-	//FOCUS and UNFOCUS
-	//Such a cluster fuck enter at own peril
+	//FOCUS and UNFOCUS: Enter at own peril.
 	case const.FOCUS:
-	    types.focus.flag = true
-		switch (cmd.t_token)
-            {
-            case const.COLLECTION:
-                  if len(cmd.o_token) > 0 {
-                      collection := cmd.o_token[0]
-                      types.focus.t_ = const.COLLECTION
-                      types.focus.o_ = collection
-                      fmt.printf("Focus set to COLLECTION %s\n", collection)
-                  } else {
-                      errors.throw_custom_err(
-                          invalidCommandErr,
-                          "Invalid FOCUS command structure. Correct Usage: FOCUS COLLECTION <collection_name>",
-                      )
-            }
-		break
+		types.focus.flag = true
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTION:
+			if len(cmd.o_token) > 0 {
+				collection := cmd.o_token[0]
+				storedT, storedO := data.OST_FOCUS(const.COLLECTION, collection)
+			} else {
+				errors.throw_custom_err(
+					invalidCommandErr,
+					"Invalid NEW command structure. Correct Usage: NEW COLLECTION <collection_name>",
+				)
+			}
+			break
 		case const.CLUSTER:
-        if len(cmd.o_token) > 0 {
-            cluster := cmd.o_token[0]
-            if within, exists := cmd.m_token["WITHIN"]; exists && within == const.COLLECTION {
-                if collection, exists := cmd.s_token["COLLECTION"]; exists {
-                    types.focus.t_ = const.CLUSTER
-                    types.focus.o_ = cluster
-                    types.focus.parent_t_ = const.COLLECTION
-                    types.focus.parent_o_ = collection
-                    fmt.printf("Focus set to CLUSTER %s WITHIN COLLECTION %s\n", cluster, collection)
-                } else {
-                    errors.throw_custom_err(
-                        invalidCommandErr,
-                        "Invalid FOCUS command structure. Missing COLLECTION name.",
-                    )
-                }
-            } else {
-                types.focus.t_ = const.CLUSTER
-                types.focus.o_ = cluster
-                types.focus.parent_t_ = ""
-                types.focus.parent_o_ = ""
-                fmt.printf("Focus set to CLUSTER %s\n", cluster)
-            }
-        } else {
-            errors.throw_custom_err(
-                invalidCommandErr,
-                "Invalid FOCUS command structure. Correct Usage: FOCUS CLUSTER <cluster_name> [WITHIN COLLECTION <collection_name>]",
-            )
-        }
-        break
-	}
-	break
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
+				cluster := cmd.o_token[0]
+				collection := cmd.o_token[1]
+				storedT, storedO := data.OST_FOCUS(collection, cluster) //storing the Target and Objec that the user wants to focus)
+			}
+			break
+		//todo: come back to this..havent done enough commands to test this in focus mode yet
+		case const.RECORD:
+			if len(cmd.o_token) >= 3 && const.WITHIN in cmd.m_token {
+				record := cmd.o_token[0]
+				cluster := cmd.o_token[1]
+				collection := cmd.o_token[2]
+				storedParentT, storedParentO, storedRO := data.OST_FOCUS_RECORD(
+					collection,
+					cluster,
+					record,
+				)
+				fmt.printfln(
+					"Focused on record %s%s%s in cluster %s%s%s within collection %s%s%s",
+					misc.BOLD,
+					record,
+					misc.RESET,
+					misc.BOLD,
+					cluster,
+					misc.RESET,
+					misc.BOLD,
+					collection,
+					misc.RESET,
+				)
+				//storing the Target and Objec that the user wants to focus)
+			}
+			break
+		}
+
+
+		break
 	}
 	return 0
 }
 
-//todo still working on focus and unfocus
+
+EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
+	cmd: ^types.Command,
+	focusTarget: string,
+	focusObject: string,
+) -> int {
+	incompleteCommandErr := errors.new_err(
+		.INCOMPLETE_COMMAND,
+		errors.get_err_msg(.INCOMPLETE_COMMAND),
+		#procedure,
+	)
+
+	invalidCommandErr := errors.new_err(
+		.INVALID_COMMAND,
+		errors.get_err_msg(.INVALID_COMMAND),
+		#procedure,
+	)
+	defer delete(cmd.o_token)
+
+
+	switch (cmd.a_token) 
+	{
+	//=======================<SINGLE-TOKEN COMMANDS>=======================//
+	case const.EXIT:
+		fmt.printf("Cannot Exit OStrichDB while in FOCUS mode...\n")
+		break
+	case const.LOGOUT:
+		fmt.printf("Cannot Logout while in FOCUS mode...\n")
+		break
+	case const.HELP:
+		//do stuff
+		break
+	case const.UNFOCUS:
+		types.focus.flag = false
+		break
+	//=======================<MULTI-TOKEN COMMANDS>=======================//
+	case const.NEW:
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTION:
+			fmt.printf("Cannot create a new collection while in FOCUS mode...\n")
+			break
+		case const.CLUSTER:
+			if len(cmd.o_token) >= 1 {
+				cluster_name := cmd.o_token[0]
+				collection_name := focusObject
+
+				id := data.OST_GENERATE_CLUSTER_ID()
+				success := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+			}
+			break
+		case const.RECORD:
+			break
+		}
+		break
+	case const.FETCH:
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTION:
+			if len(cmd.o_token) > 0 {
+				collection := cmd.o_token[0]
+				data.OST_FETCH_COLLECTION(collection)
+			} else {
+				errors.throw_custom_err(
+					invalidCommandErr,
+					"Invalid FETCH command structure. Correct Usage: FETCH COLLECTION <collection_name>",
+				)
+			}
+			break
+		case const.CLUSTER:
+			if len(cmd.o_token) >= 1 {
+				cluster := cmd.o_token[0]
+				collection := focusObject
+				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
+				fmt.printfln(clusterContent)
+			} else {
+				errors.throw_custom_err(
+					invalidCommandErr,
+					"Invalid FETCH command structure. Correct Usage: FETCH CLUSTER <cluster_name>",
+				)
+			}
+			break
+		case const.RECORD:
+			break
+		}
+		break
+	case const.ERASE:
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTION:
+			fmt.printf("Cannot erase a collection while in FOCUS mode...\n")
+			break
+		case const.CLUSTER:
+			if len(cmd.o_token) >= 1 {
+				cluster_name := cmd.o_token[0]
+				collection_name := focusObject
+				data.OST_ERASE_CLUSTER(collection_name, cluster_name)
+			}
+			break
+		case const.RECORD:
+			break
+		}
+		break
+	case const.RENAME:
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTION:
+			fmt.printf("Cannot rename a collection while in FOCUS mode...\n")
+			break
+		case const.CLUSTER:
+			if len(cmd.o_token) >= 2 {
+				old_cluster_name := cmd.o_token[0]
+				new_cluster_name := cmd.o_token[1]
+				collection_name := focusObject
+				data.OST_RENAME_CLUSTER(collection_name, old_cluster_name, new_cluster_name)
+			}
+			break
+		case const.RECORD:
+			break
+		}
+		break
+
+	}
+	return 0
+}
+
+
+//todo #1 found several bugs: check github issues
+//todo #2 copilot did not use the stored target and stored object values during code comletion for the following commands WHILE IN FOCUS MODE: FETCH, ERASE, RENAME so need to go back and do that over

@@ -36,8 +36,8 @@ NEW :: "NEW" //used to create a new record, cluster, or collection
 ERASE :: "ERASE" //used to delete a record, cluster, or collection
 FETCH :: "FETCH" //used to get the data from a record, cluster, or collection
 RENAME :: "RENAME" //used to change the name of a record, cluster, or collection
-FOCUS :: "FOCUS" //used cahnge the focus or scope that commands are being executed in
-
+FOCUS :: "FOCUS" //used change the focus/scope that commands are being executed in
+UNFOCUS :: "UNFOCUS" //unfocus the scope that commands are being executed in....Might make it to where you can UNFOCUS a single layer rather than the entire scope. example: UNFOCUS CLUSTER foo (could still preform actions on the COLLECTION)
 //Target Tokens -- Require a data to be used
 COLLECTION :: "COLLECTION" //Targets a collection to be manupulated
 CLUSTER :: "CLUSTER" //Targets a cluster to be manipulated
@@ -47,7 +47,7 @@ ALL :: "ALL" //Targets all records, clusters, or collections that are specified
 //Modifier Tokens
 AND :: "AND" //used to specify that there is another record, cluster, or collection to be created
 OF_TYPE :: "OF_TYPE" //ONLY used to specify the type of data that is going to be stored in a record...see types below
-ALL_OF :: "ALL_OF" //ONLY used with FETCH and ERASE.
+ALL_OF :: "ALL OF" //ONLY used with FETCH and ERASE.
 TO :: "TO" //ONLY used with RENAME
 
 //Scope Tokens

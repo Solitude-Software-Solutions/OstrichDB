@@ -160,9 +160,11 @@ Usage Locations: focus.odin
 */
 focus: Focus
 Focus :: struct {
-    t_: string,        // The primary target (e.g., "CLUSTER" or "COLLECTION")
-    o_: string,        // The primary object (e.g., "myCluster" or "myCollection")
-    parent_t_: string, // The parent target (e.g., "COLLECTION" for a CLUSTER within a COLLECTION)
-    parent_o_: string, // The parent object
-    flag: bool,        // If the focus is active
+	t_:   string, // The primary target (e.g., "CLUSTER" or "COLLECTION")
+	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
+
+	// The related target and object are used to provide futher context for the focus
+	rt_: string, // The related target (e.g., "RECORD")
+	ro_: string, // The related object (e.g., "myRecord")
+	flag: bool, // If the focus is active
 }
