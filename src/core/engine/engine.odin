@@ -83,7 +83,7 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 	for {
 		//Command line start
 		buf: [1024]byte
-		fmt.print(const.ost_carrot)
+		fmt.print(const.ost_carrot, "\t")
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
 			error := errors.new_err(
@@ -117,7 +117,14 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 	for types.focus.flag == true {
 		//Command line start
 		buf: [1024]byte
-		fmt.print(const.ost_carrot)
+		fmt.printf(
+			"%v %s%v: %v%s\t",
+			const.ost_carrot,
+			misc.BOLD,
+			types.focus.t_,
+			types.focus.o_,
+			misc.RESET,
+		)
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
 			error := errors.new_err(

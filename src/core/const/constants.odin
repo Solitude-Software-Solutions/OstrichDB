@@ -7,7 +7,7 @@ OST_SECURE_CLUSTER_PATH :: "../bin/secure/"
 OST_FILE_EXTENSION :: ".ost"
 
 //used in engine.odin
-ost_carrot :: "OST>>>\t"
+ost_carrot :: "OST>>>"
 
 // used in auth.odin
 SEC_FILE_PATH :: "../bin/secure/_secure_.ost"

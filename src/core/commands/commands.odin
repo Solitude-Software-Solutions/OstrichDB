@@ -174,6 +174,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case const.ERASE:
+		//bug todo see https://github.com/Solitude-Software-Solutions/OstrichDB/issues/29
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
@@ -295,7 +296,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 
-
 		break
 	}
 	return 0
@@ -360,15 +360,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
-			if len(cmd.o_token) > 0 {
-				collection := cmd.o_token[0]
-				data.OST_FETCH_COLLECTION(collection)
-			} else {
-				errors.throw_custom_err(
-					invalidCommandErr,
-					"Invalid FETCH command structure. Correct Usage: FETCH COLLECTION <collection_name>",
-				)
-			}
+			fmt.printf("Cannot fetch a collection while in FOCUS mode...\n")
 			break
 		case const.CLUSTER:
 			if len(cmd.o_token) >= 1 {
@@ -388,6 +380,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		}
 		break
 	case const.ERASE:
+		//bug: todo see https://github.com/Solitude-Software-Solutions/OstrichDB/issues/29
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
@@ -411,13 +404,32 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 			fmt.printf("Cannot rename a collection while in FOCUS mode...\n")
 			break
 		case const.CLUSTER:
-			if len(cmd.o_token) >= 2 {
-				old_cluster_name := cmd.o_token[0]
-				new_cluster_name := cmd.o_token[1]
-				collection_name := focusObject
-				data.OST_RENAME_CLUSTER(collection_name, old_cluster_name, new_cluster_name)
+			fmt.printfln("cmd.o_token:%s", cmd.o_token[0])
+			fmt.printfln("cmd.m_token:%s", cmd.m_token)
+
+			if len(cmd.o_token) >= 1 && const.TO in cmd.m_token {
+				old_name := cmd.o_token[0]
+				new_name := cmd.m_token[const.TO]
+				collection := focusObject
+				fmt.printfln(
+					"Renaming cluster '%s' to '%s' in collection '%s'...",
+					old_name,
+					new_name,
+					collection,
+				)
+				success := data.OST_RENAME_CLUSTER(collection, old_name, new_name)
+				if success {
+					fmt.printf(
+						"Successfully renamed cluster '%s' to '%s' in collection '%s'\n",
+						old_name,
+						new_name,
+						collection,
+					)
+				} else {
+					fmt.println("Failed to rename cluster. Please check error messages.")
+				}
+				break
 			}
-			break
 		case const.RECORD:
 			break
 		}
@@ -426,7 +438,3 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	}
 	return 0
 }
-
-
-//todo #1 found several bugs: check github issues
-//todo #2 copilot did not use the stored target and stored object values during code comletion for the following commands WHILE IN FOCUS MODE: FETCH, ERASE, RENAME so need to go back and do that over
