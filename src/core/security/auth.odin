@@ -7,6 +7,7 @@ import "../config"
 import "../const"
 import "../data"
 import "../data/metadata"
+import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -67,6 +68,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	//get the password input from the user
 	fmt.printfln("Please enter your password:")
+	libc.system("stty -echo")
 	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
 		error3 := errors.new_err(
@@ -78,7 +80,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		return false
 	}
 	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
-
+	libc.system("stty echo")
 	//conver the return algo method string to an int
 	algoAsInt := strconv.atoi(algoMethod)
 
@@ -150,19 +152,4 @@ OST_USER_LOGOUT :: proc(param: int) -> bool {
 		break
 	}
 	return USER_SIGNIN_STATUS
-}
-
-
-//todo delete the follwoing 2 procs...
-//todo delete the follwoing 2 procs...
-//todo delete the follwoing 2 procs...
-//todo delete the follwoing 2 procs...
-OST_AUTH_GET_USERNAME :: proc() -> string {
-	fmt.printfln("Please enter your username:")
-	return misc.get_input()
-}
-
-OST_AUTH_GET_PASSWORD :: proc() -> string {
-	fmt.printfln("Please enter your password:")
-	return misc.get_input()
 }
