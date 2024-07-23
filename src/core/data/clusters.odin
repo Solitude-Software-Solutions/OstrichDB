@@ -19,7 +19,8 @@ import "core:strings"
 main :: proc() {
 	OST_CREATE_CACHE_FILE()
 	os.make_directory(const.OST_COLLECTION_PATH)
-
+	metadata.OST_CREATE_FFVF()
+	test := metadata.OST_GET_FILE_FORMAT_VERSION()
 }
 
 //creates a file in the bin directory used to store the all used cluster ids
