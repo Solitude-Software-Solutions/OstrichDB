@@ -92,14 +92,33 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				id := data.OST_GENERATE_CLUSTER_ID()
 				success := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
-				if !success {
-					fmt.println("Failed to create cluster. Please check error messages.")
+				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+				switch (result) 
+				{
+				case -1:
+					fmt.printfln(
+						"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
+						misc.BOLD,
+						cluster_name,
+						misc.RESET,
+						misc.BOLD,
+						collection_name,
+						misc.RESET,
+					)
+					break
+				case 1, 2, 3:
+					error1 := errors.new_err(
+						.CANNOT_CREATE_CLUSTER,
+						errors.get_err_msg(.CANNOT_CREATE_CLUSTER),
+						#procedure,
+					)
+					errors.throw_custom_err(
+						error1,
+						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
+					)
+					break
+
 				}
-			} else {
-				errors.throw_custom_err(
-					invalidCommandErr,
-					"Invalid NEW command structure. Correct Usage: NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
-				)
 			}
 			break
 		case const.RECORD:

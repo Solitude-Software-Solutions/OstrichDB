@@ -16,8 +16,6 @@ import "core:strings"
 //=========================================================//
 
 
-
-
 main :: proc() {
 	OST_CREATE_CACHE_FILE()
 	os.make_directory(const.OST_COLLECTION_PATH)
@@ -423,7 +421,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 
 
 //only used to create a cluster from the COMMAND LINE
-OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, id: i64) -> bool {
+OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, id: i64) -> int {
 
 	collection_path := fmt.tprintf(
 		"%s%s%s",
@@ -431,6 +429,12 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 		collectionName,
 		const.OST_FILE_EXTENSION,
 	)
+
+	clusterExist := OST_CHECK_IF_CLUSTER_EXISTS(collection_path, clusterName)
+	if clusterExist {
+		return -1
+	}
+
 	FIRST_HALF: []string = {"\n{\n\tcluster_name : %n"}
 	LAST_HALF: []string = {"\n\tcluster_id : %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
@@ -445,7 +449,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 		)
 		errors.throw_err(error1)
 		logging.log_utils_error("Error opening collection file", "OST_CREATE_CLUSTER_BLOCK")
-		return false
+		return 1
 	}
 
 
@@ -478,7 +482,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 					"Error placing id into cluster template",
 					"OST_CREATE_CLUSTER_BLOCK",
 				)
-				return false
+				return 2
 			}
 			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
 			if writeSuccess != 0 {
@@ -491,11 +495,11 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 					"Error writing cluster block to file",
 					"OST_CREATE_CLUSTER_BLOCK",
 				)
-				return false
+				return 3
 			}
 		}
 	}
-	return true
+	return 0
 }
 
 
