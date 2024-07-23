@@ -3,6 +3,7 @@ package metadata
 import "../../../errors"
 import "../../../logging"
 import "../../../misc"
+import "../../const"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -48,8 +49,9 @@ OST_SET_TIME :: proc() -> string {
 
 //sets the files format version(FFV)
 OST_SET_FFV :: proc() -> string {
-	fileVersion := "0.0.0_dev" //todo see issue #20
-	return fileVersion
+	ffv := OST_GET_FILE_FORMAT_VERSION()
+	str := transmute(string)ffv
+	return str
 }
 
 //sets the files size(FS)
@@ -220,4 +222,62 @@ OST_METADATA_ON_CREATE :: proc(fn: string) {
 	OST_UPDATE_METADATA_VALUE(fn, 3)
 	OST_UPDATE_METADATA_VALUE(fn, 4)
 	OST_UPDATE_METADATA_VALUE(fn, 5)
+}
+
+
+OST_CREATE_FFVF :: proc() {
+	CURRENT_FFV := "Pre_Rel_v0.1.0_dev" //todo allow this to be directly read from the projetcs 'version' file and not hardcoded
+	os.make_directory(const.OST_TMP_PATH)
+
+	FFVF := const.OST_FFVF
+	tmpPath := const.OST_TMP_PATH
+	pathAndName := strings.concatenate([]string{tmpPath, FFVF})
+
+	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
+
+	if createSuccess != 0 {
+		error1 := errors.new_err(
+			.CANNOT_CREATE_FILE,
+			errors.get_err_msg(.CANNOT_CREATE_FILE),
+			#procedure,
+		)
+		errors.throw_custom_err(error1, "Cannot create file format version file")
+	}
+	os.close(file)
+
+	//close then open the file again to write to it
+	f, openSuccess := os.open(pathAndName, os.O_WRONLY, 0o666)
+	defer os.close(f)
+	fmt.printfln("File: %s, Open Success: %d", pathAndName, openSuccess)
+	ffvAsBytes := transmute([]u8)CURRENT_FFV
+	writter, ok := os.write(f, ffvAsBytes)
+	if ok != 0 {
+		error1 := errors.new_err(
+			.CANNOT_WRITE_TO_FILE,
+			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#procedure,
+		)
+		errors.throw_custom_err(error1, "Cannot write to file format version file")
+	}
+}
+
+
+OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
+	FFVF := const.OST_FFVF
+	tmpPath := const.OST_TMP_PATH
+
+	pathAndName := strings.concatenate([]string{tmpPath, FFVF})
+
+	ffvf, openSuccess := os.open(pathAndName)
+	if openSuccess != 0 {
+		logging.log_utils_error(
+			"Could not open file format verson file",
+			"OST_GET_FILE_FORMAT_VERSION",
+		)
+	}
+	data, e := os.read_entire_file(ffvf)
+	if e == false {
+	}
+	os.close(ffvf)
+	return data
 }

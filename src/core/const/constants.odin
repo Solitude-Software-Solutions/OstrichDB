@@ -1,6 +1,8 @@
 package const
 
-
+//used in metadata.odin
+OST_FFVF :: "ost_file_format_version.tmp"
+OST_TMP_PATH :: "../bin/tmp/"
 //used in clusters.odin
 OST_COLLECTION_PATH :: "../bin/collections/"
 OST_SECURE_CLUSTER_PATH :: "../bin/secure/"
