@@ -1,7 +1,6 @@
 package commands
 
-import "../../errors"
-import "../../misc"
+import "../../utils"
 import "../const"
 import "../data"
 import "../security"
@@ -25,15 +24,15 @@ RENAME RECORD Chevy TO Chevrolet WITHIN COLLECTION car companies //renames recor
 
 
 OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
-	incompleteCommandErr := errors.new_err(
+	incompleteCommandErr := utils.new_err(
 		.INCOMPLETE_COMMAND,
-		errors.get_err_msg(.INCOMPLETE_COMMAND),
+		utils.get_err_msg(.INCOMPLETE_COMMAND),
 		#procedure,
 	)
 
-	invalidCommandErr := errors.new_err(
+	invalidCommandErr := utils.new_err(
 		.INVALID_COMMAND,
-		errors.get_err_msg(.INVALID_COMMAND),
+		utils.get_err_msg(.INVALID_COMMAND),
 		#procedure,
 	)
 	defer delete(cmd.o_token)
@@ -43,38 +42,47 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 	case const.VERSION:
+		utils.log_runtime_event("Used VERSION command", "User requested version information.")
 		fmt.printfln(
 			"Using OstrichDB Version: %s%s%s",
-			misc.BOLD,
-			misc.get_ost_version(),
-			misc.RESET,
+			utils.BOLD,
+			utils.get_ost_version(),
+			utils.RESET,
 		)
 		break
 	case const.EXIT:
 		//logout then exit the program
+		utils.log_runtime_event("Used EXIT commnad", "User requested to exit the program.")
 		security.OST_USER_LOGOUT(1)
 	case const.LOGOUT:
 		//only returns user to signin.
+		utils.log_runtime_event("Used LOGOUT command", "User requested to logout.")
 		fmt.printfln("Logging out...")
 		security.OST_USER_LOGOUT(0)
 		break
 	case const.HELP:
 		//TODO: Implement help command
+		utils.log_runtime_event("Used HELP command", "User requested help information.")
 		break
 	case const.UNFOCUS:
+		utils.log_runtime_event(
+			"Improperly used UNFOCUS command",
+			"User requested to unfocus while not in FOCUS mode.",
+		)
 		fmt.printfln("Cannot Unfocus becuase you are currently not in focus mode.")
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 
 	//NEW: Allows for the creation of new records, clusters, or collections
 	case const.NEW:
+		utils.log_runtime_event("Used NEW command", "")
 		switch (cmd.t_token) {
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
 				fmt.printf("Creating collection '%s'\n", cmd.o_token[0])
 				data.OST_CREATE_COLLECTION(cmd.o_token[0], 0)
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid NEW command structure. Correct Usage: NEW COLLECTION <collection_name>",
 				)
@@ -98,21 +106,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				case -1:
 					fmt.printfln(
 						"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
-						misc.BOLD,
+						utils.BOLD,
 						cluster_name,
-						misc.RESET,
-						misc.BOLD,
+						utils.RESET,
+						utils.BOLD,
 						collection_name,
-						misc.RESET,
+						utils.RESET,
 					)
 					break
 				case 1, 2, 3:
-					error1 := errors.new_err(
+					error1 := utils.new_err(
 						.CANNOT_CREATE_CLUSTER,
-						errors.get_err_msg(.CANNOT_CREATE_CLUSTER),
+						utils.get_err_msg(.CANNOT_CREATE_CLUSTER),
 						#procedure,
 					)
-					errors.throw_custom_err(
+					utils.throw_custom_err(
 						error1,
 						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
 					)
@@ -131,7 +139,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				// data.OST_CREATE_RECORD(cmd.o_token[0], cmd.o_token[1], cmd.o_token[2], 0)
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid NEW command structure. Correct Usage: NEW RECORD <record_name> WITHIN CLUSTER <cluster_name> IN COLLECTION <collection_name>",
 				)
@@ -141,6 +149,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case const.RENAME:
+		utils.log_runtime_event("Used RENAME command", "")
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
@@ -150,7 +159,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printf("Renaming collection '%s' to '%s'\n", old_name, new_name)
 				data.OST_RENAME_COLLECTION(old_name, new_name)
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid RENAME command structure. Correct Usage: RENAME COLLECTION <old_name> TO <new_name>",
 				)
@@ -182,7 +191,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printf("Renaming record '%s' to '%s'\n", old_name, new_name)
 				// data.OST_RENAME_RECORD(old_name, new_name)
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid RENAME command structure. Correct Usage: RENAME RECORD <old_name> TO <new_name>",
 				)
@@ -193,6 +202,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case const.ERASE:
+		utils.log_runtime_event("Used ERASE command", "")
 		//bug todo see https://github.com/Solitude-Software-Solutions/OstrichDB/issues/29
 		switch (cmd.t_token) 
 		{
@@ -200,9 +210,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if data.OST_ERASE_COLLECTION(cmd.o_token[0]) {
 				fmt.printfln(
 					"Collection %s%s%s successfully erased",
-					misc.BOLD,
+					utils.BOLD,
 					cmd.o_token[0],
-					misc.RESET,
+					utils.RESET,
 				)
 			}
 			break
@@ -213,16 +223,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if data.OST_ERASE_CLUSTER(collection, cluster) {
 					fmt.printfln(
 						"Cluster %s%s%s successfully erased from collection %s%s%s",
-						misc.BOLD,
+						utils.BOLD,
 						cluster,
-						misc.RESET,
-						misc.BOLD,
+						utils.RESET,
+						utils.BOLD,
 						collection,
-						misc.RESET,
+						utils.RESET,
 					)
 				}
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid ERASE command structure. Correct Usage: ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
 				)
@@ -234,6 +244,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case const.FETCH:
+		utils.log_runtime_event("Used FETCH command", "")
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
@@ -241,7 +252,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection := cmd.o_token[0]
 				data.OST_FETCH_COLLECTION(collection)
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid FETCH command structure. Correct Usage: FETCH COLLECTION <collection_name>",
 				)
@@ -254,7 +265,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
 				fmt.printfln(clusterContent)
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid FETCH command structure. Correct Usage: FETCH CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
 				)
@@ -266,6 +277,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//FOCUS and UNFOCUS: Enter at own peril.
 	case const.FOCUS:
+		utils.log_runtime_event("Used FOCUS command", "")
 		types.focus.flag = true
 		switch (cmd.t_token) 
 		{
@@ -274,7 +286,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection := cmd.o_token[0]
 				storedT, storedO := data.OST_FOCUS(const.COLLECTION, collection)
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid NEW command structure. Correct Usage: NEW COLLECTION <collection_name>",
 				)
@@ -300,15 +312,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				fmt.printfln(
 					"Focused on record %s%s%s in cluster %s%s%s within collection %s%s%s",
-					misc.BOLD,
+					utils.BOLD,
 					record,
-					misc.RESET,
-					misc.BOLD,
+					utils.RESET,
+					utils.BOLD,
 					cluster,
-					misc.RESET,
-					misc.BOLD,
+					utils.RESET,
+					utils.BOLD,
 					collection,
-					misc.RESET,
+					utils.RESET,
 				)
 				//storing the Target and Objec that the user wants to focus)
 			}
@@ -326,15 +338,16 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	focusTarget: string,
 	focusObject: string,
 ) -> int {
-	incompleteCommandErr := errors.new_err(
+	utils.log_runtime_event("Entered FOCUS mode", "User has succesfully entered FOCUS mode")
+	incompleteCommandErr := utils.new_err(
 		.INCOMPLETE_COMMAND,
-		errors.get_err_msg(.INCOMPLETE_COMMAND),
+		utils.get_err_msg(.INCOMPLETE_COMMAND),
 		#procedure,
 	)
 
-	invalidCommandErr := errors.new_err(
+	invalidCommandErr := utils.new_err(
 		.INVALID_COMMAND,
-		errors.get_err_msg(.INVALID_COMMAND),
+		utils.get_err_msg(.INVALID_COMMAND),
 		#procedure,
 	)
 	defer delete(cmd.o_token)
@@ -344,19 +357,33 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 	case const.EXIT:
+		utils.log_runtime_event(
+			"Used EXIT command while in FOCUS mode",
+			"This action cannot be performed while in FOCUS mode",
+		)
 		fmt.printf("Cannot Exit OStrichDB while in FOCUS mode...\n")
 		break
 	case const.LOGOUT:
+		utils.log_runtime_event(
+			"Used LOGOUT command while in FOCUS mode",
+			"This action cannot be performed while in FOCUS mode",
+		)
 		fmt.printf("Cannot Logout while in FOCUS mode...\n")
 		break
 	case const.HELP:
+		utils.log_runtime_event(
+			"Used HELP command while in FOCUS mode",
+			"Displaying help menu for FOCUS mode",
+		)
 		//do stuff
 		break
 	case const.UNFOCUS:
 		types.focus.flag = false
+		utils.log_runtime_event("Used UNFOCUS command", "User has succesfully exited FOCUS mode")
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	case const.NEW:
+		utils.log_runtime_event("Used NEW command while in FOCUS mode", "")
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
@@ -376,6 +403,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		}
 		break
 	case const.FETCH:
+		utils.log_runtime_event("Used FETCH command while in FOCUS mode", "")
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
@@ -388,7 +416,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
 				fmt.printfln(clusterContent)
 			} else {
-				errors.throw_custom_err(
+				utils.throw_custom_err(
 					invalidCommandErr,
 					"Invalid FETCH command structure. Correct Usage: FETCH CLUSTER <cluster_name>",
 				)
@@ -399,6 +427,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		}
 		break
 	case const.ERASE:
+		utils.log_runtime_event("Used ERASE command while in FOCUS mode", "")
 		//bug: todo see https://github.com/Solitude-Software-Solutions/OstrichDB/issues/29
 		switch (cmd.t_token) 
 		{
@@ -417,6 +446,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		}
 		break
 	case const.RENAME:
+		utils.log_runtime_event("Used RENAME command while in FOCUS mode", "")
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:

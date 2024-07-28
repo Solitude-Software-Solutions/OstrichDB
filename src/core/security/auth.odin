@@ -1,8 +1,6 @@
 package security
 
-import "../../errors"
-import "../../logging"
-import "../../misc"
+import "../../utils"
 import "../config"
 import "../const"
 import "../data"
@@ -22,12 +20,12 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 	}
 
 
@@ -38,12 +36,12 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		userName,
 	)
 	if (userNameFound != userName) {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.ENTERED_USERNAME_NOT_FOUND,
-			errors.get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
+			utils.get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
 			#procedure,
 		)
-		errors.throw_err(error2)
+		utils.throw_err(error2)
 		OST_RUN_SIGNIN()
 	}
 
@@ -71,12 +69,12 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	libc.system("stty -echo")
 	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error3 := errors.new_err(
+		error3 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error3)
+		utils.throw_err(error3)
 		return false
 	}
 	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")

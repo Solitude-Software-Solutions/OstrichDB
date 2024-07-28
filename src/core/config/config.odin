@@ -1,7 +1,6 @@
 package config
 
-import "../../errors"
-import "../../logging"
+import "../../utils"
 import "../const"
 import "core:fmt"
 import "core:os"
@@ -26,12 +25,12 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	foundFiles, readDirSuccess := os.read_dir(configPath, -1)
 
 	if readDirSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_DIRECTORY,
-			errors.get_err_msg(.CANNOT_READ_DIRECTORY),
+			utils.get_err_msg(.CANNOT_READ_DIRECTORY),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 	}
 	for file in foundFiles {
 		if file.name == "ostrich.config" {
@@ -47,13 +46,13 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 	file, createSuccess := os.open(configPath, os.O_CREATE, 0o666)
 	os.close(file)
 	if createSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_CREATE_FILE,
-			errors.get_err_msg(.CANNOT_CREATE_FILE),
+			utils.get_err_msg(.CANNOT_CREATE_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error creating config file", "OST_CREATE_CONFIG_FILE")
+		utils.throw_err(error1)
+		utils.log_err("Error creating config file", "OST_CREATE_CONFIG_FILE")
 		return false
 	}
 	msg := transmute([]u8)ostConfigHeader
@@ -61,13 +60,13 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 	defer os.close(file)
 	writter, writeSuccess := os.write(file, msg)
 	if writeSuccess != 0 {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
-			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
 			#procedure,
 		)
-		errors.throw_err(error2)
-		logging.log_utils_error("Error writing to config file", "OST_CREATE_CONFIG_FILE")
+		utils.throw_err(error2)
+		utils.log_err("Error writing to config file", "OST_CREATE_CONFIG_FILE")
 		return false
 	}
 
@@ -86,12 +85,12 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 OST_FIND_CONFIG :: proc(c: string) -> bool {
 	data, readSuccess := os.read_entire_file("../bin/ostrich.config")
 	if readSuccess != false {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 		return false
 	}
 	defer delete(data)
@@ -122,12 +121,12 @@ OST_FIND_ALL_CONFIGS :: proc(configs: ..string) -> bool {
 OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 	file, openSuccess := os.open("../bin/ostrich.config", os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
-			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			utils.get_err_msg(.CANNOT_OPEN_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 		return 1
 	}
 	defer os.close(file)
@@ -136,12 +135,12 @@ OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 	writter, writeSuccess := os.write(file, str)
 
 	if writeSuccess != 0 {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
-			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
 			#procedure,
 		)
-		errors.throw_err(error2)
+		utils.throw_err(error2)
 		return 1
 	}
 
@@ -152,12 +151,12 @@ OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 	data, readSuccess := os.read_entire_file("../bin/ostrich.config")
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 		return ""
 	}
 
@@ -186,12 +185,12 @@ OST_TOGGLE_CONFIG :: proc(config: string) -> bool {
 	replaced: bool
 	data, readSuccess := os.read_entire_file("../bin/ostrich.config")
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 		return false
 	}
 

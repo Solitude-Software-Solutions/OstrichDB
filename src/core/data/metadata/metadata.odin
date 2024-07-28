@@ -1,8 +1,6 @@
 package metadata
 
-import "../../../errors"
-import "../../../logging"
-import "../../../misc"
+import "../../../utils"
 import "../../const"
 import "core:crypto/hash"
 import "core:fmt"
@@ -121,12 +119,12 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	rawData, readSuccess := os.read_entire_file(fn)
 
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 	}
 
 	dataAsStr := cast(string)rawData
@@ -138,7 +136,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	defer os.close(file)
 
 	if e != 0 {
-		// errors.throw_utilty_error(1,"Error opening file" ,"OST_APPEND_METADATA_HEADER")
+		// utils.throw_utilty_error(1,"Error opening file" ,"OST_APPEND_METADATA_HEADER")
 	}
 
 	blockAsBytes := transmute([]u8)strings.concatenate(METADATA_HEADER)
@@ -152,9 +150,9 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
 		return
@@ -236,28 +234,27 @@ OST_CREATE_FFVF :: proc() {
 	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
 
 	if createSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_CREATE_FILE,
-			errors.get_err_msg(.CANNOT_CREATE_FILE),
+			utils.get_err_msg(.CANNOT_CREATE_FILE),
 			#procedure,
 		)
-		errors.throw_custom_err(error1, "Cannot create file format version file")
+		utils.throw_custom_err(error1, "Cannot create file format version file")
 	}
 	os.close(file)
 
 	//close then open the file again to write to it
 	f, openSuccess := os.open(pathAndName, os.O_WRONLY, 0o666)
 	defer os.close(f)
-	fmt.printfln("File: %s, Open Success: %d", pathAndName, openSuccess)
 	ffvAsBytes := transmute([]u8)CURRENT_FFV
 	writter, ok := os.write(f, ffvAsBytes)
 	if ok != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
-			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
 			#procedure,
 		)
-		errors.throw_custom_err(error1, "Cannot write to file format version file")
+		utils.throw_custom_err(error1, "Cannot write to file format version file")
 	}
 }
 
@@ -270,10 +267,7 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 
 	ffvf, openSuccess := os.open(pathAndName)
 	if openSuccess != 0 {
-		logging.log_utils_error(
-			"Could not open file format verson file",
-			"OST_GET_FILE_FORMAT_VERSION",
-		)
+		utils.log_err("Could not open file format verson file", "OST_GET_FILE_FORMAT_VERSION")
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {

@@ -1,12 +1,11 @@
-package misc
+package utils
 
-import "../logging"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-// This file contains miscellaneous entities that are used throughout the program
 
+// This file contains miscellaneous entities that are used throughout the program
 ostrich_version: string
 ostrich_art := `  _______               __                __             __
   /       \             /  |              /  |           /  |
@@ -34,7 +33,7 @@ RESET :: "\033[0m"
 get_ost_version :: proc() -> []u8 {
 	version_file, openSuccess := os.open("../version")
 	if openSuccess != 0 {
-		logging.log_utils_error("Could not open version file", "get_ost_version")
+		log_err("Could not open version file", "get_ost_version")
 	}
 	data, e := os.read_entire_file(version_file)
 	if e == false {

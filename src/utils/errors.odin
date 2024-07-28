@@ -1,6 +1,5 @@
-package errors
+package utils
 
-import "../misc"
 import "core:fmt"
 import "core:os"
 
@@ -117,33 +116,33 @@ get_err_msg :: proc(type: ErrorType) -> string {
 throw_err :: proc(err: Error) -> string {
 	return fmt.tprintf(
 		"ERROR occured in procedure: %s%s%s\nError Type: %s(%v)%s\nError Message: %s%s%s ",
-		misc.BOLD,
+		BOLD,
 		err.procedure,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		err.type,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		err.message,
-		misc.RESET,
+		RESET,
 	)
 }
 
 throw_custom_err :: proc(err: Error, custom_message: string) -> string {
 	return fmt.tprintf(
 		"ERROR occured in procedure: %s%s%s\nError Type: %s(%v)%s\nError Message: %s%s%s\nCustom Message: %s%s%s",
-		misc.BOLD,
+		BOLD,
 		err.procedure,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		err.type,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		err.message,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		custom_message,
-		misc.RESET,
+		RESET,
 	)
 }
 
@@ -151,6 +150,6 @@ throw_custom_err :: proc(err: Error, custom_message: string) -> string {
 
 Example Error Usahe:
 
-    error2:= errors.new_err(.ENTERED_USERNAME_NOT_FOUND, errors.get_err_msg(.ENTERED_USERNAME_NOT_FOUND), #procedure)
-    errors.throw_err(error2)
+    error2:= new_err(.ENTERED_USERNAME_NOT_FOUND, get_err_msg(.ENTERED_USERNAME_NOT_FOUND), #procedure)
+    throw_err(error2)
 */

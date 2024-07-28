@@ -1,8 +1,6 @@
 package engine
 
-import "../../errors"
-import "../../logging"
-import "../../misc"
+import "../../utils"
 import "../commands"
 import "../config"
 import "../const"
@@ -80,18 +78,19 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 	}
 
 	fmt.println("Welcome to the OstrichDB Command Line")
+	utils.log_runtime_event("Entered command line", "")
 	for {
 		//Command line start
 		buf: [1024]byte
 		fmt.print(const.ost_carrot, "\t")
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
-			error := errors.new_err(
+			error := utils.new_err(
 				.CANNOT_READ_INPUT,
-				errors.get_err_msg(.CANNOT_READ_INPUT),
+				utils.get_err_msg(.CANNOT_READ_INPUT),
 				#procedure,
 			)
-			errors.throw_err(error)
+			utils.throw_err(error)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 		cmd := parser.OST_PARSE_COMMAND(input)
@@ -120,19 +119,19 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 		fmt.printf(
 			"%v %s%v: %v%s\t",
 			const.ost_carrot,
-			misc.BOLD,
+			utils.BOLD,
 			types.focus.t_,
 			types.focus.o_,
-			misc.RESET,
+			utils.RESET,
 		)
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
-			error := errors.new_err(
+			error := utils.new_err(
 				.CANNOT_READ_INPUT,
-				errors.get_err_msg(.CANNOT_READ_INPUT),
+				utils.get_err_msg(.CANNOT_READ_INPUT),
 				#procedure,
 			)
-			errors.throw_err(error)
+			utils.throw_err(error)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 		cmd := parser.OST_PARSE_COMMAND(input)

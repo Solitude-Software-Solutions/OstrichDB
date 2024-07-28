@@ -1,8 +1,6 @@
 package security
 
-import "../../errors"
-import "../../logging"
-import "../../misc"
+import "../../utils"
 import "../config"
 import "../data"
 import "../data/metadata"
@@ -31,23 +29,23 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 	createDirSuccess := os.make_directory("../bin/secure") //this will change when building entire project from cmd line
 
 	if createDirSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_CREATE_DIRECTORY,
-			errors.get_err_msg(.CANNOT_CREATE_DIRECTORY),
+			utils.get_err_msg(.CANNOT_CREATE_DIRECTORY),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 	}
 
 	//use os.open to create a file in the secure directory
 	file, createSuccess := os.open("../bin/secure/_secure_.ost", 0o666)
 	if createSuccess != 0 {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.CANNOT_CREATE_FILE,
-			errors.get_err_msg(.CANNOT_CREATE_FILE),
+			utils.get_err_msg(.CANNOT_CREATE_FILE),
 			#procedure,
 		)
-		errors.throw_err(error2)
+		utils.throw_err(error2)
 		return 1
 	}
 
@@ -107,7 +105,7 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 OST_GEN_USER_ID :: proc() -> i64 {
 	userID := rand.int63_max(1e16 + 1)
 	if OST_CHECK_IF_USER_ID_EXISTS(userID) == true {
-		logging.log_utils_error("ID already exists in user file", "OST_GEN_USER_ID")
+		utils.log_err("ID already exists in user file", "OST_GEN_USER_ID")
 		OST_GEN_USER_ID()
 	}
 	types.user.user_id = userID
@@ -121,13 +119,13 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	openCacheFile, openSuccess := os.open("../bin/secure/_secure_.ost", os.O_RDONLY, 0o666)
 
 	if openSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
-			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			utils.get_err_msg(.CANNOT_OPEN_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		utils.throw_err(error1)
+		utils.log_err("Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
 	}
 	//step#1 convert the passed in i64 id number to a string
 	idStr := strconv.append_int(buf[:], id, 10)
@@ -136,13 +134,13 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	//step#2 read the cache file and compare the id to the cache file
 	readCacheFile, readSuccess := os.read_entire_file(openCacheFile)
 	if readSuccess == false {
-		errors2 := errors.new_err(
+		errors2 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(errors2)
-		logging.log_utils_error("Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		utils.throw_err(errors2)
+		utils.log_err("Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
 	}
 
 	// step#3 convert all file contents to a string because...OdinLang go brrrr??
@@ -161,18 +159,18 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 
 
 OST_GET_USERNAME :: proc() -> string {
-	misc.show_current_step("Set Up Username", "1", "3")
+	utils.show_current_step("Set Up Username", "1", "3")
 	buf: [256]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error reading input", "OST_GET_USERNAME")
+		utils.throw_err(error1)
+		utils.log_err("Error reading input", "OST_GET_USERNAME")
 	}
 	if n > 0 {
 		enteredStr := string(buf[:n])
@@ -203,19 +201,19 @@ OST_GET_USERNAME :: proc() -> string {
 
 
 OST_GET_PASSWORD :: proc() -> string {
-	misc.show_current_step("Set Up Password", "2", "3")
+	utils.show_current_step("Set Up Password", "2", "3")
 	buf: [256]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])
 	enteredStr: string
 	if inputSuccess != 0 {
 
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error reading input", "OST_GET_PASSWORD")
+		utils.throw_err(error1)
+		utils.log_err("Error reading input", "OST_GET_PASSWORD")
 	}
 	if n > 0 {
 		enteredStr = string(buf[:n])
@@ -246,7 +244,7 @@ OST_GET_PASSWORD :: proc() -> string {
 
 //taKes in the plain text password and confirms it with the user
 OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
-	misc.show_current_step("Confirm Password", "3", "3")
+	utils.show_current_step("Confirm Password", "3", "3")
 	buf: [256]byte
 
 	fmt.printfln("Re-enter the password:")
@@ -254,13 +252,13 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 	confirmation: string
 
 	if inputSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error reading input", "OST_CONFIRM_PASSWORD")
+		utils.throw_err(error1)
+		utils.log_err("Error reading input", "OST_CONFIRM_PASSWORD")
 	}
 	if n > 0 {
 		confirmation = string(buf[:n])
@@ -295,13 +293,13 @@ OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int 
 	ID := data.OST_GENERATE_CLUSTER_ID()
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
-			errors.get_err_msg(.CANNOT_OPEN_FILE),
+			utils.get_err_msg(.CANNOT_OPEN_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error opening user credentials file", "OST_STORE_USER_CREDS")
+		utils.throw_err(error1)
+		utils.log_err("Error opening user credentials file", "OST_STORE_USER_CREDS")
 	}
 	defer os.close(file)
 
