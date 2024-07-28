@@ -73,6 +73,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		fmt.printfln("Cannot Unfocus becuase you are currently not in focus mode.")
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
+	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
 	case const.BACKUP:
 		utils.log_runtime_event("Used BACKUP command", "User requested to backup data.")
 		switch (cmd.t_token) {
