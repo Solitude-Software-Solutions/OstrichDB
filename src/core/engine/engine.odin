@@ -94,7 +94,7 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 		cmd := parser.OST_PARSE_COMMAND(input)
-		fmt.printfln("Command: %v", cmd) //debugging
+		// fmt.printfln("Command: %v", cmd) //debugging
 		commands.OST_EXECUTE_COMMAND(&cmd)
 
 

@@ -269,9 +269,3 @@ log_err :: proc(message: string, location: string) -> int {
 	}
 	return 0
 }
-
-test :: proc() {
-	log_runtime_event("Test Event", "This is a test event")
-	result := log_err("Test Error", "This is a test error")
-	fmt.println(result)
-}

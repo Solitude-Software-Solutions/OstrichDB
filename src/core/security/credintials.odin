@@ -39,6 +39,7 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 
 	//use os.open to create a file in the secure directory
 	file, createSuccess := os.open("../bin/secure/_secure_.ost", 0o666)
+	defer os.close(file)
 	if createSuccess != 0 {
 		error2 := utils.new_err(
 			.CANNOT_CREATE_FILE,
@@ -292,6 +293,7 @@ OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int 
 
 	ID := data.OST_GENERATE_CLUSTER_ID()
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
+	defer os.close(file)
 	if openSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,

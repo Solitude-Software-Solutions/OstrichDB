@@ -232,6 +232,7 @@ OST_CREATE_FFVF :: proc() {
 	pathAndName := strings.concatenate([]string{tmpPath, FFVF})
 
 	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
+	defer os.close(file)
 
 	if createSuccess != 0 {
 		error1 := utils.new_err(

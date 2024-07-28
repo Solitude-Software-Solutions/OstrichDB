@@ -1,6 +1,7 @@
 package commands
 
 import "../../utils"
+import "../backup"
 import "../const"
 import "../data"
 import "../security"
@@ -72,7 +73,27 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		fmt.printfln("Cannot Unfocus becuase you are currently not in focus mode.")
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
-
+	case const.BACKUP:
+		utils.log_runtime_event("Used BACKUP command", "User requested to backup data.")
+		switch (cmd.t_token) {
+		case const.COLLECTION:
+			if len(cmd.o_token) > 0 {
+				name := backup.OST_CHOOSE_BACKUP_NAME()
+				backup.OST_CREATE_BACKUP_COLLECTION(name, cmd.o_token[0])
+			} else {
+				utils.throw_custom_err(
+					invalidCommandErr,
+					"Invalid BACKUP command structure. Correct Usage: BACKUP COLLECTION <collection_name>",
+				)
+			}
+			break
+		case const.CLUSTER, const.RECORD:
+			fmt.println(
+				"Backing up a cluster or record is not allowed please backup a collection instead.",
+			)
+			break
+		}
+		break
 	//NEW: Allows for the creation of new records, clusters, or collections
 	case const.NEW:
 		utils.log_runtime_event("Used NEW command", "")
@@ -453,9 +474,6 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 			fmt.printf("Cannot rename a collection while in FOCUS mode...\n")
 			break
 		case const.CLUSTER:
-			fmt.printfln("cmd.o_token:%s", cmd.o_token[0])
-			fmt.printfln("cmd.m_token:%s", cmd.m_token)
-
 			if len(cmd.o_token) >= 1 && const.TO in cmd.m_token {
 				old_name := cmd.o_token[0]
 				new_name := cmd.m_token[const.TO]

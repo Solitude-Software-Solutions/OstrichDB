@@ -1,5 +1,6 @@
 package main
 
+import "../core/backup"
 import "../core/config"
 import "../core/data"
 import "../core/data/metadata"
@@ -14,10 +15,9 @@ import "core:fmt"
 //=========================================================//
 
 main :: proc() {
-
+	backup.main()
 	utils.main()
 	data.main()
-	utils.test()
 	utils.log_runtime_event("OstrichDB Started", "")
 
 	//Print the Ostrich logo and version

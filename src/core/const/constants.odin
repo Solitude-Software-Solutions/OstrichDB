@@ -6,8 +6,8 @@ OST_TMP_PATH :: "../bin/tmp/"
 //used in clusters.odin
 OST_COLLECTION_PATH :: "../bin/collections/"
 OST_SECURE_CLUSTER_PATH :: "../bin/secure/"
+OST_BACKUP_PATH :: "../bin/backups/"
 OST_FILE_EXTENSION :: ".ost"
-
 //used in engine.odin
 ost_carrot :: "OST>>>"
 
@@ -35,6 +35,7 @@ LOGOUT :: "LOGOUT"
 
 //Action Tokens-- Require a space before and after the prefix and atleast one argument
 NEW :: "NEW" //used to create a new record, cluster, or collection
+BACKUP :: "BACKUP" //used to create backup collections
 ERASE :: "ERASE" //used to delete a record, cluster, or collection
 FETCH :: "FETCH" //used to get the data from a record, cluster, or collection
 RENAME :: "RENAME" //used to change the name of a record, cluster, or collection

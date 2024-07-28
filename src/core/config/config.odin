@@ -44,6 +44,7 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 OST_CREATE_CONFIG_FILE :: proc() -> bool {
 	configPath := "../bin/ostrich.config"
 	file, createSuccess := os.open(configPath, os.O_CREATE, 0o666)
+	defer os.close(file)
 	os.close(file)
 	if createSuccess != 0 {
 		error1 := utils.new_err(
