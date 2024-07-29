@@ -66,6 +66,9 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 
 	inituserName := OST_GET_USERNAME()
 	fmt.printfln("Please enter a password for the admin account")
+	fmt.printf(
+		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
+	)
 	initpassword := OST_GET_PASSWORD()
 	saltAsString := string(types.user.salt)
 	hashAsString := string(types.user.hashedPassword)
@@ -235,7 +238,7 @@ OST_GET_PASSWORD :: proc() -> string {
 		OST_CONFIRM_PASSWORD(enteredStr)
 		break
 	case false:
-		fmt.printfln("Please enter a stronger password")
+		fmt.printfln("Please try again")
 		OST_GET_PASSWORD()
 		break
 	}
@@ -377,62 +380,65 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		"Z",
 	}
 	nums: []string = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+
+	longEnough: bool
+	hasNumber: bool
+	hasSpecial: bool
+	hasUpper: bool
+
 	strong: bool
 
-	check1 := 0
-	check2 := 0
-	check3 := 0
-
-	//check for the length of the password
-	if len(p) > 32 {
-		fmt.printfln("Password is too long. Please enter a password that is 32 characters or less")
-		OST_GET_PASSWORD()
-	} else if len(p) < 8 {
+	// //check for the length of the password
+	switch (len(p)) 
+	{
+	case 0:
+		fmt.printfln("Password cannot be empty. Please enter a password")
+		return false
+	case 1 ..< 8:
 		fmt.printfln("Password is too short. Please enter a password that is 8 characters or more")
-		OST_GET_PASSWORD()
+		return false
+	case 32 ..< 1000:
+		fmt.printfln("Password is too long. Please enter a password that is 32 characters or less")
+		return false
+	case:
+		longEnough = true
 	}
 
 	//check for the presence of numbers
 	for i := 0; i < len(nums); i += 1 {
 		if strings.contains(p, nums[i]) {
-			check1 += 1
+			hasNumber = true
 		}
 	}
 
 	// check for the presence of special characters
 	for i := 0; i < len(specialChars); i += 1 {
 		if strings.contains(p, specialChars[i]) {
-			check2 += 1
+			hasSpecial = true
+			break
 		}
 	}
 	//check for the presence of uppercase letters
 	for i := 0; i < len(charsUp); i += 1 {
 		if strings.contains(p, charsUp[i]) {
-			check3 += 1
+			hasUpper = true
+			break
 		}
 	}
-	//add the results of the checks together
-	checkResults: int
-	checkResults = check1 + check2 + check3
 
-	switch checkResults 
+	switch (true) 
 	{
-	//because i iterate through the arrays, the program adds 1 to the checkResults variable for each type of character found in the password so if the user enters 2 numbers, then 3 special characters the check2 variable will be 2 and the check1 variable will be 3. so basically, as long as the checkResults variable is greater or equal to 3, the password is strong enough. Kinda hacky but maybe someone can come up with a better way to do this one day. Cannot be more than 36 because the password is only 32 characters long
-	case 3 ..< 32:
+	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
-		break
-	case 2:
-		fmt.printfln("Password is weak. Please include at least one uppercase letter")
+	case !hasNumber:
+		fmt.printfln("Password must contain at least one number")
 		strong = false
-		break
-	case 1:
-		fmt.printfln("Password is weak. Please include at least one number")
+	case !hasSpecial:
+		fmt.printfln("Password must contain at least one special character")
 		strong = false
-		break
-	case 0:
-		fmt.printfln("Password is weak. Please include at least one special character")
+	case !hasUpper:
+		fmt.printfln("Password must contain at least one uppercase letter")
 		strong = false
-		break
 	}
 
 	return strong
