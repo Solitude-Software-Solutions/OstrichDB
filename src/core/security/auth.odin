@@ -134,6 +134,7 @@ OST_USER_LOGOUT :: proc(param: int) -> bool {
 		case 0:
 			USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
+			OST_STOP_SESSION_TIMER()
 			OST_RUN_SIGNIN()
 			break
 		case 1:

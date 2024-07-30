@@ -80,6 +80,8 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 	fmt.println("Welcome to the OstrichDB Command Line")
 	utils.log_runtime_event("Entered command line", "")
 	for {
+
+
 		//Command line start
 		buf: [1024]byte
 		fmt.print(const.ost_carrot, "\t")
@@ -97,6 +99,16 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 		// fmt.printfln("Command: %v", cmd) //debugging
 		commands.OST_EXECUTE_COMMAND(&cmd)
 
+		//Check to ensure that before the next command is executed, the max session time hasnt been met
+		sessionDuration := security.OST_GET_SESSION_DURATION()
+		maxDurationMet := security.OST_CHECK_SESSION_DURATION(sessionDuration)
+		switch (maxDurationMet) 
+		{
+		case false:
+			break
+		case true:
+			security.OST_HANDLE_MAX_SESSION_DURATION_MET()
+		}
 
 		switch (types.focus.flag) 
 		{
