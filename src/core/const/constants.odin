@@ -1,5 +1,5 @@
 package const
-
+import "core:time"
 //used in metadata.odin
 OST_FFVF :: "ost_file_format_version.tmp"
 OST_TMP_PATH :: "../bin/tmp/"
@@ -63,3 +63,10 @@ INT :: "INT"
 FLOAT :: "FLOAT"
 BOOL :: "BOOL"
 //might add more...doubtful though
+
+
+//3 days in nanoseconds
+MAX_SESSION_TIME: time.Duration : 259200000000000000
+
+//1 minute in nano seconds only used for testing
+// MAX_SESSION_TIME: time.Duration : 60000000000
