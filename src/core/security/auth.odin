@@ -11,7 +11,7 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 
-USER_SIGNIN_STATUS: bool
+USER_SIGNIN_STATUS := false
 
 OST_RUN_SIGNIN :: proc() -> bool {
 	//get the username input from the user
@@ -95,7 +95,10 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	case true:
 		fmt.printfln("Auth Passed! User has been signed in!")
 		USER_SIGNIN_STATUS = true
-		config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+		userLoggedInValue := config.OST_READ_CONFIG_VALUE("OST_USER_LOGGED_IN")
+		if userLoggedInValue == "false" {
+			config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+		}
 	case false:
 		fmt.printfln("Auth Failed. Password was incorrect please try again.")
 		USER_SIGNIN_STATUS = false
