@@ -1,8 +1,8 @@
 package data
 
 
-import "../../utils"
-import "../const"
+import "../../../utils"
+import "../../const"
 import "./metadata"
 import "core:fmt"
 import "core:os"
@@ -11,7 +11,7 @@ import "core:strings"
 MAX_FILE_NAME_LENGTH_AS_BYTES: [512]byte
 
 
-//used for the commnad line
+//used for the command line
 OST_CHOOSE_COLLECTION_NAME :: proc() {
 	buf: [1024]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])

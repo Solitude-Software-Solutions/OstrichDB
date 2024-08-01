@@ -1,7 +1,7 @@
 package data
 
-import "../../utils"
-import "../const"
+import "../../../utils"
+import "../../const"
 import "core:fmt"
 import "core:os"
 import "core:strconv"

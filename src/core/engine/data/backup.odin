@@ -1,15 +1,14 @@
-package backup
+package data
 
-import "../../utils"
-import "../const"
+import "../../../utils"
+import "../../const"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
 //This file contains all things related tot backing up a database
-main :: proc() {
-	OST_CREAT_BACKUP_DIR()
-}
+
+
 OST_CREAT_BACKUP_DIR :: proc() {
 	os.make_directory("../bin/backups")
 }

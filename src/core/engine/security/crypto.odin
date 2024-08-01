@@ -1,6 +1,6 @@
 package security
 
-import "../types"
+import "../../types"
 import "core:crypto"
 import "core:crypto/hash"
 import "core:encoding/hex"
