@@ -1,11 +1,10 @@
-package commands
+package engine
 
 import "../../utils"
-import "../backup"
 import "../const"
-import "../data"
-import "../security"
 import "../types"
+import "./data"
+import "./security"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -53,13 +52,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	case const.EXIT:
 		//logout then exit the program
-		utils.log_runtime_event("Used EXIT commnad", "User requested to exit the program.")
-		security.OST_USER_LOGOUT(1)
+		utils.log_runtime_event("Used EXIT command", "User requested to exit the program.")
+		OST_USER_LOGOUT(1)
 	case const.LOGOUT:
 		//only returns user to signin.
 		utils.log_runtime_event("Used LOGOUT command", "User requested to logout.")
 		fmt.printfln("Logging out...")
-		security.OST_USER_LOGOUT(0)
+		OST_USER_LOGOUT(0)
 		break
 	case const.HELP:
 		//TODO: Implement help command
@@ -79,8 +78,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (cmd.t_token) {
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
-				name := backup.OST_CHOOSE_BACKUP_NAME()
-				backup.OST_CREATE_BACKUP_COLLECTION(name, cmd.o_token[0])
+				name := data.OST_CHOOSE_BACKUP_NAME()
+				data.OST_CREATE_BACKUP_COLLECTION(name, cmd.o_token[0])
 			} else {
 				utils.throw_custom_err(
 					invalidCommandErr,
@@ -306,7 +305,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
 				collection := cmd.o_token[0]
-				storedT, storedO := data.OST_FOCUS(const.COLLECTION, collection)
+				storedT, storedO := OST_FOCUS(const.COLLECTION, collection)
 			} else {
 				utils.throw_custom_err(
 					invalidCommandErr,
@@ -318,7 +317,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				cluster := cmd.o_token[0]
 				collection := cmd.o_token[1]
-				storedT, storedO := data.OST_FOCUS(collection, cluster) //storing the Target and Objec that the user wants to focus)
+				storedT, storedO := OST_FOCUS(collection, cluster) //storing the Target and Objec that the user wants to focus)
 			}
 			break
 		//todo: come back to this..havent done enough commands to test this in focus mode yet
@@ -327,7 +326,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				record := cmd.o_token[0]
 				cluster := cmd.o_token[1]
 				collection := cmd.o_token[2]
-				storedParentT, storedParentO, storedRO := data.OST_FOCUS_RECORD(
+				storedParentT, storedParentO, storedRO := OST_FOCUS_RECORD(
 					collection,
 					cluster,
 					record,

@@ -1,12 +1,14 @@
-package security
+package engine
 
 import "../../utils"
+import "../config"
 import "../const"
+import "../types"
 import "core:fmt"
+import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-
 
 //=====================================<Session Timer Stuff>=====================================//
 stopWatch: time.Stopwatch
@@ -47,4 +49,34 @@ OST_HANDLE_MAX_SESSION_DURATION_MET :: proc() {
 		"Max Session Time Met",
 		" User has been forced logged out due to reaching maximum session time.",
 	)
+}
+
+
+OST_USER_SESSION_LOGOUT :: proc(param: int) -> bool {
+	loggedOut := config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+
+	switch loggedOut {
+	case true:
+		switch (param) 
+		{
+		case 0:
+			types.USER_SIGNIN_STATUS = false
+			fmt.printfln("You have been logged out.")
+			OST_STOP_SESSION_TIMER()
+			OST_START_ENGINE()
+			break
+		case 1:
+			//only used when logging out AND THEN exiting.
+			types.USER_SIGNIN_STATUS = false
+			fmt.printfln("You have been logged out.")
+			fmt.println("Now Exiting OstrichDB See you soon!\n")
+			os.exit(0)
+		}
+		break
+	case false:
+		types.USER_SIGNIN_STATUS = true
+		fmt.printfln("You have NOT been logged out.")
+		break
+	}
+	return types.USER_SIGNIN_STATUS
 }

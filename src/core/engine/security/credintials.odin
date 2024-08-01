@@ -1,10 +1,10 @@
 package security
 
-import "../../utils"
-import "../config"
+import "../../../utils"
+import "../../config"
+import "../../types"
 import "../data"
 import "../data/metadata"
-import "../types"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -96,7 +96,7 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	switch (configToggled) 
 	{
 	case true:
-		USER_SIGNIN_STATUS = true
+		types.USER_SIGNIN_STATUS = true
 	case false:
 		fmt.printfln("Error toggling config")
 		os.exit(1)

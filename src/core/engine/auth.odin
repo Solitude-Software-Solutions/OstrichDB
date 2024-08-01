@@ -1,17 +1,18 @@
-package security
+package engine
 
 import "../../utils"
 import "../config"
 import "../const"
-import "../data"
-import "../data/metadata"
+import "../types"
+import "./data"
+import "./data/metadata"
+import "./security"
 import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
 
-USER_SIGNIN_STATUS := false
 
 OST_RUN_SIGNIN :: proc() -> bool {
 	//get the username input from the user
@@ -42,7 +43,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error2)
-		OST_RUN_SIGNIN()
+		fmt.printfln("The entered username was not found within OstrichDB. Please try again.")
+		return false
 	}
 
 	//PRE-MESHING START=======================================================================================================
@@ -83,8 +85,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := OST_HASH_PASSWORD(enteredPassword, algoAsInt, true)
-	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
+	newHash := security.OST_HASH_PASSWORD(enteredPassword, algoAsInt, true)
+	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
 	postMesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================
 
@@ -93,18 +95,20 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	switch authPassed {
 	case true:
+		OST_START_SESSION_TIMER()
 		fmt.printfln("Auth Passed! User has been signed in!")
-		USER_SIGNIN_STATUS = true
+		types.USER_SIGNIN_STATUS = true
 		userLoggedInValue := config.OST_READ_CONFIG_VALUE("OST_USER_LOGGED_IN")
 		if userLoggedInValue == "false" {
 			config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
 		}
+		break
 	case false:
 		fmt.printfln("Auth Failed. Password was incorrect please try again.")
-		USER_SIGNIN_STATUS = false
+		types.USER_SIGNIN_STATUS = false
 		os.exit(0)
 	}
-	return USER_SIGNIN_STATUS
+	return types.USER_SIGNIN_STATUS
 
 }
 
@@ -135,23 +139,23 @@ OST_USER_LOGOUT :: proc(param: int) -> bool {
 		switch (param) 
 		{
 		case 0:
-			USER_SIGNIN_STATUS = false
+			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 			OST_STOP_SESSION_TIMER()
-			OST_RUN_SIGNIN()
+			OST_START_ENGINE()
 			break
 		case 1:
 			//only used when logging out AND THEN exiting.
-			USER_SIGNIN_STATUS = false
+			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)
 		}
 		break
 	case false:
-		USER_SIGNIN_STATUS = true
+		types.USER_SIGNIN_STATUS = true
 		fmt.printfln("You have NOT been logged out.")
 		break
 	}
-	return USER_SIGNIN_STATUS
+	return types.USER_SIGNIN_STATUS
 }

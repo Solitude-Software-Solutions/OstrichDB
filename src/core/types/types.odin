@@ -168,3 +168,5 @@ Focus :: struct {
 	ro_:  string, // The related object (e.g., "myRecord")
 	flag: bool, // If the focus is active
 }
+//some gloables because fuck cyclical importation problems in Odin
+USER_SIGNIN_STATUS: bool

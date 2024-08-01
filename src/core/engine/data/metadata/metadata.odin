@@ -1,7 +1,7 @@
 package metadata
 
-import "../../../utils"
-import "../../const"
+import "../../../../utils"
+import "../../../const"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"

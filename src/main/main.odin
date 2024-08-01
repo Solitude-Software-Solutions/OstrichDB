@@ -1,11 +1,10 @@
 package main
 
-import "../core/backup"
 import "../core/config"
-import "../core/data"
-import "../core/data/metadata"
 import "../core/engine"
-import "../core/security"
+import "../core/engine/data"
+import "../core/engine/data/metadata"
+import "../core/engine/security"
 import "../core/types"
 import "../utils"
 import "core:fmt"
@@ -15,7 +14,6 @@ import "core:fmt"
 //=========================================================//
 
 main :: proc() {
-	backup.main()
 	utils.main()
 	data.main()
 	utils.log_runtime_event("OstrichDB Started", "")
@@ -31,26 +29,6 @@ main :: proc() {
 	} else {
 		types.engine.Initialized = false
 	}
-
-	switch (types.engine.Initialized) 
-	{
-	case false:
-		config.main()
-		security.OST_INIT_USER_SETUP()
-		break
-
-	case true:
-		userSignedIn := security.OST_RUN_SIGNIN()
-		switch (userSignedIn) 
-		{
-		case true:
-			utils.log_runtime_event("User Signed In", "User successfully logged into OstrichDB")
-			engine.OST_ENGINE_COMMAND_LINE()
-
-		case false:
-			//to stuff
-			break
-		}
-	}
+	engine.main()
 
 }

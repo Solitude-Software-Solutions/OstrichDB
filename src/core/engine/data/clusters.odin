@@ -1,6 +1,6 @@
 package data
-import "../../utils"
-import "../const"
+import "../../../utils"
+import "../../const"
 import "./metadata"
 import "core:fmt"
 import "core:math/rand"
@@ -16,6 +16,7 @@ import "core:strings"
 
 main :: proc() {
 	OST_CREATE_CACHE_FILE()
+	OST_CREAT_BACKUP_DIR()
 	os.make_directory(const.OST_COLLECTION_PATH)
 	metadata.OST_CREATE_FFVF()
 	test := metadata.OST_GET_FILE_FORMAT_VERSION()
