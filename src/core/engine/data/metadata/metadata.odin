@@ -224,7 +224,7 @@ OST_METADATA_ON_CREATE :: proc(fn: string) {
 
 
 OST_CREATE_FFVF :: proc() {
-	CURRENT_FFV := "Pre_Rel_v0.1.0_dev" //todo allow this to be directly read from the projetcs 'version' file and not hardcoded
+	CURRENT_FFV := "Pre_Rel_v0.2.0_dev" //todo allow this to be directly read from the projetcs 'version' file and not hardcoded
 	os.make_directory(const.OST_TMP_PATH)
 
 	FFVF := const.OST_FFVF

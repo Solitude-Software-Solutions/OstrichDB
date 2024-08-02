@@ -299,10 +299,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//FOCUS and UNFOCUS: Enter at own peril.
 	case const.FOCUS:
 		utils.log_runtime_event("Used FOCUS command", "")
-		types.focus.flag = true
+
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
+			types.focus.flag = true
 			if len(cmd.o_token) > 0 {
 				collection := cmd.o_token[0]
 				storedT, storedO := OST_FOCUS(const.COLLECTION, collection)
@@ -314,6 +315,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
+			types.focus.flag = true
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				cluster := cmd.o_token[0]
 				collection := cmd.o_token[1]
@@ -322,6 +324,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		//todo: come back to this..havent done enough commands to test this in focus mode yet
 		case const.RECORD:
+			types.focus.flag = true
 			if len(cmd.o_token) >= 3 && const.WITHIN in cmd.m_token {
 				record := cmd.o_token[0]
 				cluster := cmd.o_token[1]
@@ -345,6 +348,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				//storing the Target and Objec that the user wants to focus)
 			}
+			break
+		case:
+			fmt.printfln(
+				"Invalid FOCUS command structure. Correct Usage: FOCUS <collection_name> or FOCUS <cluster_name> WITHIN COLLECTION <collection_name>",
+			)
 			break
 		}
 
