@@ -252,52 +252,6 @@ OST_NEWLINE_CHAR :: proc() {
 
 
 // =====================================DATA INTERACTION=====================================//
-//This section holds procs that deal with user/data interation within the Ostrich Engine
-
-
-//handles logic whehn the user chooses to interact with a specific cluster in a .ost file
-OST_CHOOSE_CLUSTER_NAME :: proc(fn: string) {
-	buf: [256]byte
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-	}
-	if n > 0 {
-		fmt.printfln("Which cluster would you like to interact with?")
-		input := string(buf[:n])
-		//trim the string of any whitespace or newline characters
-
-		//Shoutout to the OdinLang Discord for helping me with this...
-		input = strings.trim_right_proc(input, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
-
-		cluserExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, input)
-		switch (cluserExists) 
-		{
-		case true:
-			//todo what would the user like to do with this cluster?
-			break
-		case false:
-			fmt.printfln(
-				"Cluster with name:%s%s%s does not exist in database: %s",
-				utils.BOLD,
-				input,
-				utils.RESET,
-				fn,
-			)
-			fmt.printfln("Please try again")
-			OST_CHOOSE_CLUSTER_NAME(fn)
-			//todo add a commands the lists all available cluster in the current db file.
-			break
-		}
-	}
-}
 
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
@@ -489,63 +443,107 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 
 
 OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
+	buf: [64]byte
+	fmt.printfln(
+		"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
+		utils.BOLD,
+		cn,
+		utils.RESET,
+		utils.BOLD,
 		fn,
-		const.OST_FILE_EXTENSION,
+		utils.RESET,
 	)
-	data, readSuccess := os.read_entire_file(collection_path)
-	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
 		)
-		return false
+		utils.throw_err(error1)
 	}
-	defer delete(data)
 
-	content := string(data)
-	clusters := strings.split(content, "}")
-	newContent := make([dynamic]u8)
-	defer delete(newContent)
-	clusterFound := false
+	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+	cap := strings.to_upper(confirmation)
+	switch cap 
+	{
+	case const.YES:
+		collection_path := fmt.tprintf(
+			"%s%s%s",
+			const.OST_COLLECTION_PATH,
+			fn,
+			const.OST_FILE_EXTENSION,
+		)
 
-	for i := 0; i < len(clusters); i += 1 {
-		cluster := clusters[i]
-		if strings.contains(cluster, fmt.tprintf("cluster_name : %s", cn)) {
-			clusterFound = true
-		} else if len(strings.trim_space(cluster)) > 0 {
-			append(&newContent, ..transmute([]u8)cluster)
-			// Add closing brace only if it's not the last cluster
-			if i < len(clusters) - 1 {
-				append(&newContent, "}")
+		data, readSuccess := os.read_entire_file(collection_path)
+		if !readSuccess {
+			utils.throw_err(
+				utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+			)
+			return false
+		}
+		defer delete(data)
+
+		content := string(data)
+		clusters := strings.split(content, "}")
+		newContent := make([dynamic]u8)
+		defer delete(newContent)
+		clusterFound := false
+
+		for i := 0; i < len(clusters); i += 1 {
+			cluster := clusters[i]
+			if strings.contains(cluster, fmt.tprintf("cluster_name : %s", cn)) {
+				clusterFound = true
+			} else if len(strings.trim_space(cluster)) > 0 {
+				append(&newContent, ..transmute([]u8)cluster)
+				// Add closing brace only if it's not the last cluster
+				if i < len(clusters) - 1 {
+					append(&newContent, "}")
+				}
 			}
 		}
-	}
 
-	if !clusterFound {
-		utils.throw_err(
-			utils.new_err(
-				.CANNOT_FIND_CLUSTER,
-				fmt.tprintf("Cluster '%s' not found in collection '%s'", cn, fn),
-				#procedure,
-			),
+		if !clusterFound {
+			utils.throw_err(
+				utils.new_err(
+					.CANNOT_FIND_CLUSTER,
+					fmt.tprintf("Cluster '%s' not found in collection '%s'", cn, fn),
+					#procedure,
+				),
+			)
+			return false
+		}
+
+		writeSuccess := os.write_entire_file(collection_path, newContent[:])
+		if !writeSuccess {
+			utils.throw_err(
+				utils.new_err(
+					.CANNOT_WRITE_TO_FILE,
+					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+					#procedure,
+				),
+			)
+			return false
+		}
+		utils.log_runtime_event(
+			"Database Cluster",
+			"User confirmed deletion of cluster and it was successfully deleted.",
 		)
+		break
+
+	case const.NO:
+		utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
+		return false
+	case:
+		utils.log_runtime_event(
+			"User entered invalid input",
+			"User entered invalid input when trying to delete cluster",
+		)
+		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 		return false
 	}
-
-	writeSuccess := os.write_entire_file(collection_path, newContent[:])
-	if !writeSuccess {
-		utils.throw_err(
-			utils.new_err(
-				.CANNOT_WRITE_TO_FILE,
-				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#procedure,
-			),
-		)
-		return false
-	}
-
 	return true
 }
 

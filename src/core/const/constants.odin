@@ -70,3 +70,7 @@ MAX_SESSION_TIME: time.Duration : 259200000000000000
 
 //1 minute in nano seconds only used for testing
 // MAX_SESSION_TIME: time.Duration : 60000000000
+
+//used for confirming user actions. Input will be capitalized in the engine
+YES :: "YES"
+NO :: "NO"

@@ -57,8 +57,6 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	preMesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
 	//PRE-MESHING END=========================================================================================================
-
-	//todo cant remember if im looking for "algo_method" something else
 	algoMethod := data.OST_READ_RECORD_VALUE(
 		const.SEC_FILE_PATH,
 		const.SEC_CLUSTER_NAME,

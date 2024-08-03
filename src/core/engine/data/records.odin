@@ -157,15 +157,7 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
 	return false
 }
 
-//so Im trying to get the type of the data that is passed in. but I cannot use type_of on anything that is of type "any"
-
-// todo
-//need to create a proc that takes in the users input on which cluster they want to store the record in
-//create a proc that checks if the cluster that the user wants to store the record in actually exists
-// need to create a proc that passes all info of a record to a different proc that will then store the record into a cluster
-
-
-//.appends the passed in record to the passed in cluster
+//appends the passed in record to the passed in cluster
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string, rd: string) {
 	data, readSuccess := os.read_entire_file(fn)

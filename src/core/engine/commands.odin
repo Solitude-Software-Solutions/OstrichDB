@@ -285,9 +285,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
-			if data.OST_ERASE_COLLECTION(cmd.o_token[0]) {
+			if data.OST_ERASE_COLLECTION(cmd.o_token[0]) == true {
 				fmt.printfln(
 					"Collection %s%s%s successfully erased",
+					utils.BOLD,
+					cmd.o_token[0],
+					utils.RESET,
+				)
+			} else {
+				fmt.printfln(
+					"Failed to erase collection %s%s%s",
 					utils.BOLD,
 					cmd.o_token[0],
 					utils.RESET,
@@ -298,9 +305,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				collection_name := cmd.o_token[1]
 				cluster := cmd.o_token[0]
-				if data.OST_ERASE_CLUSTER(collection_name, cluster) {
+				if data.OST_ERASE_CLUSTER(collection_name, cluster) == true {
 					fmt.printfln(
 						"Cluster %s%s%s successfully erased from collection %s%s%s",
+						utils.BOLD,
+						cluster,
+						utils.RESET,
+						utils.BOLD,
+						collection_name,
+						utils.RESET,
+					)
+				} else {
+					fmt.printfln(
+						"Failed to erase cluster %s%s%s from collection %s%s%s",
 						utils.BOLD,
 						cluster,
 						utils.RESET,
@@ -471,7 +488,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	return 0
 }
 
-
+// =======================<FOCUS MODE>=======================//
+// =======================<FOCUS MODE>=======================//
 EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	cmd: ^types.Command,
 	focusTarget: string,
@@ -627,7 +645,27 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 			if len(cmd.o_token) >= 1 {
 				cluster_name := cmd.o_token[0]
 				collection_name := focusObject
-				data.OST_ERASE_CLUSTER(collection_name, cluster_name)
+				if data.OST_ERASE_CLUSTER(collection_name, cluster_name) == true {
+					fmt.printfln(
+						"Cluster %s%s%s successfully erased from collection %s%s%s",
+						utils.BOLD,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD,
+						collection_name,
+						utils.RESET,
+					)
+				} else {
+					fmt.printfln(
+						"Failed to erase cluster %s%s%s from collection %s%s%s",
+						utils.BOLD,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD,
+						collection_name,
+						utils.RESET,
+					)
+				}
 				fn := OST_CONCAT_OBJECT_EXT(collection_name)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
