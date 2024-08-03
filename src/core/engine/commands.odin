@@ -4,6 +4,7 @@ import "../../utils"
 import "../const"
 import "../types"
 import "./data"
+import "./data/metadata"
 import "./security"
 import "core:fmt"
 import "core:os"
@@ -22,6 +23,11 @@ RENAME RECORD Chevy TO Chevrolet WITHIN COLLECTION car companies //renames recor
 
 */
 
+//used to concatenate an object name with an extension this will be used for updating collection file metadata from the command line
+OST_CONCAT_OBJECT_EXT :: proc(obj: string) -> string {
+	path := strings.concatenate([]string{const.OST_COLLECTION_PATH, obj})
+	return strings.concatenate([]string{path, const.OST_FILE_EXTENSION})
+}
 
 OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	incompleteCommandErr := utils.new_err(
@@ -80,6 +86,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) > 0 {
 				name := data.OST_CHOOSE_BACKUP_NAME()
 				data.OST_CREATE_BACKUP_COLLECTION(name, cmd.o_token[0])
+
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: BACKUP COLLECTION <collection_name>",
@@ -130,7 +137,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 
 				id := data.OST_GENERATE_CLUSTER_ID()
-				success := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
 				switch (result) 
 				{
@@ -156,8 +162,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
 					)
 					break
-
 				}
+				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
@@ -167,16 +175,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a cluster name to create.",
 				)
 			}
+
 			break
 		case const.RECORD:
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
+				record_name := cmd.o_token[0]
+				cluster_name := cmd.o_token[1]
+				collection_name := cmd.o_token[2]
 				fmt.printf(
 					"Creating record '%s' within cluster '%s' in collection '%s'\n",
-					cmd.o_token[0],
-					cmd.o_token[1],
-					cmd.o_token[2],
+					record_name,
+					cluster_name,
+					collection_name,
 				)
 				// data.OST_CREATE_RECORD(cmd.o_token[0], cmd.o_token[1], cmd.o_token[2], 0)
+				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: NEW RECORD <record_name> WITHIN <Target>",
@@ -215,17 +230,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case const.CLUSTER:
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token && const.TO in cmd.m_token {
 				old_name := cmd.o_token[0]
-				collection := cmd.o_token[1]
+				collection_name := cmd.o_token[1]
 				new_name := cmd.m_token[const.TO]
 
-				success := data.OST_RENAME_CLUSTER(collection, old_name, new_name)
+				success := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
 				if success {
 					fmt.printf(
 						"Successfully renamed cluster '%s' to '%s' in collection '%s'\n",
 						old_name,
 						new_name,
-						collection,
+						collection_name,
 					)
+					fn := OST_CONCAT_OBJECT_EXT(collection_name)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 				} else {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
@@ -278,19 +296,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case const.CLUSTER:
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
-				collection := cmd.o_token[1]
+				collection_name := cmd.o_token[1]
 				cluster := cmd.o_token[0]
-				if data.OST_ERASE_CLUSTER(collection, cluster) {
+				if data.OST_ERASE_CLUSTER(collection_name, cluster) {
 					fmt.printfln(
 						"Cluster %s%s%s successfully erased from collection %s%s%s",
 						utils.BOLD,
 						cluster,
 						utils.RESET,
 						utils.BOLD,
-						collection,
+						collection_name,
 						utils.RESET,
 					)
 				}
+				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
@@ -514,6 +535,9 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 
 				id := data.OST_GENERATE_CLUSTER_ID()
 				success := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: NEW CLUSTER <collection_name>")
 				utils.log_runtime_event(
@@ -578,6 +602,9 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				cluster_name := cmd.o_token[0]
 				collection_name := focusObject
 				data.OST_ERASE_CLUSTER(collection_name, cluster_name)
+				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: ERASE CLUSTER <cluster_name>")
 				utils.log_runtime_event(
@@ -608,21 +635,24 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 			if len(cmd.o_token) >= 1 && const.TO in cmd.m_token {
 				old_name := cmd.o_token[0]
 				new_name := cmd.m_token[const.TO]
-				collection := focusObject
+				collection_name := focusObject
 				fmt.printfln(
 					"Renaming cluster '%s' to '%s' in collection '%s'...",
 					old_name,
 					new_name,
-					collection,
+					collection_name,
 				)
-				success := data.OST_RENAME_CLUSTER(collection, old_name, new_name)
+				success := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
 				if success {
 					fmt.printf(
 						"Successfully renamed cluster '%s' to '%s' in collection '%s'\n",
 						old_name,
 						new_name,
-						collection,
+						collection_name,
 					)
+					fn := OST_CONCAT_OBJECT_EXT(collection_name)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 				} else {
 					fmt.println("Failed to rename cluster. Please check error messages.")
 				}

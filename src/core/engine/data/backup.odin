@@ -19,7 +19,6 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	//retirve the data from the src collection file
 	srcNameAndPath := strings.concatenate([]string{const.OST_COLLECTION_PATH, src})
 	srcFullPath := strings.concatenate([]string{srcNameAndPath, const.OST_FILE_EXTENSION})
-	fmt.println("srcFullPath: ", srcFullPath)
 	f, readSuccess := os.read_entire_file(srcFullPath)
 	if !readSuccess {
 		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
@@ -65,7 +64,6 @@ OST_CHOOSE_BACKUP_NAME :: proc() -> string {
 		utils.throw_err(error1)
 	}
 	str := strings.trim_right(string(buf[:n]), "\r\n")
-	fmt.printfln("You chose: %s", str)
 
 	return str
 }
