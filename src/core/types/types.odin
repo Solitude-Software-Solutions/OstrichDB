@@ -47,8 +47,8 @@ Cluster :: struct {
 //=================================================/src/core/engine/=================================================//
 /*
 Type: Engine_Error
-Desc: Used to define the structure of an ENGINE SPECIFIC errors. Not to
-        be confused with the standard errors located in errors.odin
+Desc: Used to define the structure of an ENGINE SPECIFIC utils. Not to
+        be confused with the standard errors located in utils.odin
 Usage Locations: NOT YET IMPLEMENTED but wil be used in several places
 */
 Engine_Error :: struct {
@@ -164,7 +164,9 @@ Focus :: struct {
 	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
 
 	// The related target and object are used to provide futher context for the focus
-	rt_: string, // The related target (e.g., "RECORD")
-	ro_: string, // The related object (e.g., "myRecord")
+	rt_:  string, // The related target (e.g., "RECORD")
+	ro_:  string, // The related object (e.g., "myRecord")
 	flag: bool, // If the focus is active
 }
+//some gloables because fuck cyclical importation problems in Odin
+USER_SIGNIN_STATUS: bool

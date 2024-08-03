@@ -1,10 +1,8 @@
 package data
 
 
-import "../../errors"
-import "../../logging"
-import "../../misc"
-import "../const"
+import "../../../utils"
+import "../../const"
 import "./metadata"
 import "core:fmt"
 import "core:os"
@@ -13,18 +11,18 @@ import "core:strings"
 MAX_FILE_NAME_LENGTH_AS_BYTES: [512]byte
 
 
-//used for the commnad line
+//used for the command line
 OST_CHOOSE_COLLECTION_NAME :: proc() {
 	buf: [1024]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 	}
 	name := strings.trim_right(string(buf[:n]), "\n")
 	OST_CREATE_COLLECTION(name, 0)
@@ -52,13 +50,13 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o666)
 		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
 		if createSuccess != 0 {
-			error1 := errors.new_err(
+			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
-				errors.get_err_msg(.CANNOT_CREATE_FILE),
+				utils.get_err_msg(.CANNOT_CREATE_FILE),
 				#procedure,
 			)
-			errors.throw_err(error1)
-			logging.log_utils_error("Error creating .ost file", "OST_CREATE_COLLECTION")
+			utils.throw_err(error1)
+			utils.log_err("Error creating .ost file", "OST_CREATE_COLLECTION")
 			return false
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
@@ -74,13 +72,13 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		createFile, createSuccess := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
 		if createSuccess != 0 {
-			error1 := errors.new_err(
+			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
-				errors.get_err_msg(.CANNOT_CREATE_FILE),
+				utils.get_err_msg(.CANNOT_CREATE_FILE),
 				#procedure,
 			)
-			errors.throw_err(error1)
-			logging.log_utils_error("Error creating .ost file", "OST_CREATE_COLLECTION")
+			utils.throw_err(error1)
+			utils.log_err("Error creating .ost file", "OST_CREATE_COLLECTION")
 			return false
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
@@ -94,13 +92,13 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	//check if the file exists
 	fileWithExt := strings.concatenate([]string{fileName, const.OST_FILE_EXTENSION})
-	fmt.printfln("Deleting database: %s%s%s", misc.BOLD, fileWithExt, misc.RESET)
+	fmt.printfln("Deleting database: %s%s%s", utils.BOLD, fileWithExt, utils.RESET)
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fileName, 0) {
 		fmt.printfln(
 			"Database with name:%s%s%s does not exist",
-			misc.BOLD,
+			utils.BOLD,
 			fileWithExt,
-			misc.RESET,
+			utils.RESET,
 		)
 		return false
 	}
@@ -109,16 +107,16 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
 	deleteSuccess := os.remove(pathNameExtension)
 	if deleteSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_DELETE_FILE,
-			errors.get_err_msg(.CANNOT_DELETE_FILE),
+			utils.get_err_msg(.CANNOT_DELETE_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error deleting .ost file", "OST_ERASE_COLLECTION")
+		utils.throw_err(error1)
+		utils.log_err("Error deleting .ost file", "OST_ERASE_COLLECTION")
 		return false
 	}
-	fmt.printfln("Database with name:%s%s%s has been deleted", misc.BOLD, fileName, misc.RESET)
+	fmt.printfln("Database with name:%s%s%s has been deleted", utils.BOLD, fileName, utils.RESET)
 	return true
 }
 
@@ -132,13 +130,13 @@ OST_PREFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 	//CHECK#2: check if the file already exists
 	existenceCheck, readSuccess := os.read_entire_file_from_filename(fn)
 	if readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.FILE_ALREADY_EXISTS,
-			errors.get_err_msg(.FILE_ALREADY_EXISTS),
+			utils.get_err_msg(.FILE_ALREADY_EXISTS),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error(".ost file already exists", "OST_CREATE_COLLECTION")
+		utils.throw_err(error1)
+		utils.log_err(".ost file already exists", "OST_CREATE_COLLECTION")
 		return 1
 	}
 	//CHECK#3: check if the file name is valid
@@ -195,12 +193,12 @@ OST_CHOOSE_COLLECTION :: proc() {
 
 	n, inputSuccess := os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 	}
 	if n > 0 {
 		//todo add option for user to enter a command that lists current dbs
@@ -218,17 +216,22 @@ OST_CHOOSE_COLLECTION :: proc() {
 		case true:
 			fmt.printfln(
 				"%sFound database%s: %s%s%s",
-				misc.GREEN,
-				misc.RESET,
-				misc.BOLD,
+				utils.GREEN,
+				utils.RESET,
+				utils.BOLD,
 				input,
-				misc.RESET,
+				utils.RESET,
 			)
 			//do stuff
 			//todo what would the user like to do with this database?
 			break
 		case false:
-			fmt.printfln("Database with name:%s%s%s does not exist", misc.BOLD, input, misc.RESET)
+			fmt.printfln(
+				"Database with name:%s%s%s does not exist",
+				utils.BOLD,
+				input,
+				utils.RESET,
+			)
 			fmt.printfln("please try again")
 			OST_CHOOSE_COLLECTION()
 			break
@@ -242,13 +245,13 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 	oldPathAndExt := strings.concatenate([]string{oldPath, const.OST_FILE_EXTENSION})
 	file, readSuccess := os.read_entire_file_from_filename(oldPathAndExt)
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error reading .ost file", "OST_RENAME_COLLECTION")
+		utils.throw_err(error1)
+		utils.log_err("Error reading .ost file", "OST_RENAME_COLLECTION")
 		return false
 	}
 
@@ -266,13 +269,13 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	filePathAndExt := strings.concatenate([]string{filePath, const.OST_FILE_EXTENSION})
 	data, readSuccess := os.read_entire_file(filePathAndExt)
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
-		logging.log_utils_error("Error reading .ost file", "OST_FETCH_COLLECTION")
+		utils.throw_err(error1)
+		utils.log_err("Error reading .ost file", "OST_FETCH_COLLECTION")
 		return ""
 	}
 	defer delete(data)

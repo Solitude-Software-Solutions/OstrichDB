@@ -1,8 +1,7 @@
 package data
 
-import "../../errors"
-import "../../misc"
-import "../const"
+import "../../../utils"
+import "../../const"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -23,12 +22,12 @@ import "core:strings"
 OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) -> bool {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 		return false
 	}
 	defer delete(data)
@@ -36,9 +35,9 @@ OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) ->
 	// Check if the cluster exists
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, cn)
 	if !clusterExists {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
-			errors.get_err_msg(.CANNOT_FIND_CLUSTER),
+			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
 			#procedure,
 		)
 		return false
@@ -64,12 +63,12 @@ OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) ->
 
 	// If the cluster is not found or the structure is invalid, return false
 	if cluster_start == -1 || closing_brace == -1 {
-		error3 := errors.new_err(
+		error3 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
-			errors.get_err_msg(.CANNOT_FIND_CLUSTER),
+			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
 			#procedure,
 		)
-		errors.throw_err(error3)
+		utils.throw_err(error3)
 
 		return false
 	}
@@ -97,12 +96,12 @@ OST_CHECK_IF_RECORDS_EXIST :: proc(fn: string, cn: string, records: ..string) ->
 OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bool {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 		return false
 	}
 	defer delete(data)
@@ -110,12 +109,12 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
 	// Check if the cluster exists
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, cn)
 	if !clusterExists {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
-			errors.get_err_msg(.CANNOT_FIND_CLUSTER),
+			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
 			#procedure,
 		)
-		errors.throw_err(error2)
+		utils.throw_err(error2)
 		return false
 	}
 
@@ -139,12 +138,12 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
 
 	// If the cluster is not found or the structure is invalid, return false
 	if cluster_start == -1 || closing_brace == -1 {
-		error3 := errors.new_err(
+		error3 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
-			errors.get_err_msg(.CANNOT_FIND_CLUSTER),
+			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
 			#procedure,
 		)
-		errors.throw_err(error3)
+		utils.throw_err(error3)
 		return false
 	}
 
@@ -171,12 +170,12 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, record: string) -> bo
 OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string, rd: string) {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 		return
 	}
 	defer delete(data)
@@ -206,12 +205,12 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string
 	}
 	//if the cluster is not found or the structure is invalid, return
 	if cluster_start == -1 || closing_brace == -1 {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
-			errors.get_err_msg(.CANNOT_FIND_CLUSTER),
+			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
 			#procedure,
 		)
-		errors.throw_err(error2)
+		utils.throw_err(error2)
 		return
 	}
 
@@ -230,12 +229,12 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string
 	new_content := strings.join(new_lines[:], "\n")
 	writeSuccess := os.write_entire_file(fn, transmute([]byte)new_content)
 	if writeSuccess != true {
-		error3 := errors.new_err(
+		error3 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
-			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
 			#procedure,
 		)
-		errors.throw_err(error3)
+		utils.throw_err(error3)
 	}
 }
 
@@ -243,12 +242,12 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn: string, cn: string, id: i64, rn: string
 OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rn: string) -> string {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 		return ""
 	}
 	defer delete(data)
@@ -273,12 +272,12 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rn: string) -> string {
 
 	// If the cluster is not found or the structure is invalid, return an empty string
 	if cluster_start == -1 || closing_brace == -1 {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
-			errors.get_err_msg(.CANNOT_FIND_CLUSTER),
+			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
 			#procedure,
 		)
-		errors.throw_err(error2)
+		utils.throw_err(error2)
 		return ""
 	}
 
@@ -342,12 +341,12 @@ OST_SET_RECORD_TYPE :: proc(rType: string, rd: string) -> (string, any) {
 		   strings.contains(rd, alpha) ||
 		   strings.contains(rd, b_true) ||
 		   strings.contains(rd, b_false) {
-			error1 := errors.new_err(
+			error1 := utils.new_err(
 				.INVALID_RECORD_DATA,
-				errors.get_err_msg(.INVALID_RECORD_DATA),
+				utils.get_err_msg(.INVALID_RECORD_DATA),
 				#procedure,
 			)
-			errors.throw_err(error1)
+			utils.throw_err(error1)
 			return "", error1
 		} else {
 			type = "int"
@@ -362,12 +361,12 @@ OST_SET_RECORD_TYPE :: proc(rType: string, rd: string) -> (string, any) {
 		   !strings.contains(rd, periodChar) ||
 		   strings.contains(rd, b_true) ||
 		   strings.contains(rd, b_false) {
-			error2 := errors.new_err(
+			error2 := utils.new_err(
 				.INVALID_RECORD_DATA,
-				errors.get_err_msg(.INVALID_RECORD_DATA),
+				utils.get_err_msg(.INVALID_RECORD_DATA),
 				#procedure,
 			)
-			errors.throw_err(error2)
+			utils.throw_err(error2)
 			return "", error2
 		} else {
 			type = "float"
@@ -377,12 +376,12 @@ OST_SET_RECORD_TYPE :: proc(rType: string, rd: string) -> (string, any) {
 	case "bool":
 		// bools can only be true or false
 		if !strings.contains(rd, b_true) || !strings.contains(rd, b_false) {
-			error3 := errors.new_err(
+			error3 := utils.new_err(
 				.INVALID_RECORD_DATA,
-				errors.get_err_msg(.INVALID_RECORD_DATA),
+				utils.get_err_msg(.INVALID_RECORD_DATA),
 				#procedure,
 			)
-			errors.throw_err(error3)
+			utils.throw_err(error3)
 			return "", error3
 		} else {
 			type = "bool"

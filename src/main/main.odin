@@ -1,14 +1,12 @@
 package main
 
 import "../core/config"
-import "../core/data"
-import "../core/data/metadata"
 import "../core/engine"
-import "../core/security"
+import "../core/engine/data"
+import "../core/engine/data/metadata"
+import "../core/engine/security"
 import "../core/types"
-import "../errors"
-import "../logging"
-import "../misc"
+import "../utils"
 import "core:fmt"
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
@@ -16,40 +14,21 @@ import "core:fmt"
 //=========================================================//
 
 main :: proc() {
-	//Create /bin dir and start the logging system
-	logging.main()
-	//Create the cluster id cache file and clusters directory
+	utils.main()
 	data.main()
-
+	utils.log_runtime_event("OstrichDB Started", "")
 
 	//Print the Ostrich logo and version
-	fmt.printfln(misc.ostrich_art)
-	version := transmute(string)misc.get_ost_version()
-	fmt.printfln("%sVersion: %s%s%s", misc.BOLD, misc.GREEN, version, misc.RESET)
+	fmt.printfln(utils.ostrich_art)
+	version := transmute(string)utils.get_ost_version()
+	fmt.printfln("%sVersion: %s%s%s", utils.BOLD, utils.GREEN, version, utils.RESET)
 
 	if config.OST_READ_CONFIG_VALUE("ENGINE_INIT") == "true" {
 		types.engine.Initialized = true
+		utils.log_runtime_event("OstrichDB Engine Initialized", "")
 	} else {
 		types.engine.Initialized = false
 	}
-	switch (types.engine.Initialized) 
-	{
-	case false:
-		config.main()
-		security.OST_INIT_USER_SETUP()
-		break
-
-	case true:
-		userSignedIn := security.OST_RUN_SIGNIN()
-		switch (userSignedIn) 
-		{
-		case true:
-			engine.OST_ENGINE_COMMAND_LINE()
-
-		case false:
-			//to stuff
-			break
-		}
-	}
+	engine.main()
 
 }
