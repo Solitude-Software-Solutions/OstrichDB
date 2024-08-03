@@ -534,7 +534,33 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				collection_name := focusObject
 
 				id := data.OST_GENERATE_CLUSTER_ID()
-				success := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+				switch (result) 
+				{
+				case -1:
+					fmt.printfln(
+						"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
+						utils.BOLD,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 1, 2, 3:
+					error1 := utils.new_err(
+						.CANNOT_CREATE_CLUSTER,
+						utils.get_err_msg(.CANNOT_CREATE_CLUSTER),
+						#procedure,
+					)
+					utils.throw_custom_err(
+						error1,
+						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
+					)
+					break
+				}
+
 				fn := OST_CONCAT_OBJECT_EXT(collection_name)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
