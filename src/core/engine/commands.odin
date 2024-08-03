@@ -84,6 +84,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println(
 					"Incomplete command. Correct Usage: BACKUP COLLECTION <collection_name>",
 				)
+				utils.log_runtime_event(
+					"Incomplete BACKUP command",
+					"User did not provide a collection name to backup.",
+				)
 			}
 			break
 		case const.CLUSTER, const.RECORD:
@@ -93,6 +97,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case:
 			fmt.println("Invalid command. Correct Usage: BACKUP COLLECTION <collection_name>")
+			utils.log_runtime_event(
+				"Invalid BACKUP command",
+				"User did not provide a valid target.",
+			)
 		}
 		break
 	//NEW: Allows for the creation of new records, clusters, or collections
@@ -105,6 +113,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				data.OST_CREATE_COLLECTION(cmd.o_token[0], 0)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: NEW COLLECTION <collection_name>")
+				utils.log_runtime_event(
+					"Incomplete NEW command",
+					"User did not provide a collection name to create.",
+				)
 			}
 			break
 		case const.CLUSTER:
@@ -150,6 +162,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
 				)
+				utils.log_runtime_event(
+					"Incomplete NEW command",
+					"User did not provide a cluster name to create.",
+				)
 			}
 			break
 		case const.RECORD:
@@ -165,10 +181,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: NEW RECORD <record_name> WITHIN <Target>",
 				)
+				utils.log_runtime_event(
+					"Incomplete NEW command",
+					"User did not provide a record name to create.",
+				)
 			}
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Target> <Targets_name>")
+			utils.log_runtime_event(
+				"Invalid NEW command",
+				"User did not provide a valid target to create.",
+			)
 		}
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
@@ -211,6 +235,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME CLUSTER <old_name> WITHIN <collection_name> TO <new_name>",
 				)
+				utils.log_runtime_event(
+					"Incomplete RENAME command",
+					"User did not provide a valid cluster name to rename.",
+				)
 			}
 			break
 		case const.RECORD:
@@ -222,6 +250,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME RECORD <old_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> TO <new_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete RENAME command",
+					"User did not provide a valid record name to rename.",
 				)
 			}
 			break
@@ -263,12 +295,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println(
 					"Incomplete command. Correct Usage: ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
 				)
+				utils.log_runtime_event(
+					"Incomplete ERASE command",
+					"User did not provide a valid cluster name to erase.",
+				)
 			}
 			break
 		case const.RECORD:
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: ERASE <Target> <Targets_name>")
+			utils.log_runtime_event(
+				"Invalid ERASE command",
+				"User did not provide a valid target.",
+			)
 		}
 		break
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
@@ -284,6 +324,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println(
 					"Incomplete command. Correct Usage: FETCH COLLECTION <collection_name>",
 				)
+				utils.log_runtime_event(
+					"Incomplete FETCH command",
+					"User did not provide a valid collection name to fetch.",
+				)
 			}
 			break
 		case const.CLUSTER:
@@ -293,9 +337,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
 				fmt.printfln(clusterContent)
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
+				fmt.println(
 					"Incomplete command. Correct Usage: FETCH CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FETCH command",
+					"User did not provide a valid cluster name to fetch.",
 				)
 			}
 			break
@@ -303,6 +350,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Target> <Targets_name>")
+			utils.log_runtime_event(
+				"Invalid FETCH command",
+				"User did not provide a valid target.",
+			)
 		}
 		break
 	//FOCUS and UNFOCUS: Enter at own peril.
@@ -321,6 +372,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					invalidCommandErr,
 					"Incomplete command. Correct Usage: NEW COLLECTION <collection_name>",
 				)
+				utils.log_runtime_event(
+					"Incomplete FOCUS command",
+					"User did not provide a valid collection name to focus.",
+				)
 			}
 			break
 		case const.CLUSTER:
@@ -332,6 +387,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FOCUS command",
+					"User did not provide a valid cluster name to focus.",
 				)
 			}
 			break
@@ -364,10 +423,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: FOCUS RECORD <record_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
 				)
+				utils.log_runtime_event(
+					"Incomplete FOCUS command",
+					"User did not provide a valid record name to focus.",
+				)
 			}
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
+			utils.log_runtime_event(
+				"Invalid FOCUS command",
+				"User did not provide a valid target.",
+			)
 			break
 		}
 		break
@@ -378,6 +445,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			cmd.a_token,
 			utils.RESET,
 		)
+		utils.log_runtime_event("Invalid command", "User entered an invalid command.")
 	}
 	return 0
 }
@@ -448,12 +516,20 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				success := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: NEW CLUSTER <collection_name>")
+				utils.log_runtime_event(
+					"Incomplete NEW command while in FOCUS mode",
+					"User did not provide a valid cluster name.",
+				)
 			}
 			break
 		case const.RECORD:
 			break
 		case:
 			fmt.println("Invalid command. Correct Usage: NEW <target> <target_name>")
+			utils.log_runtime_event(
+				"Invalid NEW command while in FOCUS mode",
+				"User did not provide a valid target.",
+			)
 			break
 		}
 		break
@@ -472,12 +548,20 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				fmt.printfln(clusterContent)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: FETCH CLUSTER <cluster_name>")
+				utils.log_runtime_event(
+					"Incomplete FETCH command while in FOCUS mode",
+					"User did not provide a valid cluster name.",
+				)
 			}
 			break
 		case const.RECORD:
 			break
 		case:
 			fmt.println("Invalid command. Correct Usage: FETCH <target> <target_name>")
+			utils.log_runtime_event(
+				"Invalid FETCH command while in FOCUS mode",
+				"User did not provide a valid target.",
+			)
 			break
 		}
 		break
@@ -496,12 +580,20 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				data.OST_ERASE_CLUSTER(collection_name, cluster_name)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: ERASE CLUSTER <cluster_name>")
+				utils.log_runtime_event(
+					"Incomplete ERASE command while in FOCUS mode",
+					"User did not provide a valid cluster name.",
+				)
 			}
 			break
 		case const.RECORD:
 			break
 		case:
 			fmt.println("Invalid command. Correct Usage: ERASE <target> <target_name>")
+			utils.log_runtime_event(
+				"Invalid ERASE command while in FOCUS mode",
+				"User did not provide a valid target.",
+			)
 			break
 		}
 		break
@@ -539,12 +631,20 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME CLUSTER <cluster_name> TO <new_name>",
 				)
+				utils.log_runtime_event(
+					"Incomplete RENAME command while in FOCUS mode",
+					"User did not provide a valid cluster name or new name.",
+				)
 			}
 		case const.RECORD:
 			break
 		case:
 			fmt.println(
 				"Invalid command. Correct Usage: RENAME <target> <target_name> TO <new_name>",
+			)
+			utils.log_runtime_event(
+				"Invalid RENAME command while in FOCUS mode",
+				"User did not provide a valid target.",
 			)
 			break
 		}
@@ -555,6 +655,10 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 			utils.BOLD,
 			cmd.a_token,
 			utils.RESET,
+		)
+		utils.log_runtime_event(
+			"Invalid command while in FOCUS mode",
+			"User entered an invalid command.",
 		)
 		break
 	}
