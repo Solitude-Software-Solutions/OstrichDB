@@ -81,17 +81,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				name := data.OST_CHOOSE_BACKUP_NAME()
 				data.OST_CREATE_BACKUP_COLLECTION(name, cmd.o_token[0])
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
-					"Invalid BACKUP command structure. Correct Usage: BACKUP COLLECTION <collection_name>",
+				fmt.println(
+					"Incomplete command. Correct Usage: BACKUP COLLECTION <collection_name>",
 				)
 			}
 			break
 		case const.CLUSTER, const.RECORD:
 			fmt.println(
-				"Backing up a cluster or record is not allowed please backup a collection instead.",
+				"Backing up a cluster or record is not currently support in OstrichDB. Try backing up a collection instead.",
 			)
 			break
+		case:
+			fmt.println("Invalid command. Correct Usage: BACKUP COLLECTION <collection_name>")
 		}
 		break
 	//NEW: Allows for the creation of new records, clusters, or collections
@@ -103,10 +104,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printf("Creating collection '%s'\n", cmd.o_token[0])
 				data.OST_CREATE_COLLECTION(cmd.o_token[0], 0)
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
-					"Invalid NEW command structure. Correct Usage: NEW COLLECTION <collection_name>",
-				)
+				fmt.println("Incomplete command. Correct Usage: NEW COLLECTION <collection_name>")
 			}
 			break
 		case const.CLUSTER:
@@ -148,6 +146,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					break
 
 				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				)
 			}
 			break
 		case const.RECORD:
@@ -160,12 +162,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				// data.OST_CREATE_RECORD(cmd.o_token[0], cmd.o_token[1], cmd.o_token[2], 0)
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
-					"Invalid NEW command structure. Correct Usage: NEW RECORD <record_name> WITHIN CLUSTER <cluster_name> IN COLLECTION <collection_name>",
+				fmt.printfln(
+					"Incomplete command. Correct Usage: NEW RECORD <record_name> WITHIN <Target>",
 				)
 			}
 			break
+		case:
+			fmt.printfln("Invalid command structure. Correct Usage: NEW <Target> <Targets_name>")
 		}
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
@@ -180,9 +183,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printf("Renaming collection '%s' to '%s'\n", old_name, new_name)
 				data.OST_RENAME_COLLECTION(old_name, new_name)
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
-					"Invalid RENAME command structure. Correct Usage: RENAME COLLECTION <old_name> TO <new_name>",
+				fmt.println(
+					"Incomplete command. Correct Usage: RENAME COLLECTION <old_name> TO <new_name>",
 				)
 			}
 			break
@@ -201,8 +203,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection,
 					)
 				} else {
-					fmt.println("Failed to rename cluster. Please check error messages.")
+					fmt.println(
+						"Failed to rename cluster due to internal error. Please check error logs.",
+					)
 				}
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: RENAME CLUSTER <old_name> WITHIN <collection_name> TO <new_name>",
+				)
 			}
 			break
 		case const.RECORD:
@@ -212,9 +220,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printf("Renaming record '%s' to '%s'\n", old_name, new_name)
 				// data.OST_RENAME_RECORD(old_name, new_name)
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
-					"Invalid RENAME command structure. Correct Usage: RENAME RECORD <old_name> TO <new_name>",
+				fmt.println(
+					"Incomplete command. Correct Usage: RENAME RECORD <old_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> TO <new_name>",
 				)
 			}
 			break
@@ -253,14 +260,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 				}
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
-					"Invalid ERASE command structure. Correct Usage: ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				fmt.println(
+					"Incomplete command. Correct Usage: ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
 				)
 			}
 			break
 		case const.RECORD:
 			break
+		case:
+			fmt.printfln("Invalid command structure. Correct Usage: ERASE <Target> <Targets_name>")
 		}
 		break
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
@@ -273,9 +281,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection := cmd.o_token[0]
 				data.OST_FETCH_COLLECTION(collection)
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
-					"Invalid FETCH command structure. Correct Usage: FETCH COLLECTION <collection_name>",
+				fmt.println(
+					"Incomplete command. Correct Usage: FETCH COLLECTION <collection_name>",
 				)
 			}
 			break
@@ -288,12 +295,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			} else {
 				utils.throw_custom_err(
 					invalidCommandErr,
-					"Invalid FETCH command structure. Correct Usage: FETCH CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+					"Incomplete command. Correct Usage: FETCH CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
 				)
 			}
 			break
 		case const.RECORD:
 			break
+		case:
+			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Target> <Targets_name>")
 		}
 		break
 	//FOCUS and UNFOCUS: Enter at own peril.
@@ -308,9 +317,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection := cmd.o_token[0]
 				storedT, storedO := OST_FOCUS(const.COLLECTION, collection)
 			} else {
-				utils.throw_custom_err(
+				fmt.println(
 					invalidCommandErr,
-					"Invalid NEW command structure. Correct Usage: NEW COLLECTION <collection_name>",
+					"Incomplete command. Correct Usage: NEW COLLECTION <collection_name>",
 				)
 			}
 			break
@@ -320,6 +329,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cluster := cmd.o_token[0]
 				collection := cmd.o_token[1]
 				storedT, storedO := OST_FOCUS(collection, cluster) //storing the Target and Objec that the user wants to focus)
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				)
 			}
 			break
 		//todo: come back to this..havent done enough commands to test this in focus mode yet
@@ -347,16 +360,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					utils.RESET,
 				)
 				//storing the Target and Objec that the user wants to focus)
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: FOCUS RECORD <record_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				)
 			}
 			break
 		case:
-			fmt.printfln(
-				"Invalid FOCUS command structure. Correct Usage: FOCUS <collection_name> or FOCUS <cluster_name> WITHIN COLLECTION <collection_name>",
-			)
+			fmt.printfln("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
 			break
 		}
-
 		break
+	case:
+		fmt.printfln(
+			"Invalid command: %s%s%s. Please enter a valide OstrichDB command. Enter 'HELP' for more information.",
+			utils.BOLD,
+			cmd.a_token,
+			utils.RESET,
+		)
 	}
 	return 0
 }
@@ -425,9 +446,14 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 
 				id := data.OST_GENERATE_CLUSTER_ID()
 				success := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+			} else {
+				fmt.println("Incomplete command. Correct Usage: NEW CLUSTER <collection_name>")
 			}
 			break
 		case const.RECORD:
+			break
+		case:
+			fmt.println("Invalid command. Correct Usage: NEW <target> <target_name>")
 			break
 		}
 		break
@@ -445,13 +471,13 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
 				fmt.printfln(clusterContent)
 			} else {
-				utils.throw_custom_err(
-					invalidCommandErr,
-					"Invalid FETCH command structure. Correct Usage: FETCH CLUSTER <cluster_name>",
-				)
+				fmt.println("Incomplete command. Correct Usage: FETCH CLUSTER <cluster_name>")
 			}
 			break
 		case const.RECORD:
+			break
+		case:
+			fmt.println("Invalid command. Correct Usage: FETCH <target> <target_name>")
 			break
 		}
 		break
@@ -461,16 +487,21 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
-			fmt.printf("Cannot erase a collection while in FOCUS mode...\n")
+			fmt.println("Cannot erase a collection while in FOCUS mode.")
 			break
 		case const.CLUSTER:
 			if len(cmd.o_token) >= 1 {
 				cluster_name := cmd.o_token[0]
 				collection_name := focusObject
 				data.OST_ERASE_CLUSTER(collection_name, cluster_name)
+			} else {
+				fmt.println("Incomplete command. Correct Usage: ERASE CLUSTER <cluster_name>")
 			}
 			break
 		case const.RECORD:
+			break
+		case:
+			fmt.println("Invalid command. Correct Usage: ERASE <target> <target_name>")
 			break
 		}
 		break
@@ -479,7 +510,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
-			fmt.printf("Cannot rename a collection while in FOCUS mode...\n")
+			fmt.println("Cannot rename a collection while in FOCUS mode.")
 			break
 		case const.CLUSTER:
 			if len(cmd.o_token) >= 1 && const.TO in cmd.m_token {
@@ -504,12 +535,28 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 					fmt.println("Failed to rename cluster. Please check error messages.")
 				}
 				break
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: RENAME CLUSTER <cluster_name> TO <new_name>",
+				)
 			}
 		case const.RECORD:
 			break
+		case:
+			fmt.println(
+				"Invalid command. Correct Usage: RENAME <target> <target_name> TO <new_name>",
+			)
+			break
 		}
 		break
-
+	case:
+		fmt.printfln(
+			"Invalid command: %s%s%s. Please enter a valide OstrichDB command. Enter 'HELP' for more information.",
+			utils.BOLD,
+			cmd.a_token,
+			utils.RESET,
+		)
+		break
 	}
 	return 0
 }
