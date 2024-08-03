@@ -4,7 +4,6 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-
 // This file contains miscellaneous entities that are used throughout the program
 ostrich_version: string
 ostrich_art := `  _______               __                __             __
