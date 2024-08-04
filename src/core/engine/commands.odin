@@ -356,7 +356,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
 				collection := cmd.o_token[0]
-				data.OST_FETCH_COLLECTION(collection)
+				str := data.OST_FETCH_COLLECTION(collection)
+				fmt.println(str)
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: FETCH COLLECTION <collection_name>",

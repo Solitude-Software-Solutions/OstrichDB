@@ -280,5 +280,6 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	if fileStart == -1 || fileStart >= len(lines) {
 		return "No data found after header"
 	}
-	return strings.join(lines[fileStart:], "\n")
+	str := strings.join(lines[fileStart:], "\n")
+	return str
 }
