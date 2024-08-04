@@ -486,19 +486,19 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 		defer delete(data)
 
 		content := string(data)
-		clusters := strings.split(content, "}")
+		clusterClosingBrace := strings.split(content, "}")
 		newContent := make([dynamic]u8)
 		defer delete(newContent)
 		clusterFound := false
 
-		for i := 0; i < len(clusters); i += 1 {
-			cluster := clusters[i]
+
+		for i := 0; i < len(clusterClosingBrace); i += 1 {
+			cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
 			if strings.contains(cluster, fmt.tprintf("cluster_name : %s", cn)) {
 				clusterFound = true
 			} else if len(strings.trim_space(cluster)) > 0 {
-				append(&newContent, ..transmute([]u8)cluster)
-				// Add closing brace only if it's not the last cluster
-				if i < len(clusters) - 1 {
+				append(&newContent, ..transmute([]u8)cluster) // Add closing brace
+				if i < len(clusterClosingBrace) - 1 {
 					append(&newContent, "}")
 				}
 			}
@@ -514,7 +514,6 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 			)
 			return false
 		}
-
 		writeSuccess := os.write_entire_file(collection_path, newContent[:])
 		if !writeSuccess {
 			utils.throw_err(

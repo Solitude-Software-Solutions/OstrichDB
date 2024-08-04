@@ -18,12 +18,12 @@ import "core:time"
 
 @(private = "file")
 METADATA_HEADER: []string = {
-	"[Ostrich File Header Start]\n\n",
+	"{[Ostrich File Header Start]\n\n",
 	"#File Format Version: %ffv\n",
 	"#Time of Creation: %ftoc\n",
 	"#Last Time Modified: %fltm\n",
 	"#File Size: %fs Bytes\n",
-	"#Checksum: %cs\n\n[Ostrich File Header End]\n\n\n\n",
+	"#Checksum: %cs\n\n[Ostrich File Header End]},\n\n\n\n",
 }
 
 // sets the files time of creation(FTOC) or last time modified(FLTM)
