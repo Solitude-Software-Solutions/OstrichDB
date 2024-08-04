@@ -281,7 +281,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case const.ERASE:
 		utils.log_runtime_event("Used ERASE command", "")
-		//bug todo see https://github.com/Solitude-Software-Solutions/OstrichDB/issues/29
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
@@ -677,7 +676,6 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		break
 	case const.ERASE:
 		utils.log_runtime_event("Used ERASE command while in FOCUS mode", "")
-		//bug: todo see https://github.com/Solitude-Software-Solutions/OstrichDB/issues/29
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
