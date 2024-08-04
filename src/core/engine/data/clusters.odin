@@ -205,12 +205,8 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
-	fmt.printfln(
-		"Creating cluster with name: %s and id: %i inside collection:%s",
-		clusterName,
-		clusterID,
-		fileName,
-	)
+	fmt.printfln("Succesfully created account: %s%s%s", utils.BOLD, clusterName, utils.RESET)
+	fmt.println("Please restart OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0
