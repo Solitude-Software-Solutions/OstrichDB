@@ -34,7 +34,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	userNameFound := data.OST_READ_RECORD_VALUE(
 		const.SEC_FILE_PATH,
 		const.SEC_CLUSTER_NAME,
-		userName,
+		"user_name",
 	)
 	if (userNameFound != userName) {
 		error2 := utils.new_err(
