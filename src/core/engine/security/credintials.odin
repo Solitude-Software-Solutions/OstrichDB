@@ -5,6 +5,7 @@ import "../../config"
 import "../../types"
 import "../data"
 import "../data/metadata"
+import "core:c/libc"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -12,7 +13,6 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
 //Desc: This file handles the creation and storage of user
@@ -68,6 +68,7 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
+	libc.system("stty -echo")
 	initpassword := OST_GET_PASSWORD()
 	saltAsString := string(types.user.salt)
 	hashAsString := string(types.user.hashedPassword)
@@ -252,6 +253,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 
 	fmt.printfln("Re-enter the password:")
 	n, inputSuccess := os.read(os.stdin, buf[:])
+	libc.system("stty -echo")
 	confirmation: string
 
 	if inputSuccess != 0 {
