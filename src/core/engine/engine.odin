@@ -23,7 +23,7 @@ main :: proc() {
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
 		config.OST_CREATE_CONFIG_FILE()
-		break
+		main()
 	case:
 		OST_START_ENGINE()
 	}
