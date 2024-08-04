@@ -162,7 +162,7 @@ focus: Focus
 Focus :: struct {
 	t_:   string, // The primary target (e.g., "CLUSTER" or "COLLECTION")
 	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
-
+	p_o:  string, // The parent object of the primary object (e.g., "myCluster" or "myCollection")
 	// The related target and object are used to provide futher context for the focus
 	rt_:  string, // The related target (e.g., "RECORD")
 	ro_:  string, // The related object (e.g., "myRecord")

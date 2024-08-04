@@ -401,37 +401,78 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
-			types.focus.flag = true
-			if len(cmd.o_token) > 0 {
-				collection := cmd.o_token[0]
-				storedT, storedO := OST_FOCUS(const.COLLECTION, collection)
-			} else {
-				fmt.println(
-					invalidCommandErr,
-					"Incomplete command. Correct Usage: NEW COLLECTION <collection_name>",
+			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.o_token[0], 0)
+			switch exists {
+			case true:
+				types.focus.flag = true
+				if len(cmd.o_token) > 0 {
+					collection := cmd.o_token[0]
+					storedT, storedO, _ := OST_FOCUS(const.COLLECTION, collection, "[NO PARENT]")
+				} else {
+					fmt.println(
+						invalidCommandErr,
+						"Incomplete command. Correct Usage: NEW COLLECTION <collection_name>",
+					)
+					utils.log_runtime_event(
+						"Incomplete FOCUS command",
+						"User did not provide a valid collection name to focus.",
+					)
+				}
+				break
+			case false:
+				fmt.printfln(
+					"Collection %s%s%s does not exist.",
+					utils.BOLD,
+					cmd.o_token[0],
+					utils.RESET,
 				)
 				utils.log_runtime_event(
-					"Incomplete FOCUS command",
-					"User did not provide a valid collection name to focus.",
+					"Invalid FOCUS command",
+					"User tried to focus on a collection that does not exist.",
 				)
+				types.focus.flag = false
+				break
 			}
-			break
+
 		case const.CLUSTER:
-			types.focus.flag = true
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
-				cluster := cmd.o_token[0]
-				collection := cmd.o_token[1]
-				storedT, storedO := OST_FOCUS(collection, cluster) //storing the Target and Objec that the user wants to focus)
-			} else {
-				fmt.println(
-					"Incomplete command. Correct Usage: FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+			collectionNamePath := strings.concatenate(
+				[]string{const.OST_COLLECTION_PATH, cmd.o_token[1]},
+			)
+			fullCollectionPath := strings.concatenate(
+				[]string{collectionNamePath, const.OST_FILE_EXTENSION},
+			)
+			exists := data.OST_CHECK_IF_CLUSTER_EXISTS(fullCollectionPath, cmd.o_token[0])
+			switch exists {
+			case true:
+				types.focus.flag = true
+				if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
+					cluster := cmd.o_token[0]
+					collection := cmd.o_token[1]
+					storedT, storedO, _ := OST_FOCUS(const.CLUSTER, cluster, cmd.o_token[1]) //storing the Target and Objec that the user wants to focus)
+				} else {
+					fmt.println(
+						"Incomplete command. Correct Usage: FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+					)
+					utils.log_runtime_event(
+						"Incomplete FOCUS command",
+						"User did not provide a valid cluster name to focus.",
+					)
+				}
+				break
+			case false:
+				fmt.printfln(
+					"Cluster: %s%s%s does not exist within collection: %s%s%s.",
+					utils.BOLD,
+					cmd.o_token[0],
+					utils.RESET,
+					utils.BOLD,
+					cmd.o_token[1],
+					utils.RESET,
 				)
-				utils.log_runtime_event(
-					"Incomplete FOCUS command",
-					"User did not provide a valid cluster name to focus.",
-				)
+				types.focus.flag = false
+				break
 			}
-			break
+
 		//todo: come back to this..havent done enough commands to test this in focus mode yet
 		case const.RECORD:
 			types.focus.flag = true
@@ -494,6 +535,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	cmd: ^types.Command,
 	focusTarget: string,
 	focusObject: string,
+	focusParentObject: ..string,
 ) -> int {
 	utils.log_runtime_event("Entered FOCUS mode", "User has succesfully entered FOCUS mode")
 	incompleteCommandErr := utils.new_err(
@@ -697,9 +739,9 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 			break
 		case const.CLUSTER:
 			if len(cmd.o_token) >= 1 && const.TO in cmd.m_token {
-				old_name := cmd.o_token[0]
+				old_name := focusObject
 				new_name := cmd.m_token[const.TO]
-				collection_name := focusObject
+				collection_name := types.focus.p_o
 				fmt.printfln(
 					"Renaming cluster '%s' to '%s' in collection '%s'...",
 					old_name,
@@ -717,6 +759,11 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 					fn := OST_CONCAT_OBJECT_EXT(collection_name)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+
+					// quickly unfocus the old object and update it to refocus on the new object
+					types.focus.flag = false
+					storedT, storedO, _ := OST_FOCUS(collection_name, new_name, types.focus.p_o)
+					types.focus.flag = true
 				} else {
 					fmt.println("Failed to rename cluster. Please check error messages.")
 				}
@@ -730,6 +777,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 					"User did not provide a valid cluster name or new name.",
 				)
 			}
+			break
 		case const.RECORD:
 			break
 		case:
