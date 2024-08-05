@@ -2,6 +2,7 @@ package engine
 
 import "../../utils"
 import "../const"
+import "../help"
 import "../types"
 import "./data"
 import "./data/metadata"
@@ -67,10 +68,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		fmt.printfln("Logging out...")
 		OST_USER_LOGOUT(0)
 		break
-	case const.HELP:
-		//TODO: Implement help command
-		utils.log_runtime_event("Used HELP command", "User requested help information.")
-		break
 	case const.UNFOCUS:
 		utils.log_runtime_event(
 			"Improperly used UNFOCUS command",
@@ -81,6 +78,26 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case const.CLEAR:
 		utils.log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")
+		break
+	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
+	case const.HELP:
+		utils.log_runtime_event("Used HELP command", "User requested help information.")
+		if len(cmd.t_token) == 0 {
+			utils.log_runtime_event(
+				"Used HELP command",
+				"User requested general help information.",
+			)
+			help.OST_GET_GENERAL_HELP()
+		} else if cmd.t_token == const.ATOM || cmd.t_token == const.ATOMS {
+			utils.log_runtime_event("Used HELP command", "User requested atom help information.")
+			help.OST_GET_ATOMS_HELP()
+		} else {
+			utils.log_runtime_event(
+				"Used HELP command",
+				"User requested specific help information.",
+			)
+			help.OST_GET_SPECIFIC_HELP(cmd.t_token)
+		}
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
@@ -574,13 +591,6 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		)
 		fmt.printf("Cannot Logout while in FOCUS mode...\n")
 		break
-	case const.HELP:
-		utils.log_runtime_event(
-			"Used HELP command while in FOCUS mode",
-			"Displaying help menu for FOCUS mode",
-		)
-		//do stuff
-		break
 	case const.UNFOCUS:
 		types.focus.flag = false
 		utils.log_runtime_event("Used UNFOCUS command", "User has succesfully exited FOCUS mode")
@@ -589,6 +599,15 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		utils.log_runtime_event("Used CLEAR command while in FOCUS mode", "")
 		libc.system("clear")
 		break
+	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
+	case const.HELP:
+		utils.log_runtime_event(
+			"Used HELP command while in FOCUS mode",
+			"Displaying help menu for FOCUS mode",
+		)
+		fmt.println(
+			"Help mode is currently not supported in FOCUS mode.Check for updates in a future release.",
+		)
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	case const.NEW:
 		utils.log_runtime_event("Used NEW command while in FOCUS mode", "")
