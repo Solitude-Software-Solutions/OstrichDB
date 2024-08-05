@@ -56,8 +56,8 @@ In this example:
 - `ERASE`: Delete collection, cluster, or record
 - `RENAME`: Change name of collection, cluster, or record
 - `FETCH`: Retrieve data from collection, cluster, or record
-- `BACKUP`: Creates a backup of a collection
-- `FOCUS`: Set focus on specific collection, cluster, or record
+- `BACKUP`: Create a backup of a collection
+- `FOCUS`: Set the current context to on specific collection, cluster, or record
 
 **Note: Some commands CANNOT be used while focusing on a specific object**
 
