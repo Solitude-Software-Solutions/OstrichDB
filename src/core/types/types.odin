@@ -37,8 +37,9 @@ Desc: Used to define the structure of a cluster within the Ostrich Database
 Usage Locations: NOT YET IMPLEMENTED but will be in clusters.odin
 */
 Cluster :: struct {
-	_id:    int, //unique identifier for the record cannot be duplicated
-	record: [dynamic]Record,
+	cluster_name: string,
+	cluster_id:   int, //unique identifier for the record cannot be duplicated
+	record:       [dynamic]Record, //so that the cluster can hold multiple records
 }
 
 //NOTE THERE IS NOT A TYPE FOR A COLLECTION :^)
