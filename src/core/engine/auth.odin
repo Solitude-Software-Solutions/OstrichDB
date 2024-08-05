@@ -96,9 +96,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		OST_START_SESSION_TIMER()
 		fmt.printfln("Auth Passed! User has been signed in!")
 		types.USER_SIGNIN_STATUS = true
-		userLoggedInValue := config.OST_READ_CONFIG_VALUE("OST_USER_LOGGED_IN")
+		userLoggedInValue := config.OST_READ_CONFIG_VALUE(const.configThree)
 		if userLoggedInValue == "false" {
-			config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+			config.OST_TOGGLE_CONFIG(const.configThree)
 		}
 		break
 	case false:
@@ -130,7 +130,7 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 }
 
 OST_USER_LOGOUT :: proc(param: int) -> bool {
-	loggedOut := config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+	loggedOut := config.OST_TOGGLE_CONFIG(const.configThree)
 
 	switch loggedOut {
 	case true:
