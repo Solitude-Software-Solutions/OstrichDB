@@ -6,6 +6,7 @@ import "../types"
 import "./data"
 import "./data/metadata"
 import "./security"
+import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -76,6 +77,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			"User requested to unfocus while not in FOCUS mode.",
 		)
 		fmt.printfln("Cannot Unfocus becuase you are currently not in focus mode.")
+		break
+	case const.CLEAR:
+		utils.log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
+		libc.system("clear")
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
@@ -579,6 +584,10 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	case const.UNFOCUS:
 		types.focus.flag = false
 		utils.log_runtime_event("Used UNFOCUS command", "User has succesfully exited FOCUS mode")
+		break
+	case const.CLEAR:
+		utils.log_runtime_event("Used CLEAR command while in FOCUS mode", "")
+		libc.system("clear")
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	case const.NEW:

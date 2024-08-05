@@ -32,7 +32,7 @@ VERSION :: "VERSION"
 HELP :: "HELP"
 EXIT :: "EXIT"
 LOGOUT :: "LOGOUT"
-
+CLEAR :: "CLEAR" //clears the screen
 //Action Tokens-- Require a space before and after the prefix and atleast one argument
 NEW :: "NEW" //used to create a new record, cluster, or collection
 BACKUP :: "BACKUP" //used to create backup collections
