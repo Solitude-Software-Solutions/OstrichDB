@@ -1,52 +1,75 @@
 # OstrichDB Simplified Help Documentation
 
-### HELP
+### HELP START
 Shows information about OstrichDB. Use `HELP <command>` for specific details.
+### HELP END
 
-### VERSION
+### VERSION START
 Displays the current OstrichDB version.
+### VERSION END
 
-### EXIT
+### EXIT START
 Safely closes OstrichDB.
+### EXIT END
 
-### LOGOUT
+### LOGOUT START
 Logs out the current user without closing OstrichDB.
+### LOGOUT END
 
-### CLEAR
+### CLEAR START
 Clears the screen of clutter.
+### LOGOUT END
 
-### NEW
+
+### NEW START
 Creates new objects. Use: `NEW <object_type> <name>`.
+### NEW END
 
-### ERASE
+### ERASE START
 Deletes objects. Use: `ERASE <object_type> <name>`.
+### ERASE END
 
-### FETCH
+### FETCH START
 Retrieves data. Use: `FETCH <object_type> <name>`.
+### FETCH END
 
-### RENAME
+### RENAME START
 Changes object names. Use: `RENAME <object_type> <old_name> TO <new_name>`.
+### RENAME END
 
-### FOCUS
+### FOCUS START
 Sets the current working context. Use: `FOCUS <object_type> <name>`.
+### FOCUS END
 
-### UNFOCUS
+### UNFOCUS START
 Removes the current focus.
+### UNFOCUS END
 
-### BACKUP
+### BACKUP START
 Creates a backup of data. Use: `BACKUP COLLECTION <name>`.
+### BACKUP END
 
-### COLLECTION
+### COLLECTION START
 A database containing clusters. Stored as `.ost` files.
+### COLLECTION END
 
-### CLUSTER
+### CLUSTER START
 Groups of related records within a collection.
+### CLUSTER END
 
-### RECORD
+### RECORD START
 Individual pieces of data stored in clusters.
+### RECORD END
 
-### WITHIN
+### WITHIN START
 Specifies location. Use: `<action> <object> WITHIN <parent_object>`.
+### WITHIN END
 
-### TO
+### TO START
 Used with RENAME to specify the new name.
+### TO END
+
+### ATOMS START
+Used with `HELP` to show information about atoms.
+### ATOMS END
+```
