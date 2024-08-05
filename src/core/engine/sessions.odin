@@ -53,7 +53,7 @@ OST_HANDLE_MAX_SESSION_DURATION_MET :: proc() {
 
 
 OST_USER_SESSION_LOGOUT :: proc(param: int) -> bool {
-	loggedOut := config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+	loggedOut := config.OST_TOGGLE_CONFIG(const.configThree)
 
 	switch loggedOut {
 	case true:
