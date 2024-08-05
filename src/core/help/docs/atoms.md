@@ -29,7 +29,7 @@
       Action
     </td>
     <td>
-      Single or multi
+      Single or Multi
     </td>
     <td>
       Displays helpful information about OstrichDB
@@ -170,6 +170,20 @@
       Unsets the current context if any
     </td>
   </tr>
+
+  <tr>
+    <td>
+      CLEAR
+    </td>
+    <td>
+      Action
+    </td>
+    <td>
+      Single
+    </td>
+    <td>
+      Clears the screen of clutter
+    </td>
 
   <tr>
     <td>
