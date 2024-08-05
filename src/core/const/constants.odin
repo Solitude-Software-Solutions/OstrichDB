@@ -8,6 +8,12 @@ OST_COLLECTION_PATH :: "../bin/collections/"
 OST_SECURE_CLUSTER_PATH :: "../bin/secure/"
 OST_BACKUP_PATH :: "../bin/backups/"
 OST_FILE_EXTENSION :: ".ost"
+
+VERBOSE_HELP_FILE :: "./core/help/docs/verbose/verbose.md"
+SIMPLE_HELP_FILE :: "./core/help/docs/simple/simple.md"
+GENERAL_HELP_FILE :: "./core/help/docs/general/general.md"
+ATOMS_HELP_FILE :: "./core/help/docs/atoms/atoms.txt"
+
 //used in engine.odin
 ost_carrot :: "OST>>>"
 
@@ -22,9 +28,12 @@ ATTEMPTS_BEFORE_TIMER :: 5
 
 //used in config.odin
 configOne :: "OST_ENGINE_INIT" //values: true, false...has the engine been initialized
-configTwo :: "OST_ENGINE_LOGGING" //values: simple, verbose, none???
-configThree :: "OST_ENGINE_HELP" //values: true, false...helpful hints for users... might delete once I incorporate athe help command
-
+//is logging simple or verbose
+configTwo :: "OST_ENGINE_LOGGING"
+//is user logged in
+configThree :: "OST_USER_LOGGED_IN"
+//is help documentation simple or verbose
+configFour :: "OST_HELP"
 
 //used in commands.odin
 //Standard Command Tokens
@@ -62,8 +71,10 @@ STRING :: "STRING"
 INT :: "INT"
 FLOAT :: "FLOAT"
 BOOL :: "BOOL"
-//might add more...doubtful though
 
+//Used with the HELP command
+ATOMS :: "ATOMS"
+ATOM :: "ATOM"
 
 //3 days in nanoseconds
 MAX_SESSION_TIME: time.Duration : 259200000000000000
