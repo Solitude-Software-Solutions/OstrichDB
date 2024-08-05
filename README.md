@@ -1,13 +1,15 @@
 # OstrichDB
 
-OstrichDB is a document-based NoSQL database designed and built for ease of use and local application data testing/manipulation. It is written in the Odin programming language and is currently a work in progress.
+OstrichDB is a lightweight, document-based, key-value NoSQL database designed for ease of use and local application data testing/manipulation. Written in the Odin programming language, it offers a flexible architecture and a simple command syntax, making it ideal for developers and users who need a simple yet versatile database solution.
 
-## Current Features
+## Features
 
-- User authentication
 - Serverless architecture (current implementation)
-- Backend command parsing
-- Comprehensive set of database operations
+- User authentication
+- JSON-like hierarchical data structures
+- Intuitive yet simple command syntax with multi-token and single-token commands
+- Basic CRUD operations
+- Focus mode for streamlined operations within a context
 
 ## Data Structure
 
@@ -19,70 +21,72 @@ OstrichDB uses a hierarchical data structure:
 
 ## Command Structure
 
-Commands in OstrichDB are parsed into components called ATOMs. This structured approach allows for complex operations while maintaining readability. Here's a breakdown of the command structure as ATOMs:
+Commands in OstrichDB are parsed into tokens also called ATOMs. This structured approach allows for complex operations while maintaining readability. Here's a breakdown of the command structure as ATOM(s):
 
 - **(A)ction token**: Specifies the operation to be performed (e.g., NEW, ERASE, RENAME)
 - **(T)arget token**: Indicates the type of object the action is performed on (e.g., CLUSTER, RECORD)
 - **(O)bject token**: Represents the name or identifier of the target
 - **(M)odifier**: Additional parameters that modify the command's behavior (e.g., WITHIN)
 
+Note: Not all commands require all ATOMs. The number of ATOMs required depends on the command and its context.
+
 Example: `NEW CLUSTER foo WITHIN COLLECTION bar`
 
 In this example:
-- NEW is the Action token
-- CLUSTER is the Target token
-- foo is the Object token (name of the cluster) given by the user
-- WITHIN is a scoped modifier
-- COLLECTION bar specifies where the new cluster should be created
+- `NEW` is the Action token
+- `CLUSTER` is the Target token
+- `foo` is the Object token (name of the cluster) given by the user
+- `WITHIN` is a special modifier called a scope modifier
+- `COLLECTION bar` specifies where the new cluster should be created
 
 ## Supported Commands
 
-OstrichDB supports several single token and multi-token commands:
-
 ### Single Token Commands
 
-- `VERSION`: Displays the current version of OstrichDB
-- `LOGOUT`: Logs out the current user
-- `EXIT`: Exits the database session
-- `UNFOCUS`: Removes focus from the current document or collection
+- `VERSION`: Display current version
+- `LOGOUT`: Log out current user
+- `EXIT`: Exit database session
+- `UNFOCUS`: Remove focus from current data structure
 
 ### Multi-Token Commands
 
 **Note: Multi-token commands require both a Target and Object token**
 
-- `NEW`: Creates a new collection, cluster, or record
-- `ERASE`: Deletes a collection, cluster, or record
-- `RENAME`: Changes the name of a collection, cluster, or record
-- `FETCH`: Retrieves data from a collection, cluster, or record
-- `FOCUS`: Sets focus on a specific collection, cluster, or record
+- `NEW`: Create new collection, cluster, or record
+- `ERASE`: Delete collection, cluster, or record
+- `RENAME`: Change name of collection, cluster, or record
+- `FETCH`: Retrieve data from collection, cluster, or record
+- `BACKUP`: Creates a backup of a collection
+- `FOCUS`: Set focus on specific collection, cluster, or record
+
+**Note: Some commands CANNOT be used while focusing on a specific object**
 
 Example usage for each multi-token command:
 ```
-NEW CLUSTER ...
-ERASE COLLECTION ...
-RENAME RECORD ...
-FETCH CLUSTER ...
-FOCUS CLUSTER ... WITHIN COLLECTION ...
+ERASE CLUSTER <cluster name> //Erase the cluster with the specified name
+FETCH COLLECTION <collection name> //Fetches all data within the collection of specified name
+NEW CLUSTER <cluster name> WITHIN COLLECTION <collection name> //Creates a new cluster within the specified collection 
+FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection name>  //Focuses on the specified cluster within the specified collection
+BACKUP COLLECTION <collection name> //Creates a backup of the specified collection
 ```
+**Note: The `FOCUS` command is used to set the current context to a specific object. ALL subsequent commands will be executed in the context of the focused object.**
 
 ### Modifiers
 
 Modifiers are additional parameters that modify the behavior of a command:
 
-- `WITHIN`: Specifies the parent collection of a cluster or record
+- `WITHIN`: A scope modifier used to specify the parent object of the target object
 - `TO`: Used with the RENAME command to specify the new name of the object
 
 ## Installation
 
-**Note: This project assumes that you are using Linux**
+### Prerequisites
 
-### Prerequisites:
+- Linux environment
+- Clang and LLVM
+- Odin programming language (properly built and in PATH)
 
-- Clang and LLVM installed on your machine
-- The Odin programming language installed and properly built (See [Installing Odin](https://odin-lang.org/docs/install/))
-- Ensure Odin is in your PATH
-
-### Steps:
+### Steps
 
 1. Clone the repository:
    ```bash
@@ -99,33 +103,45 @@ Modifiers are additional parameters that modify the behavior of a command:
    odin build main
    ```
 
-4. Run the project:
+4. Run OstrichDB:
    ```bash
    ./main.bin
    ```
 
-Voila! You now have OstrichDB running on your local machine.
-
 ## Contributing
 
-Contributions to OstrichDB are welcome! Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for detailed guidelines on how to contribute to this project.
+Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to OstrichDB.
 
 ## License
 
-OstrichDB is released under the Apache License 2.0. This is a permissive license that allows you to use, modify, and distribute the software, even for commercial purposes, under certain conditions.
-
-For the full license text, please see the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) page.
+OstrichDB is released under the Apache License 2.0. For full license text, see [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ## Future Plans
 
-More features and improvements are planned for OstrichDB, including:
-- Improved error handling
-- Enhanced user authentication
-- Support for more complex queries
-- Additional database operations
-- Better documentation and user guides
-- Bug fixes and performance improvements
-- API support for external applications
-- Support for more data types
-- Enhanced security features
-- And much more!
+- Enhanced user interface
+- Improved configuration options
+- Multi-user support with role-based access control
+- Several new command tokens:
+  - `STATS`: Display database statistics
+  - `PURGE`: Clear data while retaining structure
+  - `SIZE`: Show object size in bytes
+  - `SORT`: Sort records or clusters by field
+  - `IMPORT`: Load data from external sources(JSON, CSV, etc.)
+  - `EXPORT`: Export data to various formats
+  - `VALIDATE`: Check data integrity
+  - `LOCK`: Prevent data modification
+  - `UNLOCK`: Allow data modification
+  - `RESTORE`: Undo recent changes
+  - `COUNT`: Display the number of objects within a scope
+  - `MERGE`: Combine multiple collections or clusters into one 
+  - `ALL`: Perform operations on all objects within a scope
+  - `AND`: Execute multiple operations in one command
+  - `OF_TYPE`: Filter operations by record type
+  - `INTO`: Specify the destination for data operations
+- Support for additional data types
+- Data validation
+- Enhanced security (database encryption/decryption, secure deletion)
+- Performance optimizations
+- External API support for popular programming languages
+- Windows & macOS compatibility
+- Integration with the planned Ostrich query language!
