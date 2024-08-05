@@ -171,3 +171,9 @@ Focus :: struct {
 }
 //some gloables because fuck cyclical importation problems in Odin
 USER_SIGNIN_STATUS: bool
+
+
+help_mode: Help_Mode
+Help_Mode :: struct {
+	verbose: bool, //if its false then its simple
+}
