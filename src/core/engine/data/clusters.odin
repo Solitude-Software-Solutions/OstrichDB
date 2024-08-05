@@ -252,9 +252,8 @@ OST_NEWLINE_CHAR :: proc() {
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
 OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
-	clusterFound: bool
-	data, readSuccess := os.read_entire_file(fn)
-	if !readSuccess {
+	data, read_success := os.read_entire_file(fn)
+	if !read_success {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
@@ -266,17 +265,34 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 	defer delete(data)
 
 	content := string(data)
-	if strings.contains(content, cn) {
-		clusterFound = true
-	} else {
-		clusterFound = false
+
+	cluster_strings := strings.split(content, "},")
+	defer delete(cluster_strings)
+
+	for cluster_str in cluster_strings {
+		cluster_str := strings.trim_space(cluster_str)
+		if cluster_str == "" do continue
+		// Finds the start index of "cluster_name :" in the string
+		name_start := strings.index(cluster_str, "cluster_name :")
+		// If "cluster_name :" is not found, skip this cluster
+		if name_start == -1 do continue
+		// Move the start index to after "cluster_name :"
+		name_start += len("cluster_name :")
+		// Find the end of the cluster name
+		name_end := strings.index(cluster_str[name_start:], "\n")
+		// If newline is not found, skip this cluster
+		if name_end == -1 do continue
+		// Extract the cluster name and remove leading/trailing whitespace
+		cluster_name := strings.trim_space(cluster_str[name_start:][:name_end])
+		// Compare the extracted cluster name with the provided cluster name
+		if strings.compare(cluster_name, cn) == 0 {
+			return true
+		}
 	}
-	return clusterFound
+	return false
 }
 
 OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) -> bool {
-
-
 	collection_path := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
