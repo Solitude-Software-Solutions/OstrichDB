@@ -47,6 +47,9 @@ In this example:
 - `LOGOUT`: Log out current user
 - `EXIT`: Exit database session
 - `UNFOCUS`: Remove focus from current data structure
+- `CLEAR`: Clear the screen of clutter
+- `HELP`: Display general help information
+**Note: The `HELP` command can also be a multi-token command to get more detailed information**
 
 ### Multi-Token Commands
 
@@ -58,7 +61,7 @@ In this example:
 - `FETCH`: Retrieve data from collection, cluster, or record
 - `BACKUP`: Create a backup of a collection
 - `FOCUS`: Set the current context to on specific collection, cluster, or record
-
+- `HELP`: Display detailed information when chained with a specific token
 **Note: Some commands CANNOT be used while focusing on a specific object**
 
 Example usage for each multi-token command:
@@ -68,6 +71,7 @@ FETCH COLLECTION <collection name> //Fetches all data within the collection of s
 NEW CLUSTER <cluster name> WITHIN COLLECTION <collection name> //Creates a new cluster within the specified collection 
 FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection name>  //Focuses on the specified cluster within the specified collection
 BACKUP COLLECTION <collection name> //Creates a backup of the specified collection
+HELP COLLECTION //Displays information about collections
 ```
 **Note: The `FOCUS` command is used to set the current context to a specific object. ALL subsequent commands will be executed in the context of the focused object.**
 
