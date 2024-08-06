@@ -55,6 +55,8 @@ ErrorType :: enum {
 	INCOMPLETE_COMMAND,
 	INVALID_COMMAND,
 	COMMAND_TOO_LONG, //??? idk
+	//Miscellaneous
+	INVALID_INPUT,
 }
 
 Error :: struct {
@@ -103,6 +105,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.INCOMPLETE_COMMAND         = "Incomplete Command",
 	.INVALID_COMMAND            = "Invalid Command",
 	.COMMAND_TOO_LONG           = "Command Too Long",
+	.INVALID_INPUT              = "Invalid Input",
 }
 
 new_err :: proc(type: ErrorType, message: string, procedure: string) -> Error {

@@ -90,7 +90,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 
 
 OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
-	//check if the file exists
+	buf: [64]byte
 	fileWithExt := strings.concatenate([]string{fileName, const.OST_FILE_EXTENSION})
 	fmt.printfln("Deleting database: %s%s%s", utils.BOLD, fileWithExt, utils.RESET)
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fileName, 0) {
@@ -102,21 +102,67 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 		)
 		return false
 	}
-	//delete the file
-	pathAndName := strings.concatenate([]string{const.OST_COLLECTION_PATH, fileName})
-	pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
-	deleteSuccess := os.remove(pathNameExtension)
-	if deleteSuccess != 0 {
+	fmt.printfln(
+		"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
+		utils.BOLD,
+		fileName,
+		utils.RESET,
+	)
+	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
 		error1 := utils.new_err(
-			.CANNOT_DELETE_FILE,
-			utils.get_err_msg(.CANNOT_DELETE_FILE),
+			.CANNOT_READ_INPUT,
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error deleting .ost file", "OST_ERASE_COLLECTION")
+	}
+
+	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+	cap := strings.to_upper(confirmation)
+
+	switch (cap) 
+	{
+	case const.YES:
+		// /delete the file
+		pathAndName := strings.concatenate([]string{const.OST_COLLECTION_PATH, fileName})
+		pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
+		deleteSuccess := os.remove(pathNameExtension)
+		if deleteSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_DELETE_FILE,
+				utils.get_err_msg(.CANNOT_DELETE_FILE),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error deleting .ost file", "OST_ERASE_COLLECTION")
+			return false
+		}
+		fmt.printfln(
+			"Database with name:%s%s%s has been deleted",
+			utils.BOLD,
+			fileName,
+			utils.RESET,
+		)
+		utils.log_runtime_event(
+			"Database deleted",
+			"User confirmed deletion of database and it was successfully deleted .",
+		)
+		break
+
+	case const.NO:
+		utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
+		return false
+	case:
+		utils.log_runtime_event(
+			"User entered invalid input",
+			"User entered invalid input when trying to delete database",
+		)
+		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 		return false
 	}
-	fmt.printfln("Database with name:%s%s%s has been deleted", utils.BOLD, fileName, utils.RESET)
 	return true
 }
 
@@ -183,63 +229,6 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 }
 
 
-//handle logic for choosing which .ost file the user wants to interact with
-OST_CHOOSE_COLLECTION :: proc() {
-	buf: [256]byte
-	input: string
-	ext := ".ost" //concat this to end of input to prevent user from having to type it each time
-
-	fmt.printfln("Enter the name of database that you would like to interact with")
-
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-	}
-	if n > 0 {
-		//todo add option for user to enter a command that lists current dbs
-		input := string(buf[:n])
-		//trim the string of any whitespace or newline characters
-
-		//Shoutout to the OdinLang Discord for helping me with this...
-		input = strings.trim_right_proc(input, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
-		dbName := strings.concatenate([]string{input, ext})
-		dbExists := OST_CHECK_IF_COLLECTION_EXISTS(dbName, 1)
-		switch (dbExists) 
-		{
-		case true:
-			fmt.printfln(
-				"%sFound database%s: %s%s%s",
-				utils.GREEN,
-				utils.RESET,
-				utils.BOLD,
-				input,
-				utils.RESET,
-			)
-			//do stuff
-			//todo what would the user like to do with this database?
-			break
-		case false:
-			fmt.printfln(
-				"Database with name:%s%s%s does not exist",
-				utils.BOLD,
-				input,
-				utils.RESET,
-			)
-			fmt.printfln("please try again")
-			OST_CHOOSE_COLLECTION()
-			break
-		}
-	}
-}
-
-
 OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 	oldPath := strings.concatenate([]string{const.OST_COLLECTION_PATH, old})
 	oldPathAndExt := strings.concatenate([]string{oldPath, const.OST_FILE_EXTENSION})
@@ -264,7 +253,7 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 //reads and retuns everything below the metadata header in the .ost file
 OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	fileStart := -1
-	startingPoint := "[Ostrich File Header End]"
+	startingPoint := "[Ostrich File Header End]},"
 	filePath := strings.concatenate([]string{const.OST_COLLECTION_PATH, fn})
 	filePathAndExt := strings.concatenate([]string{filePath, const.OST_FILE_EXTENSION})
 	data, readSuccess := os.read_entire_file(filePathAndExt)
@@ -291,5 +280,6 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	if fileStart == -1 || fileStart >= len(lines) {
 		return "No data found after header"
 	}
-	return strings.join(lines[fileStart:], "\n")
+	str := strings.join(lines[fileStart:], "\n")
+	return str
 }

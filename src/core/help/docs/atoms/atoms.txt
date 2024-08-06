@@ -1,0 +1,20 @@
+|Token      |Class          |Type             |Definition                                                          |
+|-----------|---------------|-----------------|--------------------------------------------------------------------|
+|VERSION    |Action         |Single           |Fetches the current installed version of OstrichDB                  |
+|HELP       |Action         |Single or Multi  |Displays helpful information about OstrichDB                        |
+|EXIT       |Action         |Single           |Safely exits OstrichDB                                              |
+|LOGOUT     |Action         |Single           |Logs out the current user WITHOUT closing OstrichDB                 |
+|NEW        |Action         |Multi            |Creates a new collection, cluster, or record                        |
+|ERASE      |Action         |Multi            |Deletes a collection, cluster, or record                            |
+|RENAME     |Action         |Multi            |Renames a collection, cluster, or record                            |
+|BACKUP     |Action         |Multi            |Creates a backup of a collection                                    |
+|FETCH      |Action         |Multi            |Fetches all data of the specified collection, cluster, or record    |
+|FOCUS      |Action         |Multi            |Sets the current context to the specified collection, cluster, or record|
+|UNFOCUS    |Action         |Single           |Unsets the current context if any                                   |
+|CLEAR      |Action         |Single           |Clears the screen of clutter                                        |
+|COLLECTION |Target         |                 |Specifies that the target is a collection                           |
+|CLUSTER    |Target         |                 |Specifies that the target is a cluster                              |
+|RECORD     |Target         |                 |Specifies that the target is a record                               |
+|TO         |Modifier       |                 |Used with the RENAME action to specify the new name of the target   |
+|WITHIN     |Scope Modifier |                 |Specifies the scope of the target in which the action should be performed|
+|ATOM       |Help Target    |                 |Only Used with the HELP action to show information about atoms|

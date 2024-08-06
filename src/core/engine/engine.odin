@@ -23,7 +23,7 @@ main :: proc() {
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
 		config.OST_CREATE_CONFIG_FILE()
-		break
+		main()
 	case:
 		OST_START_ENGINE()
 	}
@@ -131,10 +131,11 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 		//Command line start
 		buf: [1024]byte
 		fmt.printf(
-			"%v %s%v: %v%s\t",
-			const.ost_carrot,
+			"%sFOCUSING: %v%s | %s%v%s>>> ",
 			utils.BOLD,
-			types.focus.t_,
+			types.focus.p_o,
+			utils.RESET,
+			utils.BOLD,
 			types.focus.o_,
 			utils.RESET,
 		)
@@ -150,7 +151,7 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
-		EXECUTE_COMMANDS_WHILE_FOCUSED(&cmd, types.focus.t_, types.focus.o_)
+		EXECUTE_COMMANDS_WHILE_FOCUSED(&cmd, types.focus.t_, types.focus.o_, types.focus.p_o)
 		//Command line end
 	}
 

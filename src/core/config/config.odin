@@ -71,12 +71,17 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 		return false
 	}
 
-	configsFound := OST_FIND_ALL_CONFIGS(const.configOne, const.configTwo, const.configThree)
+	configsFound := OST_FIND_ALL_CONFIGS(
+		const.configOne,
+		const.configTwo,
+		const.configThree,
+		const.configFour,
+	)
 	if !configsFound {
 		OST_APPEND_AND_SET_CONFIG(const.configOne, "false")
 		OST_APPEND_AND_SET_CONFIG(const.configTwo, "simple")
-		OST_APPEND_AND_SET_CONFIG(const.configThree, "true")
-		OST_APPEND_AND_SET_CONFIG("OST_USER_LOGGED_IN", "false")
+		OST_APPEND_AND_SET_CONFIG(const.configThree, "false")
+		OST_APPEND_AND_SET_CONFIG(const.configFour, "verbose")
 	}
 	return true
 }

@@ -5,6 +5,7 @@ import "../../config"
 import "../../types"
 import "../data"
 import "../data/metadata"
+import "core:c/libc"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -12,7 +13,6 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-
 //=========================================================//
 //Author: Marshall Burns aka @SchoolyB
 //Desc: This file handles the creation and storage of user
@@ -53,7 +53,6 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 	return 0
 }
 
-//todo move all of this to main proc above
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR_FILE()
@@ -69,6 +68,7 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
+	libc.system("stty -echo")
 	initpassword := OST_GET_PASSWORD()
 	saltAsString := string(types.user.salt)
 	hashAsString := string(types.user.hashedPassword)
@@ -253,6 +253,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 
 	fmt.printfln("Re-enter the password:")
 	n, inputSuccess := os.read(os.stdin, buf[:])
+	libc.system("stty -echo")
 	confirmation: string
 
 	if inputSuccess != 0 {
@@ -320,7 +321,6 @@ OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int 
 }
 
 // checks if the passed in password is strong enough returns true or false.
-//todo need to rework this proc. Its not working as intended
 OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 	specialChars: []string = {"!", "@", "#", "$", "%", "^", "&", "*"}
 	charsLow: []string = {
@@ -443,7 +443,3 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 	return strong
 }
-
-
-//todos
-//4. implement a proc wipes the user credentials file after a certain number of failed login attempts....will probably max out at 5

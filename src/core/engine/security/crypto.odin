@@ -72,8 +72,7 @@ OST_GENERATE_SALT :: proc() -> []u8 {
 	//convert the string to a byte array then shuffle the array
 	saltSlice: []byte
 	saltSlice = transmute([]byte)salt
-	//  rand.shuffle(saltSlice, nil)
-	rand.shuffle(saltSlice) //todo according to compiler this is the correct way to call the function
+	rand.shuffle(saltSlice)
 
 	return saltSlice
 }

@@ -18,30 +18,90 @@ import "core:time"
 
 @(private = "file")
 METADATA_HEADER: []string = {
-	"[Ostrich File Header Start]\n\n",
+	"{[Ostrich File Header Start]\n\n",
 	"#File Format Version: %ffv\n",
 	"#Time of Creation: %ftoc\n",
 	"#Last Time Modified: %fltm\n",
 	"#File Size: %fs Bytes\n",
-	"#Checksum: %cs\n\n[Ostrich File Header End]\n\n\n\n",
+	"#Checksum: %cs\n\n[Ostrich File Header End]},\n\n\n\n",
 }
 
 // sets the files time of creation(FTOC) or last time modified(FLTM)
 OST_SET_TIME :: proc() -> string {
-	buf: [256]byte
+	mBuf: [8]byte
+	dBuf: [8]byte
+	yBuf: [8]byte
 
+	hBuf: [8]byte
+	minBuf: [8]byte
+	sBuf: [8]byte
+
+	h, min, s := time.clock(time.now())
 	y, m, d := time.date(time.now())
+
+	mAsInt := int(m) //month comes base as a type "Month" so need to convert
+	// Conversions!!! because everything in Odin needs to be converted... :)
 
 	Y := transmute(i64)y
 	M := transmute(i64)m
 	D := transmute(i64)d
 
-	Year := strconv.append_int(buf[:], Y, 10)
-	Month := strconv.append_int(buf[:], M, 10)
-	Day := strconv.append_int(buf[:], D, 10)
+	H := transmute(i64)h
+	MIN := transmute(i64)min
+	S := transmute(i64)s
 
-	timeCreated := strings.concatenate([]string{Day, "/", Month, "/", Year})
-	return timeCreated
+
+	Month := strconv.append_int(mBuf[:], M, 10)
+	Year := strconv.append_int(yBuf[:], Y, 10)
+	Day := strconv.append_int(dBuf[:], D, 10)
+
+	Hour := strconv.append_int(hBuf[:], H, 10)
+	Minute := strconv.append_int(minBuf[:], MIN, 10)
+	Second := strconv.append_int(sBuf[:], S, 10)
+
+
+	switch (mAsInt) 
+	{
+	case 1:
+		Month = "January"
+		break
+	case 2:
+		Month = "February"
+		break
+	case 3:
+		Month = "March"
+		break
+	case 4:
+		Month = "April"
+		break
+	case 5:
+		Month = "May"
+		break
+	case 6:
+		Month = "June"
+		break
+	case 7:
+		Month = "July"
+		break
+	case 8:
+		Month = "August"
+		break
+	case 9:
+		Month = "September"
+		break
+	case 10:
+		Month = "October"
+		break
+	case 11:
+		Month = "November"
+		break
+	case 12:
+		Month = "December"
+		break
+	}
+
+	Date := strings.concatenate([]string{Month, " ", Day, " ", Year, " "})
+	return Date
 }
 
 

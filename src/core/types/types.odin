@@ -37,8 +37,9 @@ Desc: Used to define the structure of a cluster within the Ostrich Database
 Usage Locations: NOT YET IMPLEMENTED but will be in clusters.odin
 */
 Cluster :: struct {
-	_id:    int, //unique identifier for the record cannot be duplicated
-	record: [dynamic]Record,
+	cluster_name: string,
+	cluster_id:   int, //unique identifier for the record cannot be duplicated
+	record:       [dynamic]Record, //so that the cluster can hold multiple records
 }
 
 //NOTE THERE IS NOT A TYPE FOR A COLLECTION :^)
@@ -162,7 +163,7 @@ focus: Focus
 Focus :: struct {
 	t_:   string, // The primary target (e.g., "CLUSTER" or "COLLECTION")
 	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
-
+	p_o:  string, // The parent object of the primary object (e.g., "myCluster" or "myCollection")
 	// The related target and object are used to provide futher context for the focus
 	rt_:  string, // The related target (e.g., "RECORD")
 	ro_:  string, // The related object (e.g., "myRecord")
@@ -170,3 +171,9 @@ Focus :: struct {
 }
 //some gloables because fuck cyclical importation problems in Odin
 USER_SIGNIN_STATUS: bool
+
+
+help_mode: Help_Mode
+Help_Mode :: struct {
+	verbose: bool, //if its false then its simple
+}
