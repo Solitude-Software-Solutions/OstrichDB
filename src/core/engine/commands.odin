@@ -138,8 +138,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (cmd.t_token) {
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
-				fmt.printf("Creating collection '%s'\n", cmd.o_token[0])
-				data.OST_CREATE_COLLECTION(cmd.o_token[0], 0)
+				exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.o_token[0], 0)
+				switch (exists) {
+				case false:
+					fmt.printf("Creating collection '%s'\n", cmd.o_token[0])
+					data.OST_CREATE_COLLECTION(cmd.o_token[0], 0)
+					break
+				case true:
+					fmt.printf(
+						"Collection '%s' already exists. Please choose a different name.\n",
+						cmd.o_token[0],
+					)
+					utils.log_runtime_event(
+						"Duplicate collection name",
+						"User tried to create a collection with a name that already exists.",
+					)
+					break
+				}
 			} else {
 				fmt.println("Incomplete command. Correct Usage: NEW COLLECTION <collection_name>")
 				utils.log_runtime_event(
@@ -424,6 +439,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		{
 		case const.COLLECTION:
 			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.o_token[0], 0)
+			fmt.println(exists)
 			switch exists {
 			case true:
 				types.focus.flag = true
