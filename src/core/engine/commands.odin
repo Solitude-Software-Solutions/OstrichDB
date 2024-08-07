@@ -215,28 +215,27 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			break
 		case const.RECORD:
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
-				record_name := cmd.o_token[0]
-				cluster_name := cmd.o_token[1]
-				collection_name := cmd.o_token[2]
-				fmt.printf(
-					"Creating record '%s' within cluster '%s' in collection '%s'\n",
-					record_name,
-					cluster_name,
-					collection_name,
-				)
-				// data.OST_CREATE_RECORD(cmd.o_token[0], cmd.o_token[1], cmd.o_token[2], 0)
-				fn := OST_CONCAT_OBJECT_EXT(collection_name)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-			} else {
-				fmt.printfln(
-					"Incomplete command. Correct Usage: NEW RECORD <record_name> WITHIN <Target>",
-				)
-				utils.log_runtime_event(
-					"Incomplete NEW command",
-					"User did not provide a record name to create.",
-				)
+			utils.log_runtime_event(
+				"Used NEW RECORD command",
+				"User requested to create a new record.",
+			)
+			if len(cmd.o_token) == 1 && const.OF_TYPE in cmd.m_token || const.TYPE in cmd.m_token {
+				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[0])
+				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
+				if nameSuccess == 0 && typeSuccess == 0 {
+					fmt.printfln("Creating record '%s' of type '%s'", rName, rType)
+					data.OST_GET_ALL_COLLECTION_NAMES()
+					collection, cluster := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
+					filePath := fmt.tprintf(
+						"%s%s%s",
+						const.OST_COLLECTION_PATH,
+						collection,
+						const.OST_FILE_EXTENSION,
+					)
+					data.OST_APPEND_RECORD_TO_CLUSTER(filePath, cluster, rName, "", rType)
+				} else {
+					fmt.printfln("Failed to create record '%s' of type '%s'", rName, rType)
+				}
 			}
 			break
 		case:

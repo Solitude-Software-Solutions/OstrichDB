@@ -78,8 +78,6 @@ OST_START_ENGINE :: proc() -> int {
 
 
 OST_ENGINE_COMMAND_LINE :: proc() {
-	//used to constantly evaluate if the user is signed in
-
 	fmt.println("Welcome to the OstrichDB Command Line")
 	utils.log_runtime_event("Entered command line", "")
 	for {

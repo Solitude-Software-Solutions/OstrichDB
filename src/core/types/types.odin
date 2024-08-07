@@ -25,9 +25,9 @@ Desc: Used to define the structure of a record withinin the Ostrich Database
 Usage Locations: NOT YET IMPLEMENTED but will be in records.odin and possibly clusters.odin
 */
 Record :: struct {
-	_name: string,
-	_type: any,
-	_data: any,
+	name: string,
+	type: string,
+	data: string,
 }
 
 /*
@@ -164,6 +164,7 @@ Focus :: struct {
 	t_:   string, // The primary target (e.g., "CLUSTER" or "COLLECTION")
 	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
 	p_o:  string, // The parent object of the primary object (e.g., "myCluster" or "myCollection")
+	// gp_o: string, // The grandparent object of the primary object (e.g.,"myCollection" in relation to a record in "myCluster")
 	// The related target and object are used to provide futher context for the focus
 	rt_:  string, // The related target (e.g., "RECORD")
 	ro_:  string, // The related object (e.g., "myRecord")

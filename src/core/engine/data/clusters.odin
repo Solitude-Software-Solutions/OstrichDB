@@ -150,8 +150,8 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 		utils.log_err("Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
 		return 1
 	}
-	FIRST_HALF: []string = {"{\n\tcluster_name : %n"}
-	LAST_HALF: []string = {"\n\tcluster_id : %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
+	FIRST_HALF: []string = {"{\n\tcluster_name :identifier: %n"}
+	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
 	//step#1: open the file
 	clusterFile, openSuccess := os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
@@ -273,11 +273,11 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 		cluster_str := strings.trim_space(cluster_str)
 		if cluster_str == "" do continue
 		// Finds the start index of "cluster_name :" in the string
-		name_start := strings.index(cluster_str, "cluster_name :")
+		name_start := strings.index(cluster_str, "cluster_name :identifier:")
 		// If "cluster_name :" is not found, skip this cluster
 		if name_start == -1 do continue
 		// Move the start index to after "cluster_name :"
-		name_start += len("cluster_name :")
+		name_start += len("cluster_name :identifier:")
 		// Find the end of the cluster name
 		name_end := strings.index(cluster_str[name_start:], "\n")
 		// If newline is not found, skip this cluster
@@ -392,8 +392,8 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 		return -1
 	}
 
-	FIRST_HALF: []string = {"\n{\n\tcluster_name : %n"}
-	LAST_HALF: []string = {"\n\tcluster_id : %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
+	FIRST_HALF: []string = {"\n{\n\tcluster_name :identifier: %n"}
+	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
 	//step#1: open the file
 	clusterFile, openSuccess := os.open(collection_path, os.O_APPEND | os.O_WRONLY, 0o666)
@@ -601,4 +601,46 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 		),
 	)
 	return ""
+}
+
+
+OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string) -> int {
+	buf := make([]byte, 64)
+	defer delete(buf)
+	filePath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+
+	data, readSuccess := os.read_entire_file(filePath)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		return 0
+	}
+
+	content := string(data)
+	defer delete(content)
+	clusters := strings.split(content, "}")
+	for cluster in clusters {
+		cluster := strings.trim_space(cluster)
+		if cluster == "" do continue
+		// Finds the start index of "cluster_name :" in the string
+		name_start := strings.index(cluster, "cluster_name :identifier:")
+		// If "cluster_name :" is not found, skip this cluster
+		if name_start == -1 do continue
+		// Move the start index to after "cluster_name :"
+		name_start += len("cluster_name :identifier:")
+		// Find the end of the cluster name
+		name_end := strings.index(cluster[name_start:], "\n")
+		// If newline is not found, skip this cluster
+		if name_end == -1 do continue
+		// Extract the cluster name and remove leading/trailing whitespace
+		cluster_name := strings.trim_space(cluster[name_start:][:name_end])
+		// Compare the extracted cluster name with the provided cluster name
+
+		clusterName := fmt.tprintf("|\n|_________%s\n", cluster_name)
+
+
+		fmt.println(clusterName)
+	}
+	return 0
 }

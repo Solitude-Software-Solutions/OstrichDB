@@ -6,8 +6,8 @@ import "../../const"
 import "./metadata"
 import "core:fmt"
 import "core:os"
+import "core:strconv"
 import "core:strings"
-
 MAX_FILE_NAME_LENGTH_AS_BYTES: [512]byte
 
 
@@ -38,7 +38,7 @@ Params: fileName - the desired file(cluster) name
 OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType) 
+	switch (collectionType)
 	{
 	case 0:
 		//standard cluster file
@@ -122,7 +122,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
 	cap := strings.to_upper(confirmation)
 
-	switch (cap) 
+	switch (cap)
 	{
 	case const.YES:
 		// /delete the file
@@ -204,7 +204,7 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	//need to cwd into bin
 	os.set_current_directory("../bin/")
 	dir: string
-	switch (type) 
+	switch (type)
 	{
 	case 0:
 		dir = "collections/"
@@ -282,4 +282,41 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	}
 	str := strings.join(lines[fileStart:], "\n")
 	return str
+}
+
+
+OST_GET_ALL_COLLECTION_NAMES :: proc() -> [dynamic]string {
+
+	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+	defer os.close(collectionsDir)
+	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
+	collectionNames := make([dynamic]string)
+	defer delete(collectionNames)
+
+	result: string
+
+
+	//only did this to get the length of the collection names
+	for file in foundFiles {
+		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+			append(&collectionNames, file.name)
+		}
+	}
+	fmt.printf("\n")
+	fmt.printf("\n")
+	fmt.printfln(
+		"Found %d number collections\n--------------------------------",
+		len(collectionNames),
+	)
+
+	for file in foundFiles {
+		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+			append(&collectionNames, file.name)
+			withoutExt := strings.split(file.name, const.OST_FILE_EXTENSION)
+			fmt.println(withoutExt[0])
+			OST_LIST_CLUSTERS_IN_FILE(withoutExt[0])
+		}
+	}
+
+	return collectionNames
 }

@@ -7,7 +7,8 @@ import "core:os"
 import "core:strings"
 
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
-	validModifiers := []string{const.AND, const.WITHIN, const.OF_TYPE, const.ALL_OF, const.TO}
+	using const
+	validModifiers := []string{AND, WITHIN, IN, OF_TYPE, TYPE, ALL_OF, TO}
 	for modifier in validModifiers {
 		if strings.to_upper(token) == modifier {
 			return true

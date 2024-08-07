@@ -310,11 +310,11 @@ OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int 
 	defer os.close(file)
 
 	if data.OST_CHECK_IF_CLUSTER_EXISTS(secureFilePath, credClusterName) == true {
-		data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, credClusterName, ID, dn, d)
+		data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, credClusterName, dn, d, "identifier", ID)
 		return 1
 	} else {
 		data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, ID, credClusterName)
-		data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, credClusterName, ID, dn, d)
+		data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, credClusterName, dn, d, "identifier", ID)
 	}
 
 	return 0

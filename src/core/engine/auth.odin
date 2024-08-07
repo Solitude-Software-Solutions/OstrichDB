@@ -34,6 +34,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	userNameFound := data.OST_READ_RECORD_VALUE(
 		const.SEC_FILE_PATH,
 		const.SEC_CLUSTER_NAME,
+		"identifier",
 		"user_name",
 	)
 	if (userNameFound != userName) {
@@ -49,9 +50,19 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
-	salt := data.OST_READ_RECORD_VALUE(const.SEC_FILE_PATH, const.SEC_CLUSTER_NAME, "salt")
+	salt := data.OST_READ_RECORD_VALUE(
+		const.SEC_FILE_PATH,
+		const.SEC_CLUSTER_NAME,
+		"identifier",
+		"salt",
+	)
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.OST_READ_RECORD_VALUE(const.SEC_FILE_PATH, const.SEC_CLUSTER_NAME, "hash")
+	providedHash := data.OST_READ_RECORD_VALUE(
+		const.SEC_FILE_PATH,
+		const.SEC_CLUSTER_NAME,
+		"identifier",
+		"hash",
+	)
 	pHashAsBytes := transmute([]u8)providedHash
 
 
@@ -60,6 +71,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	algoMethod := data.OST_READ_RECORD_VALUE(
 		const.SEC_FILE_PATH,
 		const.SEC_CLUSTER_NAME,
+		"identifier",
 		"store_method",
 	)
 	//POST-MESHING START=======================================================================================================
