@@ -38,7 +38,7 @@ Params: fileName - the desired file(cluster) name
 OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType)
+	switch (collectionType) 
 	{
 	case 0:
 		//standard cluster file
@@ -122,7 +122,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
 	cap := strings.to_upper(confirmation)
 
-	switch (cap)
+	switch (cap) 
 	{
 	case const.YES:
 		// /delete the file
@@ -204,7 +204,7 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	//need to cwd into bin
 	os.set_current_directory("../bin/")
 	dir: string
-	switch (type)
+	switch (type) 
 	{
 	case 0:
 		dir = "collections/"
@@ -304,10 +304,13 @@ OST_GET_ALL_COLLECTION_NAMES :: proc() -> [dynamic]string {
 	}
 	fmt.printf("\n")
 	fmt.printf("\n")
-	fmt.printfln(
-		"Found %d number collections\n--------------------------------",
-		len(collectionNames),
-	)
+	if len(foundFiles) == 1 {
+		fmt.println("Found 1 collection\n--------------------------------", len(collectionNames))
+	} else {
+		fmt.printfln(
+			"Found %d collections\n--------------------------------",
+			len(collectionNames),
+		)}
 
 	for file in foundFiles {
 		if strings.contains(file.name, const.OST_FILE_EXTENSION) {

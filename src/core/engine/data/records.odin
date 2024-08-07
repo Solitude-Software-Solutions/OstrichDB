@@ -27,8 +27,7 @@ record: types.Record
 //can be used to check if a single record exists within a cluster
 OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 	using const
-	collectionPath := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
-	data, readSuccess := os.read_entire_file(collectionPath)
+	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
@@ -36,13 +35,12 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		fmt.println("Cannot read file")
 		return false
 	}
 	defer delete(data)
 
 	// Check if the cluster exists
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
+	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, cn)
 	if !clusterExists {
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
@@ -53,7 +51,6 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 		fmt.println("Cluster does not exist")
 		return false
 	}
-	fmt.println("Cluster exists")
 
 	content := string(data)
 	lines := strings.split(content, "\n")
@@ -61,7 +58,6 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 
 	cluster_start := -1
 	closing_brace := -1
-
 	// Find the cluster and its closing brace
 	for i := 0; i < len(lines); i += 1 {
 		if strings.contains(lines[i], cn) {
@@ -93,14 +89,6 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 	return false
 }
 
-// /*
-// !IMPORTANT!:
-// OST_APPEND_RECORD_TO_CLUSTER is ONLY used when creating records with the
-// type `identifier` and should NOT be used anywhere else
-//
-// Examples of this are: cluster_id & cluster_name
-// as well as all records in the secure cluster in `bin/secure/secure.ost`
-//  */
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	fn: string,
@@ -109,7 +97,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	rd: string,
 	rType: string,
 	ID: ..i64,
-) {
+) -> int {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
 		error1 := utils.new_err(
@@ -118,7 +106,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 			#procedure,
 		)
 		utils.throw_err(error1)
-		return
+		return -1
 	}
 	defer delete(data)
 
@@ -141,9 +129,21 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	}
 
 	//check if the record name already exists if it does return
-	record_exists := OST_CHECK_IF_RECORD_EXISTS(fn, cn, rn)
-	if record_exists == true {
-		return
+	recordExists := OST_CHECK_IF_RECORD_EXISTS(fn, cn, rn)
+	if recordExists == true {
+		fmt.printfln(
+			"Record: %s%s%s already exists within Collection: %s%s%s -> Cluster: %s%s%s",
+			utils.BOLD,
+			rn,
+			utils.RESET,
+			utils.BOLD,
+			fn,
+			utils.RESET,
+			utils.BOLD,
+			cn,
+			utils.RESET,
+		)
+		return 1
 	}
 	//if the cluster is not found or the structure is invalid, return
 	if cluster_start == -1 || closing_brace == -1 {
@@ -153,7 +153,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 			#procedure,
 		)
 		utils.throw_err(error2)
-		return
+		return -1
 	}
 
 	// Create the new line
@@ -177,7 +177,11 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 			#procedure,
 		)
 		utils.throw_err(error3)
+		return -1
 	}
+
+
+	return 0
 }
 
 // // get the value from the right side of a key value

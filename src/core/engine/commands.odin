@@ -225,17 +225,42 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if nameSuccess == 0 && typeSuccess == 0 {
 					fmt.printfln("Creating record '%s' of type '%s'", rName, rType)
 					data.OST_GET_ALL_COLLECTION_NAMES()
-					collection, cluster := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
+					collection_name, cluster_name := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
 					filePath := fmt.tprintf(
 						"%s%s%s",
 						const.OST_COLLECTION_PATH,
-						collection,
+						collection_name,
 						const.OST_FILE_EXTENSION,
 					)
-					data.OST_APPEND_RECORD_TO_CLUSTER(filePath, cluster, rName, "", rType)
+					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
+						filePath,
+						cluster_name,
+						rName,
+						"",
+						rType,
+					)
+					fn := OST_CONCAT_OBJECT_EXT(collection_name)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+					switch (appendSuccess) 
+					{
+					case 0:
+						fmt.printfln("Record '%s' of type '%s' created successfully", rName, rType)
+						break
+					case:
+						fmt.printfln("Failed to create record '%s' of type '%s'", rName, rType)
+					}
 				} else {
 					fmt.printfln("Failed to create record '%s' of type '%s'", rName, rType)
 				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: NEW RECORD <record_name> OF_TYPE <record_type>",
+				)
+				utils.log_runtime_event(
+					"Incomplete NEW RECORD command",
+					"User did not provide a record name or type to create.",
+				)
 			}
 			break
 		case:
