@@ -280,7 +280,6 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 	)
 
 	n, colNameSuccess := os.read(os.stdin, buf)
-
 	if colNameSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
@@ -291,19 +290,9 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 	}
 
 
-	collection := strings.trim_right(string(buf[:n]), "\r\n")
-	collection = strings.to_upper(collection)
-	collectionExists := OST_CHECK_IF_COLLECTION_EXISTS(collection, 0)
-
-
-	switch collectionExists 
-	{
-	case true:
-		col = collection
-		break
-
-	}
-
+	collectionName := strings.trim_right(string(buf[:n]), "\r\n")
+	collectionNameUpper := strings.to_upper(collectionName)
+	collectionExists := OST_CHECK_IF_COLLECTION_EXISTS(collectionNameUpper, 0)
 	fmt.printfln(
 		"Select the cluster that you would like to store the record: %s%s%s in.",
 		utils.BOLD,
@@ -311,8 +300,16 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 		utils.RESET,
 	)
 
-	nn, cluNameSuccess := os.read(os.stdin, buf)
+	switch collectionExists {
+	case true:
+		col = collectionNameUpper
+		break
+	case false:
+		fmt.printfln("Could not find collection: %s. Please try again", collectionNameUpper)
+		OST_CHOOSE_RECORD_LOCATION(rName, rType)
+	}
 
+	nn, cluNameSuccess := os.read(os.stdin, buf)
 	if cluNameSuccess != 0 {
 		error2 := utils.new_err(
 			.CANNOT_READ_INPUT,
@@ -327,18 +324,20 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 	collectionPath := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
-		collection,
+		collectionNameUpper,
 		const.OST_FILE_EXTENSION,
 	)
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cluster)
 
-
-	switch clusterExists 
-	{
+	switch clusterExists {
 	case true:
 		clu = cluster
 		break
+	case false:
+		fmt.printfln("Could not find cluster: %s. Please try again", cluster)
+		OST_CHOOSE_RECORD_LOCATION(rName, rType)
 	}
+
 
 	return col, clu
 }

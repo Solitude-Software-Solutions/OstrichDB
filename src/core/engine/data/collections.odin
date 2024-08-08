@@ -200,32 +200,31 @@ OST_PREFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 //checks if the passed in ost file exists in "../bin/clusters". see usage in OST_CHOOSE_COLLECTION()
 //type 0 is for standard collection files, type 1 is for secure files
 OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
-	dbExists: bool
-	//need to cwd into bin
-	os.set_current_directory("../bin/")
-	dir: string
-	switch (type) 
-	{
+	switch (type) {
 	case 0:
-		dir = "collections/"
+		colPath, openSuccess := os.open(const.OST_COLLECTION_PATH)
+		collections, readSuccess := os.read_dir(colPath, -1)
+
+		for collection in collections {
+			if collection.name == fmt.tprintf("%s%s", fn, const.OST_FILE_EXTENSION) {
+				return true
+			}
+		}
 		break
 	case 1:
-		dir = "secure/"
+		secColPath, openSuccess := os.open(const.OST_SECURE_COLLECTION_PATH)
+		secureCollections, readSuccess := os.read_dir(secColPath, -1)
+
+		for collection in secureCollections {
+			if collection.name == fmt.tprintf("%s%s", fn, const.OST_FILE_EXTENSION) {
+				return true
+			}
+		}
 		break
 	}
 
-	fileWithExt := strings.concatenate([]string{fn, const.OST_FILE_EXTENSION})
-	collectionsDir, errOpen := os.open(dir)
 
-	defer os.close(collectionsDir)
-	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
-	for file in foundFiles {
-		if (file.name == fileWithExt) {
-			dbExists = true
-			return dbExists
-		}
-	}
-	return dbExists
+	return false
 }
 
 

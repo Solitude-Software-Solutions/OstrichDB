@@ -260,6 +260,7 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		fmt.println("Error reading cluster file")
 		return false
 	}
 	defer delete(data)
@@ -289,6 +290,13 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 			return true
 		}
 	}
+	fmt.printfln(
+		"Cluster with name:%s%s%s does not exist in collection: %s",
+		utils.BOLD,
+		cn,
+		utils.RESET,
+		fn,
+	)
 	return false
 }
 

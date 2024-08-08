@@ -222,9 +222,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) == 1 && const.OF_TYPE in cmd.m_token || const.TYPE in cmd.m_token {
 				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[0])
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
+
 				if nameSuccess == 0 && typeSuccess == 0 {
 					fmt.printfln("Creating record '%s' of type '%s'", rName, rType)
 					data.OST_GET_ALL_COLLECTION_NAMES()
+
 					collection_name, cluster_name := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
 					filePath := fmt.tprintf(
 						"%s%s%s",
@@ -232,6 +234,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						const.OST_FILE_EXTENSION,
 					)
+
 					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
 						filePath,
 						cluster_name,
@@ -239,20 +242,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"",
 						rType,
 					)
-					fn := OST_CONCAT_OBJECT_EXT(collection_name)
-					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 					switch (appendSuccess) 
 					{
 					case 0:
 						fmt.printfln("Record '%s' of type '%s' created successfully", rName, rType)
+						fn := OST_CONCAT_OBJECT_EXT(collection_name)
+						metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+						metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+
 						break
-					case:
+					case -1, 1:
 						fmt.printfln("Failed to create record '%s' of type '%s'", rName, rType)
+						break
 					}
 				} else {
-					fmt.printfln("Failed to create record '%s' of type '%s'", rName, rType)
+					fmt.println("Something went wrong. Failed to create record.")
 				}
+
 			} else {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: NEW RECORD <record_name> OF_TYPE <record_type>",
@@ -263,6 +269,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 			break
+
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Target> <Targets_name>")
 			utils.log_runtime_event(

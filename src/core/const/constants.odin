@@ -5,6 +5,7 @@ OST_FFVF :: "ost_file_format_version.tmp"
 OST_TMP_PATH :: "../bin/tmp/"
 //used in clusters.odin
 OST_COLLECTION_PATH :: "../bin/collections/"
+OST_SECURE_COLLECTION_PATH :: "../bin/secure/"
 OST_SECURE_CLUSTER_PATH :: "../bin/secure/"
 OST_BACKUP_PATH :: "../bin/backups/"
 OST_FILE_EXTENSION :: ".ost"
