@@ -588,7 +588,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	clusters := strings.split(content, "}")
 
 	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name : %s", cn)) {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			// Find the start of the cluster (opening brace)
 			start_index := strings.index(cluster, "{")
 			if start_index != -1 {
