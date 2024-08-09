@@ -341,3 +341,76 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 
 	return col, clu
 }
+//gets every record of the passed in rName and returns the record type, the records data, the cluster it is in, and the collection it is in
+OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
+	allRecords := make([dynamic]string)
+	defer delete(allRecords)
+	clusterName: string
+	recordType: string
+	recordData: string
+
+	collectionDir, openDirSuccess := os.open(const.OST_COLLECTION_PATH)
+	collections, readDirSuccess := os.read_dir(collectionDir, -1) //might not be -1
+
+	for collection in collections {
+		colPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collection.name)
+		data, collectionReadSuccess := os.read_entire_file(colPath)
+		defer delete(data)
+		content := string(data)
+
+		colNameNoExt := strings.trim_right(collection.name, const.OST_FILE_EXTENSION)
+		//getting the name of each cluster that the record name is found in per database
+		clusters := strings.split(content, "}")
+		for cluster in clusters {
+			if strings.contains(cluster, rName) {
+				cluster := strings.trim_space(cluster)
+				if cluster == "" do continue
+				//get the cluster name
+				name_start := strings.index(cluster, "cluster_name :identifier:")
+				if name_start == -1 do continue
+				name_start += len("cluster_name :identifier:")
+				name_end := strings.index(cluster[name_start:], "\n")
+				if name_end == -1 do continue
+				clusterName = strings.trim_space(cluster[name_start:][:name_end])
+
+				//split the cluster into lines to find the record type and record data
+				lines := strings.split(cluster, "\n")
+				for line in lines {
+					line := strings.trim_space(line)
+					if strings.has_prefix(line, rName) {
+						// Split the line into parts
+						parts := strings.split(line, ":")
+						if len(parts) >= 3 {
+							recordType = strings.trim_space(parts[1])
+							recordData = strings.trim_space(strings.join(parts[2:], ":"))
+
+							// Append record info to allRecords
+							recordInfo := fmt.tprintf(
+								"Collection: %s | Cluster Name: %s | Record Type: %s | Record Data: %s",
+								collection.name,
+								clusterName,
+								recordType,
+								recordData,
+							)
+							append(&allRecords, recordInfo)
+
+							fmt.printfln(
+								"Collection: %s | Cluster Name: %s",
+								colNameNoExt,
+								clusterName,
+							)
+							fmt.printfln(
+								"Record Type: %s | Record Data: %s",
+								recordType,
+								recordData,
+							)
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+	return allRecords
+
+}
