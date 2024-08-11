@@ -1,18 +1,18 @@
-package security
+package engine
 
-import "../../errors"
-import "../../logging"
-import "../../misc"
+import "../../utils"
 import "../config"
 import "../const"
-import "../data"
-import "../data/metadata"
+import "../types"
+import "./data"
+import "./data/metadata"
+import "./security"
+import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
 
-USER_SIGNIN_STATUS: bool
 
 OST_RUN_SIGNIN :: proc() -> bool {
 	//get the username input from the user
@@ -21,12 +21,12 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 	}
 
 
@@ -34,57 +34,69 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	userNameFound := data.OST_READ_RECORD_VALUE(
 		const.SEC_FILE_PATH,
 		const.SEC_CLUSTER_NAME,
-		userName,
+		"identifier",
+		"user_name",
 	)
 	if (userNameFound != userName) {
-		error2 := errors.new_err(
+		error2 := utils.new_err(
 			.ENTERED_USERNAME_NOT_FOUND,
-			errors.get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
+			utils.get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
 			#procedure,
 		)
-		errors.throw_err(error2)
-		OST_RUN_SIGNIN()
+		utils.throw_err(error2)
+		fmt.printfln("The entered username was not found within OstrichDB. Please try again.")
+		return false
 	}
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
-	salt := data.OST_READ_RECORD_VALUE(const.SEC_FILE_PATH, const.SEC_CLUSTER_NAME, "salt")
+	salt := data.OST_READ_RECORD_VALUE(
+		const.SEC_FILE_PATH,
+		const.SEC_CLUSTER_NAME,
+		"identifier",
+		"salt",
+	)
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.OST_READ_RECORD_VALUE(const.SEC_FILE_PATH, const.SEC_CLUSTER_NAME, "hash")
+	providedHash := data.OST_READ_RECORD_VALUE(
+		const.SEC_FILE_PATH,
+		const.SEC_CLUSTER_NAME,
+		"identifier",
+		"hash",
+	)
 	pHashAsBytes := transmute([]u8)providedHash
 
 
 	preMesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
 	//PRE-MESHING END=========================================================================================================
-
-	//todo cant remember if im looking for "algo_method" something else
 	algoMethod := data.OST_READ_RECORD_VALUE(
 		const.SEC_FILE_PATH,
 		const.SEC_CLUSTER_NAME,
+		"identifier",
 		"store_method",
 	)
 	//POST-MESHING START=======================================================================================================
 
 	//get the password input from the user
 	fmt.printfln("Please enter your password:")
+	libc.system("stty -echo")
 	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error3 := errors.new_err(
+		error3 := utils.new_err(
 			.CANNOT_READ_INPUT,
-			errors.get_err_msg(.CANNOT_READ_INPUT),
+			utils.get_err_msg(.CANNOT_READ_INPUT),
 			#procedure,
 		)
-		errors.throw_err(error3)
+		utils.throw_err(error3)
 		return false
 	}
 	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
-
+	libc.system("stty echo")
 	//conver the return algo method string to an int
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := OST_HASH_PASSWORD(enteredPassword, algoAsInt, true)
-	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
+	newHash := security.OST_HASH_PASSWORD(enteredPassword, algoAsInt, true)
+	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
 	postMesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================
 
@@ -93,15 +105,20 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	switch authPassed {
 	case true:
+		OST_START_SESSION_TIMER()
 		fmt.printfln("Auth Passed! User has been signed in!")
-		USER_SIGNIN_STATUS = true
-		config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+		types.USER_SIGNIN_STATUS = true
+		userLoggedInValue := config.OST_READ_CONFIG_VALUE(const.configThree)
+		if userLoggedInValue == "false" {
+			config.OST_TOGGLE_CONFIG(const.configThree)
+		}
+		break
 	case false:
 		fmt.printfln("Auth Failed. Password was incorrect please try again.")
-		USER_SIGNIN_STATUS = false
+		types.USER_SIGNIN_STATUS = false
 		os.exit(0)
 	}
-	return USER_SIGNIN_STATUS
+	return types.USER_SIGNIN_STATUS
 
 }
 
@@ -125,44 +142,30 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 }
 
 OST_USER_LOGOUT :: proc(param: int) -> bool {
-	loggedOut := config.OST_TOGGLE_CONFIG("OST_USER_LOGGED_IN")
+	loggedOut := config.OST_TOGGLE_CONFIG(const.configThree)
 
 	switch loggedOut {
 	case true:
 		switch (param) 
 		{
 		case 0:
-			USER_SIGNIN_STATUS = false
+			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
-			OST_RUN_SIGNIN()
+			OST_STOP_SESSION_TIMER()
+			OST_START_ENGINE()
 			break
 		case 1:
 			//only used when logging out AND THEN exiting.
-			USER_SIGNIN_STATUS = false
+			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)
 		}
 		break
 	case false:
-		USER_SIGNIN_STATUS = true
+		types.USER_SIGNIN_STATUS = true
 		fmt.printfln("You have NOT been logged out.")
 		break
 	}
-	return USER_SIGNIN_STATUS
-}
-
-
-//todo delete the follwoing 2 procs...
-//todo delete the follwoing 2 procs...
-//todo delete the follwoing 2 procs...
-//todo delete the follwoing 2 procs...
-OST_AUTH_GET_USERNAME :: proc() -> string {
-	fmt.printfln("Please enter your username:")
-	return misc.get_input()
-}
-
-OST_AUTH_GET_PASSWORD :: proc() -> string {
-	fmt.printfln("Please enter your password:")
-	return misc.get_input()
+	return types.USER_SIGNIN_STATUS
 }

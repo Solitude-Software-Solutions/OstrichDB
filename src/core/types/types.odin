@@ -25,9 +25,9 @@ Desc: Used to define the structure of a record withinin the Ostrich Database
 Usage Locations: NOT YET IMPLEMENTED but will be in records.odin and possibly clusters.odin
 */
 Record :: struct {
-	_name: string,
-	_type: any,
-	_data: any,
+	name: string,
+	type: string,
+	data: string,
 }
 
 /*
@@ -37,8 +37,9 @@ Desc: Used to define the structure of a cluster within the Ostrich Database
 Usage Locations: NOT YET IMPLEMENTED but will be in clusters.odin
 */
 Cluster :: struct {
-	_id:    int, //unique identifier for the record cannot be duplicated
-	record: [dynamic]Record,
+	cluster_name: string,
+	cluster_id:   int, //unique identifier for the record cannot be duplicated
+	record:       [dynamic]Record, //so that the cluster can hold multiple records
 }
 
 //NOTE THERE IS NOT A TYPE FOR A COLLECTION :^)
@@ -47,8 +48,8 @@ Cluster :: struct {
 //=================================================/src/core/engine/=================================================//
 /*
 Type: Engine_Error
-Desc: Used to define the structure of an ENGINE SPECIFIC errors. Not to
-        be confused with the standard errors located in errors.odin
+Desc: Used to define the structure of an ENGINE SPECIFIC utils. Not to
+        be confused with the standard errors located in utils.odin
 Usage Locations: NOT YET IMPLEMENTED but wil be used in several places
 */
 Engine_Error :: struct {
@@ -162,9 +163,18 @@ focus: Focus
 Focus :: struct {
 	t_:   string, // The primary target (e.g., "CLUSTER" or "COLLECTION")
 	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
-
+	p_o:  string, // The parent object of the primary object (e.g., "myCluster" or "myCollection")
+	// gp_o: string, // The grandparent object of the primary object (e.g.,"myCollection" in relation to a record in "myCluster")
 	// The related target and object are used to provide futher context for the focus
-	rt_: string, // The related target (e.g., "RECORD")
-	ro_: string, // The related object (e.g., "myRecord")
+	rt_:  string, // The related target (e.g., "RECORD")
+	ro_:  string, // The related object (e.g., "myRecord")
 	flag: bool, // If the focus is active
+}
+//some gloables because fuck cyclical importation problems in Odin
+USER_SIGNIN_STATUS: bool
+
+
+help_mode: Help_Mode
+Help_Mode :: struct {
+	verbose: bool, //if its false then its simple
 }

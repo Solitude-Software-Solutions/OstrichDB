@@ -1,6 +1,5 @@
-package errors
+package utils
 
-import "../misc"
 import "core:fmt"
 import "core:os"
 
@@ -52,10 +51,12 @@ ErrorType :: enum {
 	INCORRECT_USERNAME_ENTERED,
 	INCORRECT_PASSWORD_ENTERED,
 	ENTERED_USERNAME_NOT_FOUND,
-	//COMMNAD ERRORS
+	//command ERRORS
 	INCOMPLETE_COMMAND,
 	INVALID_COMMAND,
 	COMMAND_TOO_LONG, //??? idk
+	//Miscellaneous
+	INVALID_INPUT,
 }
 
 Error :: struct {
@@ -104,6 +105,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.INCOMPLETE_COMMAND         = "Incomplete Command",
 	.INVALID_COMMAND            = "Invalid Command",
 	.COMMAND_TOO_LONG           = "Command Too Long",
+	.INVALID_INPUT              = "Invalid Input",
 }
 
 new_err :: proc(type: ErrorType, message: string, procedure: string) -> Error {
@@ -117,33 +119,33 @@ get_err_msg :: proc(type: ErrorType) -> string {
 throw_err :: proc(err: Error) -> string {
 	return fmt.tprintf(
 		"ERROR occured in procedure: %s%s%s\nError Type: %s(%v)%s\nError Message: %s%s%s ",
-		misc.BOLD,
+		BOLD,
 		err.procedure,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		err.type,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		err.message,
-		misc.RESET,
+		RESET,
 	)
 }
 
 throw_custom_err :: proc(err: Error, custom_message: string) -> string {
 	return fmt.tprintf(
 		"ERROR occured in procedure: %s%s%s\nError Type: %s(%v)%s\nError Message: %s%s%s\nCustom Message: %s%s%s",
-		misc.BOLD,
+		BOLD,
 		err.procedure,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		err.type,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		err.message,
-		misc.RESET,
-		misc.BOLD,
+		RESET,
+		BOLD,
 		custom_message,
-		misc.RESET,
+		RESET,
 	)
 }
 
@@ -151,6 +153,6 @@ throw_custom_err :: proc(err: Error, custom_message: string) -> string {
 
 Example Error Usahe:
 
-    error2:= errors.new_err(.ENTERED_USERNAME_NOT_FOUND, errors.get_err_msg(.ENTERED_USERNAME_NOT_FOUND), #procedure)
-    errors.throw_err(error2)
+    error2:= new_err(.ENTERED_USERNAME_NOT_FOUND, get_err_msg(.ENTERED_USERNAME_NOT_FOUND), #procedure)
+    throw_err(error2)
 */

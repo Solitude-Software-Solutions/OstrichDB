@@ -1,9 +1,7 @@
 package metadata
 
-import "../../../errors"
-import "../../../logging"
-import "../../../misc"
-import "../../const"
+import "../../../../utils"
+import "../../../const"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -20,30 +18,90 @@ import "core:time"
 
 @(private = "file")
 METADATA_HEADER: []string = {
-	"[Ostrich File Header Start]\n\n",
+	"{[Ostrich File Header Start]\n\n",
 	"#File Format Version: %ffv\n",
 	"#Time of Creation: %ftoc\n",
 	"#Last Time Modified: %fltm\n",
 	"#File Size: %fs Bytes\n",
-	"#Checksum: %cs\n\n[Ostrich File Header End]\n\n\n\n",
+	"#Checksum: %cs\n\n[Ostrich File Header End]},\n\n\n\n",
 }
 
 // sets the files time of creation(FTOC) or last time modified(FLTM)
 OST_SET_TIME :: proc() -> string {
-	buf: [256]byte
+	mBuf: [8]byte
+	dBuf: [8]byte
+	yBuf: [8]byte
 
+	hBuf: [8]byte
+	minBuf: [8]byte
+	sBuf: [8]byte
+
+	h, min, s := time.clock(time.now())
 	y, m, d := time.date(time.now())
+
+	mAsInt := int(m) //month comes base as a type "Month" so need to convert
+	// Conversions!!! because everything in Odin needs to be converted... :)
 
 	Y := transmute(i64)y
 	M := transmute(i64)m
 	D := transmute(i64)d
 
-	Year := strconv.append_int(buf[:], Y, 10)
-	Month := strconv.append_int(buf[:], M, 10)
-	Day := strconv.append_int(buf[:], D, 10)
+	H := transmute(i64)h
+	MIN := transmute(i64)min
+	S := transmute(i64)s
 
-	timeCreated := strings.concatenate([]string{Day, "/", Month, "/", Year})
-	return timeCreated
+
+	Month := strconv.append_int(mBuf[:], M, 10)
+	Year := strconv.append_int(yBuf[:], Y, 10)
+	Day := strconv.append_int(dBuf[:], D, 10)
+
+	Hour := strconv.append_int(hBuf[:], H, 10)
+	Minute := strconv.append_int(minBuf[:], MIN, 10)
+	Second := strconv.append_int(sBuf[:], S, 10)
+
+
+	switch (mAsInt) 
+	{
+	case 1:
+		Month = "January"
+		break
+	case 2:
+		Month = "February"
+		break
+	case 3:
+		Month = "March"
+		break
+	case 4:
+		Month = "April"
+		break
+	case 5:
+		Month = "May"
+		break
+	case 6:
+		Month = "June"
+		break
+	case 7:
+		Month = "July"
+		break
+	case 8:
+		Month = "August"
+		break
+	case 9:
+		Month = "September"
+		break
+	case 10:
+		Month = "October"
+		break
+	case 11:
+		Month = "November"
+		break
+	case 12:
+		Month = "December"
+		break
+	}
+
+	Date := strings.concatenate([]string{Month, " ", Day, " ", Year, " "})
+	return Date
 }
 
 
@@ -121,12 +179,12 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	rawData, readSuccess := os.read_entire_file(fn)
 
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		errors.throw_err(error1)
+		utils.throw_err(error1)
 	}
 
 	dataAsStr := cast(string)rawData
@@ -138,7 +196,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	defer os.close(file)
 
 	if e != 0 {
-		// errors.throw_utilty_error(1,"Error opening file" ,"OST_APPEND_METADATA_HEADER")
+		// utils.throw_utilty_error(1,"Error opening file" ,"OST_APPEND_METADATA_HEADER")
 	}
 
 	blockAsBytes := transmute([]u8)strings.concatenate(METADATA_HEADER)
@@ -152,9 +210,9 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			errors.get_err_msg(.CANNOT_READ_FILE),
+			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
 		return
@@ -226,7 +284,7 @@ OST_METADATA_ON_CREATE :: proc(fn: string) {
 
 
 OST_CREATE_FFVF :: proc() {
-	CURRENT_FFV := "Pre_Rel_v0.1.0_dev" //todo allow this to be directly read from the projetcs 'version' file and not hardcoded
+	CURRENT_FFV := utils.get_ost_version()
 	os.make_directory(const.OST_TMP_PATH)
 
 	FFVF := const.OST_FFVF
@@ -234,30 +292,30 @@ OST_CREATE_FFVF :: proc() {
 	pathAndName := strings.concatenate([]string{tmpPath, FFVF})
 
 	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
+	defer os.close(file)
 
 	if createSuccess != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_CREATE_FILE,
-			errors.get_err_msg(.CANNOT_CREATE_FILE),
+			utils.get_err_msg(.CANNOT_CREATE_FILE),
 			#procedure,
 		)
-		errors.throw_custom_err(error1, "Cannot create file format version file")
+		utils.throw_custom_err(error1, "Cannot create file format version file")
 	}
 	os.close(file)
 
 	//close then open the file again to write to it
 	f, openSuccess := os.open(pathAndName, os.O_WRONLY, 0o666)
 	defer os.close(f)
-	fmt.printfln("File: %s, Open Success: %d", pathAndName, openSuccess)
 	ffvAsBytes := transmute([]u8)CURRENT_FFV
 	writter, ok := os.write(f, ffvAsBytes)
 	if ok != 0 {
-		error1 := errors.new_err(
+		error1 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
-			errors.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
 			#procedure,
 		)
-		errors.throw_custom_err(error1, "Cannot write to file format version file")
+		utils.throw_custom_err(error1, "Cannot write to file format version file")
 	}
 }
 
@@ -270,10 +328,7 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 
 	ffvf, openSuccess := os.open(pathAndName)
 	if openSuccess != 0 {
-		logging.log_utils_error(
-			"Could not open file format verson file",
-			"OST_GET_FILE_FORMAT_VERSION",
-		)
+		utils.log_err("Could not open file format verson file", "OST_GET_FILE_FORMAT_VERSION")
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {
