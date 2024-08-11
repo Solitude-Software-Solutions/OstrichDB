@@ -61,17 +61,19 @@ In this example:
 - `FETCH`: Retrieve data from collection, cluster, or record
 - `BACKUP`: Create a backup of a collection
 - `FOCUS`: Set the current context to on specific collection, cluster, or record
-- `HELP`: Display detailed information when chained with a specific token
+- `HELP`: Display detailed information when chained with a specific token such as COLLECTION, FETCH, NEW, ATOMS, etc.
+
 **Note: Some commands CANNOT be used while focusing on a specific object**
 
 Example usage for each multi-token command:
-```
-ERASE CLUSTER <cluster name> //Erase the cluster with the specified name
-FETCH COLLECTION <collection name> //Fetches all data within the collection of specified name
-NEW CLUSTER <cluster name> WITHIN COLLECTION <collection name> //Creates a new cluster within the specified collection 
-FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection name>  //Focuses on the specified cluster within the specified collection
-BACKUP COLLECTION <collection name> //Creates a backup of the specified collection
+```bash
+ERASE CLUSTER <cluster_name> //Erase the cluster with the specified name
+FETCH COLLECTION <collection_name> //Fetches all data within the collection of specified name
+NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Creates a new cluster within the specified collection 
+FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>  //Focuses on the specified cluster within the specified collection
+BACKUP COLLECTION <collection_name> //Creates a backup of the specified collection
 HELP COLLECTION //Displays information about collections
+NEW RECORD <record_name> OF_TYPE <record_type>
 ```
 **Note: The `FOCUS` command is used to set the current context to a specific object. ALL subsequent commands will be executed in the context of the focused object.**
 
@@ -81,6 +83,10 @@ Modifiers are additional parameters that modify the behavior of a command:
 
 - `WITHIN`: A scope modifier used to specify the parent object of the target object
 - `TO`: Used with the RENAME command to specify the new name of the object
+- `ATOMS`: A special modifier ONLY used with the HELP command to display detailed information about the command's ATOMs
+- `OF_TYPE`: ONLY used with the NEW RECORD command to specify the type of record being created
+
+**Note: Currently, the only supported record types are `STRING`, `INTEGER`, `BOOL`, and `FLOAT`.**
 
 ## Installation
 
@@ -102,14 +108,9 @@ Modifiers are additional parameters that modify the behavior of a command:
    cd your/path/to/OstrichDB/src
    ```
 
-3. Build the project:
+3. Build the and run OstrichDB:
    ```bash
-   odin build main
-   ```
-
-4. Run OstrichDB:
-   ```bash
-   ./main.bin
+   odin build main && ./main.bin
    ```
 
 ## Contributing
@@ -122,10 +123,13 @@ OstrichDB is released under the Apache License 2.0. For full license text, see [
 
 ## Future Plans
 
+- More data operations on records
 - Enhanced user interface
 - Improved configuration options
+- Database file compression and zipping
 - Multi-user support with role-based access control
 - Several new command tokens:
+  - `TREE`: Display a hierarchical view of the database
   - `STATS`: Display database statistics
   - `PURGE`: Clear data while retaining structure
   - `SIZE`: Show object size in bytes
@@ -140,7 +144,6 @@ OstrichDB is released under the Apache License 2.0. For full license text, see [
   - `MERGE`: Combine multiple collections or clusters into one 
   - `ALL`: Perform operations on all objects within a scope
   - `AND`: Execute multiple operations in one command
-  - `OF_TYPE`: Filter operations by record type
   - `INTO`: Specify the destination for data operations
 - Support for additional data types
 - Data validation
