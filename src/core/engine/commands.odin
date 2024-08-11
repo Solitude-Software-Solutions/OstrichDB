@@ -256,7 +256,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						break
 					}
 				} else {
-					fmt.println("Something went wrong. Failed to create record.")
+					fmt.printfln(
+						"Failed to create record: %s of type: %s. Please try again.",
+						rName,
+						rType,
+					)
 				}
 
 			} else {
@@ -328,11 +332,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.RECORD:
-			if len(cmd.o_token) > 0 && const.TO in cmd.m_token {
-				old_name := cmd.o_token[0]
-				new_name := cmd.m_token[const.TO]
-				fmt.printf("Renaming record '%s' to '%s'\n", old_name, new_name)
-				// data.OST_RENAME_RECORD(old_name, new_name)
+			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
+				oldRName := cmd.o_token[0]
+				newRName := cmd.m_token[const.TO]
+				data.OST_RENAME_RECORD(oldRName, newRName)
+
+
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME RECORD <old_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> TO <new_name>",
@@ -597,7 +602,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	}
 	return 0
 }
-
+// =======================<FOCUS MODE>=======================//
 // =======================<FOCUS MODE>=======================//
 // =======================<FOCUS MODE>=======================//
 EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
