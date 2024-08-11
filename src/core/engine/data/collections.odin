@@ -6,8 +6,8 @@ import "../../const"
 import "./metadata"
 import "core:fmt"
 import "core:os"
+import "core:strconv"
 import "core:strings"
-
 MAX_FILE_NAME_LENGTH_AS_BYTES: [512]byte
 
 
@@ -200,32 +200,31 @@ OST_PREFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 //checks if the passed in ost file exists in "../bin/clusters". see usage in OST_CHOOSE_COLLECTION()
 //type 0 is for standard collection files, type 1 is for secure files
 OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
-	dbExists: bool
-	//need to cwd into bin
-	os.set_current_directory("../bin/")
-	dir: string
-	switch (type) 
-	{
+	switch (type) {
 	case 0:
-		dir = "collections/"
+		colPath, openSuccess := os.open(const.OST_COLLECTION_PATH)
+		collections, readSuccess := os.read_dir(colPath, -1)
+
+		for collection in collections {
+			if collection.name == fmt.tprintf("%s%s", fn, const.OST_FILE_EXTENSION) {
+				return true
+			}
+		}
 		break
 	case 1:
-		dir = "secure/"
+		secColPath, openSuccess := os.open(const.OST_SECURE_COLLECTION_PATH)
+		secureCollections, readSuccess := os.read_dir(secColPath, -1)
+
+		for collection in secureCollections {
+			if collection.name == fmt.tprintf("%s%s", fn, const.OST_FILE_EXTENSION) {
+				return true
+			}
+		}
 		break
 	}
 
-	fileWithExt := strings.concatenate([]string{fn, const.OST_FILE_EXTENSION})
-	collectionsDir, errOpen := os.open(dir)
 
-	defer os.close(collectionsDir)
-	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
-	for file in foundFiles {
-		if (file.name == fileWithExt) {
-			dbExists = true
-			return dbExists
-		}
-	}
-	return dbExists
+	return false
 }
 
 
@@ -282,4 +281,44 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	}
 	str := strings.join(lines[fileStart:], "\n")
 	return str
+}
+
+
+OST_GET_ALL_COLLECTION_NAMES :: proc() -> [dynamic]string {
+
+	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+	defer os.close(collectionsDir)
+	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
+	collectionNames := make([dynamic]string)
+	defer delete(collectionNames)
+
+	result: string
+
+
+	//only did this to get the length of the collection names
+	for file in foundFiles {
+		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+			append(&collectionNames, file.name)
+		}
+	}
+	fmt.printf("\n")
+	fmt.printf("\n")
+	if len(foundFiles) == 1 {
+		fmt.println("Found 1 collection\n--------------------------------", len(collectionNames))
+	} else {
+		fmt.printfln(
+			"Found %d collections\n--------------------------------",
+			len(collectionNames),
+		)}
+
+	for file in foundFiles {
+		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+			append(&collectionNames, file.name)
+			withoutExt := strings.split(file.name, const.OST_FILE_EXTENSION)
+			fmt.println(withoutExt[0])
+			OST_LIST_CLUSTERS_IN_FILE(withoutExt[0])
+		}
+	}
+
+	return collectionNames
 }

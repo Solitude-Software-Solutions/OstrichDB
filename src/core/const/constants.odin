@@ -5,6 +5,7 @@ OST_FFVF :: "ost_file_format_version.tmp"
 OST_TMP_PATH :: "../bin/tmp/"
 //used in clusters.odin
 OST_COLLECTION_PATH :: "../bin/collections/"
+OST_SECURE_COLLECTION_PATH :: "../bin/secure/"
 OST_SECURE_CLUSTER_PATH :: "../bin/secure/"
 OST_BACKUP_PATH :: "../bin/backups/"
 OST_FILE_EXTENSION :: ".ost"
@@ -55,18 +56,18 @@ COLLECTION :: "COLLECTION" //Targets a collection to be manupulated
 CLUSTER :: "CLUSTER" //Targets a cluster to be manipulated
 RECORD :: "RECORD" //Targets a record to be manipulated
 ALL :: "ALL" //Targets all records, clusters, or collections that are specified
-
 //Modifier Tokens
 AND :: "AND" //used to specify that there is another record, cluster, or collection to be created
 OF_TYPE :: "OF_TYPE" //ONLY used to specify the type of data that is going to be stored in a record...see types below
+TYPE :: "TYPE" //Shorthand for OF_TYPE for lazy people :)
 ALL_OF :: "ALL OF" //ONLY used with FETCH and ERASE.
 TO :: "TO" //ONLY used with RENAME
 
 //Scope Tokens
 WITHIN :: "WITHIN" //used to specify where the record, cluster, or collection is going to be created
+IN :: "IN" //Shorthand for WITHIN for lazy people :)
 
-
-//Type Tokens -- Requires a special datas as a prefix
+//Type Tokens
 STRING :: "STRING"
 INT :: "INT"
 FLOAT :: "FLOAT"
@@ -85,3 +86,6 @@ MAX_SESSION_TIME: time.Duration : 259200000000000000
 //used for confirming user actions. Input will be capitalized in the engine
 YES :: "YES"
 NO :: "NO"
+
+//used for establishing the type on creation of a record
+VALID_RECORD_TYPES: []string : {STRING, INT, FLOAT, BOOL}
