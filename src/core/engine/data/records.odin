@@ -39,56 +39,37 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 	}
 	defer delete(data)
 
-	// Check if the cluster exists
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, cn)
-	if !clusterExists {
-		error2 := utils.new_err(
-			.CANNOT_FIND_CLUSTER,
-			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		fmt.println("Cluster does not exist")
-		return false
-	}
-
 	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
+	clusters := strings.split(content, "},")
 
-	cluster_start := -1
-	closing_brace := -1
-	// Find the cluster and its closing brace
-	for i := 0; i < len(lines); i += 1 {
-		if strings.contains(lines[i], cn) {
-			cluster_start = i
-		}
-		if cluster_start != -1 && strings.contains(lines[i], "}") {
-			closing_brace = i
-			break
-		}
-	}
-	// If the cluster is not found or the structure is invalid, return false
-	if cluster_start == -1 || closing_brace == -1 {
-		error3 := utils.new_err(
-			.CANNOT_FIND_CLUSTER,
-			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#procedure,
-		)
-		utils.throw_err(error3)
-		return false
-	}
-
-	// Check if the record exists within the cluster
-	for i := cluster_start; i <= closing_brace; i += 1 {
-		if strings.contains(lines[i], rn) {
-			return true
+	for cluster in clusters {
+		cluster := strings.trim_space(cluster)
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			// Found the correct cluster, now look for the record
+			lines := strings.split(cluster, "\n")
+			for line in lines {
+				line := strings.trim_space(line)
+				if strings.has_prefix(line, fmt.tprintf("%s :", rn)) {
+					fmt.println("Record found:", line)
+					return true
+				}
+			}
+			// If we've searched the whole cluster and didn't find the record, it doesn't exist
+			fmt.println("Record not found in the specified cluster")
+			return false
 		}
 	}
 
+	// If we've gone through all clusters and didn't find the specified cluster
+	error2 := utils.new_err(
+		.CANNOT_FIND_CLUSTER,
+		utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+		#procedure,
+	)
+	utils.throw_err(error2)
+	fmt.println("Specified cluster not found")
 	return false
 }
-
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	fn: string,
@@ -163,7 +144,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	new_lines := make([dynamic]string, len(lines) + 1)
 	copy(new_lines[:closing_brace], lines[:closing_brace])
 	new_lines[closing_brace] = new_line
-	new_lines[closing_brace + 1] = "}"
+	new_lines[closing_brace + 1] = "},"
 	if closing_brace + 1 < len(lines) {
 		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
 	}
@@ -412,5 +393,175 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 		}
 	}
 	return allRecords
+}
+
+
+OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
+	OST_FETCH_EVERY_RECORD_BY_NAME(old)
+	buf := make([]byte, 1024)
+	defer delete(buf)
+	fn, cn: string
+
+
+	fmt.printfln(
+		"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
+		utils.BOLD,
+		old,
+		utils.RESET,
+	)
+
+	col, colInputSuccess := os.read(os.stdin, buf)
+	if colInputSuccess != 0 {
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		utils.throw_err(error1)
+	}
+	fn = strings.trim_right(string(buf[:col]), "\r\n")
+	fn = strings.to_upper(fn)
+
+	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
+		fmt.printfln("Collection with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)
+		fmt.println("Please try again with a different name")
+		return -1
+	}
+
+	collectionPath := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
+
+	fmt.printfln(
+		"Enter the name of the cluster that contains the record: %s%s%s that you would like to rename.",
+		utils.BOLD,
+		old,
+		utils.RESET,
+	)
+
+	buf = make([]byte, 1024)
+	clu, cluInputSuccess := os.read(os.stdin, buf)
+	if cluInputSuccess != 0 {
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		utils.throw_err(error1)
+	}
+	cn = strings.trim_right(string(buf[:clu]), "\r\n")
+	cn = strings.to_upper(cn)
+
+
+	if !OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn) {
+		fmt.printfln("Cluster with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)
+		fmt.println("Please try again with a different name")
+		return -1
+	}
+
+
+	rExists := OST_CHECK_IF_RECORD_EXISTS(
+		strings.to_upper(fn),
+		strings.to_upper(cn),
+		strings.to_upper(new),
+	)
+
+	switch rExists 
+	{
+	case true:
+		fmt.printfln(
+			"A record named: %s. Already exists within cluster:%s Please try again.",
+			old,
+			cn,
+		)
+		return -1
+	case false:
+		data, readSuccess := os.read_entire_file(collectionPath)
+		if !readSuccess {
+			utils.throw_err(
+				utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+			)
+			return -1
+		}
+		defer delete(data)
+
+		content := string(data)
+		clusters := strings.split(content, "},")
+		newContent := make([dynamic]u8)
+		defer delete(newContent)
+		recordFound := false
+
+		for cluster in clusters {
+			cluster := strings.trim_space(cluster)
+			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+				// Found the correct cluster, now look for the record to rename
+				lines := strings.split(cluster, "\n")
+				newCluster := make([dynamic]u8)
+				defer delete(newCluster)
+
+				for line in lines {
+					fmt.println(line)
+					trimmedLine := strings.trim_space(line)
+					fmt.printfln("Trimmed Line: %s", trimmedLine)
+					if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", old)) {
+						// Found the record to rename
+						recordFound = true
+						newLine, _ := strings.replace(
+							trimmedLine,
+							fmt.tprintf("%s :", old),
+							fmt.tprintf("%s :", new),
+							1,
+						)
+						fmt.printfln("New Line: %s", newLine)
+						append(&newCluster, ..transmute([]u8)newLine)
+						append(&newCluster, "\n")
+					} else if len(trimmedLine) > 0 {
+						// Keep other lines unchanged
+						append(&newCluster, ..transmute([]u8)line)
+						append(&newCluster, "\n")
+					}
+				}
+
+				// Add the modified cluster to the new content
+				append(&newContent, ..newCluster[:])
+				append(&newContent, "}")
+				append(&newContent, ",\n\n")
+			} else if len(cluster) > 0 {
+				// Keep other clusters unchanged
+				append(&newContent, ..transmute([]u8)cluster)
+				append(&newContent, "}")
+				append(&newContent, ",\n\n")
+			}
+		}
+
+		if !recordFound {
+			fmt.printfln("Record '%s' not found in cluster '%s' ,collection %s", old, cn, fn)
+			return -1
+		}
+
+		// write new content to file
+		writeSuccess := os.write_entire_file(collectionPath, newContent[:])
+		if !writeSuccess {
+			utils.throw_err(
+				utils.new_err(
+					.CANNOT_WRITE_TO_FILE,
+					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+					#procedure,
+				),
+			)
+			result = 0
+		}
+		break
+	}
+
+	return result
+
 
 }
+//marshall we are close to renaming records but for some odd reason.
+//closing brackets and commas are being moved up to the previous line
+//after renaming a cluster. This only happens on clusters that DO NOT
+// have the record being renamed.
