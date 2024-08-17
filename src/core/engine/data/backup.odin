@@ -6,8 +6,12 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-//This file contains all things related tot backing up a database
-
+//=========================================================//
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
+//=========================================================//
 
 OST_CREAT_BACKUP_DIR :: proc() {
 	os.make_directory("../bin/backups")
@@ -17,8 +21,8 @@ OST_CREAT_BACKUP_DIR :: proc() {
 OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	using utils
 	//retirve the data from the src collection file
-	srcNameAndPath := strings.concatenate([]string{const.OST_COLLECTION_PATH, src})
-	srcFullPath := strings.concatenate([]string{srcNameAndPath, const.OST_FILE_EXTENSION})
+	srcNameAndPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, src)
+	srcFullPath := fmt.tprintf("%s%s", srcNameAndPath, const.OST_FILE_EXTENSION)
 	f, readSuccess := os.read_entire_file(srcFullPath)
 	if !readSuccess {
 		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
@@ -30,8 +34,8 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	defer delete(data)
 
 	//create a backup file dest and write the src content to it
-	destNameAndPath := strings.concatenate([]string{const.OST_BACKUP_PATH, dest})
-	destFullPath := strings.concatenate([]string{destNameAndPath, const.OST_FILE_EXTENSION})
+	destNameAndPath := fmt.tprintf("%s%s", const.OST_BACKUP_PATH, dest)
+	destFullPath := fmt.tprintf("%s%s", destNameAndPath, const.OST_FILE_EXTENSION)
 
 	c, creationSuccess := os.open(destFullPath, os.O_CREATE | os.O_RDWR, 0o666)
 	defer os.close(c)
