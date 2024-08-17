@@ -11,10 +11,11 @@ import "core:os"
 import "core:strings"
 import "core:time"
 //=========================================================//
-//Author: Marshall Burns aka @SchoolyB
-//Desc: This file handles the main engine of the db
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
-
 
 main :: proc() {
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
@@ -30,24 +31,6 @@ main :: proc() {
 
 
 }
-
-// //todo wtf is this lol
-// OST_GET_ENGINE_STATUS :: proc() -> int {
-// 	switch (types.engine.Status)
-// 	{
-// 	case 0:
-// 		types.engine.StatusName = "Idle"
-// 		break
-// 	case 1:
-// 		types.engine.StatusName = "Running"
-// 		break
-// 	case 2:
-// 		types.engine.StatusName = "Stopped"
-// 		break
-// 	}
-
-// 	return types.engine.Status
-// }
 
 OST_START_ENGINE :: proc() -> int {
 

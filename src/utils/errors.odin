@@ -1,12 +1,13 @@
 package utils
-
 import "core:fmt"
 import "core:os"
+//=========================================================//
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
+//=========================================================//
 
-//=========================================================//
-//Author: Marshall Burns aka @SchoolyB
-//Desc: This file contains helper functions for error handling
-//=========================================================//
 ErrorType :: enum {
 	NO_ERROR,
 	//General File Errors

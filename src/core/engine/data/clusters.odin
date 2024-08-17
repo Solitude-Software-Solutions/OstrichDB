@@ -9,9 +9,10 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 //=========================================================//
-//Author: Marshall Burns aka @SchoolyB
-//Desc: This file handles the creation and manipulation of
-//			cluster files and their data within the db engine
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
 
@@ -23,7 +24,7 @@ main :: proc() {
 	test := metadata.OST_GET_FILE_FORMAT_VERSION()
 }
 
-//creates a file in the bin directory used to store the all used cluster ids
+//creates a cache used to store all generated cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
 	cacheFile, createSuccess := os.open("../bin/cluster_id_cache", os.O_CREATE, 0o666)
 	if createSuccess != 0 {
@@ -120,8 +121,7 @@ OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
 		utils.log_err("Error opening cluster id cache file", "OST_ADD_ID_TO_CACHE_FILE")
 	}
 
-	idStr := strconv.append_int(buf[:], id, 10) //the 10 is the base of the number
-	//there are several bases, 10 is decimal, 2 is binary, 16 is hex, 16 is octal, 32 is base32, 64 is base64, computer science is fun
+	idStr := strconv.append_int(buf[:], id, 10) //base 10 conversion
 
 	//converting stirng to byte array then writing to file
 	transStr := transmute([]u8)idStr

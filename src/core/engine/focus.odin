@@ -2,11 +2,16 @@ package engine
 
 import "../const"
 import "../types"
-//this file contains the code that is used for the FOCUS and UNFOCUS commands
+//=========================================================//
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
+//=========================================================//
 
-//t - target(cluster, collection)
-//o - object to focus on(name of the target)
-//p - the parent object of the object to focus on. NOTE: COLLECTIONS DO NOT HAVE PARENTS
+//t - target
+//o - object(name of the target)
+//p - the parent object of the target to focus on.
 //only used to focus collection and clusters
 OST_FOCUS :: proc(t: string, o: string, p: ..string) -> (string, string, string) {
 	types.focus.t_ = t
@@ -25,7 +30,7 @@ OST_FOCUS_RECORD :: proc(t: string, o: string, rO: string) -> (string, string, s
 	return types.focus.t_, types.focus.o_, types.focus.ro_
 }
 
-
+//Clears the focus
 OST_UNFOCUS :: proc() {
 	types.focus.t_ = ""
 	types.focus.o_ = ""

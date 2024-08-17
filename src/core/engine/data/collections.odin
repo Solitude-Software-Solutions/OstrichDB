@@ -8,6 +8,13 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+//=========================================================//
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
+//=========================================================//
+
 MAX_FILE_NAME_LENGTH_AS_BYTES: [512]byte
 
 

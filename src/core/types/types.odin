@@ -1,6 +1,11 @@
 package types
-
 import "core:time"
+//=========================================================//
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
+//=========================================================//
 
 
 //=================================================/src/core/commands/=================================================//
