@@ -316,7 +316,8 @@ OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int 
 		data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, ID, credClusterName)
 		data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, credClusterName, dn, d, "identifier", ID)
 	}
-
+	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 2)
+	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 3)
 	return 0
 }
 
