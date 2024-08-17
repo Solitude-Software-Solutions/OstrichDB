@@ -39,56 +39,37 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 	}
 	defer delete(data)
 
-	// Check if the cluster exists
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fn, cn)
-	if !clusterExists {
-		error2 := utils.new_err(
-			.CANNOT_FIND_CLUSTER,
-			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		fmt.println("Cluster does not exist")
-		return false
-	}
-
 	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
+	clusters := strings.split(content, "},")
 
-	cluster_start := -1
-	closing_brace := -1
-	// Find the cluster and its closing brace
-	for i := 0; i < len(lines); i += 1 {
-		if strings.contains(lines[i], cn) {
-			cluster_start = i
-		}
-		if cluster_start != -1 && strings.contains(lines[i], "}") {
-			closing_brace = i
-			break
-		}
-	}
-	// If the cluster is not found or the structure is invalid, return false
-	if cluster_start == -1 || closing_brace == -1 {
-		error3 := utils.new_err(
-			.CANNOT_FIND_CLUSTER,
-			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#procedure,
-		)
-		utils.throw_err(error3)
-		return false
-	}
-
-	// Check if the record exists within the cluster
-	for i := cluster_start; i <= closing_brace; i += 1 {
-		if strings.contains(lines[i], rn) {
-			return true
+	for cluster in clusters {
+		cluster := strings.trim_space(cluster)
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			// Found the correct cluster, now look for the record
+			lines := strings.split(cluster, "\n")
+			for line in lines {
+				line := strings.trim_space(line)
+				if strings.has_prefix(line, fmt.tprintf("%s :", rn)) {
+					fmt.println("Record found:", line)
+					return true
+				}
+			}
+			// If we've searched the whole cluster and didn't find the record, it doesn't exist
+			fmt.println("Record not found in the specified cluster")
+			return false
 		}
 	}
 
+	// If we've gone through all clusters and didn't find the specified cluster
+	error2 := utils.new_err(
+		.CANNOT_FIND_CLUSTER,
+		utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+		#procedure,
+	)
+	utils.throw_err(error2)
+	fmt.println("Specified cluster not found")
 	return false
 }
-
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	fn: string,
@@ -163,7 +144,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	new_lines := make([dynamic]string, len(lines) + 1)
 	copy(new_lines[:closing_brace], lines[:closing_brace])
 	new_lines[closing_brace] = new_line
-	new_lines[closing_brace + 1] = "}"
+	new_lines[closing_brace + 1] = "},"
 	if closing_brace + 1 < len(lines) {
 		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
 	}
