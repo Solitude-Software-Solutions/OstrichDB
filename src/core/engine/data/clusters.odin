@@ -1,6 +1,7 @@
 package data
 import "../../../utils"
 import "../../const"
+import "../../types"
 import "./metadata"
 import "core:fmt"
 import "core:math/rand"
@@ -205,8 +206,13 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
-	fmt.printfln("Succesfully created account: %s%s%s", utils.BOLD, clusterName, utils.RESET)
-	fmt.println("Please restart OstrichDB...")
+	fmt.printfln(
+		"Succesfully created account: %s%s%s",
+		utils.BOLD,
+		types.user.username.Value,
+		utils.RESET,
+	)
+	fmt.println("Please relaunch OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0
@@ -290,13 +296,6 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 			return true
 		}
 	}
-	fmt.printfln(
-		"Cluster with name:%s%s%s does not exist in collection: %s",
-		utils.BOLD,
-		cn,
-		utils.RESET,
-		fn,
-	)
 	return false
 }
 
@@ -575,6 +574,14 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 		fn,
 		const.OST_FILE_EXTENSION,
 	)
+
+	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collection_path, cn)
+	switch clusterExists 
+	{
+	case false:
+		fmt.printfln("Cluster '%s' does not exist in collection '%s'", cn, fn)
+		break
+	}
 	data, readSuccess := os.read_entire_file(collection_path)
 	if !readSuccess {
 		utils.throw_err(
