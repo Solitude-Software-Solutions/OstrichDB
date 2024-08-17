@@ -7,19 +7,12 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-
-// example of a cluster with records in it
-/*
-{   cluster_name :identifier: example //special record that cannot be changed or deleted without deleting the entire cluster
-	cluster_id :identifier: 91849991478591014 //special record that cannot be changed or deleted without deleting the entire cluster
-
-	player name :string: "Marshall"
-	player age :int: 25
-	player height :string: "6'2"
-    player avg grade :float: 3.5
-    player is active :bool: true
-}
-*/
+//=========================================================//
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
+//=========================================================//
 
 record: types.Record
 

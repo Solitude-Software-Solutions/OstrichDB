@@ -10,9 +10,10 @@ import "core:strconv"
 import "core:strings"
 import "core:time"
 //=========================================================//
-//Author: Marshall Burns aka @SchoolyB
-//Desc: This file handles the metadata for .ost files within
-//      the Ostrich database engine.
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
 
@@ -39,7 +40,7 @@ OST_SET_TIME :: proc() -> string {
 	h, min, s := time.clock(time.now())
 	y, m, d := time.date(time.now())
 
-	mAsInt := int(m) //month comes base as a type "Month" so need to convert
+	mAsInt := int(m) //month comes back as a type "Month" so need to convert
 	// Conversions!!! because everything in Odin needs to be converted... :)
 
 	Y := transmute(i64)y
@@ -105,26 +106,23 @@ OST_SET_TIME :: proc() -> string {
 }
 
 
-//sets the files format version(FFV)
+//Sets the files format version(FFV)
 OST_SET_FFV :: proc() -> string {
 	ffv := OST_GET_FILE_FORMAT_VERSION()
 	str := transmute(string)ffv
 	return str
 }
 
-//sets the files size(FS)
-//this will be called when a file is read or modified through the engine to ensure the file size is accurate
+//Gets the files size
 OST_GET_FS :: proc(file: string) -> os.File_Info {
-	//get the file size
 	fileSize, _ := os.stat(file)
 	return fileSize
 }
 
 
-// Generate a random 32 char checksum for .ost files.
+// Generates a random 32 char checksum for .ost files.
 OST_GENERATE_CHECKSUM :: proc() -> string {
 	checksum: string
-
 	possibleNums: []string = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
 	possibleChars: []string = {
 		"A",
@@ -171,11 +169,6 @@ OST_GENERATE_CHECKSUM :: proc() -> string {
 //!Only used when to append the meta template upon .ost file creation NOT modification
 //this appends the metadata header to the file as well as sets the time of creation
 OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
-
-	//ppreform check that sees if the file already has the metadata header
-	//if it does then return false
-	//if it does not then append the metadata header to the file
-
 	rawData, readSuccess := os.read_entire_file(fn)
 
 	if !readSuccess {
@@ -196,7 +189,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	defer os.close(file)
 
 	if e != 0 {
-		// utils.throw_utilty_error(1,"Error opening file" ,"OST_APPEND_METADATA_HEADER")
+		return false
 	}
 
 	blockAsBytes := transmute([]u8)strings.concatenate(METADATA_HEADER)
@@ -206,7 +199,8 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 }
 
 
-//fn = file name, param = distiguish between which metadata value to set 1 = time of creation, 2 = last time modified, 3 = file size, 4 = file format version, 5 = checksum
+//fn = file name, param = metadata value to update.
+//1 = time of creation, 2 = last time modified, 3 = file size, 4 = file format version, 5 = checksum
 OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
@@ -282,14 +276,14 @@ OST_METADATA_ON_CREATE :: proc(fn: string) {
 	OST_UPDATE_METADATA_VALUE(fn, 5)
 }
 
-
+//Creates the file format version file in the temp dir
 OST_CREATE_FFVF :: proc() {
 	CURRENT_FFV := utils.get_ost_version()
 	os.make_directory(const.OST_TMP_PATH)
 
 	FFVF := const.OST_FFVF
 	tmpPath := const.OST_TMP_PATH
-	pathAndName := strings.concatenate([]string{tmpPath, FFVF})
+	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF)
 
 	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
 	defer os.close(file)
@@ -303,8 +297,8 @@ OST_CREATE_FFVF :: proc() {
 		utils.throw_custom_err(error1, "Cannot create file format version file")
 	}
 	os.close(file)
-
 	//close then open the file again to write to it
+
 	f, openSuccess := os.open(pathAndName, os.O_WRONLY, 0o666)
 	defer os.close(f)
 	ffvAsBytes := transmute([]u8)CURRENT_FFV
@@ -319,12 +313,11 @@ OST_CREATE_FFVF :: proc() {
 	}
 }
 
-
+//Gets the file format version from the file format version file
 OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 	FFVF := const.OST_FFVF
 	tmpPath := const.OST_TMP_PATH
-
-	pathAndName := strings.concatenate([]string{tmpPath, FFVF})
+	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF)
 
 	ffvf, openSuccess := os.open(pathAndName)
 	if openSuccess != 0 {

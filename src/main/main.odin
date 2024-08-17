@@ -9,8 +9,10 @@ import "../core/types"
 import "../utils"
 import "core:fmt"
 //=========================================================//
-//Author: Marshall Burns aka @SchoolyB
-//Desc: The main entry point for the Ostrich Database Engine
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
 main :: proc() {

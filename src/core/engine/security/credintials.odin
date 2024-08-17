@@ -14,11 +14,11 @@ import "core:strconv"
 import "core:strings"
 import "core:time"
 //=========================================================//
-//Author: Marshall Burns aka @SchoolyB
-//Desc: This file handles the creation and storage of user
-//      credentials
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
-
 
 SIGN_IN_ATTEMPTS: int
 FAILED_SIGN_IN_TIMER := time.MIN_DURATION //this will be used to track the time between failed sign in attempts. this timeer will start after the 5th failed attempt in a row
