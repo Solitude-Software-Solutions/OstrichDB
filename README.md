@@ -108,7 +108,7 @@ Modifiers are additional parameters that modify the behavior of a command:
    cd your/path/to/OstrichDB/src
    ```
 
-3. Build the and run OstrichDB:
+3. Build and run OstrichDB:
    ```bash
    odin build main && ./main.bin
    ```

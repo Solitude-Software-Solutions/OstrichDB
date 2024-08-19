@@ -212,7 +212,7 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 		types.user.username.Value,
 		utils.RESET,
 	)
-	fmt.println("Please relaunch OstrichDB...")
+	fmt.println("Please re-launch OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0
