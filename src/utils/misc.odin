@@ -36,14 +36,7 @@ RESET :: "\033[0m"
 
 
 get_ost_version :: proc() -> []u8 {
-	version_file, openSuccess := os.open("../version")
-	if openSuccess != 0 {
-		log_err("Could not open version file", "get_ost_version")
-	}
-	data, e := os.read_entire_file(version_file)
-	if e == false {
-	}
-	os.close(version_file)
+	data := #load("../../version")
 	return data
 }
 
