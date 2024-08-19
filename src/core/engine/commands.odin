@@ -135,7 +135,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				switch (exists) {
 				case false:
 					fmt.printf("Creating collection '%s'\n", cmd.o_token[0])
-					data.OST_CREATE_COLLECTION(cmd.o_token[0], 0)
+					success := data.OST_CREATE_COLLECTION(cmd.o_token[0], 0)
+					if success {
+						fmt.printf("Collection '%s' created successfully.\n", cmd.o_token[0])
+					} else {
+						fmt.printf("Failed to create collection '%s'.\n", cmd.o_token[0])
+						utils.log_runtime_event(
+							"Failed to create collection",
+							"User tried to create a collection but failed.",
+						)
+						utils.log_err("Failed to create new collection", #procedure)
+					}
 					break
 				case true:
 					fmt.printf(
@@ -191,6 +201,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						error1,
 						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
 					)
+					utils.log_err("Failed to create new cluster.", #procedure)
 					break
 				}
 				fn := OST_CONCAT_OBJECT_EXT(collection_name)
@@ -246,6 +257,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						break
 					case -1, 1:
 						fmt.printfln("Failed to create record '%s' of type '%s'", rName, rType)
+						utils.log_runtime_event(
+							"Failed to create record",
+							"User requested to create a record but failed.",
+						)
+						utils.log_err("Failed to create a new record.", #procedure)
 						break
 					}
 				} else {
@@ -285,7 +301,30 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				old_name := cmd.o_token[0]
 				new_name := cmd.m_token[const.TO]
 				fmt.printf("Renaming collection '%s' to '%s'\n", old_name, new_name)
-				data.OST_RENAME_COLLECTION(old_name, new_name)
+				success := data.OST_RENAME_COLLECTION(old_name, new_name)
+				switch (success) 
+				{
+				case true:
+					fmt.printf(
+						"Successfully renamed collection '%s' to '%s'\n",
+						old_name,
+						new_name,
+					)
+					utils.log_runtime_event(
+						"Successfully renamed collection",
+						"User successfully renamed a collection.",
+					)
+					break
+				case:
+					fmt.printfln("Failed to rename collection '%s' to '%s'", old_name, new_name)
+					utils.log_runtime_event(
+						"Failed to rename collection",
+						"User requested to rename a collection but failed.",
+					)
+					utils.log_err("Failed to rename collection.", #procedure)
+					break
+				}
+
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME COLLECTION <old_name> TO <new_name>",
@@ -313,6 +352,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
 					)
+					utils.log_err("Failed to rename cluster.", #procedure)
 				}
 			} else {
 				fmt.println(
@@ -328,8 +368,25 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
 				oldRName := cmd.o_token[0]
 				newRName := cmd.m_token[const.TO]
-				data.OST_RENAME_RECORD(oldRName, newRName)
-
+				result := data.OST_RENAME_RECORD(oldRName, newRName)
+				switch (result) 
+				{
+				case 0:
+					fmt.printfln("Record %s successfully renamed to %s", oldRName, newRName)
+					utils.log_runtime_event(
+						"Successfully renamed record",
+						"User successfully renamed a record.",
+					)
+					break
+				case:
+					fmt.printfln("Failed to rename record %s to %s", oldRName, newRName)
+					utils.log_runtime_event(
+						"Failed to rename record",
+						"User requested to rename a record but failed.",
+					)
+					utils.log_err("Failed to rename record.", #procedure)
+					break
+				}
 
 			} else {
 				fmt.println(
