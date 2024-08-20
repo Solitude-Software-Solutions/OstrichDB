@@ -65,16 +65,18 @@ In this example:
 
 **Note: Some commands CANNOT be used while focusing on a specific object**
 
-Example usage for each multi-token command:
+Example usage of multi-token commands:
 ```bash
-ERASE CLUSTER <cluster_name> //Erase the cluster with the specified name
+NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Creates a new cluster within the specified collection
+ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Erase the cluster with the specified name
+RENAME RECORD <old_name> TO <new_name> //Renames the record with the specified old name to the new name
 FETCH COLLECTION <collection_name> //Fetches all data within the collection of specified name
-NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Creates a new cluster within the specified collection 
-FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>  //Focuses on the specified cluster within the specified collection
 BACKUP COLLECTION <collection_name> //Creates a backup of the specified collection
 HELP COLLECTION //Displays information about collections
 NEW RECORD <record_name> OF_TYPE <record_type>
+FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>  //Focuses on the specified cluster within the specified collection
 ```
+
 **Note: The `FOCUS` command is used to set the current context to a specific object. ALL subsequent commands will be executed in the context of the focused object.**
 
 ### Modifiers
@@ -129,6 +131,7 @@ OstrichDB is released under the Apache License 2.0. For full license text, see [
 - Database file compression and zipping
 - Multi-user support with role-based access control
 - Several new command tokens:
+  - `SET`: Set the value of a record or configuration option
   - `TREE`: Display a hierarchical view of the database
   - `STATS`: Display database statistics
   - `PURGE`: Clear data while retaining structure
@@ -141,7 +144,7 @@ OstrichDB is released under the Apache License 2.0. For full license text, see [
   - `UNLOCK`: Allow data modification
   - `RESTORE`: Undo recent changes
   - `COUNT`: Display the number of objects within a scope
-  - `MERGE`: Combine multiple collections or clusters into one 
+  - `MERGE`: Combine multiple collections or clusters into one
   - `ALL`: Perform operations on all objects within a scope
   - `AND`: Execute multiple operations in one command
   - `INTO`: Specify the destination for data operations
