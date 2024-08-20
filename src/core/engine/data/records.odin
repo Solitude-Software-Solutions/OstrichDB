@@ -553,7 +553,3 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 
 
 }
-//marshall we are close to renaming records but for some odd reason.
-//closing brackets and commas are being moved up to the previous line
-//after renaming a cluster. This only happens on clusters that DO NOT
-// have the record being renamed.
