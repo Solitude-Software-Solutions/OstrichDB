@@ -496,7 +496,6 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 				defer delete(newCluster)
 
 				for line in lines {
-					fmt.println(line)
 					trimmedLine := strings.trim_space(line)
 					if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", old)) {
 						// Found the record to rename
@@ -507,7 +506,6 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 							fmt.tprintf("%s :", new),
 							1,
 						)
-						fmt.printfln("New Line: %s", newLine)
 						append(&newCluster, "\t")
 						append(&newCluster, ..transmute([]u8)newLine)
 						append(&newCluster, "\n")
