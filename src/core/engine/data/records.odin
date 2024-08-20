@@ -498,7 +498,6 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 				for line in lines {
 					fmt.println(line)
 					trimmedLine := strings.trim_space(line)
-					fmt.printfln("Trimmed Line: %s", trimmedLine)
 					if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", old)) {
 						// Found the record to rename
 						recordFound = true
