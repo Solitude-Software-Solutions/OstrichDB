@@ -47,8 +47,6 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 					return true
 				}
 			}
-			// If we've searched the whole cluster and didn't find the record, it doesn't exist
-			fmt.println("Record not found in the specified cluster")
 			return false
 		}
 	}
