@@ -212,7 +212,7 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 		types.user.username.Value,
 		utils.RESET,
 	)
-	fmt.println("Please relaunch OstrichDB...")
+	fmt.println("Please re-launch OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0
@@ -325,6 +325,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 		utils.throw_err(
 			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
 		)
+		utils.log_err("Error reading cluster file", #procedure)
 		return false
 	}
 	defer delete(data)
@@ -377,6 +378,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 				#procedure,
 			),
 		)
+		utils.log_err("Error writing to cluster file while renaming", #procedure)
 		return false
 	}
 
@@ -442,7 +444,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 					#procedure,
 				)
 				utils.throw_err(error2)
-				utils.log_err("Error placing id into cluster template", "OST_CREATE_CLUSTER_BLOCK")
+				utils.log_err("Error placing id into cluster template", #procedure)
 				return 2
 			}
 			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
@@ -452,7 +454,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
 					#procedure,
 				)
-				utils.log_err("Error writing cluster block to file", "OST_CREATE_CLUSTER_BLOCK")
+				utils.log_err("Error writing cluster block to file", #procedure)
 				return 3
 			}
 		}
@@ -500,6 +502,7 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 			utils.throw_err(
 				utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
 			)
+			utils.log_err("Error reading collection file", #procedure)
 			return false
 		}
 		defer delete(data)
@@ -542,6 +545,7 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 					#procedure,
 				),
 			)
+			utils.log_err("Error writing to collection file", #procedure)
 			return false
 		}
 		utils.log_runtime_event(

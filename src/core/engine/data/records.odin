@@ -47,8 +47,6 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 					return true
 				}
 			}
-			// If we've searched the whole cluster and didn't find the record, it doesn't exist
-			fmt.println("Record not found in the specified cluster")
 			return false
 		}
 	}
@@ -496,9 +494,7 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 				defer delete(newCluster)
 
 				for line in lines {
-					fmt.println(line)
 					trimmedLine := strings.trim_space(line)
-					fmt.printfln("Trimmed Line: %s", trimmedLine)
 					if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", old)) {
 						// Found the record to rename
 						recordFound = true
@@ -508,7 +504,7 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 							fmt.tprintf("%s :", new),
 							1,
 						)
-						fmt.printfln("New Line: %s", newLine)
+						append(&newCluster, "\t")
 						append(&newCluster, ..transmute([]u8)newLine)
 						append(&newCluster, "\n")
 					} else if len(trimmedLine) > 0 {
@@ -554,7 +550,3 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 
 
 }
-//marshall we are close to renaming records but for some odd reason.
-//closing brackets and commas are being moved up to the previous line
-//after renaming a cluster. This only happens on clusters that DO NOT
-// have the record being renamed.

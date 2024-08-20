@@ -21,14 +21,14 @@ import "core:time"
 METADATA_HEADER: []string = {
 	"{[Ostrich File Header Start]\n\n",
 	"#File Format Version: %ffv\n",
-	"#Time of Creation: %ftoc\n",
-	"#Last Time Modified: %fltm\n",
+	"#Date of Creation: %fdoc\n",
+	"#Date Last Modified: %fdlm\n",
 	"#File Size: %fs Bytes\n",
 	"#Checksum: %cs\n\n[Ostrich File Header End]},\n\n\n\n",
 }
 
-// sets the files time of creation(FTOC) or last time modified(FLTM)
-OST_SET_TIME :: proc() -> string {
+// sets the files date of creation(FDOC) or file date last modified(FDLM)
+OST_SET_DATE :: proc() -> string {
 	mBuf: [8]byte
 	dBuf: [8]byte
 	yBuf: [8]byte
@@ -217,7 +217,7 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	current_time := OST_SET_TIME()
+	current_date := OST_SET_DATE()
 	file_info := OST_GET_FS(fn)
 	file_size := file_info.size
 
@@ -225,14 +225,14 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	for line, i in lines {
 		switch param {
 		case 1:
-			if strings.has_prefix(line, "#Time of Creation:") {
-				lines[i] = fmt.tprintf("#Time of Creation: %s", current_time)
+			if strings.has_prefix(line, "#Date of Creation:") {
+				lines[i] = fmt.tprintf("#Date of Creation: %s", current_date)
 				updated = true
 			}
 			break
 		case 2:
-			if strings.has_prefix(line, "#Last Time Modified:") {
-				lines[i] = fmt.tprintf("#Last Time Modified: %s", current_time)
+			if strings.has_prefix(line, "#Date Last Modified:") {
+				lines[i] = fmt.tprintf("#Date Last Modified: %s", current_date)
 				updated = true
 			}
 		case 3:

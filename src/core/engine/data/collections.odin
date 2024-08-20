@@ -124,6 +124,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error reading user input", #procedure)
 	}
 
 	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
@@ -143,7 +144,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 				#procedure,
 			)
 			utils.throw_err(error1)
-			utils.log_err("Error deleting .ost file", "OST_ERASE_COLLECTION")
+			utils.log_err("Error deleting .ost file", #procedure)
 			return false
 		}
 		fmt.printfln(
@@ -236,8 +237,9 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 
 
 OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
-	oldPath := strings.concatenate([]string{const.OST_COLLECTION_PATH, old})
-	oldPathAndExt := strings.concatenate([]string{oldPath, const.OST_FILE_EXTENSION})
+	oldPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, old)
+	oldPathAndExt := fmt.tprintf("%s%s", oldPath, const.OST_FILE_EXTENSION)
+
 	file, readSuccess := os.read_entire_file_from_filename(oldPathAndExt)
 	if !readSuccess {
 		error1 := utils.new_err(
@@ -246,13 +248,18 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading .ost file", "OST_RENAME_COLLECTION")
+		utils.log_err("Error reading provided .ost file", #procedure)
 		return false
 	}
 
-	newName := strings.concatenate([]string{const.OST_COLLECTION_PATH, new})
-	newNameExt := strings.concatenate([]string{newName, const.OST_FILE_EXTENSION})
+	newName := fmt.tprintf("%s%s", new, const.OST_FILE_EXTENSION)
+	newNameExt := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, newName)
 	renamed := os.rename(oldPathAndExt, newNameExt)
+
+	if renamed != 0 {
+		utils.log_err("Error renaming .ost file", #procedure)
+		return false
+	}
 	return true
 }
 
@@ -270,7 +277,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading .ost file", "OST_FETCH_COLLECTION")
+		utils.log_err("Error reading .ost file", #procedure)
 		return ""
 	}
 	defer delete(data)
