@@ -508,6 +508,7 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 							1,
 						)
 						fmt.printfln("New Line: %s", newLine)
+						append(&newCluster, "\t")
 						append(&newCluster, ..transmute([]u8)newLine)
 						append(&newCluster, "\n")
 					} else if len(trimmedLine) > 0 {
