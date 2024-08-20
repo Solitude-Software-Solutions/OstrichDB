@@ -26,6 +26,7 @@ main :: proc() {
 		config.OST_CREATE_CONFIG_FILE()
 		main()
 	case:
+		fmt.println("Config file found!\n Starting OstrichDB")
 		OST_START_ENGINE()
 	}
 
