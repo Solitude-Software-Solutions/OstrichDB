@@ -73,6 +73,8 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 	saltAsString := string(types.user.salt)
 	hashAsString := string(types.user.hashedPassword)
 	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
+	types.user.user_id = data.OST_GENERATE_CLUSTER_ID()
+
 	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "role", "admin")
 	OST_STORE_USER_CREDS(
 		"user_credentials",
@@ -289,13 +291,12 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 	return types.user.password.Value
 }
 
+//store the entered and generated user credentials in the secure cluster
 // cn- cluster name, id- cluster id, dn- data name, d- data
-// //made data type any so that the encoded hash of type []u8 can be transmuted and passed as an arg
 OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int {
 	secureFilePath := "../bin/secure/_secure_.ost"
 	credClusterName := "user_credentials"
 
-	ID := data.OST_GENERATE_CLUSTER_ID()
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
 	if openSuccess != 0 {
@@ -310,11 +311,25 @@ OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int 
 	defer os.close(file)
 
 	if data.OST_CHECK_IF_CLUSTER_EXISTS(secureFilePath, credClusterName) == true {
-		data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, credClusterName, dn, d, "identifier", ID)
+		data.OST_APPEND_RECORD_TO_CLUSTER(
+			secureFilePath,
+			credClusterName,
+			dn,
+			d,
+			"identifier",
+			types.user.user_id,
+		)
 		return 1
 	} else {
-		data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, ID, credClusterName)
-		data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, credClusterName, dn, d, "identifier", ID)
+		data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, types.user.user_id, credClusterName)
+		data.OST_APPEND_RECORD_TO_CLUSTER(
+			secureFilePath,
+			credClusterName,
+			dn,
+			d,
+			"identifier",
+			types.user.user_id,
+		)
 	}
 	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 2)
 	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 3)
