@@ -58,6 +58,54 @@ OST_GENERATE_CLUSTER_ID :: proc() -> i64 {
 	return ID
 }
 
+OST_REMOVE_ID_FROM_CACHE :: proc(id: i64) -> bool {
+	deleted := false
+	buf: [32]byte
+	idStr := strconv.append_int(buf[:], id, 10)
+	fmt.printfln("ID to delete: %s", idStr)
+
+	data, readSuccess := os.read_entire_file(const.OST_CLUSTER_CACHE_PATH)
+	if !readSuccess {
+		error2 := utils.new_err(
+			.CANNOT_READ_FILE,
+			utils.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		utils.throw_err(error2)
+		utils.log_err("Error reading cluster id cache file", #procedure)
+		return false
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	newLines := make([dynamic]string, 0, len(lines))
+	defer delete(newLines)
+
+	for line in lines {
+		if !strings.contains(line, idStr) {
+			append(&newLines, line)
+		} else {
+			deleted = true
+		}
+	}
+
+	if deleted {
+		new_content := strings.join(newLines[:], "\n")
+		writeSuccess := os.write_entire_file(
+			const.OST_CLUSTER_CACHE_PATH,
+			transmute([]byte)new_content,
+		)
+		if !writeSuccess {
+			utils.log_err("Error writing updated cluster id cache file", #procedure)
+			return false
+		}
+	}
+
+	return deleted
+}
+
 
 /*
 checks the cluster id cache file to see if the id already exists
