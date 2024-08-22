@@ -390,7 +390,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: RENAME RECORD <old_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> TO <new_name>",
+					"Incomplete command. Correct Usage: RENAME RECORD <old_name> TO <new_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete RENAME command",
@@ -427,6 +427,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				collection_name := cmd.o_token[1]
 				cluster := cmd.o_token[0]
+				clusterID := data.GET_CLUSTER_ID(collection_name, cluster)
 				if data.OST_ERASE_CLUSTER(collection_name, cluster) == true {
 					fmt.printfln(
 						"Cluster %s%s%s successfully erased from collection %s%s%s",
@@ -437,6 +438,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
+					data.OST_REMOVE_ID_FROM_CACHE(clusterID)
 				} else {
 					fmt.printfln(
 						"Failed to erase cluster %s%s%s from collection %s%s%s",
