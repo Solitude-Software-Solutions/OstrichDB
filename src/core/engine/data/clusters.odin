@@ -51,7 +51,7 @@ OST_GENERATE_CLUSTER_ID :: proc() -> i64 {
 
 	if idExistsAlready == true {
 		//dont need to throw error for ID existing already
-		utils.log_err("ID already exists in cache file", "OST_GENERATE_CLUSTER_ID")
+		utils.log_err("Generated ID already exists in cache file", #procedure)
 		OST_GENERATE_CLUSTER_ID()
 	}
 	OST_ADD_ID_TO_CACHE_FILE(ID)
@@ -205,7 +205,7 @@ OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		utils.log_err("Error opening cluster id cache file", #procedure)
 	}
 	//step#1 convert the passed in i64 id number to a string
 	idStr := strconv.append_int(buf[:], id, 10)
@@ -220,7 +220,7 @@ OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error2)
-		utils.log_err("Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		utils.log_err("Error reading cluster id cache file", #procedure)
 	}
 
 	// step#3 convert all file contents to a string because...OdinLang go brrrr??
@@ -228,7 +228,6 @@ OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
 
 	//step#4 check if the string version of the id is contained in the cache file
 	if strings.contains(contentToStr, idStr) {
-		fmt.printfln("ID already exists in cache file")
 		result = true
 	} else {
 		result = false

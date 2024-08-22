@@ -111,7 +111,7 @@ OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
 OST_GEN_USER_ID :: proc() -> i64 {
 	userID := rand.int63_max(1e16 + 1)
 	if OST_CHECK_IF_USER_ID_EXISTS(userID) == true {
-		utils.log_err("ID already exists in user file", "OST_GEN_USER_ID")
+		utils.log_err("Generated ID already exists in user file", #procedure)
 		OST_GEN_USER_ID()
 	}
 	types.user.user_id = userID
@@ -131,7 +131,7 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		utils.log_err("Error opening cluster id cache file", #procedure)
 	}
 	//step#1 convert the passed in i64 id number to a string
 	idStr := strconv.append_int(buf[:], id, 10)
@@ -146,7 +146,7 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 			#procedure,
 		)
 		utils.throw_err(errors2)
-		utils.log_err("Error reading cluster id cache file", "OST_CHECK_CACHE_FOR_ID")
+		utils.log_err("Error reading cluster id cache file", #procedure)
 	}
 
 	// step#3 convert all file contents to a string because...OdinLang go brrrr??
@@ -154,7 +154,6 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 
 	//step#4 check if the string version of the id is contained in the cache file
 	if strings.contains(contentToStr, idStr) {
-		fmt.printfln("ID already exists in cache file")
 		result = true
 	} else {
 		result = false

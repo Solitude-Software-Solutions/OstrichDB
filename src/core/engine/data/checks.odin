@@ -19,8 +19,6 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 
 	//integrity check one - cluster ids
 	switch checkOneResult {
-	case true:
-		fmt.println("Cluster IDs in collection are compliant")
 	case false:
 		error1 := utils.new_err(
 			.CLUSTER_IDS_NOT_VALID,
@@ -62,9 +60,14 @@ OST_HANDLE_INTGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 	integrityResults := OST_VALIDATE_DATA_INTEGRITY(fn)
 	for result in integrityResults {
 		if result == false {
-			fmt.printfln("%s%s[WARNING] [WARNING] [WARNING]%s", utils.BOLD, utils.RED, utils.RESET)
 			fmt.printfln(
-				"The Integrity of collection: %s%s%s was not validated.\nThe operation has been canceled and collection: %s%s%s will now be quarintined.",
+				"%s%s[WARNING] [WARNING] [WARNING] [WARNING]%s",
+				utils.BOLD,
+				utils.RED,
+				utils.RESET,
+			)
+			fmt.printfln(
+				"OstrichDB was unable to validate the integrity of collection: %s%s%s.\nThe operation has been canceled and collection: %s%s%s will now be quarintined.",
 				utils.BOLD,
 				fn,
 				utils.RESET,
