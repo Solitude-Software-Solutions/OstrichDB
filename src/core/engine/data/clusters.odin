@@ -58,8 +58,12 @@ OST_GENERATE_CLUSTER_ID :: proc() -> i64 {
 	return ID
 }
 
-//used to return the value of the cluster id of the passed in cluster
-GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
+//used to return the value of a ALL cluster ids of all clusters within the passed in file
+OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
+	//the following dynamic arrays DO NOT get deleted at the end of the procedure. They are deleted in the calling procedure
+	IDs := make([dynamic]i64)
+	idsStringArray := make([dynamic]string)
+
 	fullPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
 	data, readSuccess := os.read_entire_file(fullPath)
 	if !readSuccess {
@@ -69,7 +73,43 @@ GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading cluster file", "GET_CLUSTER_ID")
+		utils.log_err("Error reading cluster file", #procedure)
+		return IDs, idsStringArray
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	clusterIdLine := "cluster_id :identifier:"
+	for line in lines {
+		if strings.contains(line, clusterIdLine) {
+			idStr := strings.trim_space(strings.split(line, ":")[2])
+			ID, ok := strconv.parse_i64(idStr)
+			if ok {
+				append(&IDs, ID)
+				append(&idsStringArray, idStr)
+			} else {
+				utils.log_err(fmt.tprintf("Error parsing cluster ID: %s", idStr), #procedure)
+			}
+		}
+	}
+	return IDs, idsStringArray
+}
+
+
+//used to return the value of a single cluster id of the passed in cluster
+OST_GET_CLUSER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
+	fullPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+	data, readSuccess := os.read_entire_file(fullPath)
+	if !readSuccess {
+		error1 := utils.new_err(
+			.CANNOT_READ_FILE,
+			utils.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		utils.throw_err(error1)
+		utils.log_err("Error reading cluster file", #procedure)
 		return 0
 	}
 
@@ -100,6 +140,7 @@ GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 	utils.log_err("Cluster not found", #procedure)
 	return 0
 }
+
 
 OST_REMOVE_ID_FROM_CACHE :: proc(id: i64) -> bool {
 	deleted := false
