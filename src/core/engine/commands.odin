@@ -170,6 +170,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				cluster_name := cmd.o_token[0]
 				collection_name := cmd.o_token[1]
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+
 				fmt.printf(
 					"Creating cluster '%s' within collection '%s'\n",
 					cluster_name,
@@ -226,7 +233,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) == 1 && const.OF_TYPE in cmd.m_token || const.TYPE in cmd.m_token {
 				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[0])
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
-
 				if nameSuccess == 0 && typeSuccess == 0 {
 					fmt.printfln("Creating record '%s' of type '%s'", rName, rType)
 					data.OST_GET_ALL_COLLECTION_NAMES()
@@ -427,7 +433,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				collection_name := cmd.o_token[1]
 				cluster := cmd.o_token[0]
-				clusterID := data.GET_CLUSTER_ID(collection_name, cluster)
+				clusterID := data.OST_GET_CLUSER_ID(collection_name, cluster)
 				if data.OST_ERASE_CLUSTER(collection_name, cluster) == true {
 					fmt.printfln(
 						"Cluster %s%s%s successfully erased from collection %s%s%s",
