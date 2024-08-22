@@ -27,27 +27,13 @@ Command :: struct {
 Type: Record
 Desc: Used to define the structure of a record withinin the Ostrich Database
       Records are the smallest unit of data within the Ostrich Database
-Usage Locations: NOT YET IMPLEMENTED but will be in records.odin and possibly clusters.odin
+Usage Locations: records.odin
 */
 Record :: struct {
 	name: string,
 	type: string,
 	data: string,
 }
-
-/*
-Type: Cluster
-Desc: Used to define the structure of a cluster within the Ostrich Database
-      Clusters are a collection of records
-Usage Locations: NOT YET IMPLEMENTED but will be in clusters.odin
-*/
-Cluster :: struct {
-	cluster_name: string,
-	cluster_id:   int, //unique identifier for the record cannot be duplicated
-	record:       [dynamic]Record, //so that the cluster can hold multiple records
-}
-
-//NOTE THERE IS NOT A TYPE FOR A COLLECTION :^)
 
 
 //=================================================/src/core/engine/=================================================//
@@ -175,11 +161,43 @@ Focus :: struct {
 	ro_:  string, // The related object (e.g., "myRecord")
 	flag: bool, // If the focus is active
 }
-//some gloables because fuck cyclical importation problems in Odin
-USER_SIGNIN_STATUS: bool
-
 
 help_mode: Help_Mode
 Help_Mode :: struct {
 	verbose: bool, //if its false then its simple
 }
+
+
+// =================================================/src/core/data/=================================================//
+/*
+Type: Data_Integrity_Checks
+Desc: Used to ensure data integrity within the Ostrich Database
+Usage Locations: records.odin, clusters.odin, collections.odin
+*/
+data_integrity_checks: Data_Integrity_Checks
+
+Data_Integrity_Checks :: struct {
+	File_Size:           Data_Integrity_Info, //ensure file size isnt larger thant const.MAX_FILE_SIZE. LOW SEVERITY
+	File_Format:         Data_Integrity_Info, //ensure proper format of the file ie closing brackets, commas, etc... CRITCAL SEVERITY
+	File_Format_Version: Data_Integrity_Info, //ensure that the file format version is compliant with the current version. MEDIUM SEVERITY
+	Cluster_IDs:         Data_Integrity_Info, //ensure that the value of all cluster ids within a collection are in the cache. HIGH SEVERITY
+	Data_Types:          Data_Integrity_Info, //ensure that all records have a data type and that its an approved one  HIGH SEVERITY
+	//more to come
+}
+
+Data_Integrity_Info :: struct {
+	Compliant:     bool,
+	Severity:      Data_Integrity_Severity,
+	Error_Message: string,
+}
+
+Data_Integrity_Severity :: enum {
+	LOW,
+	MEDIUM,
+	HIGH,
+	CRITICAL,
+}
+
+
+//some gloables because fuck cyclical importation problems in Odin
+USER_SIGNIN_STATUS: bool
