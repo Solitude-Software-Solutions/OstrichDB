@@ -281,6 +281,13 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 		OST_CHOOSE_RECORD_LOCATION(rName, rType)
 	}
 
+	checks := OST_HANDLE_INTGRITY_CHECK_RESULT(collectionNameUpper)
+	switch (checks) 
+	{
+	case -1:
+		return "", ""
+	}
+
 	nn, cluNameSuccess := os.read(os.stdin, buf)
 	if cluNameSuccess != 0 {
 		error2 := utils.new_err(
@@ -425,6 +432,14 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 		fn,
 		const.OST_FILE_EXTENSION,
 	)
+
+
+	checks := OST_HANDLE_INTGRITY_CHECK_RESULT(fn)
+	switch (checks) 
+	{
+	case -1:
+		return -1
+	}
 
 	fmt.printfln(
 		"Enter the name of the cluster that contains the record: %s%s%s that you would like to rename.",

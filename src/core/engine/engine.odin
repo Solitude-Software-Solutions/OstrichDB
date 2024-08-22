@@ -26,14 +26,37 @@ main :: proc() {
 		config.OST_CREATE_CONFIG_FILE()
 		main()
 	case:
-		fmt.println("Config file found!\n Starting OstrichDB")
+		fmt.println("Starting OstrichDB")
 		OST_START_ENGINE()
 	}
 
 
 }
 
+
+//initialize the data integrity system
+OST_INIT_INEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
+	types.data_integrity_checks.File_Size.Severity = .LOW
+	types.data_integrity_checks.File_Format_Version.Severity = .MEDIUM
+	types.data_integrity_checks.Cluster_IDs.Severity = .HIGH
+	types.data_integrity_checks.Data_Types.Severity = .HIGH
+	types.data_integrity_checks.File_Format.Severity = .CRITICAL
+
+	types.data_integrity_checks.File_Size.Error_Message =
+	"Collection file size is larger than the maxmimum size of 10mb"
+	types.data_integrity_checks.File_Format.Error_Message =
+	"A formatting error was found in the collection file"
+	types.data_integrity_checks.File_Format_Version.Error_Message =
+	"Collection file format version is not compliant with the current version"
+	types.data_integrity_checks.Cluster_IDs.Error_Message = "Cluster ID(s) not found in cache"
+	types.data_integrity_checks.Data_Types.Error_Message =
+	"Data type(s) found in collection are not approved"
+	return 0
+
+}
 OST_START_ENGINE :: proc() -> int {
+	//Initialize data integrity system
+	OST_INIT_INEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
 
 	switch (types.engine.Initialized) 
 	{

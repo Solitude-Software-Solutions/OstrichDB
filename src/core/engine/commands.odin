@@ -226,7 +226,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) == 1 && const.OF_TYPE in cmd.m_token || const.TYPE in cmd.m_token {
 				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[0])
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
-
 				if nameSuccess == 0 && typeSuccess == 0 {
 					fmt.printfln("Creating record '%s' of type '%s'", rName, rType)
 					data.OST_GET_ALL_COLLECTION_NAMES()
@@ -300,6 +299,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) > 0 && const.TO in cmd.m_token {
 				old_name := cmd.o_token[0]
 				new_name := cmd.m_token[const.TO]
+
 				fmt.printf("Renaming collection '%s' to '%s'\n", old_name, new_name)
 				success := data.OST_RENAME_COLLECTION(old_name, new_name)
 				switch (success) 
@@ -337,6 +337,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection_name := cmd.o_token[1]
 				new_name := cmd.m_token[const.TO]
 
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+
 				success := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
 				if success {
 					fmt.printf(
@@ -368,6 +375,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
 				oldRName := cmd.o_token[0]
 				newRName := cmd.m_token[const.TO]
+
 				result := data.OST_RENAME_RECORD(oldRName, newRName)
 				switch (result) 
 				{
@@ -390,7 +398,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: RENAME RECORD <old_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> TO <new_name>",
+					"Incomplete command. Correct Usage: RENAME RECORD <old_name> TO <new_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete RENAME command",
@@ -427,6 +435,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				collection_name := cmd.o_token[1]
 				cluster := cmd.o_token[0]
+				clusterID := data.OST_GET_CLUSER_ID(collection_name, cluster)
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+
 				if data.OST_ERASE_CLUSTER(collection_name, cluster) == true {
 					fmt.printfln(
 						"Cluster %s%s%s successfully erased from collection %s%s%s",
@@ -437,6 +453,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
+					data.OST_REMOVE_ID_FROM_CACHE(clusterID)
 				} else {
 					fmt.printfln(
 						"Failed to erase cluster %s%s%s from collection %s%s%s",
@@ -495,6 +512,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				collection := cmd.o_token[1]
 				cluster := cmd.o_token[0]
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+
 				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
 				fmt.printfln(clusterContent)
 			} else {
@@ -559,12 +583,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 
 		case const.CLUSTER:
-			collectionNamePath := strings.concatenate(
-				[]string{const.OST_COLLECTION_PATH, cmd.o_token[1]},
-			)
-			fullCollectionPath := strings.concatenate(
-				[]string{collectionNamePath, const.OST_FILE_EXTENSION},
-			)
+			collectionNamePath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, cmd.o_token[1])
+			fullCollectionPath := fmt.tprintf("%s%s", collectionNamePath, const.OST_FILE_EXTENSION)
+
+			checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(cmd.o_token[1])
+			switch (checks) 
+			{
+			case -1:
+				return -1
+			}
+
 			exists := data.OST_CHECK_IF_CLUSTER_EXISTS(fullCollectionPath, cmd.o_token[0])
 			switch exists {
 			case true:
@@ -604,6 +632,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				record := cmd.o_token[0]
 				cluster := cmd.o_token[1]
 				collection := cmd.o_token[2]
+
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+
 				storedParentT, storedParentO, storedRO := OST_FOCUS_RECORD(
 					collection,
 					cluster,
