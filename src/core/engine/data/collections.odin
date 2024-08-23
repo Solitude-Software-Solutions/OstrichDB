@@ -1,6 +1,4 @@
 package data
-
-
 import "../../../utils"
 import "../../const"
 import "./metadata"
