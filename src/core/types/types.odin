@@ -193,12 +193,13 @@ Data_Integrity_Info :: struct {
 }
 
 Data_Integrity_Severity :: enum {
-	LOW,
-	MEDIUM,
-	HIGH,
-	CRITICAL,
+	LOW    = 0,
+	MEDIUM = 1,
+	HIGH   = 2,
 }
 
 
 //some gloables because fuck cyclical importation problems in Odin
 USER_SIGNIN_STATUS: bool
+Message_Color: string //used in checks.odin
+Severity_Code: int //used in checks.odin

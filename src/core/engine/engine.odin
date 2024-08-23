@@ -40,7 +40,7 @@ OST_INIT_INEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) ->
 	types.data_integrity_checks.File_Format_Version.Severity = .MEDIUM
 	types.data_integrity_checks.Cluster_IDs.Severity = .HIGH
 	types.data_integrity_checks.Data_Types.Severity = .HIGH
-	types.data_integrity_checks.File_Format.Severity = .CRITICAL
+	types.data_integrity_checks.File_Format.Severity = .HIGH
 
 	types.data_integrity_checks.File_Size.Error_Message =
 	"Collection file size is larger than the maxmimum size of 10mb"
