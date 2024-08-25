@@ -101,6 +101,9 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 			utils.throw_err(error)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
+
+        append(&const.CommandHistory, strings.clone(input))
+
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
 		OST_EXECUTE_COMMAND(&cmd)
