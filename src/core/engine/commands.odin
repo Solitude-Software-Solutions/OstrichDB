@@ -75,7 +75,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case const.HISTORY:
 		utils.log_runtime_event("Used HISTORY command", "User requested to view the command history.")
         for cmd, index in const.CommandHistory {
-            fmt.printfln("%d: %s", index, cmd)
+            fmt.printfln("%d: %s", index+1, cmd)
         }
         fmt.printf("Enter command to repeat: ")
 
@@ -92,10 +92,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 
         // convert string to index
-        commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n])))
+        commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
         // check boundaries
-        if commandIndex >= i64(len(const.CommandHistory)) {
-            fmt.printfln("Command number %d not found", commandIndex)
+        if commandIndex >= i64(len(const.CommandHistory)) || commandIndex < 0 {
+            fmt.printfln("Command number %d not found", commandIndex+1) // add one to make it reflect what the user sees
             break
         }
 
