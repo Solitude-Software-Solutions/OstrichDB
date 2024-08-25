@@ -35,6 +35,7 @@ HELP :: "HELP"
 EXIT :: "EXIT"
 LOGOUT :: "LOGOUT"
 CLEAR :: "CLEAR"
+TREE :: "TREE"
 //Action Tokens
 NEW :: "NEW"
 BACKUP :: "BACKUP"
@@ -74,6 +75,7 @@ ost_carrot :: "OST>>>"
 SEC_CLUSTER_NAME :: "user_credentials"
 VALID_RECORD_TYPES: []string : {STRING, INT, FLOAT, BOOL}
 MAX_SESSION_TIME: time.Duration : 259200000000000000 //3 days in nanoseconds
+MAX_COLLECTION_TO_DISPLAY :: 20
 // MAX_SESSION_TIME: time.Duration : 60000000000 //1 minute in nano seconds only used for testing
 
 

@@ -72,6 +72,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		utils.log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")
 		break
+	case const.TREE:
+		utils.log_runtime_event("Used TREE command", "User requested to view a tree of the database.")
+        data.OST_GET_DATABASE_TREE()
+		break
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
 	case const.HELP:
 		utils.log_runtime_event("Used HELP command", "User requested help information.")
@@ -228,7 +232,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
 				if nameSuccess == 0 && typeSuccess == 0 {
 					fmt.printfln("Creating record '%s' of type '%s'", rName, rType)
-					data.OST_GET_ALL_COLLECTION_NAMES()
+					data.OST_GET_ALL_COLLECTION_NAMES(false)
 
 					collection_name, cluster_name := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
 					filePath := fmt.tprintf(

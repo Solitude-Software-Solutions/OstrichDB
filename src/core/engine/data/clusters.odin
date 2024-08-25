@@ -754,7 +754,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 }
 
 
-OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string) -> int {
+OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 	buf := make([]byte, 64)
 	defer delete(buf)
 	filePath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
@@ -787,10 +787,23 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string) -> int {
 		cluster_name := strings.trim_space(cluster[name_start:][:name_end])
 		// Compare the extracted cluster name with the provided cluster name
 
-		clusterName := fmt.tprintf("|\n|_________%s\n", cluster_name)
-
+		clusterName := fmt.tprintf("|\n|_________%s", cluster_name)
 
 		fmt.println(clusterName)
+
+        if showRecords {
+            lines := strings.split_lines(cluster)
+            for line in lines {
+                lineTrim := strings.trim_space(line)
+                if len(lineTrim) > 0 && strings.has_suffix(lineTrim, ":") {
+                    lineData := fmt.tprintf("\t   |\n\t   |_________%s", lineTrim)
+                    lineSplit := strings.split(lineData, ":")
+                    fmt.printfln("%s: %s", lineSplit[0], lineSplit[1])
+                }
+            }
+        }
+        fmt.println("")
+
 	}
 	return 0
 }

@@ -298,7 +298,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 }
 
 
-OST_GET_ALL_COLLECTION_NAMES :: proc() -> [dynamic]string {
+OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 
 	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
 	defer os.close(collectionsDir)
@@ -325,12 +325,30 @@ OST_GET_ALL_COLLECTION_NAMES :: proc() -> [dynamic]string {
 			len(collectionNames),
 		)}
 
+    // TODO: consider the clusters and records in the size as well, rather than just collections
+    if len(collectionNames) > const.MAX_COLLECTION_TO_DISPLAY {
+        fmt.printf("There is %d collections to display, display all? (y/N) ", len(collectionNames))
+		buf: [1024]byte
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			utils.throw_err(error)
+		}
+        if buf[0] != 'y' {
+            return collectionNames
+        }
+    }
+
 	for file in foundFiles {
 		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
 			append(&collectionNames, file.name)
 			withoutExt := strings.split(file.name, const.OST_FILE_EXTENSION)
 			fmt.println(withoutExt[0])
-			OST_LIST_CLUSTERS_IN_FILE(withoutExt[0])
+			OST_LIST_CLUSTERS_IN_FILE(withoutExt[0], showRecords)
 		}
 	}
 
