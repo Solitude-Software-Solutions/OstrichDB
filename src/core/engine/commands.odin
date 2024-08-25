@@ -72,6 +72,36 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		utils.log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")
 		break
+	case const.HISTORY:
+		utils.log_runtime_event("Used HISTORY command", "User requested to view the command history.")
+        for cmd, index in const.CommandHistory {
+            fmt.printfln("%d: %s", index+1, cmd)
+        }
+        fmt.printf("Enter command to repeat: ")
+
+        // Get index of command to re-execute from user
+		inputNumber: [1024]byte
+		n, inputSuccess := os.read(os.stdin, inputNumber[:])
+		if inputSuccess != 0 {
+			error := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			utils.throw_err(error)
+		}
+
+        // convert string to index
+        commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
+        // check boundaries
+        if commandIndex >= i64(len(const.CommandHistory)) || commandIndex < 0 {
+            fmt.printfln("Command number %d not found", commandIndex+1) // add one to make it reflect what the user sees
+            break
+        }
+
+        cmd := OST_PARSE_COMMAND(const.CommandHistory[commandIndex])
+		OST_EXECUTE_COMMAND(&cmd)
+		break
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
 	case const.HELP:
 		utils.log_runtime_event("Used HELP command", "User requested help information.")
