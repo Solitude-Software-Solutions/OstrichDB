@@ -795,13 +795,16 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
             lines := strings.split_lines(cluster)
             for line in lines {
                 lineTrim := strings.trim_space(line)
+                // ensure the line is not empty, and ensure it ends with ":" to make sure it's a RECORD line
                 if len(lineTrim) > 0 && strings.has_suffix(lineTrim, ":") {
                     lineData := fmt.tprintf("\t   |\n\t   |_________%s", lineTrim)
                     lineSplit := strings.split(lineData, ":")
+                    // output the record name and the datatype
                     fmt.printfln("%s: %s", lineSplit[0], lineSplit[1])
                 }
             }
         }
+        // print the extra newline
         fmt.println("")
 
 	}
