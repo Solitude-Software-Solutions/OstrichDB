@@ -17,14 +17,15 @@ import "core:time"
 //=========================================================//
 
 
-@(private = "file")
+// @(private = "file")
 METADATA_HEADER: []string = {
-	"{[Ostrich File Header Start]\n\n",
-	"#File Format Version: %ffv\n",
-	"#Date of Creation: %fdoc\n",
-	"#Date Last Modified: %fdlm\n",
-	"#File Size: %fs Bytes\n",
-	"#Checksum: %cs\n\n[Ostrich File Header End]},\n\n\n\n",
+	"# [Ostrich File Header Start]\n",
+	"# File Format Version: %ffv\n",
+	"# Date of Creation: %fdoc\n",
+	"# Date Last Modified: %fdlm\n",
+	"# File Size: %fs Bytes\n",
+	"# Checksum: %cs\n",
+	"# [Ostrich File Header End]},\n\n\n\n",
 }
 
 // sets the files date of creation(FDOC) or file date last modified(FDLM)
@@ -181,7 +182,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	}
 
 	dataAsStr := cast(string)rawData
-	if strings.has_prefix(dataAsStr, "[Ostrich File Header Start]") {
+	if strings.has_prefix(dataAsStr, "# [Ostrich File Header Start]") {
 		return false
 	}
 
@@ -225,31 +226,31 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	for line, i in lines {
 		switch param {
 		case 1:
-			if strings.has_prefix(line, "#Date of Creation:") {
-				lines[i] = fmt.tprintf("#Date of Creation: %s", current_date)
+			if strings.has_prefix(line, "# Date of Creation:") {
+				lines[i] = fmt.tprintf("# Date of Creation: %s", current_date)
 				updated = true
 			}
 			break
 		case 2:
-			if strings.has_prefix(line, "#Date Last Modified:") {
-				lines[i] = fmt.tprintf("#Date Last Modified: %s", current_date)
+			if strings.has_prefix(line, "# Date Last Modified:") {
+				lines[i] = fmt.tprintf("# Date Last Modified: %s", current_date)
 				updated = true
 			}
 		case 3:
-			if strings.has_prefix(line, "#File Size:") {
-				lines[i] = fmt.tprintf("#File Size: %d Bytes", file_size)
+			if strings.has_prefix(line, "# File Size:") {
+				lines[i] = fmt.tprintf("# File Size: %d Bytes", file_size)
 				updated = true
 			}
 			break
 		case 4:
-			if strings.has_prefix(line, "#File Format Version:") {
-				lines[i] = fmt.tprintf("#File Format Version: %s", OST_SET_FFV())
+			if strings.has_prefix(line, "# File Format Version:") {
+				lines[i] = fmt.tprintf("# File Format Version: %s", OST_SET_FFV())
 				updated = true
 			}
 			break
 		case 5:
-			if strings.has_prefix(line, "#Checksum:") {
-				lines[i] = fmt.tprintf("#Checksum: %s", OST_GENERATE_CHECKSUM())
+			if strings.has_prefix(line, "# Checksum:") {
+				lines[i] = fmt.tprintf("# Checksum: %s", OST_GENERATE_CHECKSUM())
 				updated = true
 			}
 			break
@@ -328,4 +329,27 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 	}
 	os.close(ffvf)
 	return data
+}
+
+OST_GET_METADATA_HEADER :: proc(fn: string) -> string {
+	data, readSuccess := os.read_entire_file(fn)
+	if !readSuccess {
+		error1 := utils.new_err(
+			.CANNOT_READ_FILE,
+			utils.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		utils.throw_err(error1)
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+	for line in lines {
+		if strings.has_prefix(line, "#") {
+			fmt.println(line)
+		}
+	}
+	return ""
+
 }
