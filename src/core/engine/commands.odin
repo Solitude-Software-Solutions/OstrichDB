@@ -100,7 +100,25 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
 				name := data.OST_CHOOSE_BACKUP_NAME()
-				data.OST_CREATE_BACKUP_COLLECTION(name, cmd.o_token[0])
+
+
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(cmd.o_token[0])
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+				success := data.OST_CREATE_BACKUP_COLLECTION(name, cmd.o_token[0])
+				if success {
+					fmt.printfln(
+						"Successfully backed up collection: %s%s%s.",
+						utils.BOLD,
+						cmd.o_token[0],
+						utils.RESET,
+					)
+				} else {
+					fmt.println("Backup failed. Please try again.")
+				}
 
 			} else {
 				fmt.println(
@@ -175,6 +193,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cluster_name,
 					collection_name,
 				)
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
 
 				id := data.OST_GENERATE_CLUSTER_ID()
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)

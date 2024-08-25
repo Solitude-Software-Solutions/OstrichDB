@@ -2,6 +2,7 @@ package metadata
 
 import "../../../../utils"
 import "../../../const"
+import "../../../types"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -17,7 +18,6 @@ import "core:time"
 //=========================================================//
 
 
-// @(private = "file")
 METADATA_HEADER: []string = {
 	"# [Ostrich File Header Start]\n",
 	"# File Format Version: %ffv\n",
@@ -352,4 +352,52 @@ OST_GET_METADATA_HEADER :: proc(fn: string) -> string {
 	}
 	return ""
 
+}
+
+
+OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: bool) {
+	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+
+	types.schema.Metadata_Header_Body = [5]string {
+		"# File Format Version: ",
+		"# Date of Creation: ",
+		"# Date Last Modified: ",
+		"# File Size: ",
+		"# Checksum: ",
+	}
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
+		error1 := utils.new_err(
+			.CANNOT_READ_FILE,
+			utils.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		utils.throw_err(error1)
+		utils.log_err("Error reading collection file", #procedure)
+		return 1, true
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	if len(lines) < 7 {
+		fmt.println("failing here1")
+		return 1, true
+	}
+
+	// check if the header start and end markers are present at the correct lines
+	if !strings.has_prefix(lines[0], "# [Ostrich File Header Start]") ||
+	   !strings.has_prefix(lines[6], "# [Ostrich File Header End]") {
+		fmt.println("failing here2")
+		return 1, true
+	}
+
+	for i in 1 ..< 5 {
+		if !strings.has_prefix(lines[i], types.schema.Metadata_Header_Body[i - 1]) {
+			fmt.println("failing here3")
+			return 1, true
+		}
+	}
+	return 0, false
 }

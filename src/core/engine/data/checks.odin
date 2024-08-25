@@ -13,12 +13,65 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
+
+//preform cluster_id compliancy check on the passed collection
+OST_VALIDATE_IDS :: proc(fn: string) -> bool {
+	types.data_integrity_checks.Cluster_IDs.Compliant = false
+	idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
+	defer delete(idsFoundInCollection)
+	defer delete(idsAsStringArray)
+
+	for id in idsFoundInCollection {
+		idFoundInCache := OST_CHECK_CACHE_FOR_ID(id)
+		if idFoundInCache == true {
+			types.data_integrity_checks.Cluster_IDs.Compliant = true
+		} else {
+			types.data_integrity_checks.Cluster_IDs.Compliant = false
+			break
+		}
+	}
+	return types.data_integrity_checks.Cluster_IDs.Compliant
+}
+
+//preform file size check on the passed collection
+OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
+	types.Severity_Code = 0
+	types.data_integrity_checks.File_Size.Compliant = true
+	fileInfo := metadata.OST_GET_FS(
+		fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION),
+	)
+	fileSize := fileInfo.size
+
+	if fileSize > const.MAX_FILE_SIZE {
+		types.data_integrity_checks.File_Size.Compliant = false
+	}
+	return types.data_integrity_checks.File_Size.Compliant
+}
+
+//preform collection format check on the passed collection
+OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
+	types.data_integrity_checks.File_Format.Compliant = true
+
+	clusterScanSuccess, invalidClusterFound := OST_SCAN_CLUSTER_STRUCTURE(fn)
+	headerScanSuccess, invalidHeaderFound := metadata.OST_SCAN_METADATA_HEADER_FORMAT(fn)
+	if clusterScanSuccess != 0 || invalidClusterFound == true {
+		types.data_integrity_checks.File_Format.Compliant = false
+
+	}
+	if headerScanSuccess != 0 || invalidHeaderFound == true {
+		types.data_integrity_checks.File_Format.Compliant = false
+	}
+
+	return types.data_integrity_checks.File_Format.Compliant
+}
+
+
 //performs all data integrity checks on the passed collection and returns the results
 OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 	checks := [dynamic]bool{}
 	checkOneResult := OST_VALIDATE_IDS(fn)
 	checkTwoResult := OST_VALIDATE_FILE_SIZE(fn)
-
+	checkThreeResult := OST_VALIDATE_COLLECTION_FORMAT(fn)
 	//integrity check one - cluster ids
 	switch checkOneResult {
 	case false:
@@ -43,44 +96,25 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 		utils.throw_err(error2)
 		utils.log_err("File size is not compliant", #procedure)
 	}
+	switch checkThreeResult {
+	case false:
+		types.Severity_Code = 2
+		error3 := utils.new_err(
+			.FILE_FORMAT_NOT_VALID,
+			utils.get_err_msg(.FILE_FORMAT_NOT_VALID),
+			#procedure,
+		)
+		utils.throw_err(error3)
+		utils.log_err("Collection format is not compliant", #procedure)
+	}
 	//do more checks here
 
 
 	append(&checks, checkOneResult)
+	append(&checks, checkTwoResult)
+	append(&checks, checkThreeResult)
+
 	return checks
-}
-
-//preform cluster_id compliancy check on the passed collection
-OST_VALIDATE_IDS :: proc(fn: string) -> bool {
-	types.data_integrity_checks.Cluster_IDs.Compliant = false
-	idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
-	defer delete(idsFoundInCollection)
-	defer delete(idsAsStringArray)
-
-	for id in idsFoundInCollection {
-		idFoundInCache := OST_CHECK_CACHE_FOR_ID(id)
-		if idFoundInCache == true {
-			types.data_integrity_checks.Cluster_IDs.Compliant = true
-		} else {
-			types.data_integrity_checks.Cluster_IDs.Compliant = false
-			break
-		}
-	}
-	return types.data_integrity_checks.Cluster_IDs.Compliant
-}
-
-OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
-	types.Severity_Code = 0
-	types.data_integrity_checks.File_Size.Compliant = true
-	fileInfo := metadata.OST_GET_FS(
-		fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION),
-	)
-	fileSize := fileInfo.size
-
-	if fileSize > const.MAX_FILE_SIZE {
-		types.data_integrity_checks.File_Size.Compliant = false
-	}
-	return types.data_integrity_checks.File_Size.Compliant
 }
 
 //handles the results of the data integrity checks...duh

@@ -334,3 +334,26 @@ OST_GET_ALL_COLLECTION_NAMES :: proc() -> [dynamic]string {
 
 	return collectionNames
 }
+
+
+OST_SCAN_COLLECTION_BODY_FORMAT :: proc(fn: string) -> (success: int, validFormat: bool) {
+	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
+		error1 := utils.new_err(
+			.CANNOT_READ_FILE,
+			utils.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		utils.throw_err(error1)
+		utils.log_err("Error reading collection file", #procedure)
+		return 1, false
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	return 0, true
+}

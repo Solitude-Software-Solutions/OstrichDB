@@ -203,3 +203,9 @@ Data_Integrity_Severity :: enum {
 USER_SIGNIN_STATUS: bool
 Message_Color: string //used in checks.odin
 Severity_Code: int //used in checks.odin
+
+
+schema: Colletion_File_Schema
+Colletion_File_Schema :: struct {
+	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
+}
