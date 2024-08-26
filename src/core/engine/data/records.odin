@@ -3,6 +3,7 @@ package data
 import "../../../utils"
 import "../../const"
 import "../../types"
+import "./metadata"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -565,3 +566,11 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 
 
 }
+
+OST_GET_DATABASE_TREE :: proc() {
+    OST_GET_ALL_COLLECTION_NAMES(true)
+    // output data size
+    fmt.printfln("Size of data: %dB", metadata.OST_GET_FS(const.OST_COLLECTION_PATH).size)
+}
+
+
