@@ -55,7 +55,7 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error creating config file", "OST_CREATE_CONFIG_FILE")
+		utils.log_err("Error creating config file", #procedure)
 		return false
 	}
 	msg := transmute([]u8)const.ConfigHeader

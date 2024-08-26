@@ -54,41 +54,41 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 }
 
 //This will handle initial setup of the admin account on first run of the program
-OST_INIT_USER_SETUP :: proc() -> int {buf: [256]byte
+OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR_FILE()
 	data.OST_CREATE_COLLECTION("_secure_", 1)
-	OST_GEN_USER_ID()
+	OST_GEN_USER_ID() //todo dont seem to  acutally be storing a user ID after its generated
 	types.user.role = types.User_Role.ADMIN
 	fmt.printfln("Welcome to the Ostrich Database Engine")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
 
-	inituserName := OST_GET_USERNAME()
+	inituserName := OST_GET_USERNAME(true)
 	fmt.printfln("Please enter a password for the admin account")
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
 	libc.system("stty -echo")
-	initpassword := OST_GET_PASSWORD()
+	initpassword := OST_GET_PASSWORD(true)
 	saltAsString := string(types.user.salt)
 	hashAsString := string(types.user.hashedPassword)
 	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
-	types.user.user_id = data.OST_GENERATE_CLUSTER_ID()
+	types.user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
 
-	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "role", "admin")
+	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "role", "admin")
 	OST_STORE_USER_CREDS(
-		"user_credentials",
+		types.user.username.Value,
 		types.user.user_id,
 		"user_name",
 		types.user.username.Value,
 	)
 
 
-	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "salt", saltAsString)
+	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "salt", saltAsString)
 	hashAsStr := transmute(string)types.user.hashedPassword
-	OST_STORE_USER_CREDS("user_credentials", types.user.user_id, "hash", hashAsStr)
+	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "hash", hashAsStr)
 	OST_STORE_USER_CREDS(
-		"user_credentials",
+		types.user.username.Value,
 		types.user.user_id,
 		"store_method",
 		algoMethodAsString,
@@ -163,7 +163,8 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 }
 
 
-OST_GET_USERNAME :: proc() -> string {
+//the isInitializing param will be false when if creating an account post engine initialization,
+OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 	utils.show_current_step("Set Up Username", "1", "3")
 	buf: [256]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])
@@ -175,7 +176,7 @@ OST_GET_USERNAME :: proc() -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading input", "OST_GET_USERNAME")
+		utils.log_err("Error reading input", #procedure)
 	}
 	if n > 0 {
 		enteredStr := string(buf[:n])
@@ -189,23 +190,39 @@ OST_GET_USERNAME :: proc() -> string {
 			fmt.printfln(
 				"Username is too long. Please enter a username that is 32 characters or less",
 			)
-			OST_GET_USERNAME()
+			if isInitializing == true {
+				OST_GET_USERNAME(true)
+			} else if isInitializing == false {
+				OST_GET_USERNAME(false)
+			}
 		} else if (len(enteredStr) < 2) {
 			fmt.printfln(
 				"Username is too short. Please enter a username that is 2 characters or more",
 			)
-			OST_GET_USERNAME()
+			if isInitializing == true {
+				OST_GET_USERNAME(true)
+			} else if isInitializing == false {
+				OST_GET_USERNAME(false)
+			}
 		} else {
-			types.user.username.Value = strings.clone(enteredStr)
-			types.user.username.Length = len(enteredStr)
+			if isInitializing == true {
+				types.user.username.Value = strings.clone(enteredStr)
+				types.user.username.Length = len(enteredStr)
+			} else if isInitializing == false {
+				types.new_user.username.Value = strings.clone(enteredStr)
+				types.new_user.username.Length = len(enteredStr)
+			}
 		}
 
+	}
+	if isInitializing == false {
+		return types.new_user.username.Value
 	}
 	return types.user.username.Value
 }
 
 
-OST_GET_PASSWORD :: proc() -> string {
+OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 	utils.show_current_step("Set Up Password", "2", "3")
 	buf: [256]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])
@@ -218,7 +235,7 @@ OST_GET_PASSWORD :: proc() -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading input", "OST_GET_PASSWORD")
+		utils.log_err("Error reading input", #procedure)
 	}
 	if n > 0 {
 		enteredStr = string(buf[:n])
@@ -228,7 +245,11 @@ OST_GET_PASSWORD :: proc() -> string {
 		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
 			return r == '\r' || r == '\n'
 		})
-		types.user.password.Value = enteredStr
+		if (isInitializing == true) {
+			types.user.password.Value = enteredStr
+		} else if (isInitializing == false) {
+			types.new_user.password.Value = enteredStr
+		}
 	}
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
@@ -236,11 +257,11 @@ OST_GET_PASSWORD :: proc() -> string {
 	switch strongPassword 
 	{
 	case true:
-		OST_CONFIRM_PASSWORD(enteredStr)
+		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
 		break
 	case false:
 		fmt.printfln("Please try again")
-		OST_GET_PASSWORD()
+		OST_GET_PASSWORD(isInitializing)
 		break
 	}
 
@@ -248,7 +269,7 @@ OST_GET_PASSWORD :: proc() -> string {
 }
 
 //taKes in the plain text password and confirms it with the user
-OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
+OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 	utils.show_current_step("Confirm Password", "3", "3")
 	buf: [256]byte
 
@@ -277,15 +298,25 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 	}
 	if p != confirmation {
 		fmt.printfln("Passwords do not match. Please try again")
-		OST_GET_PASSWORD()
+		OST_GET_PASSWORD(isInitializing)
 	} else {
 
-		types.user.password.Length = len(p)
-		types.user.password.Value = strings.clone(types.user.password.Value)
-		types.user.hashedPassword = OST_HASH_PASSWORD(p, 0, false)
+		if isInitializing == true {
+			types.user.password.Length = len(p)
+			types.user.password.Value = strings.clone(p)
+			types.user.hashedPassword = OST_HASH_PASSWORD(p, 0, false, true)
 
-		encodedPassword := OST_ENCODE_HASHED_PASSWORD(types.user.hashedPassword)
-		types.user.hashedPassword = encodedPassword
+			encodedPassword := OST_ENCODE_HASHED_PASSWORD(types.user.hashedPassword)
+			types.user.hashedPassword = encodedPassword
+		} else if isInitializing == false {
+			types.new_user.password.Length = len(p)
+			types.new_user.password.Value = strings.clone(p)
+			types.new_user.hashedPassword = OST_HASH_PASSWORD(p, 0, false, false)
+
+			encodedPassword := OST_ENCODE_HASHED_PASSWORD(types.new_user.hashedPassword)
+			types.new_user.hashedPassword = encodedPassword
+			return types.new_user.password.Value
+		}
 	}
 	return types.user.password.Value
 }
@@ -294,8 +325,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string) -> string {
 // cn- cluster name, id- cluster id, dn- data name, d- data
 OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int {
 	secureFilePath := "../bin/secure/_secure_.ost"
-	credClusterName := "user_credentials"
-
+	cn := cn
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
 	if openSuccess != 0 {
@@ -309,27 +339,10 @@ OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int 
 	}
 	defer os.close(file)
 
-	if data.OST_CHECK_IF_CLUSTER_EXISTS(secureFilePath, credClusterName) == true {
-		data.OST_APPEND_RECORD_TO_CLUSTER(
-			secureFilePath,
-			credClusterName,
-			dn,
-			d,
-			"identifier",
-			types.user.user_id,
-		)
-		return 1
-	} else {
-		data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, types.user.user_id, credClusterName)
-		data.OST_APPEND_RECORD_TO_CLUSTER(
-			secureFilePath,
-			credClusterName,
-			dn,
-			d,
-			"identifier",
-			types.user.user_id,
-		)
-	}
+
+	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, types.user.user_id, cn)
+	data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, cn, dn, d, "identifier", types.user.user_id)
+
 	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 2)
 	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 3)
 	return 0
@@ -400,8 +413,8 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 	hasNumber: bool
 	hasSpecial: bool
 	hasUpper: bool
-
 	strong: bool
+
 
 	// //check for the length of the password
 	switch (len(p)) 
@@ -457,4 +470,86 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 	}
 
 	return strong
+}
+
+// creates a new user account post engine initialization
+OST_CREATE_NEW_USER :: proc() -> int {
+	buf: [1024]byte
+	foo: string
+	types.new_user.user_id = OST_GEN_USER_ID()
+	//todo:if the curernt logged in user is not a user account then the new account will be a guest account
+	//todo:if the current account is a guest account they cannot create a new account
+
+	if types.user.role == types.User_Role.ADMIN {
+		fmt.println("Please enter role you would like to assign the new account")
+		fmt.printf("1. Admin\n2. User\n3. Guest\n")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			fmt.printfln("Error reading input")
+			return 1
+		}
+		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
+		if inputToCap == "1" || inputToCap == "ADMIN" {
+			types.new_user.role = types.User_Role.ADMIN
+			foo = "admin"
+		} else if inputToCap == "2" || inputToCap == "USER" {
+			types.new_user.role = types.User_Role.USER
+			foo = "user"
+		} else if inputToCap == "3" || inputToCap == "GUEST" {
+			types.new_user.role = types.User_Role.GUEST
+			foo = "guest"
+		} else {
+			fmt.printfln("Invalid role entered")
+			return 1
+		}
+	}
+	newUserName := OST_GET_USERNAME(false)
+	switch (types.new_user.role) 
+	{
+	case .ADMIN:
+		fmt.printfln("Please enter a password for the new admin account")
+	case .USER:
+		fmt.printfln("Please enter a password for the new user account")
+	case .GUEST:
+		fmt.printfln("Please enter a password for the new guest account")
+	}
+
+	fmt.printf(
+		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
+	)
+	libc.system("stty -echo")
+	initpassword := OST_GET_PASSWORD(false)
+	libc.system("stty echo")
+	saltAsString := string(types.new_user.salt)
+	hashAsString := string(types.new_user.hashedPassword)
+	algoMethodAsString := strconv.itoa(buf[:], types.new_user.store_method)
+	types.new_user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
+
+	OST_STORE_USER_CREDS(types.new_user.username.Value, types.user.user_id, "role", foo) // gtg
+	OST_STORE_USER_CREDS(
+		types.new_user.username.Value,
+		types.new_user.user_id,
+		"user_name",
+		types.new_user.username.Value,
+	)
+
+	OST_STORE_USER_CREDS(
+		types.new_user.username.Value,
+		types.new_user.user_id,
+		"salt",
+		saltAsString,
+	)
+	OST_STORE_USER_CREDS(
+		types.new_user.username.Value,
+		types.new_user.user_id,
+		"hash",
+		hashAsString,
+	)
+	OST_STORE_USER_CREDS(
+		types.new_user.username.Value,
+		types.new_user.user_id,
+		"store_method",
+		algoMethodAsString,
+	)
+	return 0
 }

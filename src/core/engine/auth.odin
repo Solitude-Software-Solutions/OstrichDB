@@ -39,7 +39,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	userName := strings.trim_right(string(buf[:n]), "\r\n")
 	userNameFound := data.OST_READ_RECORD_VALUE(
 		const.SEC_FILE_PATH,
-		const.SEC_CLUSTER_NAME,
+		userName,
 		"identifier",
 		"user_name",
 	)
@@ -56,19 +56,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
-	salt := data.OST_READ_RECORD_VALUE(
-		const.SEC_FILE_PATH,
-		const.SEC_CLUSTER_NAME,
-		"identifier",
-		"salt",
-	)
+	salt := data.OST_READ_RECORD_VALUE(const.SEC_FILE_PATH, userName, "identifier", "salt")
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.OST_READ_RECORD_VALUE(
-		const.SEC_FILE_PATH,
-		const.SEC_CLUSTER_NAME,
-		"identifier",
-		"hash",
-	)
+	providedHash := data.OST_READ_RECORD_VALUE(const.SEC_FILE_PATH, userName, "identifier", "hash")
 	pHashAsBytes := transmute([]u8)providedHash
 
 
@@ -76,7 +66,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	//PRE-MESHING END=========================================================================================================
 	algoMethod := data.OST_READ_RECORD_VALUE(
 		const.SEC_FILE_PATH,
-		const.SEC_CLUSTER_NAME,
+		userName,
 		"identifier",
 		"store_method",
 	)
@@ -101,7 +91,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := security.OST_HASH_PASSWORD(enteredPassword, algoAsInt, true)
+	newHash := security.OST_HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
 	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
 	postMesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================

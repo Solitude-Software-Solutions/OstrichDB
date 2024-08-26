@@ -35,7 +35,7 @@ OST_CREATE_CACHE_FILE :: proc() {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error creating cluster id cache file", "OST_CREATE_CACHE_FILE")
+		utils.log_err("Error creating cluster id cache file", #procedure)
 	}
 	os.close(cacheFile)
 }
@@ -280,7 +280,7 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
 	if clusterExists == true {
 		// utils.throw_utilty_error(1, "Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
-		utils.log_err("Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
+		utils.log_err("Cluster already exists in file", #procedure)
 		return 1
 	}
 	FIRST_HALF: []string = {"{\n\tcluster_name :identifier: %n"}
@@ -295,7 +295,7 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error opening collection file", "OST_CREATE_CLUSTER_BLOCK")
+		utils.log_err("Error opening collection file", #procedure)
 	}
 
 
@@ -324,7 +324,7 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 					#procedure,
 				)
 				utils.throw_err(error2)
-				utils.log_err("Error placing id into cluster template", "OST_CREATE_CLUSTER_BLOCK")
+				utils.log_err("Error placing id into cluster template", #procedure)
 			}
 			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
 			if writeSuccess != 0 {
@@ -334,7 +334,7 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 					#procedure,
 				)
 
-				utils.log_err("Error writing cluster block to file", "OST_CREATE_CLUSTER_BLOCK")
+				utils.log_err("Error writing cluster block to file", #procedure)
 			}
 		}
 	}
@@ -546,7 +546,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error opening collection file", "OST_CREATE_CLUSTER_BLOCK")
+		utils.log_err("Error opening collection file", #procedure)
 		return 1
 	}
 
@@ -625,7 +625,7 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
 	cap := strings.to_upper(confirmation)
-	switch cap 
+	switch cap
 	{
 	case const.YES:
 		data, readSuccess := os.read_entire_file(collection_path)
@@ -712,7 +712,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collection_path, cn)
-	switch clusterExists 
+	switch clusterExists
 	{
 	case false:
 		fmt.printfln("Cluster '%s' does not exist in collection '%s'", cn, fn)

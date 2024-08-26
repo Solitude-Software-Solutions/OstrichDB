@@ -62,7 +62,7 @@ OST_START_ENGINE :: proc() -> int {
 	{
 	case false:
 		config.main()
-		security.OST_INIT_USER_SETUP()
+		security.OST_INIT_ADMIN_SETUP()
 		break
 
 	case true:
@@ -102,7 +102,7 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 
-        append(&const.CommandHistory, strings.clone(input))
+		append(&const.CommandHistory, strings.clone(input))
 
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging

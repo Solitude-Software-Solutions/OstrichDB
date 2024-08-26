@@ -78,8 +78,8 @@ OST_GENERATE_SALT :: proc() -> []u8 {
 	return saltSlice
 }
 
-// p - password, hMethod - store/hashing method, isAuth - is the user authenticating or creating an account
-OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool) -> []u8 {
+// p - password, hMethod - store/hashing method, isAuth - is the user authenticating or creating an account, isInitializing - is this being done pre or post engine initialization
+OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing: bool) -> []u8 {
 	//generate the salt
 	salt: []u8 = OST_GENERATE_SALT()
 	types.user.salt = salt //store the salt into the user struct
@@ -90,16 +90,24 @@ OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool) -> []u8 {
 	//see auth.odin
 	if (isAuth) {
 		x := sMethod
-		hashedPassword = OST_CHOOSE_ALGORITHM(x, p)
+		if isInitializing == true {
+			hashedPassword = OST_CHOOSE_ALGORITHM(x, p, true)
+		} else if isInitializing == false {
+			hashedPassword = OST_CHOOSE_ALGORITHM(x, p, false)
+		}
 	} else {
 		x := rand.choice([]int{1, 2, 3, 4, 5})
-		hashedPassword = OST_CHOOSE_ALGORITHM(x, p)
+		if isInitializing == true {
+			hashedPassword = OST_CHOOSE_ALGORITHM(x, p, true)
+		} else if isInitializing == false {
+			hashedPassword = OST_CHOOSE_ALGORITHM(x, p, false)
+		}
 	}
 	return hashedPassword
 }
 
-// choice - hashing method, p - password
-OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string) -> []u8 {
+// choice - hashing method, p - password, isInitializing - is this being done pre or post engine initialization
+OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []u8 {
 	x := choice
 	hashedPassword: []u8
 	switch (x) 
@@ -108,36 +116,61 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string) -> []u8 {
 		for i := 0; i < 1; i += 1 {
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_224, p)
 		}
-		types.user.hashedPassword = hashedPassword
-		types.user.store_method = 1
+		if (isInitializing == true) {
+			types.user.hashedPassword = hashedPassword
+			types.user.store_method = 1
+		} else if (isInitializing == false) {
+			types.new_user.hashedPassword = hashedPassword
+			types.new_user.store_method = 1
+		}
 		break
 	case 2:
 		for i := 0; i < 1; i += 1 {
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_256, p)
 		}
-		types.user.hashedPassword = hashedPassword
-		types.user.store_method = 2
+		if (isInitializing == true) {
+			types.user.hashedPassword = hashedPassword
+			types.user.store_method = 2
+		} else if (isInitializing == false) {
+			types.new_user.hashedPassword = hashedPassword
+			types.new_user.store_method = 2
+		}
 		break
 	case 3:
 		for i := 0; i < 1; i += 1 {
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_384, p)
 		}
-		types.user.hashedPassword = hashedPassword
-		types.user.store_method = 3
+		if (isInitializing == true) {
+			types.user.hashedPassword = hashedPassword
+			types.user.store_method = 3
+		} else if (isInitializing == false) {
+			types.new_user.hashedPassword = hashedPassword
+			types.new_user.store_method = 3
+		}
 		break
 	case 4:
 		for i := 0; i < 1; i += 1 {
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_512, p)
 		}
-		types.user.hashedPassword = hashedPassword
-		types.user.store_method = 4
+		if (isInitializing == true) {
+			types.user.hashedPassword = hashedPassword
+			types.user.store_method = 4
+		} else if (isInitializing == false) {
+			types.new_user.hashedPassword = hashedPassword
+			types.new_user.store_method = 4
+		}
 		break
 	case 5:
 		for i := 0; i < 1; i += 1 {
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA512_256, p)
 		}
-		types.user.hashedPassword = hashedPassword
-		types.user.store_method = 5
+		if (isInitializing == true) {
+			types.user.hashedPassword = hashedPassword
+			types.user.store_method = 5
+		} else if (isInitializing == false) {
+			types.new_user.hashedPassword = hashedPassword
+			types.new_user.store_method = 5
+		}
 	}
 	return hashedPassword
 }

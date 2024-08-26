@@ -61,7 +61,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 				#procedure,
 			)
 			utils.throw_err(error1)
-			utils.log_err("Error creating .ost file", "OST_CREATE_COLLECTION")
+			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
