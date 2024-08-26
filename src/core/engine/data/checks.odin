@@ -143,6 +143,7 @@ OST_HANDLE_INTGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 				utils.RESET,
 			)
 			fmt.println("For more information, please see the error log file.")
+			OST_QURANTINE_COLLECTION(fn)
 			return -1
 		}
 	}

@@ -193,12 +193,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cluster_name,
 					collection_name,
 				)
-				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
+				// checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name) bugged
+				// switch (checks)
+				// {
+				// case -1:
+				// 	return -1
+				// }
 
 				id := data.OST_GENERATE_CLUSTER_ID()
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)

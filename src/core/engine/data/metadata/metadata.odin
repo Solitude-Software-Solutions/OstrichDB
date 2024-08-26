@@ -382,7 +382,6 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: 
 	defer delete(lines)
 
 	if len(lines) < 7 {
-		fmt.println("failing here1")
 		return 1, true
 	}
 
