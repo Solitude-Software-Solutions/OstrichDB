@@ -58,7 +58,7 @@ OST_APPEND_QUARANTINE_LINE :: proc(qFile: string) -> int {
 		return -1
 	}
 
-	qStr := transmute([]u8)const.QuarintineStr
+	qStr := transmute([]u8)const.QuarantineStr
 
 
 	// Write the quarantine string
