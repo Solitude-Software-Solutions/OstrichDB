@@ -179,7 +179,7 @@ data_integrity_checks: Data_Integrity_Checks
 
 Data_Integrity_Checks :: struct {
 	File_Size:           Data_Integrity_Info, //ensure file size isnt larger thant const.MAX_FILE_SIZE. LOW SEVERITY
-	File_Format:         Data_Integrity_Info, //ensure proper format of the file ie closing brackets, commas, etc... CRITCAL SEVERITY
+	File_Format:         Data_Integrity_Info, //ensure proper format of the file ie closing brackets, commas, etc... HIGH SEVERITY
 	File_Format_Version: Data_Integrity_Info, //ensure that the file format version is compliant with the current version. MEDIUM SEVERITY
 	Cluster_IDs:         Data_Integrity_Info, //ensure that the value of all cluster ids within a collection are in the cache. HIGH SEVERITY
 	Data_Types:          Data_Integrity_Info, //ensure that all records have a data type and that its an approved one  HIGH SEVERITY
@@ -193,12 +193,19 @@ Data_Integrity_Info :: struct {
 }
 
 Data_Integrity_Severity :: enum {
-	LOW,
-	MEDIUM,
-	HIGH,
-	CRITICAL,
+	LOW    = 0,
+	MEDIUM = 1,
+	HIGH   = 2,
 }
 
 
 //some gloables because fuck cyclical importation problems in Odin
 USER_SIGNIN_STATUS: bool
+Message_Color: string //used in checks.odin
+Severity_Code: int //used in checks.odin
+
+
+schema: Colletion_File_Schema
+Colletion_File_Schema :: struct {
+	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
+}
