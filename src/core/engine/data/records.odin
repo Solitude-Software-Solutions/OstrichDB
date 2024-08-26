@@ -44,7 +44,7 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 			for line in lines {
 				line := strings.trim_space(line)
 				if strings.has_prefix(line, fmt.tprintf("%s :", rn)) {
-					fmt.println("Record found:", line)
+					// fmt.println("Record found:", line)
 					return true
 				}
 			}

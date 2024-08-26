@@ -76,13 +76,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		utils.log_runtime_event("Used TREE command", "User requested to view a tree of the database.")
         data.OST_GET_DATABASE_TREE()
 	case const.HISTORY:
-		utils.log_runtime_event("Used HISTORY command", "User requested to view the command history.")
-        for cmd, index in const.CommandHistory {
-            fmt.printfln("%d: %s", index+1, cmd)
-        }
-        fmt.printf("Enter command to repeat: ")
+		utils.log_runtime_event(
+			"Used HISTORY command",
+			"User requested to view the command history.",
+		)
+		for cmd, index in const.CommandHistory {
+			fmt.printfln("%d: %s", index + 1, cmd)
+		}
+		fmt.printf("Enter command to repeat: ")
 
-        // Get index of command to re-execute from user
+		// Get index of command to re-execute from user
 		inputNumber: [1024]byte
 		n, inputSuccess := os.read(os.stdin, inputNumber[:])
 		if inputSuccess != 0 {
@@ -94,15 +97,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			utils.throw_err(error)
 		}
 
-        // convert string to index
-        commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
-        // check boundaries
-        if commandIndex >= i64(len(const.CommandHistory)) || commandIndex < 0 {
-            fmt.printfln("Command number %d not found", commandIndex+1) // add one to make it reflect what the user sees
-            break
-        }
+		// convert string to index
+		commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
+		// check boundaries
+		if commandIndex >= i64(len(const.CommandHistory)) || commandIndex < 0 {
+			fmt.printfln("Command number %d not found", commandIndex + 1) // add one to make it reflect what the user sees
+			break
+		}
 
-        cmd := OST_PARSE_COMMAND(const.CommandHistory[commandIndex])
+		cmd := OST_PARSE_COMMAND(const.CommandHistory[commandIndex])
 		OST_EXECUTE_COMMAND(&cmd)
 		break
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
@@ -338,7 +341,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 			break
-
+		case const.USER:
+			if len(cmd.o_token) >= 0 {
+				security.OST_CREATE_NEW_USER()
+			}
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Target> <Targets_name>")
 			utils.log_runtime_event(

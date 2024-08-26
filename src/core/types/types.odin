@@ -112,6 +112,11 @@ User_Role :: enum {
 	USER,
 	GUEST,
 }
+UserRoleType := [User_Role]string {
+	.ADMIN = "admin",
+	.USER  = "user",
+	.GUEST = "guest",
+}
 
 /*
 Type: User_Credential
@@ -131,6 +136,7 @@ Desc: Used to define the structure of a user within the Ostrich Database
 Usage Locations: credentials.odin
 */
 user: User
+new_user: User //used for creating new accounts post initialization
 User :: struct {
 	user_id:        i64, //randomly generated user id
 	role:           User_Role,
@@ -142,6 +148,7 @@ User :: struct {
 	hashedPassword: []u8, //this is the hashed password without the salt
 	store_method:   int,
 }
+
 
 //=================================================/src/core/focus/=================================================//
 /*

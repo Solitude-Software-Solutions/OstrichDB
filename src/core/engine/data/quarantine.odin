@@ -34,7 +34,6 @@ OST_QURANTINE_COLLECTION :: proc(fn: string) -> int {
 		const.OST_FILE_EXTENSION,
 	)
 	quarantine_path := fmt.tprintf("%s/%s", const.OST_QUARANTINE_PATH, quarantineFilename)
-	fmt.printfln("Quarantine path: %s\n", quarantine_path)
 	// Move the file to quarantine
 	err := os.rename(collectionFile, quarantine_path)
 	if err != os.ERROR_NONE {
