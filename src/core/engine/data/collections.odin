@@ -1,6 +1,4 @@
 package data
-
-
 import "../../../utils"
 import "../../const"
 import "./metadata"
@@ -266,7 +264,7 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 //reads and retuns everything below the metadata header in the .ost file
 OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	fileStart := -1
-	startingPoint := "[Ostrich File Header End]},"
+	startingPoint := "# [Ostrich File Header End]},"
 	filePath := strings.concatenate([]string{const.OST_COLLECTION_PATH, fn})
 	filePathAndExt := strings.concatenate([]string{filePath, const.OST_FILE_EXTENSION})
 	data, readSuccess := os.read_entire_file(filePathAndExt)
@@ -353,4 +351,27 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 	}
 
 	return collectionNames
+}
+
+
+OST_SCAN_COLLECTION_BODY_FORMAT :: proc(fn: string) -> (success: int, validFormat: bool) {
+	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
+		error1 := utils.new_err(
+			.CANNOT_READ_FILE,
+			utils.get_err_msg(.CANNOT_READ_FILE),
+			#procedure,
+		)
+		utils.throw_err(error1)
+		utils.log_err("Error reading collection file", #procedure)
+		return 1, false
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	return 0, true
 }

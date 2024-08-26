@@ -1,5 +1,6 @@
 package utils
 
+import "../core/types"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -28,6 +29,7 @@ RED :: "\033[31m"
 BLUE :: "\033[34m"
 GREEN :: "\033[32m"
 YELLOW :: "\033[33m"
+ORANGE :: "\033[38;5;208m"
 
 BOLD :: "\033[1m"
 ITALIC :: "\033[3m"
@@ -57,4 +59,13 @@ get_input :: proc() -> string {
 	result := strings.trim_right(string(buf[:n]), "\r\n")
 	// fmt.printf("Debug: Returning result: '%s'\n", result)
 	return result
+}
+
+show_check_warning :: proc() -> string {
+	return fmt.tprintf(
+		"%s%s[WARNING] [WARNING] [WARNING] [WARNING]%s",
+		BOLD,
+		types.Message_Color,
+		RESET,
+	)
 }

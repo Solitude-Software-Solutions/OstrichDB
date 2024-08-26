@@ -19,6 +19,7 @@ import "core:strings"
 main :: proc() {
 	OST_CREATE_CACHE_FILE()
 	OST_CREAT_BACKUP_DIR()
+	os.make_directory(const.OST_QUARANTINE_PATH)
 	os.make_directory(const.OST_COLLECTION_PATH)
 	metadata.OST_CREATE_FFVF()
 	test := metadata.OST_GET_FILE_FORMAT_VERSION()
@@ -73,7 +74,7 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading cluster file", #procedure)
+		utils.log_err("Error reading collection file", #procedure)
 		return IDs, idsStringArray
 	}
 
@@ -109,7 +110,7 @@ OST_GET_CLUSER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading cluster file", #procedure)
+		utils.log_err("Error reading collection file", #procedure)
 		return 0
 	}
 
@@ -397,7 +398,7 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		fmt.println("Error reading cluster file")
+		fmt.println("Error reading collection file")
 		return false
 	}
 	defer delete(data)
@@ -456,7 +457,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 		utils.throw_err(
 			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
 		)
-		utils.log_err("Error reading cluster file", #procedure)
+		utils.log_err("Error reading collection file", #procedure)
 		return false
 	}
 	defer delete(data)
@@ -809,4 +810,57 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 
 	}
 	return 0
+}
+
+//scans each cluster in a collection file and ensures its proper structure.
+//Want this to return 0 and false if the scan was successful AND no invalid structures were found
+OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStructureFound: bool) {
+	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+
+	data, read_success := os.read_entire_file(file)
+	if !read_success {
+		return 1, true
+	}
+	defer delete(data)
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	in_cluster := false
+	bracket_count := 0
+	cluster_start_line := 0
+
+	for line, line_number in lines {
+		trimmed := strings.trim_space(line)
+
+		if trimmed == "{" {
+			if in_cluster {
+				return 0, true
+			}
+			in_cluster = true
+			bracket_count += 1
+			cluster_start_line = line_number
+		} else if trimmed == "}," {
+			if !in_cluster {
+				return 0, true
+			}
+			bracket_count -= 1
+			if bracket_count == 0 {
+				in_cluster = false
+			}
+		} else if trimmed == "}" {
+			return 0, true
+		}
+	}
+
+	if in_cluster {
+		return 0, true
+	}
+
+	if bracket_count != 0 {
+		return 0, true
+	}
+
+	return 0, false
 }
