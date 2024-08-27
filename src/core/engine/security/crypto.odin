@@ -82,7 +82,11 @@ OST_GENERATE_SALT :: proc() -> []u8 {
 OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing: bool) -> []u8 {
 	//generate the salt
 	salt: []u8 = OST_GENERATE_SALT()
-	types.user.salt = salt //store the salt into the user struct
+	if (isInitializing == true) {
+		types.user.salt = salt //store the salt into the user struct
+	} else if (isInitializing == false) {
+		types.new_user.salt = salt //store the salt into the user struct
+	}
 	hashedPassword: []u8
 
 
@@ -110,7 +114,7 @@ OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing:
 OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []u8 {
 	x := choice
 	hashedPassword: []u8
-	switch (x) 
+	switch (x)
 	{
 	case 1:
 		for i := 0; i < 1; i += 1 {

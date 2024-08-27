@@ -57,8 +57,8 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR_FILE()
 	data.OST_CREATE_COLLECTION("_secure_", 1)
-	OST_GEN_USER_ID() //todo dont seem to  acutally be storing a user ID after its generated
-	types.user.role = types.User_Role.ADMIN
+	OST_GEN_USER_ID()
+	types.user.role.Value = "admin"
 	fmt.printfln("Welcome to the Ostrich Database Engine")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
@@ -75,13 +75,13 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
 	types.user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
 
-	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "role", "admin")
 	OST_STORE_USER_CREDS(
 		types.user.username.Value,
 		types.user.user_id,
 		"user_name",
 		types.user.username.Value,
 	)
+	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "role", "admin")
 
 
 	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "salt", saltAsString)
@@ -95,7 +95,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	)
 	configToggled := config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
 
-	switch (configToggled) 
+	switch (configToggled)
 	{
 	case true:
 		types.USER_SIGNIN_STATUS = true
@@ -254,7 +254,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword 
+	switch strongPassword
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
@@ -417,7 +417,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p)) 
+	switch (len(p))
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -454,7 +454,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true) 
+	switch (true)
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -473,14 +473,13 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 }
 
 // creates a new user account post engine initialization
+//also determines if the currently logged in user has permission to create a new user account
 OST_CREATE_NEW_USER :: proc() -> int {
 	buf: [1024]byte
-	foo: string
+	role: string
 	types.new_user.user_id = OST_GEN_USER_ID()
-	//todo:if the curernt logged in user is not a user account then the new account will be a guest account
-	//todo:if the current account is a guest account they cannot create a new account
 
-	if types.user.role == types.User_Role.ADMIN {
+	if types.user.role.Value == "admin" {
 		fmt.println("Please enter role you would like to assign the new account")
 		fmt.printf("1. Admin\n2. User\n3. Guest\n")
 		n, inputSuccess := os.read(os.stdin, buf[:])
@@ -490,30 +489,31 @@ OST_CREATE_NEW_USER :: proc() -> int {
 		}
 		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
 		if inputToCap == "1" || inputToCap == "ADMIN" {
-			types.new_user.role = types.User_Role.ADMIN
-			foo = "admin"
+			types.new_user.role.Value = "admin"
 		} else if inputToCap == "2" || inputToCap == "USER" {
-			types.new_user.role = types.User_Role.USER
-			foo = "user"
+			types.new_user.role.Value = "user"
+
 		} else if inputToCap == "3" || inputToCap == "GUEST" {
-			types.new_user.role = types.User_Role.GUEST
-			foo = "guest"
+			types.new_user.role.Value = "guest"
 		} else {
 			fmt.printfln("Invalid role entered")
 			return 1
 		}
+	} else if (types.user.role.Value == "user") { 	//users can only create guest accounts
+		types.new_user.role.Value = "guest"
+	} else {
+		fmt.println("You do not have the required permissions to create a new account")
+		fmt.printfln("To create a new account you must be logged in as an admin or user account")
+		return 1
 	}
 	newUserName := OST_GET_USERNAME(false)
-	switch (types.new_user.role) 
-	{
-	case .ADMIN:
-		fmt.printfln("Please enter a password for the new admin account")
-	case .USER:
-		fmt.printfln("Please enter a password for the new user account")
-	case .GUEST:
-		fmt.printfln("Please enter a password for the new guest account")
-	}
-
+	if types.new_user.role.Value == "admin" {
+        fmt.printfln("Please enter a username for the new admin account")
+    } else if types.new_user.role.Value == "user" {
+        fmt.printfln("Please enter a username for the new user account")
+    } else {
+        fmt.printfln("Please enter a username for the new guest account")
+    }
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
@@ -525,13 +525,13 @@ OST_CREATE_NEW_USER :: proc() -> int {
 	algoMethodAsString := strconv.itoa(buf[:], types.new_user.store_method)
 	types.new_user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
 
-	OST_STORE_USER_CREDS(types.new_user.username.Value, types.user.user_id, "role", foo) // gtg
 	OST_STORE_USER_CREDS(
 		types.new_user.username.Value,
 		types.new_user.user_id,
 		"user_name",
 		types.new_user.username.Value,
 	)
+	OST_STORE_USER_CREDS(types.new_user.username.Value, types.new_user.user_id, "role", types.new_user.role.Value) // gtg
 
 	OST_STORE_USER_CREDS(
 		types.new_user.username.Value,

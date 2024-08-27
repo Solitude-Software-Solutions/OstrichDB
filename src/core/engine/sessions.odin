@@ -56,13 +56,14 @@ OST_HANDLE_MAX_SESSION_DURATION_MET :: proc() {
 	)
 }
 
-
+//todo this is the same exact proc as OST_USER_LOGOUT() in auth.odin
+//this is not even being used anywhere in the codebase
 OST_USER_SESSION_LOGOUT :: proc(param: int) -> bool {
 	loggedOut := config.OST_TOGGLE_CONFIG(const.configThree)
 
 	switch loggedOut {
 	case true:
-		switch (param) 
+		switch (param)
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false

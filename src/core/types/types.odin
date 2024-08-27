@@ -107,16 +107,7 @@ Type: User_Role
 Desc: Used to define the roles that a user can have within the Ostrich Database
       Roles are used to define the permissions that a user has within the database
 */
-User_Role :: enum {
-	ADMIN,
-	USER,
-	GUEST,
-}
-UserRoleType := [User_Role]string {
-	.ADMIN = "admin",
-	.USER  = "user",
-	.GUEST = "guest",
-}
+
 
 /*
 Type: User_Credential
@@ -139,7 +130,7 @@ user: User
 new_user: User //used for creating new accounts post initialization
 User :: struct {
 	user_id:        i64, //randomly generated user id
-	role:           User_Role,
+	role:           User_Credential,
 	username:       User_Credential,
 	password:       User_Credential, //will never be stored as plain text
 
