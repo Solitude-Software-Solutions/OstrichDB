@@ -61,7 +61,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		utils.log_runtime_event("Used LOGOUT command", "User requested to logout.")
 		fmt.printfln("Logging out...")
 		OST_USER_LOGOUT(0)
-		break
+		return 0
+
 	case const.UNFOCUS:
 		utils.log_runtime_event(
 			"Improperly used UNFOCUS command",
@@ -351,7 +352,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"User chose to create a new user account",
 			)
 			if len(cmd.o_token) >= 0 {
-				security.OST_CREATE_NEW_USER()
+				result:=security.OST_CREATE_NEW_USER()
+				return result
 			}
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Target> <Targets_name>")
@@ -506,7 +508,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
 				collection_name := cmd.o_token[1]
 				cluster := cmd.o_token[0]
-				clusterID := data.OST_GET_CLUSER_ID(collection_name, cluster)
+				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
 				switch (checks)
 				{
@@ -757,7 +759,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		)
 		utils.log_runtime_event("Invalid command", "User entered an invalid command.")
 	}
-	return 0
+	return 1
 }
 // =======================<FOCUS MODE>=======================//
 // =======================<FOCUS MODE>=======================//

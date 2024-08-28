@@ -99,6 +99,7 @@ Engine :: struct {
 		Error:          Engine_Error,
 		StatusOfTask:   Task_Flag,
 	},
+	State: int //running or stopped 1 is running 0 is stopped
 }
 
 //=================================================/src/core/security/=================================================//
@@ -207,3 +208,4 @@ schema: Colletion_File_Schema
 Colletion_File_Schema :: struct {
 	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
 }
+

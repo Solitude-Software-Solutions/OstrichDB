@@ -31,6 +31,15 @@ main :: proc() {
 	} else {
 		types.engine.Initialized = false
 	}
-	engine.main()
+
+	for {
+		result := engine.run()
+		if result == 0
+		{
+		main()
+		break
+		}
+	}
+
 
 }
