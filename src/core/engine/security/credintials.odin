@@ -314,14 +314,14 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 			types.user.password.Value = strings.clone(p)
 			types.user.hashedPassword = OST_HASH_PASSWORD(p, 0, false, true)
 
-			encodedPassword, str := OST_ENCODE_HASHED_PASSWORD(types.user.hashedPassword)
+			encodedPassword := OST_ENCODE_HASHED_PASSWORD(types.user.hashedPassword)
 			types.user.hashedPassword = encodedPassword
 		} else if isInitializing == false {
 			types.new_user.password.Length = len(p)
 			types.new_user.password.Value = strings.clone(p)
 			types.new_user.hashedPassword = OST_HASH_PASSWORD(p, 0, false, false)
 
-			encodedPassword, str := OST_ENCODE_HASHED_PASSWORD(types.new_user.hashedPassword)
+			encodedPassword := OST_ENCODE_HASHED_PASSWORD(types.new_user.hashedPassword)
 			types.new_user.hashedPassword = encodedPassword
 			return types.new_user.password.Value
 		}
@@ -500,6 +500,7 @@ OST_CREATE_NEW_USER :: proc() -> int {
 			fmt.printfln("Error reading input")
 			return 1
 		}
+
 		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
 		if inputToCap == "1" || inputToCap == "ADMIN" {
 			types.new_user.role.Value = "admin"
@@ -520,11 +521,22 @@ OST_CREATE_NEW_USER :: proc() -> int {
 		return 1
 	}
 	newUserName := OST_GET_USERNAME(false)
+
+	isBannedUsername:= OST_CHECK_FOR_BANNED_USERNAME(newUserName)
+	if isBannedUsername == true {
+            fmt.printfln("Username is banned. Please enter a different username")
+            OST_CREATE_NEW_USER()
+        }
 	newColName := fmt.tprintf("secure_%s", newUserName)
 	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
 
 	if exists {
-		fmt.printfln("There is already a user with the name: %s%s%s\nPlease try again.", utils.BOLD, newUserName, utils.RESET)
+		fmt.printfln(
+			"There is already a user with the name: %s%s%s\nPlease try again.",
+			utils.BOLD,
+			newUserName,
+			utils.RESET,
+		)
 		return 1
 	}
 	data.OST_CREATE_COLLECTION(newColName, 1) //create a new secure collection for each new user
@@ -561,7 +573,7 @@ OST_CREATE_NEW_USER :: proc() -> int {
 		types.new_user.user_id,
 		"role",
 		types.new_user.role.Value,
-	) // gtg
+	)
 
 	OST_STORE_USER_CREDS(
 		colFileName,
@@ -585,4 +597,14 @@ OST_CREATE_NEW_USER :: proc() -> int {
 		algoMethodAsString,
 	)
 	return 0
+}
+
+
+OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
+	for i := 0; i < len(const.BannedUserNames); i += 1 {
+		if strings.contains(un, const.BannedUserNames[0]) {
+		    return true
+		}
+	}
+	return false
 }

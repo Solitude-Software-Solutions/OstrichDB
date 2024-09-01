@@ -100,12 +100,10 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
 	newHash := security.OST_HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
-	encodedHash, str := security.OST_ENCODE_HASHED_PASSWORD(newHash)
+	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
 	postMesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================
 	authPassed := OST_CROSS_CHECK_MESH(preMesh, postMesh)
-	fmt.printfln("preMesh: %s", preMesh)
-	fmt.printfln("postMesh: %s", postMesh)
 	switch authPassed {
 	case true:
 		OST_START_SESSION_TIMER()
@@ -144,7 +142,7 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 	return false
 }
 
-OST_USER_LOGOUT :: proc(param: int) -> int {
+OST_USER_LOGOUT :: proc(param: int) {
 	loggedOut := config.OST_TOGGLE_CONFIG(const.configThree)
 
 	switch loggedOut {
@@ -155,8 +153,8 @@ OST_USER_LOGOUT :: proc(param: int) -> int {
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 			OST_STOP_SESSION_TIMER()
-			types.engine.State = 0
-			return types.engine.State
+			libc.system("./main.bin")
+
 		case 1:
 			//only used when logging out AND THEN exiting.
 			types.USER_SIGNIN_STATUS = false
@@ -170,5 +168,4 @@ OST_USER_LOGOUT :: proc(param: int) -> int {
 		fmt.printfln("You have NOT been logged out.")
 		break
 	}
-	return types.engine.State
 }

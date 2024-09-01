@@ -17,7 +17,7 @@ import "core:time"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-run :: proc() -> (state: int) {
+run :: proc()  {
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
 	switch (configFound)
 	{
@@ -34,11 +34,9 @@ run :: proc() -> (state: int) {
             fmt.println("OstrichDB Engine started successfully")
             break
         case 0:
-        types.engine.State = 0 //off
 
         }
 	}
-	return types.engine.State
 }
 
 

@@ -78,23 +78,14 @@ OST_GENERATE_SALT :: proc() -> []u8 {
 	return saltSlice
 }
 
-
-OST_ENCODE_SALT :: proc(salt: []u8) -> []u8 {
-   	encodedSalt := hex.encode(salt)
-	// str := transmute(string)encodedHash
-	return encodedSalt
-
-}
-
 // p - password, hMethod - store/hashing method, isAuth - is the user authenticating or creating an account, isInitializing - is this being done pre or post engine initialization
 OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing: bool) -> []u8 {
 	//generate the salt
 	salt: []u8 = OST_GENERATE_SALT()
-	encodedSalt := OST_ENCODE_SALT(salt)
 	if (isInitializing == true) {
-		types.user.salt = encodedSalt //store the salt into the user struct
+		types.user.salt = salt //store the salt into the user struct
 	} else if (isInitializing == false) {
-		types.new_user.salt = encodedSalt //store the salt into the user struct
+		types.new_user.salt = salt //store the salt into the user struct
 	}
 	hashedPassword: []u8
 
@@ -189,8 +180,8 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 }
 
 // hp - hashed password
-OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> (encoded:[]u8, passwordStr:string) {
+OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 	encodedHash := hex.encode(hp)
 	str := transmute(string)encodedHash
-	return encodedHash, str
+	return encodedHash
 }
