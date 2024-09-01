@@ -31,6 +31,7 @@ main :: proc() {
 	} else {
 		types.engine.Initialized = false
 	}
-	engine.main()
+
+engine.run()
 
 }

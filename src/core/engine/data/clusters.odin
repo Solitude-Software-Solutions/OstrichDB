@@ -100,7 +100,7 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 
 
 //used to return the value of a single cluster id of the passed in cluster
-OST_GET_CLUSER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
+OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 	fullPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
 	data, readSuccess := os.read_entire_file(fullPath)
 	if !readSuccess {
@@ -279,7 +279,6 @@ Creates and appends a new cluster to the specified .ost file
 OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: string) -> int {
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
 	if clusterExists == true {
-		// utils.throw_utilty_error(1, "Cluster already exists in file", "OST_CREATE_CLUSTER_BLOCK")
 		utils.log_err("Cluster already exists in file", #procedure)
 		return 1
 	}
@@ -338,12 +337,13 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
-	fmt.printfln(
-		"Succesfully created account: %s%s%s",
-		utils.BOLD,
-		types.user.username.Value,
-		utils.RESET,
-	)
+
+	// fmt.printfln(
+	// 	"Succesfully created account: %s%s%s",
+	// 	utils.BOLD,
+	// 	types.user.username.Value,
+	// 	utils.RESET,
+	// )
 	fmt.println("Please re-launch OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)

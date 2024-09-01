@@ -43,15 +43,19 @@ Params: fileName - the desired file(cluster) name
 OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType) 
+	switch (collectionType)
 	{
 	case 0:
 		//standard cluster file
-		pathAndName := strings.concatenate([]string{const.OST_COLLECTION_PATH, fileName})
 		if OST_PREFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
 			return false
 		}
-		pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
+		pathNameExtension := fmt.tprintf(
+			"%s%s%s",
+			const.OST_COLLECTION_PATH,
+			fileName,
+			const.OST_FILE_EXTENSION,
+		)
 		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o666)
 		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
 		if createSuccess != 0 {
@@ -61,7 +65,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 				#procedure,
 			)
 			utils.throw_err(error1)
-			utils.log_err("Error creating .ost file", #procedure)
+			utils.log_err("Error creating new collection file", #procedure)
 			return false
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
@@ -69,12 +73,16 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		break
 	case 1:
 		//secure file
-		pathAndName := strings.concatenate([]string{const.OST_SECURE_CLUSTER_PATH, fileName})
 		if OST_PREFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
 			return false
 		}
-		pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
-		createFile, createSuccess := os.open("../bin/secure/_secure_.ost", os.O_CREATE, 0o644)
+		pathNameExtension := fmt.tprintf(
+			"%s%s%s",
+			const.OST_SECURE_COLLECTION_PATH,
+			fileName,
+			const.OST_FILE_EXTENSION,
+		)
+		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
@@ -128,7 +136,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
 	cap := strings.to_upper(confirmation)
 
-	switch (cap) 
+	switch (cap)
 	{
 	case const.YES:
 		// /delete the file
@@ -323,9 +331,9 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 			len(collectionNames),
 		)}
 
-    // TODO: consider the clusters and records in the size as well, rather than just collections
-    if len(collectionNames) > const.MAX_COLLECTION_TO_DISPLAY {
-        fmt.printf("There is %d collections to display, display all? (y/N) ", len(collectionNames))
+	// TODO: consider the clusters and records in the size as well, rather than just collections
+	if len(collectionNames) > const.MAX_COLLECTION_TO_DISPLAY {
+		fmt.printf("There is %d collections to display, display all? (y/N) ", len(collectionNames))
 		buf: [1024]byte
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
@@ -336,10 +344,10 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 			)
 			utils.throw_err(error)
 		}
-        if buf[0] != 'y' {
-            return collectionNames
-        }
-    }
+		if buf[0] != 'y' {
+			return collectionNames
+		}
+	}
 
 	for file in foundFiles {
 		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
@@ -354,24 +362,16 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 }
 
 
-OST_SCAN_COLLECTION_BODY_FORMAT :: proc(fn: string) -> (success: int, validFormat: bool) {
-	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (found: bool, name: string) {
+	secDir, e := os.open(const.OST_SECURE_COLLECTION_PATH)
+	files, readDirSuccess := os.read_dir(secDir, -1)
+	found= false
+	for file in files {
+		if strings.contains(file.name, fn) {
+			found = true
+			return found, file.name
+		}
 
-	data, readSuccess := os.read_entire_file(file)
-	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading collection file", #procedure)
-		return 1, false
 	}
-
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
-
-	return 0, true
+	return found, ""
 }

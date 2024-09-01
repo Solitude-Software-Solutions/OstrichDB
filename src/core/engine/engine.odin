@@ -17,20 +17,26 @@ import "core:time"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-main :: proc() {
+run :: proc()  {
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch (configFound) 
+	switch (configFound)
 	{
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
 		config.OST_CREATE_CONFIG_FILE()
-		main()
+		run()
 	case:
 		fmt.println("Starting OstrichDB")
-		OST_START_ENGINE()
+		result:= OST_START_ENGINE()
+		switch (result)
+        {
+        case 1:
+            fmt.println("OstrichDB Engine started successfully")
+            break
+        case 0:
+
+        }
 	}
-
-
 }
 
 
@@ -58,7 +64,7 @@ OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
 	OST_INIT_INEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
 
-	switch (types.engine.Initialized) 
+	switch (types.engine.Initialized)
 	{
 	case false:
 		config.main()
@@ -67,13 +73,13 @@ OST_START_ENGINE :: proc() -> int {
 
 	case true:
 		userSignedIn := OST_RUN_SIGNIN()
-		switch (userSignedIn) 
+		switch (userSignedIn)
 		{
 		case true:
 			OST_START_SESSION_TIMER()
 			utils.log_runtime_event("User Signed In", "User successfully logged into OstrichDB")
-			OST_ENGINE_COMMAND_LINE()
-			break
+			result:= OST_ENGINE_COMMAND_LINE()
+			return result
 
 		case false:
 			OST_START_ENGINE()
@@ -84,7 +90,7 @@ OST_START_ENGINE :: proc() -> int {
 }
 
 
-OST_ENGINE_COMMAND_LINE :: proc() {
+OST_ENGINE_COMMAND_LINE :: proc() ->  int {
 	fmt.println("Welcome to the OstrichDB Command Line")
 	utils.log_runtime_event("Entered command line", "")
 	for {
@@ -106,12 +112,16 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
-		OST_EXECUTE_COMMAND(&cmd)
-
+		result :=OST_EXECUTE_COMMAND(&cmd)
+		switch (result)
+        {
+        case 0:
+            return 0
+        }
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := OST_GET_SESSION_DURATION()
 		maxDurationMet := OST_CHECK_SESSION_DURATION(sessionDuration)
-		switch (maxDurationMet) 
+		switch (maxDurationMet)
 		{
 		case false:
 			break
@@ -119,7 +129,7 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 			OST_HANDLE_MAX_SESSION_DURATION_MET()
 		}
 
-		switch (types.focus.flag) 
+		switch (types.focus.flag)
 		{
 		case true:
 			fmt.printfln("Focus mode is on")
@@ -131,7 +141,6 @@ OST_ENGINE_COMMAND_LINE :: proc() {
 	}
 
 }
-
 
 OST_FOCUSED_COMMAND_LINE :: proc() {
 	fmt.println("NOW USING FOCUS MODE")

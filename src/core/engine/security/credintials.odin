@@ -2,6 +2,7 @@ package security
 
 import "../../../utils"
 import "../../config"
+import "../../const"
 import "../../types"
 import "../data"
 import "../data/metadata"
@@ -37,28 +38,14 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 		utils.throw_err(error1)
 	}
 
-	//use os.open to create a file in the secure directory
-	file, createSuccess := os.open("../bin/secure/_secure_.ost", 0o666)
-	defer os.close(file)
-	if createSuccess != 0 {
-		error2 := utils.new_err(
-			.CANNOT_CREATE_FILE,
-			utils.get_err_msg(.CANNOT_CREATE_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		return 1
-	}
-
 	return 0
 }
 
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR_FILE()
-	data.OST_CREATE_COLLECTION("_secure_", 1)
+
 	OST_GEN_USER_ID()
-	types.user.role.Value = "admin"
 	fmt.printfln("Welcome to the Ostrich Database Engine")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
@@ -75,19 +62,41 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
 	types.user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
 
+	inituserName = fmt.tprintf("secure_%s", inituserName)
+	data.OST_CREATE_COLLECTION(inituserName, 1)
 	OST_STORE_USER_CREDS(
+		inituserName,
 		types.user.username.Value,
 		types.user.user_id,
 		"user_name",
 		types.user.username.Value,
 	)
-	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "role", "admin")
-
-
-	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "salt", saltAsString)
-	hashAsStr := transmute(string)types.user.hashedPassword
-	OST_STORE_USER_CREDS(types.user.username.Value, types.user.user_id, "hash", hashAsStr)
 	OST_STORE_USER_CREDS(
+		inituserName,
+		types.user.username.Value,
+		types.user.user_id,
+		"role",
+		"admin",
+	)
+
+
+	OST_STORE_USER_CREDS(
+		inituserName,
+		types.user.username.Value,
+		types.user.user_id,
+		"salt",
+		saltAsString,
+	)
+	hashAsStr := transmute(string)types.user.hashedPassword
+	OST_STORE_USER_CREDS(
+		inituserName,
+		types.user.username.Value,
+		types.user.user_id,
+		"hash",
+		hashAsStr,
+	)
+	OST_STORE_USER_CREDS(
+		inituserName,
 		types.user.username.Value,
 		types.user.user_id,
 		"store_method",
@@ -275,7 +284,6 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 
 	fmt.printfln("Re-enter the password:")
 	n, inputSuccess := os.read(os.stdin, buf[:])
-	libc.system("stty -echo")
 	confirmation: string
 
 	if inputSuccess != 0 {
@@ -318,13 +326,19 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 			return types.new_user.password.Value
 		}
 	}
+	libc.system("stty echo")
 	return types.user.password.Value
 }
 
 //store the entered and generated user credentials in the secure cluster
 // cn- cluster name, id- cluster id, dn- data name, d- data
-OST_STORE_USER_CREDS :: proc(cn: string, id: i64, dn: string, d: string) -> int {
-	secureFilePath := "../bin/secure/_secure_.ost"
+OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: string) -> int {
+	secureFilePath := fmt.tprintf(
+		"%s%s%s",
+		const.OST_SECURE_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
 	cn := cn
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
@@ -478,7 +492,6 @@ OST_CREATE_NEW_USER :: proc() -> int {
 	buf: [1024]byte
 	role: string
 	types.new_user.user_id = OST_GEN_USER_ID()
-
 	if types.user.role.Value == "admin" {
 		fmt.println("Please enter role you would like to assign the new account")
 		fmt.printf("1. Admin\n2. User\n3. Guest\n")
@@ -487,6 +500,7 @@ OST_CREATE_NEW_USER :: proc() -> int {
 			fmt.printfln("Error reading input")
 			return 1
 		}
+
 		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
 		if inputToCap == "1" || inputToCap == "ADMIN" {
 			types.new_user.role.Value = "admin"
@@ -507,13 +521,34 @@ OST_CREATE_NEW_USER :: proc() -> int {
 		return 1
 	}
 	newUserName := OST_GET_USERNAME(false)
+
+	isBannedUsername:= OST_CHECK_FOR_BANNED_USERNAME(newUserName)
+	if isBannedUsername == true {
+            fmt.printfln("Username is banned. Please enter a different username")
+            OST_CREATE_NEW_USER()
+        }
+	newColName := fmt.tprintf("secure_%s", newUserName)
+	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
+
+	if exists {
+		fmt.printfln(
+			"There is already a user with the name: %s%s%s\nPlease try again.",
+			utils.BOLD,
+			newUserName,
+			utils.RESET,
+		)
+		return 1
+	}
+	data.OST_CREATE_COLLECTION(newColName, 1) //create a new secure collection for each new user
+
+
 	if types.new_user.role.Value == "admin" {
-        fmt.printfln("Please enter a username for the new admin account")
-    } else if types.new_user.role.Value == "user" {
-        fmt.printfln("Please enter a username for the new user account")
-    } else {
-        fmt.printfln("Please enter a username for the new guest account")
-    }
+		fmt.printfln("Please enter a username for the new admin account")
+	} else if types.new_user.role.Value == "user" {
+		fmt.printfln("Please enter a username for the new user account")
+	} else {
+		fmt.printfln("Please enter a username for the new guest account")
+	}
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
@@ -524,32 +559,52 @@ OST_CREATE_NEW_USER :: proc() -> int {
 	hashAsString := string(types.new_user.hashedPassword)
 	algoMethodAsString := strconv.itoa(buf[:], types.new_user.store_method)
 	types.new_user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
-
+	colFileName := fmt.tprintf("secure_%s", newUserName)
 	OST_STORE_USER_CREDS(
+		colFileName,
 		types.new_user.username.Value,
 		types.new_user.user_id,
 		"user_name",
 		types.new_user.username.Value,
 	)
-	OST_STORE_USER_CREDS(types.new_user.username.Value, types.new_user.user_id, "role", types.new_user.role.Value) // gtg
+	OST_STORE_USER_CREDS(
+		colFileName,
+		types.new_user.username.Value,
+		types.new_user.user_id,
+		"role",
+		types.new_user.role.Value,
+	)
 
 	OST_STORE_USER_CREDS(
+		colFileName,
 		types.new_user.username.Value,
 		types.new_user.user_id,
 		"salt",
 		saltAsString,
 	)
 	OST_STORE_USER_CREDS(
+		colFileName,
 		types.new_user.username.Value,
 		types.new_user.user_id,
 		"hash",
 		hashAsString,
 	)
 	OST_STORE_USER_CREDS(
+		colFileName,
 		types.new_user.username.Value,
 		types.new_user.user_id,
 		"store_method",
 		algoMethodAsString,
 	)
 	return 0
+}
+
+
+OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
+	for i := 0; i < len(const.BannedUserNames); i += 1 {
+		if strings.contains(un, const.BannedUserNames[0]) {
+		    return true
+		}
+	}
+	return false
 }
