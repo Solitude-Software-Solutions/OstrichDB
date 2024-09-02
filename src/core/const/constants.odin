@@ -29,7 +29,7 @@ configFour :: "OST_HELP"
 
 //ATOM TOKEN CONSTANTS
 VERSION :: "VERSION"
-HELP :: "HELP"
+HELP :: "HELP" //help can also be a multi token command.
 EXIT :: "EXIT"
 LOGOUT :: "LOGOUT"
 CLEAR :: "CLEAR"
@@ -39,8 +39,9 @@ HISTORY :: "HISTORY"
 NEW :: "NEW"
 BACKUP :: "BACKUP"
 ERASE :: "ERASE"
-FETCH :: "FETCH"
 RENAME :: "RENAME"
+FETCH :: "FETCH"
+SET :: "SET"
 FOCUS :: "FOCUS"
 UNFOCUS :: "UNFOCUS"
 //Target Tokens
@@ -49,19 +50,27 @@ CLUSTER :: "CLUSTER"
 RECORD :: "RECORD"
 USER :: "USER"
 ALL :: "ALL"
+CONFIG :: "CONFIG" //special target exclusive to SET command
 //Modifier Tokens
 AND :: "AND"
 OF_TYPE :: "OF_TYPE"
 TYPE :: "TYPE"
-ALL_OF :: "ALL OF"
+ALL_OF :: "ALL_OF"
 TO :: "TO"
 //Scope Tokens
 WITHIN :: "WITHIN"
 IN :: "IN"
 //Type Tokens
 STRING :: "STRING"
+STR:: "STR"
+//------------
+INTEGER :: "INTEGER"
 INT :: "INT"
+//------------
 FLOAT :: "FLOAT"
+FLT :: "FLT"
+//------------
+BOOLEAN :: "BOOLEAN"
 BOOL :: "BOOL"
 //SPECIAL HELP TOKENS
 ATOMS :: "ATOMS"
@@ -72,7 +81,7 @@ NO :: "NO"
 
 //MISC CONSTANTS
 ost_carrot :: "OST>>>"
-VALID_RECORD_TYPES: []string : {STRING, INT, FLOAT, BOOL}
+VALID_RECORD_TYPES: []string : {STRING, INTEGER, FLOAT, BOOLEAN, STR, INT, FLT, BOOL}
 MAX_SESSION_TIME: time.Duration : 259200000000000000 //3 days in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print
 // MAX_SESSION_TIME: time.Duration : 60000000000 //1 minute in nano seconds only used for testing
