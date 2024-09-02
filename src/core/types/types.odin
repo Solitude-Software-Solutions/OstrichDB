@@ -32,7 +32,7 @@ Usage Locations: records.odin
 Record :: struct {
 	name: string,
 	type: string,
-	data: string,
+	value: string,
 }
 
 
