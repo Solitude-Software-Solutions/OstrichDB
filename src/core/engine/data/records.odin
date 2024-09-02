@@ -215,20 +215,8 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rType: string, rn: string)
 	return ""
 }
 
-//here is where the type that the user enters in their command is passed
-OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
-	for type in const.VALID_RECORD_TYPES {
-		if rType == type {
-			record.type = rType
-			return record.type, 0
-		}
-	}
 
-	fmt.printfln("Invalid record type %s", rType)
-	return record.type, 1
-}
-
-
+//set the record name, if the name is too long, return an error
 OST_SET_RECORD_NAME :: proc(rn: string) -> (string, int) {
 	if len(rn) > 256 {
 		fmt.println("The Entered Record Name is too long. Please try again.")
@@ -239,7 +227,230 @@ OST_SET_RECORD_NAME :: proc(rn: string) -> (string, int) {
 	return record.name, 0
 }
 
+//here is where the type that the user enters in their command is passed
+OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
+	for type in const.VALID_RECORD_TYPES {
+		if rType == type {
+			//evaluate the shorthand type name and assign the full type name to the record
+			switch (rType)
+			{
+			case const.STR:
+				record.type = const.STRING
+				break
+			case const.INT:
+				record.type = const.INTEGER
+				break
+			case const.FLT:
+				record.type = const.FLOAT
+				break
+			case const.BOOL:
+				record.type = const.BOOLEAN
+				break
+			case:
+				record.type = rType
+				break
+			}
+			return record.type, 0
+		}
+	}
+	fmt.printfln("Invalid record type %s", rType)
+	return record.type, 1
+}
 
+//takes the input value from the SET command and assigns it to the record
+OST_SET_RECORD_VALUE :: proc(rn: string, rValue: string) -> (success: bool) {
+	success = true
+	buf := make([]byte, 1024)
+	defer delete(buf)
+	fmt.printfln("Getting value %s", rValue)
+	fmt.println("Select the collection that contains the record you'd like to SET the value of.")
+
+	n, colNameSuccess := os.read(os.stdin, buf)
+	if colNameSuccess != 0 {
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		utils.throw_err(error1)
+		success = false
+		return
+	}
+
+	collectionName := strings.trim_right(string(buf[:n]), "\r\n")
+	collectionNameUpper := strings.to_upper(collectionName)
+
+	collectionFile := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collectionNameUpper,
+		const.OST_FILE_EXTENSION,
+	)
+
+	data, readSuccess := os.read_entire_file(collectionFile)
+	if !readSuccess {
+		fmt.println("Failed to read collection file:", collectionFile)
+		success = false
+		return
+	}
+
+	// look for the record in the file
+	record, type, found := OST_FIND_RECORD(data, rn)
+	if !found {
+		fmt.println("Record not found:", collectionName)
+		success = false
+		return
+	}
+
+
+	setType, setSuccess := OST_SET_RECORD_TYPE(type)
+	fmt.printfln("Set type: %s", setType)
+
+	value_any, ok := OST_VALIDATE_AND_CONVERT_RECORD_VALUE(rValue, setType)
+
+	if !ok {
+		fmt.printfln("Invalid value for record type %s", record.type)
+		success = false
+		return
+	}
+
+	value, is_bool := value_any.(bool)
+	fmt.printfln("After type assertion - value: %v (%T), is_bool: %v", value, value, is_bool)
+
+	// Update the record in the file
+	success = OST_UPDATE_RECORD_IN_FILE(collectionFile, rn, value_any)
+	if success {
+		fmt.printfln("Successfully set %s to %v", rn, value)
+	} else {
+		fmt.printfln("Failed to update record %s in file", rn)
+	}
+
+	return
+}
+
+//reads over a collection file looking for the passed in record and returns the record type and the record data
+OST_FIND_RECORD :: proc(data: []byte, recordName: string) -> (types.Record, string, bool) {
+	lines := strings.split(string(data), "\n")
+	for line in lines {
+		if strings.contains(line, recordName) {
+			parts := strings.split(line, ":")
+			if len(parts) >= 2 {
+				record := types.Record {
+					name = strings.trim_space(parts[0]),
+					type = strings.trim_space(parts[1]),
+				}
+				return record, record.type, true
+			}
+		}
+	}
+	return types.Record{}, "", false
+}
+
+//reads over a collection file looking for the passed in record and returns the record type
+OST_GET_RECORD_TYPE :: proc(
+	collection_name: string,
+	record_name: string,
+) -> (
+	recordType: string,
+	success: bool,
+) {
+	success = false
+	recordType = ""
+
+	collection_file := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		strings.to_upper(collection_name),
+		const.OST_FILE_EXTENSION,
+	)
+
+	data, read_success := os.read_entire_file(collection_file)
+	if !read_success {
+		fmt.println("Failed to read collection file:", collection_file)
+		return
+	}
+
+	lines := strings.split(string(data), "\n")
+
+	for line in lines {
+		line := strings.trim_space(line)
+		if strings.has_prefix(line, record_name) {
+			parts := strings.split(line, ":")
+			if len(parts) >= 2 {
+				recordType = strings.trim_space(parts[1])
+				success = true
+				return
+			}
+		}
+	}
+
+	fmt.println("Record not found:", record_name)
+	return
+}
+
+//updates the passed in records value in the collection file
+OST_UPDATE_RECORD_IN_FILE :: proc(filePath: string, recordName: string, newValue: any) -> bool {
+	data, success := os.read_entire_file(filePath)
+	if !success {
+		return false
+	}
+	lines := strings.split(string(data), "\n")
+	for line, i in lines {
+		if strings.contains(line, recordName) {
+			parts := strings.split(line, ":")
+			if len(parts) >= 2 {
+				lines[i] = fmt.tprintf("%s:%s:%v", parts[0], parts[1], newValue)
+				break
+			}
+		}
+	}
+
+	newContent := strings.join(lines, "\n")
+	return os.write_entire_file(filePath, transmute([]byte)newContent)
+}
+
+//checks that the entered record value is valid for that same records  data type, and converts it to the correct type
+OST_VALIDATE_AND_CONVERT_RECORD_VALUE :: proc(
+	rValue: string,
+	rType: string,
+) -> (
+	value: any,
+	ok: bool,
+) {
+	fmt.printfln("Validating - rValue: '%s', rType: '%s'", rValue, rType)
+
+	switch rType {
+	case const.BOOLEAN:
+		lower_str := strings.to_lower(strings.trim_space(rValue))
+		fmt.printfln("Lowercased and trimmed value: '%s'", lower_str)
+		if lower_str == "true" {
+			fmt.println("Setting value to true")
+			value = true
+			ok = true
+			return value, ok
+		} else if lower_str == "false" {
+			fmt.println("Setting value to false")
+			value = false
+			ok = true
+			return value, ok
+		} else {
+			fmt.println("Invalid boolean value")
+			value = nil
+			ok = false
+		}
+	case const.INTEGER:
+		if val, ok := strconv.parse_int(rValue); ok {
+			return val, true
+		}
+	case const.FLOAT:
+		if val, ok := strconv.parse_f64(rValue); ok {
+			return val, true
+		}
+	case const.STRING:
+		return rValue, true
+	}
+	return nil, false
+}
 //Present user with prompt on where to save the record
 OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string, clu: string) {
 	buf := make([]byte, 1024)
@@ -283,7 +494,7 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 	}
 
 	checks := OST_HANDLE_INTGRITY_CHECK_RESULT(collectionNameUpper)
-	switch (checks) 
+	switch (checks)
 	{
 	case -1:
 		return "", ""
@@ -436,7 +647,7 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 
 
 	checks := OST_HANDLE_INTGRITY_CHECK_RESULT(fn)
-	switch (checks) 
+	switch (checks)
 	{
 	case -1:
 		return -1
@@ -476,7 +687,7 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 		strings.to_upper(new),
 	)
 
-	switch rExists 
+	switch rExists
 	{
 	case true:
 		fmt.printfln(
@@ -568,9 +779,7 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 }
 
 OST_GET_DATABASE_TREE :: proc() {
-    OST_GET_ALL_COLLECTION_NAMES(true)
-    // output data size
-    fmt.printfln("Size of data: %dB", metadata.OST_GET_FS(const.OST_COLLECTION_PATH).size)
+	OST_GET_ALL_COLLECTION_NAMES(true)
+	// output data size
+	fmt.printfln("Size of data: %dB", metadata.OST_GET_FS(const.OST_COLLECTION_PATH).size)
 }
-
-

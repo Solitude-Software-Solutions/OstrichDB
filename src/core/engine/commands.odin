@@ -234,7 +234,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cluster_name,
 					collection_name,
 				)
-				// checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name) bugged
+				// checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name) todo this is pretty bugged
 				// switch (checks)
 				// {
 				// case -1:
@@ -352,7 +352,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"User chose to create a new user account",
 			)
 			if len(cmd.o_token) >= 0 {
-				result:=security.OST_CREATE_NEW_USER()
+				result := security.OST_CREATE_NEW_USER()
 				return result
 			}
 		case:
@@ -614,6 +614,35 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 		}
 		break
+	case const.SET:
+		//set can only be usedon RECORDS and CONFIGS
+		switch cmd.t_token
+		{
+		case const.RECORD:
+			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
+				record := cmd.o_token[0]
+				value : string
+				for key, val in cmd.m_token {
+					value = val
+				}
+				fmt.printfln("Setting record %s%s%s to %s%s%s", utils.BOLD, record, utils.RESET, utils.BOLD, value, utils.RESET)
+				data.OST_SET_RECORD_VALUE(record, value)
+
+			}
+			break
+		case const.CONFIG:
+			if len(cmd.o_token) >= 2 && const.TO in cmd.m_token {
+				config := cmd.o_token[0]
+				value := cmd.o_token[1]
+
+			}
+			break
+		case:
+			fmt.printfln(
+				"Invalid command structure. Correct Usage: SET <Target> <Targets_name> TO <value>",
+			)
+			fmt.printfln("The SET command can only be used on RECORDS and CONFIGS")
+		}
 	//FOCUS and UNFOCUS: Enter at own peril.
 	case const.FOCUS:
 		utils.log_runtime_event("Used FOCUS command", "")
