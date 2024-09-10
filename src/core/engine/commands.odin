@@ -626,7 +626,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					value = val
 				}
 				fmt.printfln("Setting record %s%s%s to %s%s%s", utils.BOLD, record, utils.RESET, utils.BOLD, value, utils.RESET)
-				data.OST_SET_RECORD_VALUE(record, value)
+
+				col, ok:=data.OST_SET_RECORD_VALUE(record, value)
+				fn := OST_CONCAT_OBJECT_EXT(col)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
 			}
 			break
