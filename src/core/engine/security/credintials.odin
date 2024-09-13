@@ -102,7 +102,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 		"store_method",
 		algoMethodAsString,
 	)
-	configToggled := config.OST_TOGGLE_CONFIG("OST_ENGINE_INIT")
+	configToggled := config.OST_TOGGLE_CONFIG(const.configOne)
 
 	switch (configToggled)
 	{

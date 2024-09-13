@@ -1,6 +1,7 @@
 package engine
 
 import "../../utils"
+import "../config"
 import "../const"
 import "../help"
 import "../types"
@@ -641,11 +642,35 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			}
 			break
-			//todo come back to this
 		case const.CONFIG:
-			if len(cmd.o_token) >= 2 && const.TO in cmd.m_token {
-				config := cmd.o_token[0]
-				value := cmd.o_token[1]
+			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
+				configName := cmd.o_token[0]
+				value:string
+				for key, val in cmd.m_token {
+                    value = val
+                }
+				fmt.printfln(
+                    "Setting config %s%s%s to %s%s%s",
+                    utils.BOLD,
+                    configName,
+                    utils.RESET,
+                    utils.BOLD,
+                    value,
+                    utils.RESET,
+                )
+				switch (configName)
+				{
+				case "HELP":
+					success:= config.OST_TOGGLE_CONFIG(const.configFour)
+					if success == false {
+                        fmt.printfln("Failed to toggle HELP config")
+                    } else {
+                        fmt.printfln("Successfully toggled HELP config")
+                    }
+                    help.OST_SET_HELP_MODE()
+				case:
+				fmt.printfln("Invalid config name. Valid config names are: 'HELP'")
+				}
 			}
 			break
 		case:
