@@ -621,24 +621,31 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case const.RECORD:
 			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
 				record := cmd.o_token[0]
-				value : string
+				value: string
 				for key, val in cmd.m_token {
 					value = val
 				}
-				fmt.printfln("Setting record %s%s%s to %s%s%s", utils.BOLD, record, utils.RESET, utils.BOLD, value, utils.RESET)
-
-				col, ok:=data.OST_SET_RECORD_VALUE(record, value)
+				fmt.printfln(
+					"Setting record %s%s%s to %s%s%s",
+					utils.BOLD,
+					record,
+					utils.RESET,
+					utils.BOLD,
+					value,
+					utils.RESET,
+				)
+				col, ok := data.OST_SET_RECORD_VALUE(record, value)
 				fn := OST_CONCAT_OBJECT_EXT(col)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
 			}
 			break
+			//todo come back to this
 		case const.CONFIG:
 			if len(cmd.o_token) >= 2 && const.TO in cmd.m_token {
 				config := cmd.o_token[0]
 				value := cmd.o_token[1]
-
 			}
 			break
 		case:
