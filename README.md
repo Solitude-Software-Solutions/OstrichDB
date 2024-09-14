@@ -49,6 +49,8 @@ In this example:
 - `UNFOCUS`: Remove focus from current data structure
 - `CLEAR`: Clear the screen of clutter
 - `HELP`: Display general help information
+- `TREE`: Display the hierarchical structure of the database
+- `HISTORY`: Display OStrichDB usage command history
 **Note: The `HELP` command can also be a multi-token command to get more detailed information**
 
 ### Multi-Token Commands
@@ -59,6 +61,7 @@ In this example:
 - `ERASE`: Delete collection, cluster, or record
 - `RENAME`: Change name of collection, cluster, or record
 - `FETCH`: Retrieve data from collection, cluster, or record
+- `SET`: Set the value of a record or config
 - `BACKUP`: Create a backup of a collection
 - `FOCUS`: Set the current context to on specific collection, cluster, or record
 - `HELP`: Display detailed information when chained with a specific token such as COLLECTION, FETCH, NEW, ATOMS, etc.
@@ -71,6 +74,7 @@ NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Creates a new c
 ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Erase the cluster with the specified name
 RENAME RECORD <old_name> TO <new_name> //Renames the record with the specified old name to the new name
 FETCH COLLECTION <collection_name> //Fetches all data within the collection of specified name
+SET RECORD <record_name> TO <value> //Sets the value of the specified record
 BACKUP COLLECTION <collection_name> //Creates a backup of the specified collection
 HELP COLLECTION //Displays information about collections
 NEW RECORD <record_name> OF_TYPE <record_type>
@@ -84,11 +88,11 @@ FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>  //Focuses on t
 Modifiers are additional parameters that modify the behavior of a command:
 
 - `WITHIN`: A scope modifier used to specify the parent object of the target object
-- `TO`: Used with the RENAME command to specify the new name of the object
+- `TO`: Used with the RENAME and SET command to specify the new name or value of the object
 - `ATOMS`: A special modifier ONLY used with the HELP command to display detailed information about the command's ATOMs
 - `OF_TYPE`: ONLY used with the NEW RECORD command to specify the type of record being created
 
-**Note: Currently, the only supported record types are `STRING`, `INTEGER`, `BOOL`, and `FLOAT`.**
+**Note: Currently, the only supported record types are `STRING`, `INTEGER`, `BOOL`, and `FLOAT`. Although when setting a record type, you can use shorthand such as `STR`, `INT`, `BOOL`, and `FLT`.**
 
 ## Installation
 
@@ -131,8 +135,6 @@ OstrichDB is released under the Apache License 2.0. For full license text, see [
 - Database file compression and zipping
 - Multi-user support with role-based access control
 - Several new command tokens:
-  - `SET`: Set the value of a record or configuration option
-  - `TREE`: Display a hierarchical view of the database
   - `STATS`: Display database statistics
   - `PURGE`: Clear data while retaining structure
   - `SIZE`: Show object size in bytes
@@ -149,7 +151,6 @@ OstrichDB is released under the Apache License 2.0. For full license text, see [
   - `AND`: Execute multiple operations in one command
   - `INTO`: Specify the destination for data operations
 - Support for additional data types
-- Data validation
 - Enhanced security (database encryption/decryption, secure deletion)
 - Performance optimizations
 - External API support for popular programming languages
