@@ -55,7 +55,7 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error creating config file", "OST_CREATE_CONFIG_FILE")
+		utils.log_err("Error creating config file", #procedure)
 		return false
 	}
 	msg := transmute([]u8)const.ConfigHeader
@@ -211,18 +211,32 @@ OST_TOGGLE_CONFIG :: proc(config: string) -> bool {
 	new_lines := make([dynamic]string, 0, len(lines))
 	defer delete(new_lines)
 
+
 	for line in lines {
 		new_line := line
-		if strings.contains(line, config) {
-			if strings.contains(line, "true") {
-				new_line, replaced = strings.replace(line, "true", "false", 1)
-				updated = true
-			} else if strings.contains(line, "false") {
-				new_line, replaced = strings.replace(line, "false", "true", 1)
-				updated = true
+		if config == const.configFour {
+			if strings.contains(line, config) {
+				if strings.contains(line, "verbose") {
+					new_line, replaced = strings.replace(line, "verbose", "simple", 1)
+					updated = true
+				} else if strings.contains(line, "simple") {
+					new_line, replaced = strings.replace(line, "simple", "verbose", 1)
+					updated = true
+				}
+			}
+		} else {
+			if strings.contains(line, config) {
+				if strings.contains(line, "true") {
+					new_line, replaced = strings.replace(line, "true", "false", 1)
+					updated = true
+				} else if strings.contains(line, "false") {
+					new_line, replaced = strings.replace(line, "false", "true", 1)
+					updated = true
+				}
 			}
 		}
 		append(&new_lines, new_line)
+
 	}
 
 	if updated {
