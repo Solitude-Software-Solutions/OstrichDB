@@ -17,23 +17,36 @@ Logs out the current user without closing OstrichDB. Useful for switching users.
 ### CLEAR
 Clears the screen, helping to keep the command line organized.
 
+### TREE
+Displays a tree view all collections and thier clusters within OstrichDB
+Example: `TREE`
+
+### HISTORY
+Displays all previous commands entered in the current session
+Example: `HISTORY`
+
+
 ## Object Management Commands
 
 ### NEW
 Creates new objects. Syntax: `NEW <object_type> <name>`.
 Example: `NEW COLLECTION <collection_name>`
 
-### ERASE
-Deletes objects. Syntax: `ERASE <object_type> <name>`.
-Example: `ERASE COLLECTION <collection_name>`
-
 ### FETCH
 Retrieves data. Syntax: `FETCH <object_type> <name>`.
 Example: `FETCH COLLECTION <collection_name>` (retrieves ALL data from the specified collection)
 
+### SET
+Sets a value for a record or config.
+Example: `SET <record_name> TO <value>` or `SET <config_name> TO <value>`
+
 ### RENAME
 Changes object names. Syntax: `RENAME <object_type> <old_name> TO <new_name>`.
 Example: `RENAME COLLECTION <collection_name> TO <new_collection_name>`
+
+### ERASE
+Deletes objects. Syntax: `ERASE <object_type> <name>`.
+Example: `ERASE COLLECTION <collection_name>`
 
 ### FOCUS
 Sets the current working context. Syntax: `FOCUS <object_type> <name>`.
