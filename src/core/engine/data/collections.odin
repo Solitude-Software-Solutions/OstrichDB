@@ -28,6 +28,7 @@ OST_CHOOSE_COLLECTION_NAME :: proc() {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error reading user input", #procedure)
 	}
 	name := strings.trim_right(string(buf[:n]), "\n")
 	OST_CREATE_COLLECTION(name, 0)
@@ -91,7 +92,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 				#procedure,
 			)
 			utils.throw_err(error1)
-			utils.log_err("Error creating .ost file", "OST_CREATE_COLLECTION")
+			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
@@ -105,11 +106,11 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	buf: [64]byte
 	fileWithExt := strings.concatenate([]string{fileName, const.OST_FILE_EXTENSION})
-	fmt.printfln("Deleting database: %s%s%s", utils.BOLD, fileWithExt, utils.RESET)
+	fmt.printfln("Deleting collection: %s%s%s", utils.BOLD, fileWithExt, utils.RESET)
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fileName, 0) {
 		fmt.printfln(
-			"Database with name:%s%s%s does not exist",
-			utils.BOLD,
+			"Collection with name:%s%s%s does not exist",
+			utils.BOLD_UNDERLINE,
 			fileWithExt,
 			utils.RESET,
 		)
@@ -117,7 +118,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	}
 	fmt.printfln(
 		"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
-		utils.BOLD,
+		utils.BOLD_UNDERLINE,
 		fileName,
 		utils.RESET,
 	)
@@ -154,24 +155,24 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 			return false
 		}
 		fmt.printfln(
-			"Database with name:%s%s%s has been deleted",
+			"Collection with name:%s%s%s has been deleted",
 			utils.BOLD,
 			fileName,
 			utils.RESET,
 		)
 		utils.log_runtime_event(
-			"Database deleted",
-			"User confirmed deletion of database and it was successfully deleted .",
+			"Collection deleted",
+			"User confirmed deletion of collection and it was successfully deleted .",
 		)
 		break
 
 	case const.NO:
-		utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
+		utils.log_runtime_event("User canceled deletion", "User canceled deletion of collection")
 		return false
 	case:
 		utils.log_runtime_event(
 			"User entered invalid input",
-			"User entered invalid input when trying to delete database",
+			"User entered invalid input when trying to delete collection",
 		)
 		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
 		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
@@ -196,7 +197,7 @@ OST_PREFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err(".ost file already exists", "OST_CREATE_COLLECTION")
+		utils.log_err(".ost file already exists", #procedure)
 		return 1
 	}
 	//CHECK#3: check if the file name is valid
@@ -343,6 +344,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 				#procedure,
 			)
 			utils.throw_err(error)
+			utils.log_err("Error reading user input", #procedure)
 		}
 		if buf[0] != 'y' {
 			return collectionNames

@@ -27,6 +27,7 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	if !readSuccess {
 		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
 		throw_custom_err(error1, "Could not read collection file for backup")
+		utils.log_err("Could not read collection file for backup", #procedure)
 		return false
 	}
 
@@ -42,12 +43,14 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	if creationSuccess != 0 {
 		error1 := new_err(.CANNOT_CREATE_FILE, get_err_msg(.CANNOT_CREATE_FILE), #procedure)
 		throw_custom_err(error1, "Could not create collection file for backup")
+		utils.log_err("Could not create backup collection file", #procedure)
 		return false
 	}
 	w, writeSuccess := os.write(c, data)
 	if writeSuccess != 0 {
 		error1 := new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure)
 		throw_custom_err(error1, "Could not write to collection file for backup")
+		utils.log_err("Could not write to collection file for backup", #procedure)
 		return false
 	}
 
@@ -66,6 +69,7 @@ OST_CHOOSE_BACKUP_NAME :: proc() -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error reading input for backup collection name",#procedure)
 	}
 	str := strings.trim_right(string(buf[:n]), "\r\n")
 

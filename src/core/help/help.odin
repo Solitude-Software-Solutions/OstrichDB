@@ -3,6 +3,7 @@ package help
 import "../config"
 import "../const"
 import "../types"
+import "../../utils"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -39,7 +40,7 @@ validCommnads := []string {
 OST_SET_HELP_MODE :: proc() -> bool {
 	value := config.OST_READ_CONFIG_VALUE(const.configFour)
 	//do stuff
-	switch (value) 
+	switch (value)
 	{
 	case "verbose":
 		types.help_mode.verbose = true
@@ -75,12 +76,14 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 	validCommnad := OST_CHECK_HELP_EXISTS(subject)
 	if !validCommnad {
 		fmt.printfln(
-			"Cannot get help with '%s' as it is not a valid command.\nPlease try valid OstrichDB commmand\nor enter 'HELP' with no trailing arguments",
+			"Cannot get help with %s%s%s as it is not a valid command.\nPlease try valid OstrichDB commmand\nor enter 'HELP' with no trailing arguments",
+			utils.BOLD_UNDERLINE,
 			subject,
+			utils.RESET,
 		)
 		return ""
 	}
-	switch (helpMode) 
+	switch (helpMode)
 	{
 	case true:
 		data, ok = os.read_entire_file(const.VERBOSE_HELP_FILE)
@@ -99,13 +102,18 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 
 	start_index := strings.index(content, help_section_start)
 	if start_index == -1 {
-		return fmt.tprintf("No help found for '%s'", subject)
+		return fmt.tprintf("No help found for %s%s%s",
+		 utils.BOLD_UNDERLINE,
+			subject,
+			utils.RESET,)
 	}
 
 	start_index += len(help_section_start)
 	end_index := strings.index(content[start_index:], help_section_end)
 	if end_index == -1 {
-		return fmt.tprintf("Malformed help section for '%s'", subject)
+		return fmt.tprintf("Malformed help section for %s%s%s", utils.BOLD_UNDERLINE,
+		subject,
+		utils.RESET,)
 	}
 
 	help_text = strings.trim_space(content[start_index:][:end_index])

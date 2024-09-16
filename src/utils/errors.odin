@@ -63,6 +63,8 @@ ErrorType :: enum {
 	FILE_FORMAT_VERSION_NOT_SUPPORTED,
 	CLUSTER_IDS_NOT_VALID,
 	INVALID_DATA_TYPE_FOUND,
+	INVALID_VALUE_FOR_EXPECTED_TYPE,
+
 
 	//Miscellaneous
 	INVALID_INPUT,
@@ -120,6 +122,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.FILE_FORMAT_VERSION_NOT_SUPPORTED = "Collection File Format Version Is Not Supported",
 	.CLUSTER_IDS_NOT_VALID             = "Cluster IDs Found In Collection Do Not Match Valid Cluster IDs",
 	.INVALID_DATA_TYPE_FOUND           = "Invalid Data Type(s) Found In Collection",
+	.INVALID_VALUE_FOR_EXPECTED_TYPE   = "An invalid value was given for the expected type",
 }
 
 new_err :: proc(type: ErrorType, message: string, procedure: string) -> Error {
@@ -130,9 +133,11 @@ get_err_msg :: proc(type: ErrorType) -> string {
 	return ERROR_MESSAGE[type]
 }
 
-throw_err :: proc(err: Error) -> string {
-	return fmt.tprintf(
-		"ERROR occured in procedure: %s%s%s\nError Type: %s(%v)%s\nError Message: %s%s%s ",
+throw_err :: proc(err: Error) -> int {
+	fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD,RESET)
+	fmt.printfln(
+		"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+		RESET,
 		BOLD,
 		err.procedure,
 		RESET,
@@ -143,29 +148,32 @@ throw_err :: proc(err: Error) -> string {
 		err.message,
 		RESET,
 	)
+	return 1
 }
 
-throw_custom_err :: proc(err: Error, custom_message: string) -> string {
-	return fmt.tprintf(
-		"ERROR occured in procedure: %s%s%s\nError Type: %s(%v)%s\nError Message: %s%s%s\nCustom Message: %s%s%s",
+//allows for more customization of error messages.
+//the custom err message that is passed is the same as the err message in the print statement
+throw_custom_err :: proc(err: Error, custom_message: string) -> int {
+    fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
+	fmt.printfln(
+		"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+		RESET,
 		BOLD,
 		err.procedure,
 		RESET,
 		BOLD,
 		err.type,
-		RESET,
-		BOLD,
-		err.message,
 		RESET,
 		BOLD,
 		custom_message,
 		RESET,
 	)
+	return 1
 }
 
 /*
 
-Example Error Usahe:
+Example Error Usage:
 
     error2:= new_err(.ENTERED_USERNAME_NOT_FOUND, get_err_msg(.ENTERED_USERNAME_NOT_FOUND), #procedure)
     throw_err(error2)

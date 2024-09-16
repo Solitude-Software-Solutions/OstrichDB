@@ -62,7 +62,7 @@ OST_SET_DATE :: proc() -> string {
 	Second := strconv.append_int(sBuf[:], S, 10)
 
 
-	switch (mAsInt) 
+	switch (mAsInt)
 	{
 	case 1:
 		Month = "January"
@@ -179,6 +179,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error readinding collection file", #procedure)
 	}
 
 	dataAsStr := cast(string)rawData
@@ -322,7 +323,7 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 
 	ffvf, openSuccess := os.open(pathAndName)
 	if openSuccess != 0 {
-		utils.log_err("Could not open file format verson file", "OST_GET_FILE_FORMAT_VERSION")
+		utils.log_err("Could not open file format verson file", #procedure)
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {
@@ -331,6 +332,7 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 	return data
 }
 
+//gets the entire metadata header of a collection file
 OST_GET_METADATA_HEADER :: proc(fn: string) -> string {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
@@ -340,6 +342,7 @@ OST_GET_METADATA_HEADER :: proc(fn: string) -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Could not read file", #procedure)
 	}
 
 	content := string(data)
@@ -354,7 +357,7 @@ OST_GET_METADATA_HEADER :: proc(fn: string) -> string {
 
 }
 
-
+//looks over the metadata header in a collection file and verifies the formatting of it
 OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: bool) {
 	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
 
@@ -388,13 +391,11 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: 
 	// check if the header start and end markers are present at the correct lines
 	if !strings.has_prefix(lines[0], "# [Ostrich File Header Start]") ||
 	   !strings.has_prefix(lines[6], "# [Ostrich File Header End]") {
-		fmt.println("failing here2")
 		return 1, true
 	}
 
 	for i in 1 ..< 5 {
 		if !strings.has_prefix(lines[i], types.schema.Metadata_Header_Body[i - 1]) {
-			fmt.println("failing here3")
 			return 1, true
 		}
 	}
