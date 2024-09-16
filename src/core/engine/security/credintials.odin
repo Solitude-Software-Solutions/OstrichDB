@@ -294,7 +294,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading input", "OST_CONFIRM_PASSWORD")
+		utils.log_err("Error reading input", #procedure)
 	}
 	if n > 0 {
 		confirmation = string(buf[:n])
@@ -350,7 +350,7 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error opening user credentials file", "OST_STORE_USER_CREDS")
+		utils.log_err("Error opening user credentials file", #procedure)
 	}
 	defer os.close(file)
 
@@ -534,7 +534,7 @@ OST_CREATE_NEW_USER :: proc() -> int {
 	if exists {
 		fmt.printfln(
 			"There is already a user with the name: %s%s%s\nPlease try again.",
-			utils.BOLD,
+			utils.BOLD_UNDERLINE,
 			newUserName,
 			utils.RESET,
 		)

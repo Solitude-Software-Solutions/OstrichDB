@@ -53,7 +53,7 @@ OST_APPEND_QUARANTINE_LINE :: proc(qFile: string) -> int {
 	// Seek to the end of the file
 	_, seek_err := os.seek(file, 0, os.SEEK_END)
 	if seek_err != os.ERROR_NONE {
-		fmt.printf("Error seeking to end of file: %v\n", seek_err)
+		fmt.printf("Error seeking the end of collection file: %v\n", seek_err)
 		return -1
 	}
 
@@ -63,7 +63,7 @@ OST_APPEND_QUARANTINE_LINE :: proc(qFile: string) -> int {
 	// Write the quarantine string
 	_, write_err := os.write(file, qStr)
 	if write_err != os.ERROR_NONE {
-		fmt.printf("Error writing to file: %v\n", write_err)
+		fmt.printf("Error writing to collection file: %v\n", write_err)
 		return -1
 	}
 

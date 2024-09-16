@@ -135,10 +135,10 @@ OST_HANDLE_INTGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 
 			fmt.printfln(
 				"OstrichDB was unable to validate the integrity of collection: %s%s%s.\nThe operation has been canceled and collection: %s%s%s will now be quarantined.",
-				utils.BOLD,
+				utils.BOLD_UNDERLINE,
 				fn,
 				utils.RESET,
-				utils.BOLD,
+				utils.BOLD_UNDERLINE,
 				fn,
 				utils.RESET,
 			)

@@ -34,6 +34,7 @@ ORANGE :: "\033[38;5;208m"
 BOLD :: "\033[1m"
 ITALIC :: "\033[3m"
 UNDERLINE :: "\033[4m"
+BOLD_UNDERLINE:: "\033[4m\033[1m" //:) makes formatting even easier - SchoolyB
 RESET :: "\033[0m"
 
 

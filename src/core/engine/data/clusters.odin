@@ -250,7 +250,7 @@ OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", "OST_ADD_ID_TO_CACHE_FILE")
+		utils.log_err("Error opening cluster id cache file", #procedure)
 	}
 
 	idStr := strconv.append_int(buf[:], id, 10) //base 10 conversion
@@ -265,7 +265,7 @@ OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
 			#procedure,
 		)
 		utils.throw_err(error2)
-		utils.log_err("Error writing to cluster id cache file", "OST_ADD_ID_TO_CACHE_FILE")
+		utils.log_err("Error writing to cluster id cache file", #procedure)
 	}
 	OST_NEWLINE_CHAR()
 	os.close(cacheFile)
@@ -337,13 +337,6 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
-
-	// fmt.printfln(
-	// 	"Succesfully created account: %s%s%s",
-	// 	utils.BOLD,
-	// 	types.user.username.Value,
-	// 	utils.RESET,
-	// )
 	fmt.println("Please re-launch OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)
@@ -364,7 +357,7 @@ OST_NEWLINE_CHAR :: proc() {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", "OST_NEWLINE_CHAR")
+		utils.log_err("Error opening cluster id cache file", #procedure)
 	}
 	newLineChar: string = "\n"
 	transStr := transmute([]u8)newLineChar
@@ -376,10 +369,7 @@ OST_NEWLINE_CHAR :: proc() {
 			#procedure,
 		)
 		utils.throw_err(error2)
-		utils.log_err(
-			"Error writing newline character to cluster id cache file",
-			"OST_NEWLINE_CHAR",
-		)
+		utils.log_err("Error writing newline character to cluster id cache file", #procedure)
 	}
 	os.close(cacheFile)
 }
@@ -442,11 +432,13 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 	// check if the desired new cluster name already exists
 	if OST_CHECK_IF_CLUSTER_EXISTS(collection_path, new) {
 		fmt.printfln(
-			"Cluster with name:%s%s%s already exists in collection: %s",
-			utils.BOLD,
+			"Cluster with name:%s%s%s already exists in collection: %s%s%s",
+			utils.BOLD_UNDERLINE,
 			new,
 			utils.RESET,
+			utils.BOLD_UNDERLINE,
 			collection_name,
+			utils.RESET,
 		)
 		fmt.println("Please try again with a different name")
 		return false
@@ -493,10 +485,19 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 		utils.throw_err(
 			utils.new_err(
 				.CANNOT_FIND_CLUSTER,
-				fmt.tprintf("Cluster '%s' not found in collection '%s'", old, collection_name),
+				fmt.tprintf(
+					"Cluster: %s%s%s not found in collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					old,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+				),
 				#procedure,
 			),
 		)
+		utils.log_err("Error finding cluster in collection file", #procedure)
 		return false
 	}
 
@@ -661,7 +662,15 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 			utils.throw_err(
 				utils.new_err(
 					.CANNOT_FIND_CLUSTER,
-					fmt.tprintf("Cluster '%s' not found in collection '%s'", cn, fn),
+					fmt.tprintf(
+						"Cluster: %s%s%s not found in collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cn,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						fn,
+						utils.RESET,
+					),
 					#procedure,
 				),
 			)
@@ -715,7 +724,15 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	switch clusterExists
 	{
 	case false:
-		fmt.printfln("Cluster '%s' does not exist in collection '%s'", cn, fn)
+		fmt.printfln(
+			"Cluster %s%s%s does not exist within collection '%s%s%s'",
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			fn,
+			utils.RESET,
+		)
 		break
 	}
 	data, readSuccess := os.read_entire_file(collection_path)
@@ -747,10 +764,19 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	utils.throw_err(
 		utils.new_err(
 			.CANNOT_FIND_CLUSTER,
-			fmt.tprintf("Cluster '%s' not found in collection '%s'", cn, fn),
+			fmt.tprintf(
+				"Cluster %s%s%s not found in collection: %s%s%s",
+				utils.BOLD_UNDERLINE,
+				cn,
+				utils.RESET,
+				utils.BOLD_UNDERLINE,
+				fn,
+				utils.RESET,
+			),
 			#procedure,
 		),
 	)
+	utils.log_err("Error finding cluster in collection", #procedure)
 	return ""
 }
 
@@ -792,21 +818,21 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 
 		fmt.println(clusterName)
 
-        if showRecords {
-            lines := strings.split_lines(cluster)
-            for line in lines {
-                lineTrim := strings.trim_space(line)
-                // ensure the line is not empty, and ensure it ends with ":" to make sure it's a RECORD line
-                if len(lineTrim) > 0 && strings.has_suffix(lineTrim, ":") {
-                    lineData := fmt.tprintf("\t   |\n\t   |_________%s", lineTrim)
-                    lineSplit := strings.split(lineData, ":")
-                    // output the record name and the datatype
-                    fmt.printfln("%s: %s", lineSplit[0], lineSplit[1])
-                }
-            }
-        }
-        // print the extra newline
-        fmt.println("")
+		if showRecords {
+			lines := strings.split_lines(cluster)
+			for line in lines {
+				lineTrim := strings.trim_space(line)
+				// ensure the line is not empty, and ensure it ends with ":" to make sure it's a RECORD line
+				if len(lineTrim) > 0 && strings.has_suffix(lineTrim, ":") {
+					lineData := fmt.tprintf("\t   |\n\t   |_________%s", lineTrim)
+					lineSplit := strings.split(lineData, ":")
+					// output the record name and the datatype
+					fmt.printfln("%s: %s", lineSplit[0], lineSplit[1])
+				}
+			}
+		}
+		// print the extra newline
+		fmt.println("")
 
 	}
 	return 0

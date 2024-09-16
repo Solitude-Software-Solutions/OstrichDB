@@ -106,14 +106,14 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	recordExists := OST_CHECK_IF_RECORD_EXISTS(fn, cn, rn)
 	if recordExists == true {
 		fmt.printfln(
-			"Record: %s%s%s already exists within Collection: %s%s%s -> Cluster: %s%s%s",
-			utils.BOLD,
+			"Record: %s%s%s already exists within Collection: %s%s%s. Located in Cluster: %s%s%s",
+			utils.BOLD_UNDERLINE,
 			rn,
 			utils.RESET,
 			utils.BOLD,
 			fn,
 			utils.RESET,
-			utils.BOLD,
+			utils.BOLD_UNDERLINE,
 			cn,
 			utils.RESET,
 		)
@@ -127,7 +127,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 			#procedure,
 		)
 		utils.throw_err(error2)
-		utils.log_err("Unable to find cluster/valid structur", #procedure)
+		utils.log_err("Unable to find cluster/valid structure", #procedure)
 		return -1
 	}
 
@@ -224,7 +224,7 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rType: string, rn: string)
 //set the record name, if the name is too long, return an error
 OST_SET_RECORD_NAME :: proc(rn: string) -> (string, int) {
 	if len(rn) > 256 {
-		fmt.println("The Entered Record Name is too long. Please try again.")
+		fmt.println("The entered record name is too long. Please try again.")
 		return "", 1
 	}
 
@@ -240,7 +240,7 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 
 	fmt.printfln(
 		"Select the collection that you would like to store the record: %s%s%s in.",
-		utils.BOLD,
+		utils.BOLD_UNDERLINE,
 		rName,
 		utils.RESET,
 	)
@@ -262,7 +262,7 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 	collectionExists := OST_CHECK_IF_COLLECTION_EXISTS(collectionNameUpper, 0)
 	fmt.printfln(
 		"Select the cluster that you would like to store the record: %s%s%s in.",
-		utils.BOLD,
+		utils.BOLD_UNDERLINE,
 		rName,
 		utils.RESET,
 	)
@@ -370,14 +370,22 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 							append(&allRecords, recordInfo)
 
 							fmt.printfln(
-								"Collection: %s | Cluster Name: %s",
+								"Collection: %s%s%s | Cluster Name: %s%s%s",
+								utils.BOLD_UNDERLINE,
 								colNameNoExt,
+								utils.RESET,
+								utils.BOLD_UNDERLINE,
 								clusterName,
+								utils.RESET,
 							)
 							fmt.printfln(
-								"Record Type: %s | Record Data: %s",
+								"Record Type: %s%s%s | Record Data: %s%s%s",
+								utils.BOLD_UNDERLINE,
 								recordType,
+								utils.RESET,
+								utils.BOLD_UNDERLINE,
 								recordData,
+								utils.RESET,
 							)
 						}
 						break
@@ -398,7 +406,7 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 
 	fmt.printfln(
 		"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
-		utils.BOLD,
+		utils.BOLD_UNDERLINE,
 		old,
 		utils.RESET,
 	)
@@ -476,9 +484,13 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 	{
 	case true:
 		fmt.printfln(
-			"A record named: %s. Already exists within cluster:%s Please try again.",
+			"A record with the name: %s%s%s. Already exists within cluster: %s%s%s Please try again.",
+			utils.BOLD_UNDERLINE,
 			old,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
 			cn,
+			utils.RESET,
 		)
 		return -1
 	case false:
@@ -540,7 +552,18 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 		}
 
 		if !recordFound {
-			fmt.printfln("Record '%s' not found in cluster '%s' ,collection %s", old, cn, fn)
+			fmt.printfln(
+				"Record %s%s%s not found within cluster %s%s%s of collection %s%s%s",
+				utils.BOLD_UNDERLINE,
+				old,
+				utils.RESET,
+				utils.BOLD_UNDERLINE,
+				cn,
+				utils.RESET,
+				utils.BOLD_UNDERLINE,
+				fn,
+				utils.RESET,
+			)
 			return -1
 		}
 
@@ -595,7 +618,7 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 			return record.type, 0
 		}
 	}
-	fmt.printfln("Invalid record type %s", rType)
+	fmt.printfln("Invalid record type %s%s%s",utils.BOLD_UNDERLINE, rType, utils.RESET)
 	return record.type, 1
 }
 
@@ -618,7 +641,7 @@ OST_FIND_RECORD_IN_CLUSTER :: proc(
 	)
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
-		fmt.printfln("Failed to read collection file: %s", collectionPath)
+		fmt.printfln("Failed to read collection file: %s%s%s",utils.BOLD_UNDERLINE, collectionPath,utils.RESET)
 		return types.Record{}, "", false
 	}
 	defer delete(data)
@@ -719,7 +742,6 @@ OST_GET_RECORD_TYPE :: proc(
 //Originally these where all in one single proce but that was breaking shit.
 OST_CONVERT_RECORD_TO_INT :: proc(rValue: string) -> (int, bool) {
 	val, ok := strconv.parse_int(rValue)
-	fmt.printfln("The converted value of the string: %v is now: %v", rValue, val)
 	if ok {
 		return val, true
 	} else {
@@ -745,7 +767,7 @@ OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 	} else if lower_str == "false" {
 		return false, true
 	} else {
-		fmt.println("Invalid boolean value read")
+	//no need to do anything other than return here. Once false is returned error handling system will do its thing
 		return false, false
 	}
 }
@@ -771,7 +793,7 @@ OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 			#procedure,
 		)
 		utils.throw_err(error)
-		utils.log_err("Coudl not read collection directory", #procedure)
+		utils.log_err("Could not read collection directory", #procedure)
 		return {}, {}
 	}
 	defer delete(files)
@@ -855,9 +877,9 @@ OST_SET_RECORD_VALUE :: proc(rn: string, rValue: string) -> (fn: string, success
 	case 1:
 		fmt.printfln(
 			"%s1%s instance of record: %s%s%s Found.\n--------------------------------",
-			utils.BOLD,
+			utils.BOLD_UNDERLINE,
 			utils.RESET,
-			utils.BOLD,
+			utils.BOLD_UNDERLINE,
 			rn,
 			utils.RESET,
 		)
@@ -867,10 +889,10 @@ OST_SET_RECORD_VALUE :: proc(rn: string, rValue: string) -> (fn: string, success
 	case:
 		fmt.printfln(
 			"%s%d%s instances of record: %s%s%s Found\n--------------------------------",
-			utils.BOLD,
+			utils.BOLD_UNDERLINE,
 			len(collectionMatch),
 			utils.RESET,
-			utils.BOLD,
+			utils.BOLD_UNDERLINE,
 			rn,
 			utils.RESET,
 		)
@@ -966,14 +988,14 @@ OST_SET_RECORD_VALUE :: proc(rn: string, rValue: string) -> (fn: string, success
 	// look for the record in the file
 	record, type, found := OST_FIND_RECORD_IN_CLUSTER(collectionNameUpper, clusterName, rn)
 	if !found {
-		fmt.println("Record not found:", rn)
+		fmt.printfln("Record not found: %s%s%s",utils.BOLD_UNDERLINE, rn, utils.RESET)
 		success = false
 		return
 	}
 
 	setType, setSuccess := OST_SET_RECORD_TYPE(type)
 	if setSuccess == 1 {
-		fmt.printfln("Invalid record type: %s", type)
+		fmt.printfln("Invalid record type: %s%s%s",utils.BOLD_UNDERLINE, type, utils.RESET)
 		return
 	}
 
@@ -1005,8 +1027,7 @@ OST_SET_RECORD_VALUE :: proc(rn: string, rValue: string) -> (fn: string, success
 			valueTypeError,
 			fmt.tprintf(
 				"%sInvalid value given. Expected a value of type: %s%s%s",
-				utils.BOLD,
-				utils.UNDERLINE,
+				utils.BOLD_UNDERLINE,
 				record.type,
 				utils.RESET,
 			),
@@ -1022,9 +1043,9 @@ OST_SET_RECORD_VALUE :: proc(rn: string, rValue: string) -> (fn: string, success
 	// Update the record in the file
 	success = OST_UPDATE_RECORD_IN_FILE(collectionFile, clusterName, rn, valueAny)
 	if success {
-		fmt.printfln("Successfully set %s to %v", rn, valueAny)
+		fmt.printfln("Successfully set %s%s%s to %s%v%s",utils.BOLD_UNDERLINE, rn, utils.RESET, utils.BOLD_UNDERLINE, valueAny, utils.RESET)
 	} else {
-		fmt.printfln("Failed to update record %s in file", rn)
+		fmt.printfln("Failed to update record %s%s%s in file",utils.BOLD_UNDERLINE, rn, utils.RESET)
 	}
 
 	return collectionNameUpper, success
@@ -1040,7 +1061,7 @@ OST_UPDATE_RECORD_IN_FILE :: proc(
 ) -> bool {
 	data, success := os.read_entire_file(filePath)
 	if !success {
-		fmt.printfln("Failed to read file: %s", filePath)
+		fmt.printfln("Failed to read file: %s%s%s",utils.BOLD_UNDERLINE, filePath, utils.RESET)
 		return false
 	}
 	defer delete(data)
@@ -1089,15 +1110,16 @@ OST_UPDATE_RECORD_IN_FILE :: proc(
 	}
 
 	if !recordUpdated {
-		fmt.printfln("Record %s not found in cluster %s", recordName, clusterName)
+		fmt.printfln("Record %s%s%s not found in cluster %s%s%s",utils.BOLD_UNDERLINE, recordName, utils.RESET,utils.BOLD_UNDERLINE, clusterName, utils.RESET)
 		return false
 	}
 	newContent := strings.join(lines, "\n")
 	writeSuccess := os.write_entire_file(filePath, transmute([]byte)newContent)
 	if writeSuccess {
-		fmt.printfln("Successfully updated record %s in cluster %s", recordName, clusterName)
+		fmt.printfln("Successfully updated record %s%s%s in cluster %s%s%s",utils.BOLD_UNDERLINE, recordName,utils.RESET, utils.BOLD_UNDERLINE, clusterName,utils.RESET)
 	} else {
-		fmt.printfln("Failed to write updated content to file: %s", filePath)
+		fmt.printfln("Failed to write updated content to file: %s%s%s", utils.BOLD_UNDERLINE,filePath,utils.RESET)
+		return false
 	}
 	return writeSuccess
 }

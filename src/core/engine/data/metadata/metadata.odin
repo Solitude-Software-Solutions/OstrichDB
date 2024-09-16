@@ -323,7 +323,7 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 
 	ffvf, openSuccess := os.open(pathAndName)
 	if openSuccess != 0 {
-		utils.log_err("Could not open file format verson file", "OST_GET_FILE_FORMAT_VERSION")
+		utils.log_err("Could not open file format verson file", #procedure)
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {
@@ -391,13 +391,11 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: 
 	// check if the header start and end markers are present at the correct lines
 	if !strings.has_prefix(lines[0], "# [Ostrich File Header Start]") ||
 	   !strings.has_prefix(lines[6], "# [Ostrich File Header End]") {
-		fmt.println("failing here2")
 		return 1, true
 	}
 
 	for i in 1 ..< 5 {
 		if !strings.has_prefix(lines[i], types.schema.Metadata_Header_Body[i - 1]) {
-			fmt.println("failing here3")
 			return 1, true
 		}
 	}
