@@ -105,6 +105,7 @@ OST_ENGINE_COMMAND_LINE :: proc() ->  int {
 				#procedure,
 			)
 			utils.throw_err(error)
+			utils.log_err("Could not read user input from command line", #procedure)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 
@@ -164,6 +165,7 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 				#procedure,
 			)
 			utils.throw_err(error)
+			utils.log_err("Could not read user input from foucs mode command line", #procedure)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 		cmd := OST_PARSE_COMMAND(input)

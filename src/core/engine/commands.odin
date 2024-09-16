@@ -101,6 +101,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				#procedure,
 			)
 			utils.throw_err(error)
+			utils.log_err("Cannot read user input for HISTORY command.", #procedure)
 		}
 
 		// convert string to index

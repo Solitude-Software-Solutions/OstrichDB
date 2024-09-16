@@ -33,6 +33,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Could not read user input during sign in", #procedure)
 	}
 
 
@@ -62,7 +63,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error2)
-		fmt.printfln("The entered username was not found within OstrichDB. Please try again.")
+		fmt.printfln("There is no account within OstrichDB aassociated with the entered username. Please try again.")
+		utils.log_err("User entered a username that does not exist in the database", #procedure)
 		return false
 	}
 
@@ -91,6 +93,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error3)
+		utils.log_err("Could not read user input during sign in", #procedure)
 		return false
 	}
 	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")

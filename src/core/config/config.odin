@@ -33,6 +33,7 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
 		if file.name == "ostrich.config" {
@@ -55,7 +56,7 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error creating config file", #procedure)
+		utils.log_err("Error creating ostrich.config file", #procedure)
 		return false
 	}
 	msg := transmute([]u8)const.ConfigHeader
@@ -69,7 +70,7 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error2)
-		utils.log_err("Error writing to config file", "OST_CREATE_CONFIG_FILE")
+		utils.log_err("Error writing to ostrich.config file", #procedure)
 		return false
 	}
 
@@ -99,6 +100,7 @@ OST_FIND_CONFIG :: proc(c: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error ostrich.config file", #procedure)
 		return false
 	}
 	defer delete(data)
@@ -135,6 +137,7 @@ OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error opening ostrich.config file", #procedure)
 		return 1
 	}
 	defer os.close(file)
@@ -149,6 +152,7 @@ OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 			#procedure,
 		)
 		utils.throw_err(error2)
+		utils.log_err("Error writing to ostrich.config file", #procedure)
 		return 1
 	}
 
@@ -165,6 +169,7 @@ OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error reading ostrich.config file", #procedure)
 		return ""
 	}
 
@@ -199,6 +204,7 @@ OST_TOGGLE_CONFIG :: proc(config: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error reading ostrich.config file", #procedure)
 		return false
 	}
 

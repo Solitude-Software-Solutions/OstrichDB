@@ -36,6 +36,7 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error occured while attempting to generate new secure file", #procedure)
 	}
 
 	return 0

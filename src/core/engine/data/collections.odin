@@ -28,6 +28,7 @@ OST_CHOOSE_COLLECTION_NAME :: proc() {
 			#procedure,
 		)
 		utils.throw_err(error1)
+		utils.log_err("Error reading user input", #procedure)
 	}
 	name := strings.trim_right(string(buf[:n]), "\n")
 	OST_CREATE_COLLECTION(name, 0)
@@ -343,6 +344,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 				#procedure,
 			)
 			utils.throw_err(error)
+			utils.log_err("Error reading user input", #procedure)
 		}
 		if buf[0] != 'y' {
 			return collectionNames
