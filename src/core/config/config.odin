@@ -178,19 +178,21 @@ OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 	defer delete(lines)
 
 	for line in lines {
+		fmt.printfln("ShowingLine: %s", line)
 		if strings.contains(line, config) {
 			parts := strings.split(line, " : ")
 			if len(parts) >= 2 {
 				value = strings.trim_space(parts[1])
 				fmt.printfln("Value: %s", value)
-
+				types.trashHeap.TrashValueOne = value
+				return value
 			}
 			break // Found the config, but it's malformed
 		}
 	}
 
 
-	fmt.printfln("Value: %s", value)
+	fmt.println("ERROR FOUND")
 	return value // Config not found
 }
 

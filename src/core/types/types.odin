@@ -212,5 +212,5 @@ Colletion_File_Schema :: struct {
 //literally only a place to store values that for some reason are lost in translation
 trashHeap: TrashHeap
 TrashHeap :: struct {
-	TrashValueOne: any,
+	TrashValueOne: string,
 }

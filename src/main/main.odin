@@ -9,6 +9,7 @@ import "../core/engine/security"
 import "../core/types"
 import "../utils"
 import "core:fmt"
+import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
@@ -30,26 +31,29 @@ main :: proc() {
 	//the value from the config file correctly
 	//Seems as though even though the read config proc is the string "true"  the return value
 	//is coming back here as an empty string.
-	foo := config.OST_READ_CONFIG_VALUE(const.configOne)
+	// foo := config.OST_READ_CONFIG_VALUE(const.configOne)
+	foo := config.OST_READ_CONFIG_VALUE("OST_ENGINE_INIT")
+	// foo := "true"
+	// foolen := len(foo)
+	fmt.printfln("foo sanity check: %s", foo)
+	trashValue := types.trashHeap.TrashValueOne
+	fmt.printfln("Trash Value One: %s", trashValue)
+	// if foo == "true" {
+	// 	fmt.println("init is true")
+	// 	types.engine.Initialized = true
+	// 	utils.log_runtime_event("OstrichDB Engine Initialized", "")
+	// } else if foo == "false" {
+	// 	fmt.printfln("length of foo: %d", foolen)
+	// 	fmt.printfln("foo: %s", foo)
+	// 	fmt.println("init is false")
+	// 	types.engine.Initialized = false
+	// } else if foo == "" {
+	// 	fmt.println("GETTING AN EMPTY STRING")
+	// } else {
+	// 	fmt.println("THIS SHIT BROKE")
+	// 	fmt.printfln("length of foo: %d", foolen)
+	// }
 
-	foolen := len(foo)
-	if foo == "true" {
-		fmt.printfln("length of foo: %d", foolen)
-		fmt.println("init is true")
-		types.engine.Initialized = true
-		utils.log_runtime_event("OstrichDB Engine Initialized", "")
-	} else if foo == "false" {
-		fmt.printfln("length of foo: %d", foolen)
-		fmt.printfln("foo: %s", foo)
-		fmt.println("init is false")
-		types.engine.Initialized = false
-	} else if foo == "" {
-		fmt.println("GETTING AN EMPTY STRING")
-	} else {
-		fmt.println("THIS SHIT BROKE")
-		fmt.printfln("foo: %s", foo)
-		fmt.printfln("length of foo: %d", foolen)
-	}
 
 	engine.run()
 
