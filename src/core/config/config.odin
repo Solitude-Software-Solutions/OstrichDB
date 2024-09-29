@@ -32,7 +32,6 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 			utils.get_err_msg(.CANNOT_READ_DIRECTORY),
 			#procedure,
 		)
-		utils.throw_err(error1)
 		utils.log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
@@ -60,9 +59,9 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 		return false
 	}
 	msg := transmute([]u8)const.ConfigHeader
-	os.open(configPath, os.O_APPEND | os.O_WRONLY, 0o666)
-	defer os.close(file)
-	writter, writeSuccess := os.write(file, msg)
+	nFile, openSuccess := os.open(configPath, os.O_APPEND | os.O_WRONLY, 0o666)
+	defer os.close(nFile)
+	writter, writeSuccess := os.write(nFile, msg)
 	if writeSuccess != 0 {
 		error2 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
@@ -99,7 +98,6 @@ OST_FIND_CONFIG :: proc(c: string) -> bool {
 			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		utils.throw_err(error1)
 		utils.log_err("Error ostrich.config file", #procedure)
 		return false
 	}
@@ -168,7 +166,6 @@ OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		utils.throw_err(error1)
 		utils.log_err("Error reading ostrich.config file", #procedure)
 		return ""
 	}
