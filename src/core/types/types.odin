@@ -30,8 +30,8 @@ Desc: Used to define the structure of a record withinin the Ostrich Database
 Usage Locations: records.odin
 */
 Record :: struct {
-	name: string,
-	type: string,
+	name:  string,
+	type:  string,
 	value: string,
 }
 
@@ -209,3 +209,8 @@ Colletion_File_Schema :: struct {
 	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
 }
 
+//literally only a place to store values that for some reason are lost in translation
+trashHeap: TrashHeap
+TrashHeap :: struct {
+	TrashValueOne: any,
+}

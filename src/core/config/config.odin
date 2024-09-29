@@ -2,6 +2,7 @@ package config
 
 import "../../utils"
 import "../const"
+import "../types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -159,6 +160,7 @@ OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 
 
 OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
+	value: string = ""
 	data, readSuccess := os.read_entire_file(const.OST_CONFIG_PATH)
 	if !readSuccess {
 		error1 := utils.new_err(
@@ -167,9 +169,8 @@ OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 			#procedure,
 		)
 		utils.log_err("Error reading ostrich.config file", #procedure)
-		return ""
+		return value
 	}
-
 	defer delete(data)
 
 	content := string(data)
@@ -180,13 +181,17 @@ OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 		if strings.contains(line, config) {
 			parts := strings.split(line, " : ")
 			if len(parts) >= 2 {
-				return strings.trim_space(parts[1])
+				value = strings.trim_space(parts[1])
+				fmt.printfln("Value: %s", value)
+
 			}
 			break // Found the config, but it's malformed
 		}
 	}
 
-	return "" // Config not found
+
+	fmt.printfln("Value: %s", value)
+	return value // Config not found
 }
 
 
