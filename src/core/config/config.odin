@@ -160,7 +160,7 @@ OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 
 
 OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
-	value: string = ""
+	value := ""
 	data, readSuccess := os.read_entire_file(const.OST_CONFIG_PATH)
 	if !readSuccess {
 		error1 := utils.new_err(
@@ -178,21 +178,16 @@ OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 	defer delete(lines)
 
 	for line in lines {
-		fmt.printfln("ShowingLine: %s", line)
 		if strings.contains(line, config) {
 			parts := strings.split(line, " : ")
 			if len(parts) >= 2 {
 				value = strings.trim_space(parts[1])
-				fmt.printfln("Value: %s", value)
-				types.trashHeap.TrashValueOne = value
-				return value
+				return strings.clone(value)
 			}
 			break // Found the config, but it's malformed
 		}
 	}
 
-
-	fmt.println("ERROR FOUND")
 	return value // Config not found
 }
 
