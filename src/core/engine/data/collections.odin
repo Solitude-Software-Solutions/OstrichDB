@@ -263,7 +263,7 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 	newNameExt := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, newName)
 	renamed := os.rename(oldPathAndExt, newNameExt)
 
-	if renamed != true {
+	if renamed != os.ERROR_NONE {
 		utils.log_err("Error renaming .ost file", #procedure)
 		return false
 	}
