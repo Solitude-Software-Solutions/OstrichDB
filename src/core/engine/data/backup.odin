@@ -69,9 +69,9 @@ OST_CHOOSE_BACKUP_NAME :: proc() -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading input for backup collection name",#procedure)
+		utils.log_err("Error reading input for backup collection name", #procedure)
 	}
 	str := strings.trim_right(string(buf[:n]), "\r\n")
 
-	return str
+	return strings.clone(str)
 }

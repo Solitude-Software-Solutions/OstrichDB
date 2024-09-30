@@ -26,6 +26,7 @@ OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 		if idFoundInCache == true {
 			types.data_integrity_checks.Cluster_IDs.Compliant = true
 		} else {
+			utils.log_err("Cluster ID not found in cache", #procedure)
 			types.data_integrity_checks.Cluster_IDs.Compliant = false
 			break
 		}
@@ -43,6 +44,7 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 	fileSize := fileInfo.size
 
 	if fileSize > const.MAX_FILE_SIZE {
+		utils.log_err("File size is too large", #procedure)
 		types.data_integrity_checks.File_Size.Compliant = false
 	}
 	return types.data_integrity_checks.File_Size.Compliant
@@ -51,14 +53,15 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 //preform collection format check on the passed collection
 OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	types.data_integrity_checks.File_Format.Compliant = true
-
 	clusterScanSuccess, invalidClusterFound := OST_SCAN_CLUSTER_STRUCTURE(fn)
 	headerScanSuccess, invalidHeaderFound := metadata.OST_SCAN_METADATA_HEADER_FORMAT(fn)
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
+		utils.log_err("Cluster structure is not compliant", #procedure)
 		types.data_integrity_checks.File_Format.Compliant = false
 
 	}
 	if headerScanSuccess != 0 || invalidHeaderFound == true {
+		utils.log_err("Header format is not compliant", #procedure)
 		types.data_integrity_checks.File_Format.Compliant = false
 	}
 

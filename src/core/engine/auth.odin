@@ -135,7 +135,7 @@ OST_MESH_SALT_AND_HASH :: proc(s: string, hp: []u8) -> string {
 	mesh: string
 	hpStr := transmute(string)hp
 	mesh = strings.concatenate([]string{s, hpStr})
-	return mesh
+	return strings.clone(mesh)
 }
 
 //checks if the users information does exist in the user credentials file

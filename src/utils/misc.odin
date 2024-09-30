@@ -34,7 +34,7 @@ ORANGE :: "\033[38;5;208m"
 BOLD :: "\033[1m"
 ITALIC :: "\033[3m"
 UNDERLINE :: "\033[4m"
-BOLD_UNDERLINE:: "\033[4m\033[1m" //:) makes formatting even easier - SchoolyB
+BOLD_UNDERLINE :: "\033[4m\033[1m" //:) makes formatting even easier - SchoolyB
 RESET :: "\033[0m"
 
 
@@ -59,7 +59,7 @@ get_input :: proc() -> string {
 	}
 	result := strings.trim_right(string(buf[:n]), "\r\n")
 	// fmt.printf("Debug: Returning result: '%s'\n", result)
-	return result
+	return strings.clone(result)
 }
 
 show_check_warning :: proc() -> string {

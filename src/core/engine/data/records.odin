@@ -619,7 +619,7 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 		}
 	}
 	fmt.printfln("Invalid record type %s%s%s", utils.BOLD_UNDERLINE, rType, utils.RESET)
-	return record.type, 1
+	return strings.clone(record.type), 1
 }
 
 
@@ -684,7 +684,7 @@ OST_FIND_RECORD_IN_CLUSTER :: proc(
 							type  = strings.trim_space(parts[1]),
 							value = strings.trim_space(parts[2]),
 						}
-						return record, record.type, true
+						return record, strings.clone(record.type), true
 					}
 				}
 			}
@@ -722,7 +722,7 @@ OST_GET_RECORD_TYPE :: proc(
 	data, read_success := os.read_entire_file(collection_file)
 	if !read_success {
 		fmt.println("Failed to read collection file:", collection_file)
-		return
+		return strings.clone(recordType), success
 	}
 
 	lines := strings.split(string(data), "\n")
@@ -734,13 +734,13 @@ OST_GET_RECORD_TYPE :: proc(
 			if len(parts) >= 2 {
 				recordType = strings.trim_space(parts[1])
 				success = true
-				return
+				return strings.clone(recordType), success
 			}
 		}
 	}
 
 	fmt.println("Record not found:", record_name)
-	return
+	return strings.clone(recordType), success
 }
 
 //The following conversion funcs are used to convert the passed in record value to the correct data type
@@ -824,7 +824,8 @@ OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 
 		delete(foundMatches)
 	}
-
+	// fmt.printfln("Collections: %v", collections)
+	fmt.printfln("Clusters: %s", clusters[:])
 	return collections[:], clusters[:]
 }
 

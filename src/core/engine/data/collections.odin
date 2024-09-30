@@ -301,7 +301,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 		return "No data found after header"
 	}
 	str := strings.join(lines[fileStart:], "\n")
-	return str
+	return strings.clone(str)
 }
 
 

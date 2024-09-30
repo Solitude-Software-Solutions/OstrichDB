@@ -228,9 +228,9 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 
 	}
 	if isInitializing == false {
-		return types.new_user.username.Value
+		return strings.clone(types.new_user.username.Value)
 	}
-	return types.user.username.Value
+	return strings.clone(types.user.username.Value)
 }
 
 
@@ -277,7 +277,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 		break
 	}
 
-	return enteredStr
+	return strings.clone(enteredStr)
 }
 
 //taKes in the plain text password and confirms it with the user
@@ -330,7 +330,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 		}
 	}
 	libc.system("stty echo")
-	return types.user.password.Value
+	return strings.clone(types.user.password.Value)
 }
 
 //store the entered and generated user credentials in the secure cluster

@@ -626,7 +626,7 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
 	cap := strings.to_upper(confirmation)
-	switch cap
+	switch cap 
 	{
 	case const.YES:
 		data, readSuccess := os.read_entire_file(collection_path)
@@ -721,7 +721,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collection_path, cn)
-	switch clusterExists
+	switch clusterExists 
 	{
 	case false:
 		fmt.printfln(
@@ -756,7 +756,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 				cluster_content = cluster[start_index + 1:]
 				// Trim any leading or trailing whitespace
 				cluster_content = strings.trim_space(cluster_content)
-				return cluster_content
+				return strings.clone(cluster_content)
 			}
 		}
 	}
