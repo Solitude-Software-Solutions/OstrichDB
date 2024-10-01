@@ -36,9 +36,19 @@ OST_QURANTINE_COLLECTION :: proc(fn: string) -> int {
 	quarantine_path := fmt.tprintf("%s/%s", const.OST_QUARANTINE_PATH, quarantineFilename)
 	// Move the file to quarantine
 	err := os.rename(collectionFile, quarantine_path)
-	if err != os.ERROR_NONE {
-		return -1
+	//THe Odin compiler on Linux doesnt expect a bool return from os.rename
+	when ODIN_OS == .Linux {
+		if err != os.ERROR_NONE {
+			return -1
+		}
 	}
+	//The Odin compiler on Darwin expects a bool return from os.rename
+	when ODIN_OS == .Darwin {
+		if err != false {
+			return -1
+		}
+	}
+
 	OST_APPEND_QUARANTINE_LINE(quarantine_path)
 	return 0
 }

@@ -262,11 +262,19 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 	newName := fmt.tprintf("%s%s", new, const.OST_FILE_EXTENSION)
 	newNameExt := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, newName)
 	renamed := os.rename(oldPathAndExt, newNameExt)
-
-	if renamed != os.ERROR_NONE {
-		utils.log_err("Error renaming .ost file", #procedure)
-		return false
+	when ODIN_OS == .Linux {
+		if renamed != os.ERROR_NONE {
+			utils.log_err("Error renaming .ost file", #procedure)
+			return false
+		}
 	}
+	when ODIN_OS == .Darwin {
+		if renamed != true {
+			utils.log_err("Error renaming .ost file", #procedure)
+			return false
+		}
+	}
+
 	return true
 }
 
