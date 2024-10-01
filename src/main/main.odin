@@ -27,27 +27,11 @@ main :: proc() {
 	version := transmute(string)utils.get_ost_version()
 	fmt.printfln("%sVersion: %s%s%s", utils.BOLD, utils.GREEN, version, utils.RESET)
 
-	//TODO: the if statement below is return something other than the string "true" even though it is reading
-	//the value from the config file correctly
-	//Seems as though even though the read config proc is the string "true"  the return value
-	//is coming back here as an empty string.
-	// foo := config.OST_READ_CONFIG_VALUE(const.configOne)
-	foo := config.OST_READ_CONFIG_VALUE("OST_ENGINE_INIT")
-	if foo == "true" {
-		fmt.println("init is true")
+	if config.OST_READ_CONFIG_VALUE(const.configOne) == "true" {
 		types.engine.Initialized = true
 		utils.log_runtime_event("OstrichDB Engine Initialized", "")
-	} else if foo == "false" {
-		fmt.printfln("foo: %s", foo)
-		fmt.println("init is false")
-		types.engine.Initialized = false
-	} else if foo == "" {
-		fmt.println("GETTING AN EMPTY STRING")
 	} else {
-		fmt.println("THIS SHIT BROKE")
+		types.engine.Initialized = false
 	}
-
-
 	engine.run()
-
 }
