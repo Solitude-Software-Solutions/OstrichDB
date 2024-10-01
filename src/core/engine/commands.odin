@@ -15,7 +15,7 @@ import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -40,7 +40,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	defer delete(cmd.o_token)
 
 
-	switch (cmd.a_token)
+	switch (cmd.a_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
@@ -146,7 +146,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(cmd.o_token[0])
-				switch (checks)
+				switch (checks) 
 				{
 				case -1:
 					return -1
@@ -266,7 +266,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				id := data.OST_GENERATE_CLUSTER_ID()
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
-				switch (result)
+				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
@@ -315,14 +315,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[0])
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
 				if nameSuccess == 0 && typeSuccess == 0 {
-					fmt.printfln("Creating record: %s%s%s of type: %s%s%s",
-					utils.BOLD_UNDERLINE,
-					rName,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					rType,
-					utils.RESET,
-                    )
+					fmt.printfln(
+						"Creating record: %s%s%s of type: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						rName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						rType,
+						utils.RESET,
+					)
 					data.OST_GET_ALL_COLLECTION_NAMES(false)
 
 					collection_name, cluster_name := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
@@ -340,7 +341,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"",
 						rType,
 					)
-					switch (appendSuccess)
+					switch (appendSuccess) 
 					{
 					case 0:
 						fmt.printfln(
@@ -416,7 +417,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case const.RENAME:
 		utils.log_runtime_event("Used RENAME command", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 && const.TO in cmd.m_token {
@@ -433,7 +434,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					utils.RESET,
 				)
 				success := data.OST_RENAME_COLLECTION(old_name, new_name)
-				switch (success)
+				switch (success) 
 				{
 				case true:
 					fmt.printf(
@@ -481,7 +482,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				new_name := cmd.m_token[const.TO]
 
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
-				switch (checks)
+				switch (checks) 
 				{
 				case -1:
 					return -1
@@ -526,7 +527,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				newRName := cmd.m_token[const.TO]
 
 				result := data.OST_RENAME_RECORD(oldRName, newRName)
-				switch (result)
+				switch (result) 
 				{
 				case 0:
 					fmt.printfln(
@@ -577,7 +578,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case const.ERASE:
 		utils.log_runtime_event("Used ERASE command", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			if data.OST_ERASE_COLLECTION(cmd.o_token[0]) == true {
@@ -602,7 +603,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cluster := cmd.o_token[0]
 				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
-				switch (checks)
+				switch (checks) 
 				{
 				case -1:
 					return -1
@@ -656,7 +657,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case const.FETCH:
 		utils.log_runtime_event("Used FETCH command", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			if len(cmd.o_token) > 0 {
@@ -678,7 +679,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection := cmd.o_token[1]
 				cluster := cmd.o_token[0]
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection)
-				switch (checks)
+				switch (checks) 
 				{
 				case -1:
 					return -1
@@ -708,7 +709,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	case const.SET:
 		//set can only be usedon RECORDS and CONFIGS
-		switch cmd.t_token
+		switch cmd.t_token 
 		{
 		case const.RECORD:
 			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
@@ -750,7 +751,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					value,
 					utils.RESET,
 				)
-				switch (configName)
+				switch (configName) 
 				{
 				case "HELP":
 					success := config.OST_TOGGLE_CONFIG(const.configFour)
@@ -775,7 +776,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case const.FOCUS:
 		utils.log_runtime_event("Used FOCUS command", "")
 
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.o_token[0], 0)
@@ -817,7 +818,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fullCollectionPath := fmt.tprintf("%s%s", collectionNamePath, const.OST_FILE_EXTENSION)
 
 			checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(cmd.o_token[1])
-			switch (checks)
+			switch (checks) 
 			{
 			case -1:
 				return -1
@@ -864,7 +865,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection := cmd.o_token[2]
 
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection)
-				switch (checks)
+				switch (checks) 
 				{
 				case -1:
 					return -1
@@ -942,7 +943,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	defer delete(cmd.o_token)
 
 
-	switch (cmd.a_token)
+	switch (cmd.a_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 	case const.EXIT:
@@ -979,7 +980,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	case const.NEW:
 		utils.log_runtime_event("Used NEW command while in FOCUS mode", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			fmt.printf("Cannot create a new collection while in FOCUS mode...\n")
@@ -991,7 +992,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 
 				id := data.OST_GENERATE_CLUSTER_ID()
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
-				switch (result)
+				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
@@ -1041,7 +1042,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		break
 	case const.FETCH:
 		utils.log_runtime_event("Used FETCH command while in FOCUS mode", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			fmt.printf("Cannot fetch a collection while in FOCUS mode...\n")
@@ -1073,7 +1074,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		break
 	case const.ERASE:
 		utils.log_runtime_event("Used ERASE command while in FOCUS mode", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			fmt.println("Cannot erase a collection while in FOCUS mode.")
@@ -1127,7 +1128,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		break
 	case const.RENAME:
 		utils.log_runtime_event("Used RENAME command while in FOCUS mode", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
 			fmt.println("Cannot rename a collection while in FOCUS mode.")

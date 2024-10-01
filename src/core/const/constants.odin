@@ -3,7 +3,7 @@ import "core:time"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -62,7 +62,7 @@ WITHIN :: "WITHIN"
 IN :: "IN"
 //Type Tokens
 STRING :: "STRING"
-STR:: "STR"
+STR :: "STR"
 //------------
 INTEGER :: "INTEGER"
 INT :: "INT"
@@ -94,4 +94,13 @@ CommandHistory: [dynamic]string
 QuarantineStr: string = "\n# [QUARANTINED] [QUARANTINED] [QUARANTINED] [QUARANTINED]\n"
 
 //if a user created an account with these names it would break the auth system. Might come back and look at this again.. - SchoolyB
-BannedUserNames:= []string{"admin", "user","guest", "root","system","sys","administrator","superuser"}
+BannedUserNames := []string {
+	"admin",
+	"user",
+	"guest",
+	"root",
+	"system",
+	"sys",
+	"administrator",
+	"superuser",
+}
