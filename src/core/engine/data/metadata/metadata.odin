@@ -13,7 +13,7 @@ import "core:time"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -62,7 +62,7 @@ OST_SET_DATE :: proc() -> string {
 	Second := strconv.append_int(sBuf[:], S, 10)
 
 
-	switch (mAsInt)
+	switch (mAsInt) 
 	{
 	case 1:
 		Month = "January"
@@ -103,7 +103,7 @@ OST_SET_DATE :: proc() -> string {
 	}
 
 	Date := strings.concatenate([]string{Month, " ", Day, " ", Year, " "})
-	return Date
+	return strings.clone(Date)
 }
 
 
@@ -111,7 +111,7 @@ OST_SET_DATE :: proc() -> string {
 OST_SET_FFV :: proc() -> string {
 	ffv := OST_GET_FILE_FORMAT_VERSION()
 	str := transmute(string)ffv
-	return str
+	return strings.clone(str)
 }
 
 //Gets the files size
@@ -163,7 +163,7 @@ OST_GENERATE_CHECKSUM :: proc() -> string {
 		randN := rand.choice(possibleNums)
 		checksum = strings.concatenate([]string{checksum, randN})
 	}
-	return checksum
+	return strings.clone(checksum)
 }
 
 
@@ -330,31 +330,6 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 	}
 	os.close(ffvf)
 	return data
-}
-
-//gets the entire metadata header of a collection file
-OST_GET_METADATA_HEADER :: proc(fn: string) -> string {
-	data, readSuccess := os.read_entire_file(fn)
-	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read file", #procedure)
-	}
-
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
-	for line in lines {
-		if strings.has_prefix(line, "#") {
-			fmt.println(line)
-		}
-	}
-	return ""
-
 }
 
 //looks over the metadata header in a collection file and verifies the formatting of it

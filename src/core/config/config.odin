@@ -2,13 +2,14 @@ package config
 
 import "../../utils"
 import "../const"
+import "../types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -32,7 +33,6 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 			utils.get_err_msg(.CANNOT_READ_DIRECTORY),
 			#procedure,
 		)
-		utils.throw_err(error1)
 		utils.log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
@@ -60,9 +60,9 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 		return false
 	}
 	msg := transmute([]u8)const.ConfigHeader
-	os.open(configPath, os.O_APPEND | os.O_WRONLY, 0o666)
-	defer os.close(file)
-	writter, writeSuccess := os.write(file, msg)
+	nFile, openSuccess := os.open(configPath, os.O_APPEND | os.O_WRONLY, 0o666)
+	defer os.close(nFile)
+	writter, writeSuccess := os.write(nFile, msg)
 	if writeSuccess != 0 {
 		error2 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
@@ -99,7 +99,6 @@ OST_FIND_CONFIG :: proc(c: string) -> bool {
 			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		utils.throw_err(error1)
 		utils.log_err("Error ostrich.config file", #procedure)
 		return false
 	}
@@ -161,6 +160,7 @@ OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 
 
 OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
+	value := ""
 	data, readSuccess := os.read_entire_file(const.OST_CONFIG_PATH)
 	if !readSuccess {
 		error1 := utils.new_err(
@@ -168,11 +168,9 @@ OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 			utils.get_err_msg(.CANNOT_READ_FILE),
 			#procedure,
 		)
-		utils.throw_err(error1)
 		utils.log_err("Error reading ostrich.config file", #procedure)
-		return ""
+		return value
 	}
-
 	defer delete(data)
 
 	content := string(data)
@@ -183,13 +181,14 @@ OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
 		if strings.contains(line, config) {
 			parts := strings.split(line, " : ")
 			if len(parts) >= 2 {
-				return strings.trim_space(parts[1])
+				value = strings.trim_space(parts[1])
+				return strings.clone(value)
 			}
 			break // Found the config, but it's malformed
 		}
 	}
 
-	return "" // Config not found
+	return value // Config not found
 }
 
 

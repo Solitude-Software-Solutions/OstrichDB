@@ -1,10 +1,11 @@
 package utils
 import "core:fmt"
 import "core:os"
+import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -130,11 +131,11 @@ new_err :: proc(type: ErrorType, message: string, procedure: string) -> Error {
 }
 
 get_err_msg :: proc(type: ErrorType) -> string {
-	return ERROR_MESSAGE[type]
+	return strings.clone(ERROR_MESSAGE[type])
 }
 
 throw_err :: proc(err: Error) -> int {
-	fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD,RESET)
+	fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
 	fmt.printfln(
 		"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
 		RESET,
@@ -154,7 +155,7 @@ throw_err :: proc(err: Error) -> int {
 //allows for more customization of error messages.
 //the custom err message that is passed is the same as the err message in the print statement
 throw_custom_err :: proc(err: Error, custom_message: string) -> int {
-    fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
+	fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
 	fmt.printfln(
 		"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
 		RESET,

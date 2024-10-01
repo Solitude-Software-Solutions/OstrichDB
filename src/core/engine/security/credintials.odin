@@ -17,7 +17,7 @@ import "core:time"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -25,10 +25,14 @@ SIGN_IN_ATTEMPTS: int
 FAILED_SIGN_IN_TIMER := time.MIN_DURATION //this will be used to track the time between failed sign in attempts. this timeer will start after the 5th failed attempt in a row
 
 
-OST_GEN_SECURE_DIR_FILE :: proc() -> int {
-	//make directory locked
-	createDirSuccess := os.make_directory("../bin/secure") //this will change when building entire project from cmd line
+OST_GEN_SECURE_DIR :: proc() -> int {
 
+	//perform a check to see if the secure directory already exists to prevent errors and overwriting
+	_, err := os.stat("../bin/secure")
+	if err == nil {
+		return 0
+	}
+	createDirSuccess := os.make_directory("../bin/secure")
 	if createDirSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_CREATE_DIRECTORY,
@@ -38,14 +42,12 @@ OST_GEN_SECURE_DIR_FILE :: proc() -> int {
 		utils.throw_err(error1)
 		utils.log_err("Error occured while attempting to generate new secure file", #procedure)
 	}
-
 	return 0
 }
 
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
-	OST_GEN_SECURE_DIR_FILE()
-
+	OST_GEN_SECURE_DIR()
 	OST_GEN_USER_ID()
 	fmt.printfln("Welcome to the Ostrich Database Engine")
 	fmt.printfln("Before getting started please setup your admin account")
@@ -105,7 +107,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	)
 	configToggled := config.OST_TOGGLE_CONFIG(const.configOne)
 
-	switch (configToggled)
+	switch (configToggled) 
 	{
 	case true:
 		types.USER_SIGNIN_STATUS = true
@@ -132,7 +134,7 @@ OST_GEN_USER_ID :: proc() -> i64 {
 OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	buf: [32]byte
 	result: bool
-	openCacheFile, openSuccess := os.open("../bin/secure/_secure_.ost", os.O_RDONLY, 0o666)
+	openCacheFile, openSuccess := os.open("../bin/cluster_id_cache", os.O_RDONLY, 0o666)
 
 	if openSuccess != 0 {
 		error1 := utils.new_err(
@@ -226,9 +228,9 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 
 	}
 	if isInitializing == false {
-		return types.new_user.username.Value
+		return strings.clone(types.new_user.username.Value)
 	}
-	return types.user.username.Value
+	return strings.clone(types.user.username.Value)
 }
 
 
@@ -264,7 +266,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword
+	switch strongPassword 
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
@@ -275,7 +277,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 		break
 	}
 
-	return enteredStr
+	return strings.clone(enteredStr)
 }
 
 //taKes in the plain text password and confirms it with the user
@@ -328,7 +330,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 		}
 	}
 	libc.system("stty echo")
-	return types.user.password.Value
+	return strings.clone(types.user.password.Value)
 }
 
 //store the entered and generated user credentials in the secure cluster
@@ -432,7 +434,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p))
+	switch (len(p)) 
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -469,7 +471,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true)
+	switch (true) 
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -523,11 +525,11 @@ OST_CREATE_NEW_USER :: proc() -> int {
 	}
 	newUserName := OST_GET_USERNAME(false)
 
-	isBannedUsername:= OST_CHECK_FOR_BANNED_USERNAME(newUserName)
+	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(newUserName)
 	if isBannedUsername == true {
-            fmt.printfln("Username is banned. Please enter a different username")
-            OST_CREATE_NEW_USER()
-        }
+		fmt.printfln("Username is banned. Please enter a different username")
+		OST_CREATE_NEW_USER()
+	}
 	newColName := fmt.tprintf("secure_%s", newUserName)
 	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
 
@@ -604,7 +606,7 @@ OST_CREATE_NEW_USER :: proc() -> int {
 OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
 	for i := 0; i < len(const.BannedUserNames); i += 1 {
 		if strings.contains(un, const.BannedUserNames[0]) {
-		    return true
+			return true
 		}
 	}
 	return false

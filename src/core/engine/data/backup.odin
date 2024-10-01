@@ -9,7 +9,7 @@ import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -69,9 +69,9 @@ OST_CHOOSE_BACKUP_NAME :: proc() -> string {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading input for backup collection name",#procedure)
+		utils.log_err("Error reading input for backup collection name", #procedure)
 	}
 	str := strings.trim_right(string(buf[:n]), "\r\n")
 
-	return str
+	return strings.clone(str)
 }

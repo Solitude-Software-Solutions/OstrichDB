@@ -1,9 +1,9 @@
 package help
 
+import "../../utils"
 import "../config"
 import "../const"
 import "../types"
-import "../../utils"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -11,7 +11,7 @@ import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -40,7 +40,7 @@ validCommnads := []string {
 OST_SET_HELP_MODE :: proc() -> bool {
 	value := config.OST_READ_CONFIG_VALUE(const.configFour)
 	//do stuff
-	switch (value)
+	switch (value) 
 	{
 	case "verbose":
 		types.help_mode.verbose = true
@@ -83,7 +83,7 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 		)
 		return ""
 	}
-	switch (helpMode)
+	switch (helpMode) 
 	{
 	case true:
 		data, ok = os.read_entire_file(const.VERBOSE_HELP_FILE)
@@ -102,25 +102,25 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 
 	start_index := strings.index(content, help_section_start)
 	if start_index == -1 {
-		return fmt.tprintf("No help found for %s%s%s",
-		 utils.BOLD_UNDERLINE,
-			subject,
-			utils.RESET,)
+		return fmt.tprintf("No help found for %s%s%s", utils.BOLD_UNDERLINE, subject, utils.RESET)
 	}
 
 	start_index += len(help_section_start)
 	end_index := strings.index(content[start_index:], help_section_end)
 	if end_index == -1 {
-		return fmt.tprintf("Malformed help section for %s%s%s", utils.BOLD_UNDERLINE,
-		subject,
-		utils.RESET,)
+		return fmt.tprintf(
+			"Malformed help section for %s%s%s",
+			utils.BOLD_UNDERLINE,
+			subject,
+			utils.RESET,
+		)
 	}
 
 	help_text = strings.trim_space(content[start_index:][:end_index])
 	fmt.printfln("\n")
 	fmt.printfln(help_text)
 	fmt.printfln("\n")
-	return help_text
+	return strings.clone(help_text)
 }
 
 //ready and returns everything from the general help file
@@ -134,7 +134,7 @@ OST_GET_GENERAL_HELP :: proc() -> string {
 	fmt.printfln("\n")
 	fmt.printfln(content)
 	fmt.printfln("\n")
-	return content
+	return strings.clone(content)
 }
 
 //shows a table of explaining atoms
@@ -151,5 +151,5 @@ OST_GET_ATOMS_HELP :: proc() -> string {
 	)
 	fmt.println(content)
 	fmt.printfln("\n")
-	return content
+	return strings.clone(content)
 }

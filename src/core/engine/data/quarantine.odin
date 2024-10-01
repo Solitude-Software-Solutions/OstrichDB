@@ -12,7 +12,7 @@ import "core:time"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -36,9 +36,19 @@ OST_QURANTINE_COLLECTION :: proc(fn: string) -> int {
 	quarantine_path := fmt.tprintf("%s/%s", const.OST_QUARANTINE_PATH, quarantineFilename)
 	// Move the file to quarantine
 	err := os.rename(collectionFile, quarantine_path)
-	if err != os.ERROR_NONE {
-		return -1
+	//THe Odin compiler on Linux doesnt expect a bool return from os.rename
+	when ODIN_OS == .Linux {
+		if err != os.ERROR_NONE {
+			return -1
+		}
 	}
+	//The Odin compiler on Darwin expects a bool return from os.rename
+	when ODIN_OS == .Darwin {
+		if err != false {
+			return -1
+		}
+	}
+
 	OST_APPEND_QUARANTINE_LINE(quarantine_path)
 	return 0
 }

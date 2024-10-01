@@ -15,7 +15,7 @@ import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -55,6 +55,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.user.role.Value = "guest"
 	}
 
+	fmt.printfln("Username that was found: %s", userNameFound)
 
 	if (userNameFound != userName) {
 		error2 := utils.new_err(
@@ -63,7 +64,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			#procedure,
 		)
 		utils.throw_err(error2)
-		fmt.printfln("There is no account within OstrichDB aassociated with the entered username. Please try again.")
+		fmt.printfln(
+			"There is no account within OstrichDB associated with the entered username. Please try again.",
+		)
 		utils.log_err("User entered a username that does not exist in the database", #procedure)
 		return false
 	}
@@ -132,7 +135,7 @@ OST_MESH_SALT_AND_HASH :: proc(s: string, hp: []u8) -> string {
 	mesh: string
 	hpStr := transmute(string)hp
 	mesh = strings.concatenate([]string{s, hpStr})
-	return mesh
+	return strings.clone(mesh)
 }
 
 //checks if the users information does exist in the user credentials file
@@ -150,7 +153,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param)
+		switch (param) 
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false

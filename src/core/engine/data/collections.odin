@@ -9,7 +9,7 @@ import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -44,7 +44,7 @@ Params: fileName - the desired file(cluster) name
 OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType)
+	switch (collectionType) 
 	{
 	case 0:
 		//standard cluster file
@@ -137,7 +137,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
 	cap := strings.to_upper(confirmation)
 
-	switch (cap)
+	switch (cap) 
 	{
 	case const.YES:
 		// /delete the file
@@ -262,11 +262,19 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 	newName := fmt.tprintf("%s%s", new, const.OST_FILE_EXTENSION)
 	newNameExt := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, newName)
 	renamed := os.rename(oldPathAndExt, newNameExt)
-
-	if renamed != 0 {
-		utils.log_err("Error renaming .ost file", #procedure)
-		return false
+	when ODIN_OS == .Linux {
+		if renamed != os.ERROR_NONE {
+			utils.log_err("Error renaming .ost file", #procedure)
+			return false
+		}
 	}
+	when ODIN_OS == .Darwin {
+		if renamed != true {
+			utils.log_err("Error renaming .ost file", #procedure)
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -301,7 +309,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 		return "No data found after header"
 	}
 	str := strings.join(lines[fileStart:], "\n")
-	return str
+	return strings.clone(str)
 }
 
 
@@ -367,7 +375,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (found: bool, name: string) {
 	secDir, e := os.open(const.OST_SECURE_COLLECTION_PATH)
 	files, readDirSuccess := os.read_dir(secDir, -1)
-	found= false
+	found = false
 	for file in files {
 		if strings.contains(file.name, fn) {
 			found = true

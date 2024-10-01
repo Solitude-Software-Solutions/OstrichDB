@@ -3,7 +3,7 @@ import "core:time"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -30,8 +30,8 @@ Desc: Used to define the structure of a record withinin the Ostrich Database
 Usage Locations: records.odin
 */
 Record :: struct {
-	name: string,
-	type: string,
+	name:  string,
+	type:  string,
 	value: string,
 }
 
@@ -209,3 +209,8 @@ Colletion_File_Schema :: struct {
 	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
 }
 
+//literally only a place to store values that for some reason are lost in translation
+trashHeap: TrashHeap
+TrashHeap :: struct {
+	TrashValueOne: string,
+}

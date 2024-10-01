@@ -2,10 +2,11 @@ package engine
 
 import "../const"
 import "../types"
+import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
@@ -19,7 +20,9 @@ OST_FOCUS :: proc(t: string, o: string, p: ..string) -> (string, string, string)
 	for p in p {
 		types.focus.p_o = p
 	}
-	return types.focus.t_, types.focus.o_, types.focus.p_o
+	return strings.clone(
+		types.focus.t_,
+	), strings.clone(types.focus.o_), strings.clone(types.focus.p_o)
 }
 
 // only used to focus records
@@ -27,7 +30,9 @@ OST_FOCUS_RECORD :: proc(t: string, o: string, rO: string) -> (string, string, s
 	types.focus.t_ = t
 	types.focus.o_ = o
 	types.focus.ro_ = rO
-	return types.focus.t_, types.focus.o_, types.focus.ro_
+	return strings.clone(
+		types.focus.t_,
+	), strings.clone(types.focus.o_), strings.clone(types.focus.ro_)
 }
 
 //Clears the focus
