@@ -229,7 +229,7 @@ OST_SET_RECORD_NAME :: proc(rn: string) -> (string, int) {
 	}
 
 	record.name = rn
-	return record.name, 0
+	return strings.clone(record.name), 0
 }
 
 
