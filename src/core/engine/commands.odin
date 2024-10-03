@@ -31,7 +31,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		utils.get_err_msg(.INCOMPLETE_COMMAND),
 		#procedure,
 	)
-
+	if cmd.isUsingDotNotation == true {
+		fmt.printfln("Using dot notation is not supported in this version of OstrichDB.")
+	}
 	invalidCommandErr := utils.new_err(
 		.INVALID_COMMAND,
 		utils.get_err_msg(.INVALID_COMMAND),
@@ -111,7 +113,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.printfln("Command number %d not found", commandIndex + 1) // add one to make it reflect what the user sees
 			break
 		}
-
+		// parses the command that has been stored in the most recent command history index. Crucial for the HISTORY command
 		cmd := OST_PARSE_COMMAND(const.CommandHistory[commandIndex])
 		OST_EXECUTE_COMMAND(&cmd)
 		break

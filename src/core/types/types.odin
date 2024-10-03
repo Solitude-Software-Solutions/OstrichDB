@@ -16,11 +16,12 @@ Helpful Hint: Commands are built of ATOMs (A)ction, (T)arget, (O)bject, (M)odifi
 Usage Locations: commands.odin & parser.odin
 */
 Command :: struct {
-	a_token: string, //action token
-	t_token: string, //object token
-	o_token: [dynamic]string, //target token
-	m_token: map[string]string, //modifier token
-	s_token: map[string]string, //scope token
+	a_token:            string, //action token
+	t_token:            string, //object token
+	o_token:            [dynamic]string, //target token
+	m_token:            map[string]string, //modifier token
+	s_token:            map[string]string, //scope token
+	isUsingDotNotation: bool, //if the command is using dot notation
 }
 //=================================================/src/core/data/=================================================//
 /*
