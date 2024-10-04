@@ -31,9 +31,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		utils.get_err_msg(.INCOMPLETE_COMMAND),
 		#procedure,
 	)
-	if cmd.isUsingDotNotation == true {
-		fmt.printfln("Using dot notation is not supported in this version of OstrichDB.")
-	}
+
 	invalidCommandErr := utils.new_err(
 		.INVALID_COMMAND,
 		utils.get_err_msg(.INVALID_COMMAND),
@@ -247,7 +245,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
+			   cmd.isUsingDotNotation == true {
 				cluster_name := cmd.o_token[0]
 				collection_name := cmd.o_token[1]
 				fmt.printf(

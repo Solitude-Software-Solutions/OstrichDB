@@ -55,8 +55,6 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.user.role.Value = "guest"
 	}
 
-	fmt.printfln("Username that was found: %s", userNameFound)
-
 	if (userNameFound != userName) {
 		error2 := utils.new_err(
 			.ENTERED_USERNAME_NOT_FOUND,
