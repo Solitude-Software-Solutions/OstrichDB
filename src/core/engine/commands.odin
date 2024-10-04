@@ -245,10 +245,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
+			cluster_name: string
+			collection_name: string
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
 			   cmd.isUsingDotNotation == true {
-				cluster_name := cmd.o_token[0]
-				collection_name := cmd.o_token[1]
+				if cmd.isUsingDotNotation == true {
+					collection_name = cmd.o_token[0]
+					cluster_name = cmd.o_token[1]
+					fmt.println("Using dot notation")
+				} else {
+					cluster_name = cmd.o_token[0]
+					collection_name = cmd.o_token[1]
+				}
 				fmt.printf(
 					"Creating cluster: %s%s%s within collection: %s%s%s\n",
 					utils.BOLD_UNDERLINE,

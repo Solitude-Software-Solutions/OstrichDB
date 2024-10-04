@@ -36,18 +36,23 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	for c := 1; c < len(tokens); c += 1 {
 		sepByDot = strings.split(strings.trim_space(tokens[c]), ".")
 		if len(sepByDot) == 3 {
-			child = sepByDot[0]
+			child = sepByDot[2]
 			parent = sepByDot[1]
-			grandparent = sepByDot[2]
+			grandparent = sepByDot[0]
 		} else if len(sepByDot) == 2 {
-			child = sepByDot[0]
-			parent = sepByDot[1]
-		} else if len(sepByDot) == 1 {
-			child = sepByDot[0]
+			child = sepByDot[1]
+			parent = sepByDot[0]
 		} else {
 			fmt.println("There can only be 1, 2, or 3 parts to a dot notation command")
 		}
 	}
+
+	//debugging
+	fmt.println("grandparent from parser: ", grandparent)
+	fmt.println("parent from parser: ", parent)
+	fmt.println("child from parser: ", child)
+	//debugging
+
 	cmd := types.Command{}
 	switch (len(sepByDot) > 1) {
 
@@ -67,11 +72,14 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			token := strings.to_upper(tokens[i])
 			// Expecting target
 			cmd.t_token = tokens[i]
-			append(&cmd.o_token, child)
-			append(&cmd.o_token, parent)
+			//append the grandparent, parent, and child to the o_token slice in that order
 			if grandparent != "" {
 				append(&cmd.o_token, grandparent)
 			}
+			append(&cmd.o_token, parent)
+			append(&cmd.o_token, child)
+
+			fmt.println("cmd.o_token from parser: ", cmd.o_token)
 			return cmd
 		}
 
