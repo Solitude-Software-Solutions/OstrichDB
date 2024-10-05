@@ -422,6 +422,9 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 }
 
 OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) -> bool {
+	fmt.printfln("getting collection name:%s")
+	fmt.printfln("getting old cluster name:%s")
+	fmt.printfln("getting new cluster name:%s")
 	collection_path := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
@@ -461,15 +464,16 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 
 	clusterFound := false
 	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name : %s", old)) {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", old)) {
 			// if a cluster with the old name is found, replace the name with the new name
 			clusterFound = true
 			newCluster, e := strings.replace(
 				cluster,
-				fmt.tprintf("cluster_name : %s", old),
-				fmt.tprintf("cluster_name : %s", new),
+				fmt.tprintf("cluster_name :identifier: %s", old),
+				fmt.tprintf("cluster_name :identifier: %s", new),
 				1,
 			)
+			fmt.printfln("newCLuster: %s", newCluster)
 			//append the new data to the new content variable
 			append(&newContent, ..transmute([]u8)newCluster)
 			// append the closing brace
@@ -477,7 +481,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 		} else if len(strings.trim_space(cluster)) > 0 {
 			// For other clusters, just add them back unchanged and add the closing brace
 			append(&newContent, ..transmute([]u8)cluster)
-			append(&newContent, '}')
+			// append(&newContent, '}')
 		}
 	}
 

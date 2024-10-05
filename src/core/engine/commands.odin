@@ -249,11 +249,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collection_name: string
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
 			   cmd.isUsingDotNotation == true {
+				//using dot notation
 				if cmd.isUsingDotNotation == true {
 					collection_name = cmd.o_token[0]
 					cluster_name = cmd.o_token[1]
-					fmt.println("Using dot notation")
-				} else {
+				} else { 	//using within
 					cluster_name = cmd.o_token[0]
 					collection_name = cmd.o_token[1]
 				}
@@ -485,15 +485,28 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token && const.TO in cmd.m_token {
+			// old_name: string
+			// new_name: string
+			cluster_name: string
+			collection_name: string
+
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token && const.TO in cmd.m_token ||
+			   cmd.isUsingDotNotation == true {
+				// if cmd.isUsingDotNotation == true {}
 				old_name := cmd.o_token[0]
 				collection_name := cmd.o_token[1]
 				new_name := cmd.m_token[const.TO]
+				fmt.printfln("Old_name: %s", old_name)
+				fmt.printfln("Collection_name: %s", collection_name)
+				fmt.printfln("New_name: %s", new_name)
 
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
 				switch (checks) 
 				{
 				case -1:
+					fmt.printfln(
+						"Failed to rename cluster %s%s%s to %s%s%s in collection %s%s%s\n",
+					)
 					return -1
 				}
 

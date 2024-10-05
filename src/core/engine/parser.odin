@@ -52,9 +52,12 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	fmt.println("parent from parser: ", parent)
 	fmt.println("child from parser: ", child)
 	//debugging
-
+	fmt.println("length of sep by dot: ", len(sepByDot))
+	fmt.println("sep by dot: ", sepByDot)
 	cmd := types.Command{}
-	switch (len(sepByDot) > 1) {
+	//allowing this to evaluate if its greater >= 1 is super hacky
+	//and I dont think it should be this way, but fuck it I guess - Marshall Burns aka SchoolyB
+	switch (len(sepByDot) >= 1) {
 
 	//IF THE COMMAND IS USING DOT NOTATION example: new cluster foo.bar
 	case true:
@@ -67,6 +70,8 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 		if len(tokens) == 0 {
 			return cmd
 		}
+		currentModifier := ""
+		state := 0
 		cmd.a_token = strings.to_upper(tokens[0]) //i dont think i need to do this anymore
 		for i := 1; i < len(tokens); i += 1 {
 			token := strings.to_upper(tokens[i])
@@ -75,11 +80,40 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			//append the grandparent, parent, and child to the o_token slice in that order
 			if grandparent != "" {
 				append(&cmd.o_token, grandparent)
+				fmt.println("grandparent that was appended: ", grandparent)
 			}
+			fmt.println("token: ", token)
+			// append(&cmd.o_token, parent)
+			// append(&cmd.o_token, child)
 			append(&cmd.o_token, parent)
 			append(&cmd.o_token, child)
 
-			fmt.println("cmd.o_token from parser: ", cmd.o_token)
+			fmt.printfln("parent that was appended: %s", parent)
+			fmt.printfln("child that was appended: %s", child)
+
+
+			state = 1
+			switch state {
+			case 0:
+				// Expecting target
+				cmd.t_token = token
+				state = 1
+			case 1:
+				// Expecting object or modifier
+				fmt.println("token: ", token)
+				if OST_IS_VALID_MODIFIER(token) {
+					currentModifier = token
+					state = 2
+				} else {
+					append(&cmd.o_token, tokens[i]) // Preserve original case for objects
+					fmt.println("appended to o_token: ", tokens[i])
+					// state = 2
+				}
+			case 2:
+				// Expecting object after modifier
+				cmd.m_token[currentModifier] = tokens[i] // Preserve original case for modifier values
+				state = 1
+			}
 			return cmd
 		}
 
