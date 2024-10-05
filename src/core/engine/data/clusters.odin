@@ -473,7 +473,6 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 				fmt.tprintf("cluster_name :identifier: %s", new),
 				1,
 			)
-			fmt.printfln("newCLuster: %s", newCluster)
 			//append the new data to the new content variable
 			append(&newContent, ..transmute([]u8)newCluster)
 			// append the closing brace
