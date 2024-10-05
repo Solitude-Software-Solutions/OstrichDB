@@ -147,7 +147,7 @@ OST_REMOVE_ID_FROM_CACHE :: proc(id: i64) -> bool {
 	deleted := false
 	buf: [32]byte
 	idStr := strconv.append_int(buf[:], id, 10)
-	fmt.printfln("ID to delete: %s", idStr)
+
 
 	data, readSuccess := os.read_entire_file(const.OST_CLUSTER_CACHE_PATH)
 	if !readSuccess {

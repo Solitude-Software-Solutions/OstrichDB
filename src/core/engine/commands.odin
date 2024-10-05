@@ -485,8 +485,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
-			// old_name: string
-			// new_name: string
 			cluster_name: string
 			collection_name: string
 
@@ -620,9 +618,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
-				collection_name := cmd.o_token[1]
-				cluster := cmd.o_token[0]
+			collection_name: string
+			cluster_name: string
+
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
+			   cmd.isUsingDotNotation == true {
+				collection_name := cmd.o_token[0]
+				cluster := cmd.o_token[1]
 				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
 				switch (checks) 
@@ -697,9 +699,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
-				collection := cmd.o_token[1]
-				cluster := cmd.o_token[0]
+			collection_name: string
+			cluster_name: string
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
+			   cmd.isUsingDotNotation == true {
+				collection := cmd.o_token[0]
+				cluster := cmd.o_token[1]
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection)
 				switch (checks) 
 				{
