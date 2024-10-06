@@ -398,34 +398,61 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 }
 
 //Does what it says, renames a record
-OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
+//So basically since I started implementing dot notation on the command line I had to rework a lot of shit.
+//"params" is only given an arg when used during dot notation. We will call this a temp fix but lets be real... - Marshall Burns aka @SchoolyB Oct5th 2024
+OST_RENAME_RECORD :: proc(
+	old: string,
+	new: string,
+	dotNotation: bool,
+	params: ..string,
+) -> (
+	result: int,
+) {
 	OST_FETCH_EVERY_RECORD_BY_NAME(old)
 	buf := make([]byte, 1024)
 	defer delete(buf)
 	fn, cn: string
+	paramOne: string
+	paramTwo: string
+	if dotNotation == true {
+		//accessing params
+		// if len(params) > 0 {
+		paramOne = params[0]
+		paramTwo = params[1]
+		fmt.printfln("paramone %s: ", paramOne)
+		fmt.printfln("paramtwo %s: ", paramTwo)
+		// }
 
-	fmt.printfln(
-		"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
-		utils.BOLD_UNDERLINE,
-		old,
-		utils.RESET,
-	)
+		fn = paramOne //collection name from command line
+		cn = paramTwo //cluster name from command line
 
-	col, colInputSuccess := os.read(os.stdin, buf)
-	if colInputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
+		//since thse value are coming from command line itself no need to uppercase :)
+
+
+	} else {fmt.printfln(
+			"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
+			utils.BOLD_UNDERLINE,
+			old,
+			utils.RESET,
 		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read user input for collection name", #procedure)
+
+		col, colInputSuccess := os.read(os.stdin, buf)
+		if colInputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Could not read user input for collection name", #procedure)
+		}
+		fn = strings.trim_right(string(buf[:col]), "\r\n")
+		fn = strings.to_upper(fn)
 	}
-	fn = strings.trim_right(string(buf[:col]), "\r\n")
-	fn = strings.to_upper(fn)
+
 
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
-		fmt.printfln("Collection with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)
+		fmt.printfln("Collection with name:%s%s%s does not exist", utils.BOLD, fn, utils.RESET)
 		fmt.println("Please try again with a different name")
 		return -1
 	}
@@ -445,27 +472,30 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 		return -1
 	}
 
-	fmt.printfln(
-		"Enter the name of the cluster that contains the record: %s%s%s that you would like to rename.",
-		utils.BOLD,
-		old,
-		utils.RESET,
-	)
 
-	buf = make([]byte, 1024)
-	clu, cluInputSuccess := os.read(os.stdin, buf)
-	if cluInputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
+	if dotNotation == false {
+		//do this if NOT using dot notation
+		fmt.printfln(
+			"Enter the name of the cluster that contains the record: %s%s%s that you would like to rename.",
+			utils.BOLD,
+			old,
+			utils.RESET,
 		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read user input for cluster name", #procedure)
-	}
-	cn = strings.trim_right(string(buf[:clu]), "\r\n")
-	cn = strings.to_upper(cn)
 
+		buf = make([]byte, 1024)
+		clu, cluInputSuccess := os.read(os.stdin, buf)
+		if cluInputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Could not read user input for cluster name", #procedure)
+		}
+		cn = strings.trim_right(string(buf[:clu]), "\r\n")
+		cn = strings.to_upper(cn)
+	}
 
 	if !OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn) {
 		fmt.printfln("Cluster with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)

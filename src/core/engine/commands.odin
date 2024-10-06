@@ -306,7 +306,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.printfln(
-					"Incomplete command. Correct Usage: NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+					"Incomplete command. Correct Usage: NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> \nAlternatively, you can use dot notation: NEW CLUSTER <collection_name>.<cluster_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete NEW command",
@@ -320,8 +320,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Used NEW RECORD command",
 				"User requested to create a new record.",
 			)
-			if len(cmd.o_token) == 1 && const.OF_TYPE in cmd.m_token || const.TYPE in cmd.m_token {
-				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[0])
+			collection_name: string
+			cluster_name: string
+			if len(cmd.o_token) == 1 && const.OF_TYPE in cmd.m_token ||
+			   cmd.isUsingDotNotation == true {
+				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[2])
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
 				if nameSuccess == 0 && typeSuccess == 0 {
 					fmt.printfln(
@@ -333,8 +336,30 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						rType,
 						utils.RESET,
 					)
-					data.OST_GET_ALL_COLLECTION_NAMES(false)
+					//All hail the re-engineered paser - Marshall Burns aka @SchoolyB
+					if cmd.isUsingDotNotation == true {
+						collection_name = cmd.o_token[0]
+						cluster_name = cmd.o_token[1]
+						filePath := fmt.tprintf(
+							"%s%s%s",
+							const.OST_COLLECTION_PATH,
+							collection_name,
+							const.OST_FILE_EXTENSION,
+						)
+						appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
+							filePath,
+							cluster_name,
+							rName,
+							"",
+							rType,
+						)
+						if appendSuccess == 0 {
+							break
+						}
+					}
 
+					//using within and all that other lame old v0.2 stuff ROFL - Marshall Burns aka @SchoolyB
+					data.OST_GET_ALL_COLLECTION_NAMES(false)
 					collection_name, cluster_name := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
 					filePath := fmt.tprintf(
 						"%s%s%s",
@@ -398,7 +423,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.printfln(
-					"Incomplete command. Correct Usage: NEW RECORD <record_name> OF_TYPE <record_type>",
+					"Incomplete command. Correct Usage: NEW RECORD <record_name> OF_TYPE <record_type>\nAlternatively, you can use dot notation: NEW RECORD <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
 				)
 				utils.log_runtime_event(
 					"Incomplete NEW RECORD command",
@@ -542,11 +567,28 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.RECORD:
-			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
-				oldRName := cmd.o_token[0]
-				newRName := cmd.m_token[const.TO]
-
-				result := data.OST_RENAME_RECORD(oldRName, newRName)
+			oldRName: string
+			newRName: string
+			collection_name: string //only here if using dot notation
+			cluster_name: string //only here if using dot notation
+			if len(cmd.o_token) == 1 && const.TO in cmd.m_token || cmd.isUsingDotNotation == true {
+				if cmd.isUsingDotNotation == true {
+					oldRName = cmd.o_token[2]
+					newRName = cmd.m_token[const.TO]
+					collection_name = cmd.o_token[0]
+					cluster_name = cmd.o_token[1]
+				} else {
+					oldRName = cmd.o_token[0]
+					newRName = cmd.m_token[const.TO]
+				}
+				//Who wrote this code?? Oh wait, it was me. I'm sorry.
+				result := data.OST_RENAME_RECORD(
+					oldRName,
+					newRName,
+					cmd.isUsingDotNotation,
+					strings.clone(collection_name),
+					strings.clone(cluster_name),
+				)
 				switch (result) 
 				{
 				case 0:
@@ -584,7 +626,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: RENAME RECORD <old_name> TO <new_name>",
+					"Incomplete command. Correct Usage: RENAME RECORD <old_name> TO <new_name>\nAlternativley use dot notation: RENAME RECORD <collection_name>.<cluster_name>.<old_name> TO <new_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete RENAME command",
