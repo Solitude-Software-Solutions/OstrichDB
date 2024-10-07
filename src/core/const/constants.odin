@@ -79,6 +79,9 @@ ATOM :: "ATOM"
 YES :: "YES"
 NO :: "NO"
 
+//FOR DOT NOTATION
+DOT :: "."
+
 //MISC CONSTANTS
 ost_carrot :: "OST>>>"
 VALID_RECORD_TYPES: []string : {STRING, INTEGER, FLOAT, BOOLEAN, STR, INT, FLT, BOOL}

@@ -14,7 +14,7 @@ import "core:strings"
 
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	using const
-	validModifiers := []string{AND, WITHIN, IN, OF_TYPE, TYPE, ALL_OF, TO}
+	validModifiers := []string{AND, WITHIN, IN, OF_TYPE, TYPE, ALL_OF, TO, DOT}
 	for modifier in validModifiers {
 		if strings.to_upper(token) == modifier {
 			return true
@@ -27,23 +27,25 @@ OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
+	//dot notation will allow for accessing context like this: <action> <target> child.parent.grandparent or <action> <target> child.parent
 	cmd := types.Command {
-		o_token = make([dynamic]string),
-		m_token = make(map[string]string),
-		s_token = make(map[string]string),
+		o_token            = make([dynamic]string),
+		m_token            = make(map[string]string),
+		s_token            = make(map[string]string),
+		isUsingDotNotation = false,
 	}
 
 	if len(tokens) == 0 {
 		return cmd
 	}
 
-	cmd.a_token = strings.to_upper(tokens[0])
+	cmd.a_token = tokens[0] //setting the action token
+	state := 0 //state machine exclusively used for modifier token shit
+	currentModifier := "" //stores the current modifier such as TO or WITHIN
 
-	state := 0
-	current_modifier := ""
-
+	//iterate over remaining ATOM tokens and set/append them to the cmd
 	for i := 1; i < len(tokens); i += 1 {
-		token := strings.to_upper(tokens[i])
+		token := tokens[i]
 
 		switch state {
 		case 0:
@@ -53,14 +55,22 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 		case 1:
 			// Expecting object or modifier
 			if OST_IS_VALID_MODIFIER(token) {
-				current_modifier = token
+				currentModifier = token
 				state = 2
 			} else {
-				append(&cmd.o_token, tokens[i]) // Preserve original case for objects
+				if strings.contains(token, ".") {
+					cmd.isUsingDotNotation = true
+					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
+					for obj in objTokensSepByDot {
+						append(&cmd.o_token, obj)
+					}
+				} else {
+					append(&cmd.o_token, token)
+				}
 			}
 		case 2:
 			// Expecting object after modifier
-			cmd.m_token[current_modifier] = tokens[i] // Preserve original case for modifier values
+			cmd.m_token[currentModifier] = token // Preserve original case for modifier values
 			state = 1
 		}
 	}

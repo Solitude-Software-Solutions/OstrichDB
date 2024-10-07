@@ -147,7 +147,7 @@ OST_REMOVE_ID_FROM_CACHE :: proc(id: i64) -> bool {
 	deleted := false
 	buf: [32]byte
 	idStr := strconv.append_int(buf[:], id, 10)
-	fmt.printfln("ID to delete: %s", idStr)
+
 
 	data, readSuccess := os.read_entire_file(const.OST_CLUSTER_CACHE_PATH)
 	if !readSuccess {
@@ -422,6 +422,9 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 }
 
 OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) -> bool {
+	fmt.printfln("getting collection name:%s")
+	fmt.printfln("getting old cluster name:%s")
+	fmt.printfln("getting new cluster name:%s")
 	collection_path := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
@@ -461,13 +464,13 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 
 	clusterFound := false
 	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name : %s", old)) {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", old)) {
 			// if a cluster with the old name is found, replace the name with the new name
 			clusterFound = true
 			newCluster, e := strings.replace(
 				cluster,
-				fmt.tprintf("cluster_name : %s", old),
-				fmt.tprintf("cluster_name : %s", new),
+				fmt.tprintf("cluster_name :identifier: %s", old),
+				fmt.tprintf("cluster_name :identifier: %s", new),
 				1,
 			)
 			//append the new data to the new content variable
@@ -477,7 +480,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 		} else if len(strings.trim_space(cluster)) > 0 {
 			// For other clusters, just add them back unchanged and add the closing brace
 			append(&newContent, ..transmute([]u8)cluster)
-			append(&newContent, '}')
+			// append(&newContent, '}')
 		}
 	}
 
