@@ -56,7 +56,6 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			// Expecting object or modifier
 			if OST_IS_VALID_MODIFIER(token) {
 				currentModifier = token
-				fmt.println("current modifier: ", currentModifier)
 				state = 2
 			} else {
 				if strings.contains(token, ".") {

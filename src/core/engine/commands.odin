@@ -711,6 +711,53 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.RECORD:
+			collection_name: string
+			cluster_name: string
+			record_name: string
+
+			if len(cmd.o_token) == 3 && const.WITHIN in cmd.m_token ||
+			   cmd.isUsingDotNotation == true {
+				collection_name := cmd.o_token[0]
+				cluster_name := cmd.o_token[1]
+				record_name := cmd.o_token[2]
+
+				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster_name)
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+
+				if data.OST_ERASE_RECORD(collection_name, cluster_name, record_name) == true {
+					fmt.printfln(
+						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						record_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					data.OST_REMOVE_ID_FROM_CACHE(clusterID)
+				} else {
+					fmt.printfln(
+						"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						record_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+				}
+			}
 			break
 		case:
 			fmt.printfln(
