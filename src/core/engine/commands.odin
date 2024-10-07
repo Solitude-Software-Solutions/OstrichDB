@@ -713,7 +713,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case const.RECORD:
 			break
 		case:
-			fmt.printfln("Invalid command structure. Correct Usage: ERASE <Target> <Targets_name>")
+			fmt.printfln(
+				"Invalid command structure. Correct Usage: ERASE <Target> <Targets_name>\nAlternativley use dot notation: ERASE <collection_name>.<cluster_name>.<record_name>",
+			)
 			utils.log_runtime_event(
 				"Invalid ERASE command",
 				"User did not provide a valid target.",
@@ -741,6 +743,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
+			//todo: declaring these two variables but not actually using them - Marshall Burns aka @SchoolyB 06Oct2024
 			collection_name: string
 			cluster_name: string
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
@@ -767,6 +770,48 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.RECORD:
+			colllection_name: string
+			cluster_name: string
+			record_name: string
+			if len(cmd.o_token) == 3 && const.WITHIN in cmd.m_token ||
+			   cmd.isUsingDotNotation == true {
+				collection_name := cmd.o_token[0]
+				cluster_name := cmd.o_token[1]
+				record_name := cmd.o_token[2]
+
+				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+				record, found := data.OST_FETCH_RECORD(collection_name, cluster_name, record_name)
+				fmt.printfln(
+					"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
+					utils.BOLD_UNDERLINE,
+					record_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					cluster_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+				)
+				if found {
+					fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
+					fmt.println("\t^^^\t^^^\t^^^")
+					fmt.println("\tName\tType\tValue\n\n")
+				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: FETCH RECORD <record_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FETCH command",
+					"User did not provide a valid record name to fetch.",
+				)
+			}
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Target> <Targets_name>")

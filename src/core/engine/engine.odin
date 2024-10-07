@@ -112,7 +112,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		append(&const.CommandHistory, strings.clone(input))
 
 		cmd := OST_PARSE_COMMAND(input)
-		fmt.printfln("Command: %v", cmd) //debugging
+		// fmt.printfln("Command: %v", cmd) //debugging
 		result := OST_EXECUTE_COMMAND(&cmd)
 		switch (result) 
 		{

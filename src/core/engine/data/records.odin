@@ -317,6 +317,7 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 	return col, clu
 }
 //gets every record of the passed in rName and returns the record type, the records data, the cluster it is in, and the collection it is in
+//exclusivley used with the RENAME command if the user is NOT using dot notation
 OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 	allRecords := make([dynamic]string)
 	defer delete(allRecords)
@@ -1192,4 +1193,107 @@ OST_UPDATE_RECORD_IN_FILE :: proc(
 		return false
 	}
 	return writeSuccess
+}
+
+
+//used to fetch a the all data for the passed in record and display it
+// fn - collection name, cn - cluster name, rn - record name
+OST_FETCH_RECORD :: proc(fn: string, cn: string, rn: string) -> (types.Record, bool) {
+	clusterContent: string
+	recordContent: string
+	collectionPath := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
+
+
+	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
+	if !clusterExists {
+		fmt.printfln(
+			"Cluster %s%s%s does not exist in collection %s%s%s",
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			fn,
+			utils.RESET,
+		)
+		return types.Record{}, false
+	}
+
+
+	recordExists := OST_CHECK_IF_RECORD_EXISTS(collectionPath, cn, rn)
+	if !recordExists {
+		fmt.printfln(
+			"Record %s%s%s does not exist in cluster %s%s%s",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+		)
+		return types.Record{}, false
+	}
+
+	//read the file and find the passed in cluster
+	data, readSuccess := os.read_entire_file(collectionPath)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		return types.Record{}, false
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "}")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			// Find the start of the cluster (opening brace)
+			start_index := strings.index(cluster, "{")
+			if start_index != -1 {
+				// Extract the content between braces
+				clusterContent = cluster[start_index + 1:]
+				// Trim any leading or trailing whitespace
+				clusterContent = strings.trim_space(clusterContent)
+				// return strings.clone(clusterContent)
+			}
+		}
+	}
+
+
+	// for line in strings.split(clusterContent, "\n") {
+	// 	if strings.contains(line, rn) {
+	// 		recordContent = line
+	// 		break
+	// 	}
+	// }
+	//
+
+	for line in strings.split_lines(clusterContent) {
+		if strings.contains(line, rn) {
+			return OST_PARSE_RECORD(line), true
+		}
+	}
+	return types.Record{}, false
+}
+
+
+OST_PARSE_RECORD :: proc(record: string) -> types.Record {
+	recordParts := strings.split(record, ":")
+	if len(recordParts) < 2 {
+		return types.Record{}
+	}
+	recordName := strings.trim_space(recordParts[0])
+	recordType := strings.trim_space(recordParts[1])
+	recordValue := strings.trim_space(recordParts[2])
+	return types.Record {
+		name = strings.clone(recordName),
+		type = strings.clone(recordType),
+		value = strings.clone(recordValue),
+	}
 }
