@@ -519,9 +519,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				old_name := cmd.o_token[1]
 				collection_name := cmd.o_token[0]
 				new_name := cmd.m_token[const.TO]
-				fmt.printfln("Collection_name: %s", collection_name)
-				fmt.printfln("Old_name: %s", old_name)
-				fmt.printfln("New_name: %s", new_name)
 
 				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
 				switch (checks) 

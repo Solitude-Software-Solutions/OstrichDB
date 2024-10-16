@@ -22,7 +22,7 @@ main :: proc() {
 	os.make_directory(const.OST_QUARANTINE_PATH)
 	os.make_directory(const.OST_COLLECTION_PATH)
 	metadata.OST_CREATE_FFVF()
-	test := metadata.OST_GET_FILE_FORMAT_VERSION()
+	test := metadata.OST_GET_FILE_FORMAT_VERSION() //todo: remove this line
 }
 
 //creates a cache used to store all generated cluster ids
@@ -422,9 +422,6 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 }
 
 OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) -> bool {
-	fmt.printfln("getting collection name:%s")
-	fmt.printfln("getting old cluster name:%s")
-	fmt.printfln("getting new cluster name:%s")
 	collection_path := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,

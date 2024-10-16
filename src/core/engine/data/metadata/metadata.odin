@@ -333,7 +333,12 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 }
 
 //looks over the metadata header in a collection file and verifies the formatting of it
-OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: bool) {
+OST_SCAN_METADATA_HEADER_FORMAT :: proc(
+	fn: string,
+) -> (
+	scanSuccess: int,
+	invalidHeaderFormat: bool,
+) {
 	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
 
 	types.schema.Metadata_Header_Body = [5]string {
@@ -359,9 +364,36 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: 
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
+	//checks if the metadata header is the appropriate length
 	if len(lines) < 7 {
+		utils.log_err(
+			"Invalid metadata header detected\n The metadata header was not the appropriate length",
+			#procedure,
+		)
 		return 1, true
 	}
+	//checks if the file format verion file and the projects version file match
+	versionMatch := OST_VALIDATE_FILE_FORMAT_VERSION()
+	if !versionMatch {
+		utils.log_err("Invalid file format version being used", #procedure)
+		return 1, true
+	}
+
+
+	//get the FFV of the passed in collection file
+	collectionVersionValue := strings.split(lines[1], ": ")[1]
+
+	//compares the collections to the version in the FFV tmp file. Due to alreay checking if the FFV and the project file
+	//match, now have to ensure the collection file matches as well.
+	FFV := OST_GET_FILE_FORMAT_VERSION()
+	if strings.compare(collectionVersionValue, string(FFV)) != 0 {
+		utils.log_err(
+			"File format version in ßcollection file does not match the file format version",
+			#procedure,
+		)
+		return 1, true
+	}
+
 
 	// check if the header start and end markers are present at the correct lines
 	if !strings.has_prefix(lines[0], "# [Ostrich File Header Start]") ||
@@ -374,5 +406,18 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: 
 			return 1, true
 		}
 	}
+
+
 	return 0, false
+}
+
+//checks that the FFV tmp file matches the projects version file
+OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
+	FFV := string(OST_GET_FILE_FORMAT_VERSION()) //this is from the .tmp file
+
+	if (strings.compare(FFV, string(utils.get_ost_version())) != 0) {
+		utils.log_err("File format version mismatch", #procedure)
+		return false
+	}
+	return true
 }

@@ -75,6 +75,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 	checkOneResult := OST_VALIDATE_IDS(fn)
 	checkTwoResult := OST_VALIDATE_FILE_SIZE(fn)
 	checkThreeResult := OST_VALIDATE_COLLECTION_FORMAT(fn)
+	fmt.println("File format integrity check was: ", checkThreeResult)
 	//integrity check one - cluster ids
 	switch checkOneResult {
 	case false:
@@ -99,6 +100,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 		utils.throw_err(error2)
 		utils.log_err("File size is not compliant", #procedure)
 	}
+	//integrity check three - collection formatting
 	switch checkThreeResult {
 	case false:
 		types.Severity_Code = 2

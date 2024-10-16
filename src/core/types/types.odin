@@ -209,9 +209,3 @@ schema: Colletion_File_Schema
 Colletion_File_Schema :: struct {
 	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
 }
-
-//literally only a place to store values that for some reason are lost in translation
-trashHeap: TrashHeap
-TrashHeap :: struct {
-	TrashValueOne: string,
-}
