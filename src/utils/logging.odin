@@ -21,6 +21,7 @@ main :: proc() {
 	os.make_directory("../bin/")
 	os.make_directory(LOG_DIR_PATH)
 	create_log_files()
+
 }
 
 

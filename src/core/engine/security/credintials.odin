@@ -49,6 +49,7 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	OST_GEN_SECURE_DIR()
 	OST_GEN_USER_ID()
+	data.OST_CREATE_COLLECTION("history", 2) //create the history collection file
 	fmt.printfln("Welcome to the Ostrich Database Engine")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
