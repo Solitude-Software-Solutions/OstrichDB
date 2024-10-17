@@ -111,8 +111,10 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	switch authPassed {
 	case true:
 		OST_START_SESSION_TIMER()
-		fmt.printfln("Auth Passed! User has been signed in!")
+		fmt.printfln("\n\nSucessfully signed in!")
+		fmt.printfln("Welcome, %s!\n", userNameFound)
 		types.USER_SIGNIN_STATUS = true
+		types.current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
 		userLoggedInValue := config.OST_READ_CONFIG_VALUE(const.configThree)
 		if userLoggedInValue == "false" {
 			config.OST_TOGGLE_CONFIG(const.configThree)

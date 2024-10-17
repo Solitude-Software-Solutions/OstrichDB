@@ -8,6 +8,7 @@ import "./data"
 import "./security"
 import "core:fmt"
 import "core:os"
+import "core:strconv"
 import "core:strings"
 import "core:time"
 //=========================================================//
@@ -96,6 +97,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 	for {
 		//Command line start
 		buf: [1024]byte
+		histBuf: [1024]byte
 		fmt.print(const.ost_carrot, "\t")
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
@@ -109,7 +111,25 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 
+
+		//COMMAND HISTORY STUFF START
+		//append the last command to the history buffer
 		append(&const.CommandHistory, strings.clone(input))
+		types.current_user.historyCount = data.OST_COUNT_RECORDS_IN_CLUSTER("history", "marshall")
+		types.current_user.historyName = "history_"
+		histCountStr := strconv.itoa(histBuf[:], types.current_user.historyCount)
+		recordName := fmt.tprintf("%s%s", types.current_user.historyName, histCountStr)
+
+		//append the last command to the history file
+		data.OST_APPEND_RECORD_TO_CLUSTER(
+			"../bin/history.ost",
+			types.current_user.username.Value,
+			strings.to_upper(recordName),
+			strings.to_upper(strings.clone(input)),
+			"COMMAND",
+		)
+		//COMMAND HISTORY STUFF END
+
 
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging

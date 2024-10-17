@@ -89,7 +89,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		for cmd, index in const.CommandHistory {
 			fmt.printfln("%d: %s", index + 1, cmd)
 		}
-		fmt.printf("Enter command to repeat: ")
+		fmt.println("Enter command to repeat: \nTo exit,press enter.")
+
 
 		// Get index of command to re-execute from user
 		inputNumber: [1024]byte

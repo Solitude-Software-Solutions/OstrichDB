@@ -129,6 +129,7 @@ Desc: Used to define the structure of a user within the Ostrich Database
 Usage Locations: credentials.odin
 */
 user: User
+current_user: User //used to track the user of the current session
 new_user: User //used for creating new accounts post initialization
 User :: struct {
 	user_id:        i64, //randomly generated user id
@@ -140,6 +141,10 @@ User :: struct {
 	salt:           []u8,
 	hashedPassword: []u8, //this is the hashed password without the salt
 	store_method:   int,
+
+	//below is literally for the users command HISTORY
+	historyName:    string, //"history_""
+	historyCount:   int, //this is persitant across sessions see the OST_COUNT_RECORDS_IN_CLUSTER in records.odin
 }
 
 
