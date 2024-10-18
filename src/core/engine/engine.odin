@@ -114,11 +114,13 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 		//COMMAND HISTORY STUFF START
 		//append the last command to the history buffer
-		append(&const.CommandHistory, strings.clone(input))
-		types.current_user.historyCount = data.OST_COUNT_RECORDS_IN_CLUSTER("history", "marshall")
-		types.current_user.historyName = "history_"
-		histCountStr := strconv.itoa(histBuf[:], types.current_user.historyCount)
-		recordName := fmt.tprintf("%s%s", types.current_user.historyName, histCountStr)
+		types.current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
+			"history",
+			types.current_user.username.Value,
+		)
+		// types.current_user.commandHistory.cHistoryNamePrefix = "history_" dont need this shit tbh - SchoolyB
+		histCountStr := strconv.itoa(histBuf[:], types.current_user.commandHistory.cHistoryCount)
+		recordName := fmt.tprintf("%s%s", "history_", histCountStr)
 
 		//append the last command to the history file
 		data.OST_APPEND_RECORD_TO_CLUSTER(
@@ -128,7 +130,21 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			strings.to_upper(strings.clone(input)),
 			"COMMAND",
 		)
-		//COMMAND HISTORY STUFF END
+
+		//get value of the command that was just stored as a record
+		historyRecordValue := data.OST_READ_RECORD_VALUE(
+			"../bin/history.ost",
+			types.current_user.username.Value,
+			"COMMAND",
+			strings.to_upper(recordName),
+		)
+
+		//append the command from the file to the command history buffer
+		append(
+			&types.current_user.commandHistory.cHistoryValues,
+			strings.clone(historyRecordValue),
+		)
+		//COMMAND HISTORY STUFF
 
 
 		cmd := OST_PARSE_COMMAND(input)

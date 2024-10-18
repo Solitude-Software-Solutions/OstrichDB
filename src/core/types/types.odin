@@ -141,10 +141,17 @@ User :: struct {
 	salt:           []u8,
 	hashedPassword: []u8, //this is the hashed password without the salt
 	store_method:   int,
-
 	//below is literally for the users command HISTORY
-	historyName:    string, //"history_""
-	historyCount:   int, //this is persitant across sessions see the OST_COUNT_RECORDS_IN_CLUSTER in records.odin
+	commandHistory: CommandHistory,
+}
+
+//a users command history
+CommandHistory :: struct {
+	cHistoryNamePrefix: string, //will always be "history_"
+	cHistoryValues:     [dynamic]string,
+	cHistoryCount:      int, //the total
+	cHistoryIndex:      int, //the current index of the history array
+	cHistoryPrevious:   string,
 }
 
 
