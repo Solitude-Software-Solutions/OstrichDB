@@ -81,15 +81,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			"User requested to view a tree of the database.",
 		)
 		data.OST_GET_DATABASE_TREE()
+
+	//COMMAND HISTORY CLUSTER FUCK START :(
 	case const.HISTORY:
 		utils.log_runtime_event(
 			"Used HISTORY command",
 			"User requested to view the command history.",
 		)
-		for cmd, index in const.CommandHistory {
+		commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
+
+		for cmd, index in commandHistory {
 			fmt.printfln("%d: %s", index + 1, cmd)
 		}
-		fmt.printf("Enter command to repeat: ")
+		fmt.println("Enter command to repeat: \nTo exit,press enter.")
 
 		// Get index of command to re-execute from user
 		inputNumber: [1024]byte
@@ -105,16 +109,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 
 		// convert string to index
+
 		commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
 		// check boundaries
-		if commandIndex >= i64(len(const.CommandHistory)) || commandIndex < 0 {
+		if commandIndex >= i64(len(commandHistory)) || commandIndex < 0 {
 			fmt.printfln("Command number %d not found", commandIndex + 1) // add one to make it reflect what the user sees
 			break
 		}
 		// parses the command that has been stored in the most recent command history index. Crucial for the HISTORY command
-		cmd := OST_PARSE_COMMAND(const.CommandHistory[commandIndex])
+		cmd := OST_PARSE_COMMAND(commandHistory[commandIndex])
 		OST_EXECUTE_COMMAND(&cmd)
 		break
+	//HISTORY CLUSTER FUCK END :)
+
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
 	case const.HELP:
 		utils.log_runtime_event("Used HELP command", "User requested help information.")

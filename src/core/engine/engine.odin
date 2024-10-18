@@ -8,6 +8,7 @@ import "./data"
 import "./security"
 import "core:fmt"
 import "core:os"
+import "core:strconv"
 import "core:strings"
 import "core:time"
 //=========================================================//
@@ -96,6 +97,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 	for {
 		//Command line start
 		buf: [1024]byte
+		histBuf: [1024]byte
 		fmt.print(const.ost_carrot, "\t")
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
@@ -109,7 +111,41 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 
-		append(&const.CommandHistory, strings.clone(input))
+
+		//COMMAND HISTORY STUFF START
+		//append the last command to the history buffer
+		types.current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
+			"history",
+			types.current_user.username.Value,
+		)
+		// types.current_user.commandHistory.cHistoryNamePrefix = "history_" dont need this shit tbh - SchoolyB
+		histCountStr := strconv.itoa(histBuf[:], types.current_user.commandHistory.cHistoryCount)
+		recordName := fmt.tprintf("%s%s", "history_", histCountStr)
+
+		//append the last command to the history file
+		data.OST_APPEND_RECORD_TO_CLUSTER(
+			"../bin/history.ost",
+			types.current_user.username.Value,
+			strings.to_upper(recordName),
+			strings.to_upper(strings.clone(input)),
+			"COMMAND",
+		)
+
+		//get value of the command that was just stored as a record
+		historyRecordValue := data.OST_READ_RECORD_VALUE(
+			"../bin/history.ost",
+			types.current_user.username.Value,
+			"COMMAND",
+			strings.to_upper(recordName),
+		)
+
+		//append the command from the file to the command history buffer
+		append(
+			&types.current_user.commandHistory.cHistoryValues,
+			strings.clone(historyRecordValue),
+		)
+		//COMMAND HISTORY STUFF
+
 
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging

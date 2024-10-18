@@ -206,7 +206,6 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rType: string, rn: string)
 	}
 
 	type := fmt.tprintf(":%s:", rType)
-	// Check if the record exists within the cluster
 	for i in cluster_start ..= closing_brace {
 		if strings.contains(lines[i], rn) {
 			record := strings.split(lines[i], type)
@@ -223,7 +222,7 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rType: string, rn: string)
 
 //set the record name, if the name is too long, return an error
 OST_SET_RECORD_NAME :: proc(rn: string) -> (string, int) {
-	if len(rn) > 256 {
+	if len(rn) > 128 {
 		fmt.println("The entered record name is too long. Please try again.")
 		return "", 1
 	}
@@ -1443,4 +1442,90 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 	}
 	return true
 
+}
+
+
+//reads over the passed in collection file and the specified cluster and returns the number of records in that cluster
+//excluding the cluster_name and cluster_id records. potentail way of doing this would be to get all of them and just subtract 2
+OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string) -> int {
+	collectionPath := fmt.tprintf("%s%s%s", const.OST_BIN_PATH, fn, const.OST_FILE_EXTENSION)
+	data, readSuccess := os.read_entire_file(collectionPath)
+	if !readSuccess {
+		error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
+		utils.throw_err(error)
+		utils.log_err("Error reading collection file", #procedure)
+		return -1
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			lines := strings.split(cluster, "\n")
+			recordCount := 0
+
+			for line in lines {
+				trimmedLine := strings.trim_space(line)
+				if len(trimmedLine) > 0 &&
+				   !strings.has_prefix(trimmedLine, "cluster_name") &&
+				   !strings.has_prefix(trimmedLine, "cluster_id") &&
+				   strings.contains(trimmedLine, ":") {
+					recordCount += 1
+				}
+			}
+
+			return recordCount
+		}
+	}
+
+	fmt.printfln(
+		"Cluster %s%s%s not found in collection %s%s%s",
+		utils.BOLD_UNDERLINE,
+		cn,
+		utils.RESET,
+		utils.BOLD_UNDERLINE,
+		fn,
+		utils.RESET,
+	)
+	return -1
+}
+
+//used for the history command,
+//reads over the passed in collection file and
+//the specified cluster and stores the value of each record into the array
+OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
+    records: [dynamic]string
+    histBuf: [1024]byte
+
+    data, readSuccess := os.read_entire_file("../bin/history.ost")
+    if !readSuccess {
+        error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
+        utils.throw_err(error)
+        utils.log_err("Error reading collection file", #procedure)
+        return records
+    }
+    defer delete(data)
+
+    content := string(data)
+    clusters := strings.split(content, "},")
+
+    for cluster in clusters {
+        if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+            lines := strings.split(cluster, "\n")
+            for line in lines {
+                if strings.contains(line, ":COMMAND:") {
+                    parts := strings.split(line, ":COMMAND:")
+                    if len(parts) >= 2 {
+                        value := strings.trim_space(parts[1])
+                        append(&records, value)
+                    }
+                }
+            }
+            break
+        }
+    }
+
+    return records
 }
