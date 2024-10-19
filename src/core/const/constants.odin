@@ -42,6 +42,7 @@ BACKUP :: "BACKUP"
 ERASE :: "ERASE"
 RENAME :: "RENAME"
 FETCH :: "FETCH"
+COUNT :: "COUNT"
 SET :: "SET"
 FOCUS :: "FOCUS"
 UNFOCUS :: "UNFOCUS"
@@ -52,6 +53,10 @@ RECORD :: "RECORD"
 USER :: "USER"
 ALL :: "ALL"
 CONFIG :: "CONFIG" //special target exclusive to SET command
+//Special Target Tokens for the COUNT command
+COLLECTIONS :: "COLLECTIONS"
+CLUSTERS :: "CLUSTERS"
+RECORDS :: "RECORDS"
 //Modifier Tokens
 AND :: "AND"
 OF_TYPE :: "OF_TYPE"
