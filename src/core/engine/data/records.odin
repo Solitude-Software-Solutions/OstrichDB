@@ -275,7 +275,7 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 		OST_CHOOSE_RECORD_LOCATION(rName, rType)
 	}
 
-	checks := OST_HANDLE_INTGRITY_CHECK_RESULT(collectionNameUpper)
+	checks := OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionNameUpper)
 	switch (checks) 
 	{
 	case -1:
@@ -465,7 +465,7 @@ OST_RENAME_RECORD :: proc(
 	)
 
 
-	checks := OST_HANDLE_INTGRITY_CHECK_RESULT(fn)
+	checks := OST_HANDLE_INTEGRITY_CHECK_RESULT(fn)
 	switch (checks) 
 	{
 	case -1:

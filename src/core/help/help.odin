@@ -16,7 +16,7 @@ import "core:strings"
 //=========================================================//
 
 
-validCommnads := []string {
+validCommands := []string {
 	"HELP",
 	"LOGOUT",
 	"EXIT",
@@ -59,7 +59,7 @@ OST_SET_HELP_MODE :: proc() -> bool {
 
 OST_CHECK_HELP_EXISTS :: proc(cmd: string) -> bool {
 	cmdUpper := strings.to_upper(cmd)
-	for validCmd in validCommnads {
+	for validCmd in validCommands {
 		if cmdUpper == validCmd {
 			return true
 		}

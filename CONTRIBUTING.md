@@ -46,7 +46,7 @@ This section guides you through submitting an enhancement suggestion for Ostrich
    - Use clear and descriptive commit messages.
 
 5. **Code Review:**
-   - Be open to feedback. Just because tou submit a PR, it doesn't mean it will be merged as is.
+   - Be open to feedback. Just because you submit a PR, it doesn't mean it will be merged as is.
    - Make requested changes promptly.
 
 ### Issue and Pull Request Labels

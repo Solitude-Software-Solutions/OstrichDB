@@ -121,7 +121,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 }
 
 //handles the results of the data integrity checks...duh
-OST_HANDLE_INTGRITY_CHECK_RESULT :: proc(fn: string) -> int {
+OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 	integrityResults := OST_VALIDATE_DATA_INTEGRITY(fn)
 	for result in integrityResults {
 		if result == false {

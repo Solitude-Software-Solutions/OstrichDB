@@ -44,31 +44,6 @@ Desc: Used to define the structure of an ENGINE SPECIFIC utils. Not to
         be confused with the standard errors located in utils.odin
 Usage Locations: NOT YET IMPLEMENTED but wil be used in several places
 */
-Engine_Error :: struct {
-	Code:      enum {
-		None          = 0,
-		InvalidRecord = 1,
-		InvalidObject = 2,
-		InvalidAction = 3,
-	},
-	Message:   string,
-	Acion:     string, // the action/operation that caused the error
-	Procedure: string, // the specific procedure that the error occurred in
-}
-
-/*
-Type: Task_Flag
-Desc: Used to define the status of a task within the Ostrich Engine
-        Tasks are the operations run when a command is executed
-*/
-Task_Flag :: enum {
-	None      = 0,
-	Queued    = 10,
-	Running   = 20,
-	Completed = 30,
-	Failed    = 40,
-}
-
 
 /*
 Type: Engine
@@ -91,16 +66,7 @@ Engine :: struct {
 	ClustersDeleted: int,
 	ClustersUpdated: int,
 	//Tasking stuff
-	Tasking:         struct {
-		NameOfTask:     string,
-		TaskNumber:     int,
-		TaskElapsed:    time.Duration,
-		ProgressOfTask: f32, // will be a percentage
-		TargetDatabase: string, // will be the path to the database file
-		Error:          Engine_Error,
-		StatusOfTask:   Task_Flag,
-	},
-	// State: int //running or stopped 1 is running 0 is stopped
+
 }
 
 //=================================================/src/core/security/=================================================//
@@ -217,7 +183,7 @@ Message_Color: string //used in checks.odin
 Severity_Code: int //used in checks.odin
 
 
-schema: Colletion_File_Schema
-Colletion_File_Schema :: struct {
+schema: Collection_File_Schema
+Collection_File_Schema :: struct {
 	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
 }

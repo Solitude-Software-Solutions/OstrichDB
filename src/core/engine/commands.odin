@@ -152,7 +152,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				name := data.OST_CHOOSE_BACKUP_NAME()
 
 
-				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(cmd.o_token[0])
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(cmd.o_token[0])
 				switch (checks) 
 				{
 				case -1:
@@ -273,7 +273,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collection_name,
 					utils.RESET,
 				)
-				// checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name) todo this is pretty bugged - SchoolyB
+				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name) todo this is pretty bugged - SchoolyB
 				// switch (checks)
 				// {
 				// case -1:
@@ -527,7 +527,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection_name := cmd.o_token[0]
 				new_name := cmd.m_token[const.TO]
 
-				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
 				switch (checks) 
 				{
 				case -1:
@@ -672,7 +672,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection_name := cmd.o_token[0]
 				cluster := cmd.o_token[1]
 				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
-				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
 				switch (checks) 
 				{
 				case -1:
@@ -726,7 +726,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				record_name := cmd.o_token[2]
 
 				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster_name)
-				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
 				switch (checks) 
 				{
 				case -1:
@@ -798,7 +798,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			   cmd.isUsingDotNotation == true {
 				collection := cmd.o_token[0]
 				cluster := cmd.o_token[1]
-				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
 				switch (checks) 
 				{
 				case -1:
@@ -827,7 +827,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cluster_name := cmd.o_token[1]
 				record_name := cmd.o_token[2]
 
-				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection_name)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
 				switch (checks) 
 				{
 				case -1:
@@ -1151,7 +1151,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionNamePath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, cmd.o_token[1])
 			fullCollectionPath := fmt.tprintf("%s%s", collectionNamePath, const.OST_FILE_EXTENSION)
 
-			checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(cmd.o_token[1])
+			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(cmd.o_token[1])
 			switch (checks) 
 			{
 			case -1:
@@ -1196,7 +1196,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cluster := cmd.o_token[1]
 				collection := cmd.o_token[2]
 
-				checks := data.OST_HANDLE_INTGRITY_CHECK_RESULT(collection)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
 				switch (checks) 
 				{
 				case -1:
@@ -1244,7 +1244,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 	case:
 		fmt.printfln(
-			"Invalid command: %s%s%s. Please enter a valide OstrichDB command. Enter 'HELP' for more information.",
+			"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
 			utils.BOLD_UNDERLINE,
 			cmd.a_token,
 			utils.RESET,
@@ -1535,7 +1535,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		break
 	case:
 		fmt.printfln(
-			"Invalid command: %s%s%s. Please enter a valide OstrichDB command. Enter 'HELP' for more information.",
+			"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
 			utils.BOLD_UNDERLINE,
 			cmd.a_token,
 			utils.RESET,

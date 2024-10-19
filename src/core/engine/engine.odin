@@ -43,7 +43,7 @@ run :: proc() {
 
 
 //initialize the data integrity system
-OST_INIT_INEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
+OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
 	types.data_integrity_checks.File_Size.Severity = .LOW
 	types.data_integrity_checks.File_Format_Version.Severity = .MEDIUM
 	types.data_integrity_checks.Cluster_IDs.Severity = .HIGH
@@ -64,7 +64,7 @@ OST_INIT_INEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) ->
 }
 OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
-	OST_INIT_INEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
+	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
 
 	switch (types.engine.Initialized) 
 	{
