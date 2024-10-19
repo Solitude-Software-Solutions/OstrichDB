@@ -5,6 +5,7 @@ import "../config"
 import "../const"
 import "../types"
 import "./data"
+import "./data/metadata"
 import "./security"
 import "core:fmt"
 import "core:os"
@@ -145,6 +146,10 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			&types.current_user.commandHistory.cHistoryValues,
 			strings.clone(historyRecordValue),
 		)
+
+		//update the history file size value in the metadata
+		metadata.OST_UPDATE_METADATA_VALUE("../bin/history.ost", 3)
+
 		//COMMAND HISTORY STUFF
 
 
