@@ -794,9 +794,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
-			//todo: declaring these two variables but not actually using them - Marshall Burns aka @SchoolyB 06Oct2024
-			collection_name: string
-			cluster_name: string
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
 			   cmd.isUsingDotNotation == true {
 				collection := cmd.o_token[0]
@@ -1192,8 +1189,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				types.focus.flag = false
 				break
 			}
-
-		//todo: come back to this..havent done enough commands to test this in focus mode yet
 		case const.RECORD:
 			types.focus.flag = true
 			if len(cmd.o_token) >= 3 && const.WITHIN in cmd.m_token {
