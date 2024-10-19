@@ -323,7 +323,7 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 
 	ffvf, openSuccess := os.open(pathAndName)
 	if openSuccess != 0 {
-		utils.log_err("Could not open file format verson file", #procedure)
+		utils.log_err("Could not open file format version file", #procedure)
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {
@@ -388,7 +388,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	FFV := OST_GET_FILE_FORMAT_VERSION()
 	if strings.compare(collectionVersionValue, string(FFV)) != 0 {
 		utils.log_err(
-			"File format version in ßcollection file does not match the file format version",
+			"File format version in collection file does not match the file format version",
 			#procedure,
 		)
 		return 1, true

@@ -300,8 +300,8 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 	for i := 0; i < len(FIRST_HALF); i += 1 {
 		if (strings.contains(FIRST_HALF[i], "%n")) {
 			//step#5: replace the %n with the cluster name
-			newClusterName, alright := strings.replace(FIRST_HALF[i], "%n", clusterName, -1)
-			writeClusterName, ight := os.write(clusterFile, transmute([]u8)newClusterName)
+			newClusterName, replaceSuccess := strings.replace(FIRST_HALF[i], "%n", clusterName, -1)
+			writeClusterName, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterName)
 		}
 	}
 	//step#2: iterate over the FIRST_HALF array and replace the %s with the passed in clusterID
@@ -554,8 +554,8 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 	for i := 0; i < len(FIRST_HALF); i += 1 {
 		if (strings.contains(FIRST_HALF[i], "%n")) {
 			//step#5: replace the %n with the cluster name
-			newClusterName, alright := strings.replace(FIRST_HALF[i], "%n", clusterName, -1)
-			writeClusterName, ight := os.write(clusterFile, transmute([]u8)newClusterName)
+			newClusterName, replaceSuccess := strings.replace(FIRST_HALF[i], "%n", clusterName, -1)
+			writeClusterName, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterName)
 		}
 	}
 	//step#2: iterate over the FIRST_HALF array and replace the %s with the passed in clusterID

@@ -45,8 +45,8 @@ ErrorType :: enum {
 	//Signup Errors
 	USERNAME_ALREADY_EXISTS,
 	INVALID_USERNAME,
-	PASSWORD_TO_SHORT,
-	PASSWORD_TO_LONG,
+	PASSWORD_TOO_SHORT,
+	PASSWORD_TOO_LONG,
 	WEAK_PASSWORD,
 	PASSWORDS_DO_NOT_MATCH,
 	//Auth Errors
@@ -107,8 +107,8 @@ ERROR_MESSAGE := [ErrorType]string {
 	.CANNOT_READ_INPUT                 = "Cannot Read Input",
 	.USERNAME_ALREADY_EXISTS           = "Entered Username Already Exists",
 	.INVALID_USERNAME                  = "Invalid Username",
-	.PASSWORD_TO_SHORT                 = "Entered Password Too Short",
-	.PASSWORD_TO_LONG                  = "Entered Password Too Long",
+	.PASSWORD_TOO_SHORT                 = "Entered Password Too Short",
+	.PASSWORD_TOO_LONG                  = "Entered Password Too Long",
 	.WEAK_PASSWORD                     = "Weak Password Detected",
 	.PASSWORDS_DO_NOT_MATCH            = "Entered Passwords Do Not Match",
 	.INCORRECT_USERNAME_ENTERED        = "Incorrect Username Entered",

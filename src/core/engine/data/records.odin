@@ -29,7 +29,7 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Could not real collection file", #procedure)
+		utils.log_err("Could not read collection file", #procedure)
 		return false
 	}
 	defer delete(data)
