@@ -16,19 +16,17 @@ import "core:strings"
 
 //preform cluster_id compliancy check on the passed collection
 OST_VALIDATE_IDS :: proc(fn: string) -> bool {
-	types.data_integrity_checks.Cluster_IDs.Compliant = false
+	types.data_integrity_checks.Cluster_IDs.Compliant = true  // Assume compliant initially
 	idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
 	defer delete(idsFoundInCollection)
 	defer delete(idsAsStringArray)
 
 	for id in idsFoundInCollection {
 		idFoundInCache := OST_CHECK_CACHE_FOR_ID(id)
-		if idFoundInCache == true {
-			types.data_integrity_checks.Cluster_IDs.Compliant = true
-		} else {
-			utils.log_err("Cluster ID not found in cache", #procedure)
+		if !idFoundInCache {
+			utils.log_err(fmt.tprintf("Cluster ID %v not found in cache", id), #procedure)
 			types.data_integrity_checks.Cluster_IDs.Compliant = false
-			break
+			break  
 		}
 	}
 	return types.data_integrity_checks.Cluster_IDs.Compliant
