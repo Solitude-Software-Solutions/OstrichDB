@@ -22,7 +22,6 @@ main :: proc() {
 	os.make_directory(const.OST_QUARANTINE_PATH)
 	os.make_directory(const.OST_COLLECTION_PATH)
 	metadata.OST_CREATE_FFVF()
-	test := metadata.OST_GET_FILE_FORMAT_VERSION() //todo: remove this line
 }
 
 //creates a cache used to store all generated cluster ids
@@ -896,4 +895,35 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 	}
 
 	return 0, false
+}
+
+//counts the number of clusters in a collection file
+OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
+	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+
+	data, read_success := os.read_entire_file(file)
+	if !read_success {
+		utils.log_err("Failed to read collection file", #procedure)
+		return 0
+	}
+	defer delete(data)
+
+	content := string(data)
+	cluster_count := 0
+	in_cluster := false
+
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	for line in lines {
+		trimmed := strings.trim_space(line)
+		if trimmed == "{" {
+			in_cluster = true
+			cluster_count += 1
+		} else if trimmed == "}," {
+			in_cluster = false
+		}
+	}
+
+	return cluster_count
 }

@@ -117,6 +117,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		types.current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
 			"history",
 			types.current_user.username.Value,
+			false,
 		)
 		// types.current_user.commandHistory.cHistoryNamePrefix = "history_" dont need this shit tbh - SchoolyB
 		histCountStr := strconv.itoa(histBuf[:], types.current_user.commandHistory.cHistoryCount)

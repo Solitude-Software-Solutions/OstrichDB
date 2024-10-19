@@ -408,3 +408,19 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (found: bool, name: string) {
 	}
 	return found, ""
 }
+
+//gets the number of collections in the collections directory
+OST_COUNT_COLLECTIONS :: proc() -> int {
+	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+	defer os.close(collectionsDir)
+	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
+	collectionNames := make([dynamic]string)
+	defer delete(collectionNames)
+
+	for file in foundFiles {
+		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+			append(&collectionNames, file.name)
+		}
+	}
+	return len(collectionNames)
+}

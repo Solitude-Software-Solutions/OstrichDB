@@ -794,9 +794,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
-			//todo: declaring these two variables but not actually using them - Marshall Burns aka @SchoolyB 06Oct2024
-			collection_name: string
-			cluster_name: string
 			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
 			   cmd.isUsingDotNotation == true {
 				collection := cmd.o_token[0]
@@ -937,6 +934,178 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			fmt.printfln("The SET command can only be used on RECORDS and CONFIGS")
 		}
+	case const.COUNT:
+		utils.log_runtime_event("Used COUNT command", "")
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTIONS:
+			result := data.OST_COUNT_COLLECTIONS()
+			fmt.printfln("There are %d collections in the database", result)
+			break
+		case const.CLUSTERS:
+			fmt.println("cmd,o_tokens: ", cmd.o_token)
+			if len(cmd.o_token) == 1 {
+				collection_name := cmd.o_token[0]
+				result := data.OST_COUNT_CLUSTERS(collection_name)
+				switch (result) 
+				{
+				case -1:
+					fmt.printfln(
+						"Failed to count clusters in collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 0:
+					fmt.printfln(
+						"There are no clusters in the collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 1:
+					fmt.printfln(
+						"There is %d cluster in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case:
+					fmt.printfln(
+						"There are %d clusters in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				}
+			} else {
+				fmt.printfln(
+					"Invalid command structure. Correct Usage: COUNT CLUSTERS WITHIN COLLECTION <collection_name>\nIf using dot notation: COUNT CLUSTERS <collection_name>",
+				)
+				utils.log_runtime_event(
+					"Invalid COUNT command",
+					"User did not provide a valid collection name to count clusters.",
+				)
+			}
+
+			break
+		case const.RECORDS:
+			//in the event the users is counting the records in a specific cluster
+			if (len(cmd.o_token) >= 2 || cmd.isUsingDotNotation == true) {
+				collection_name := cmd.o_token[0]
+				cluster_name := cmd.o_token[1]
+				result := data.OST_COUNT_RECORDS_IN_CLUSTER(
+					strings.clone(collection_name),
+					strings.clone(cluster_name),
+					true,
+				)
+				switch result {
+				case -1:
+					fmt.printfln(
+						"Error counting records in the cluster %s%s%s collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+				case 0:
+					fmt.printfln(
+						"There are no records in the cluster %s%s%s in the collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 1:
+					fmt.printfln(
+						"There is %d record in the cluster %s%s%s in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case:
+					fmt.printfln(
+						"There are %d records in the cluster %s%s%s in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					return 0
+				}
+			} else if len(cmd.o_token) == 1 || cmd.isUsingDotNotation == true {
+				//in the event the user is counting all records in a collection
+				collection_name := cmd.o_token[0]
+				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collection_name)
+
+				switch result 
+				{
+				case -1:
+					fmt.printfln(
+						"Error counting records in the collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 0:
+					fmt.printfln(
+						"There are no records in collection %s%s%s",
+						utils.BOLD,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 1:
+					fmt.printfln(
+						"There is %d record in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case:
+					fmt.printfln(
+						"There are %d records in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+				}
+
+			} else {
+				fmt.printfln(
+					"Invalid command structure. Correct Usage: COUNT RECORDS WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>\nIf using dot notation: COUNT RECORDS <collection_name>.<cluster_name>",
+				)
+				utils.log_runtime_event(
+					"Invalid COUNT command",
+					"User did not provide a valid cluster name to count records.",
+				)
+			}
+			break
+		}
+		break
 	//FOCUS and UNFOCUS: Enter at own peril.
 	case const.FOCUS:
 		utils.log_runtime_event("Used FOCUS command", "")
@@ -1020,8 +1189,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				types.focus.flag = false
 				break
 			}
-
-		//todo: come back to this..havent done enough commands to test this in focus mode yet
 		case const.RECORD:
 			types.focus.flag = true
 			if len(cmd.o_token) >= 3 && const.WITHIN in cmd.m_token {
@@ -1073,6 +1240,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		break
+
+
 	case:
 		fmt.printfln(
 			"Invalid command: %s%s%s. Please enter a valide OstrichDB command. Enter 'HELP' for more information.",
