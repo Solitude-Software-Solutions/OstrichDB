@@ -275,12 +275,7 @@ OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
 Creates and appends a new cluster to the specified .ost file
 */
 OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: string) -> int {
-	fmt.printfln(
-		"Creating cluster block for cluster %s wihtin collection %s with id: %d",
-		clusterName,
-		fileName,
-		clusterID,
-	)
+
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
 	if clusterExists == true {
 		utils.log_err("Cluster already exists in file", #procedure)
@@ -344,8 +339,6 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 	fmt.println("Please re-launch OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)
-
-	fmt.printfln("Cluster %s has been added to %s", clusterName, fileName)
 	return 0
 }
 
