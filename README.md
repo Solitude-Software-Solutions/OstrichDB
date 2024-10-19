@@ -1,10 +1,3 @@
-# NOTICE
-From its inception OstrichDB was developed and intended to to be used in a Linux environment. It also was developed on an older build of Odin Lang.
-I am now working on a patchto ensure Mac support and utilization a more recent version of Odin Lang. 
-
--Marshall aka SchoolyB 24/Sep/2024
-
-
 # OstrichDB
 
 OstrichDB is a lightweight, document-based, key-value NoSQL database designed for ease of use and local application data testing/manipulation. Written in the Odin programming language, it offers a flexible architecture and a simple command syntax, making it ideal for developers and users who need a simple yet versatile database solution.
@@ -105,7 +98,7 @@ Modifiers are additional parameters that modify the behavior of a command:
 
 ### Prerequisites
 
-- Linux environment
+- Unix-like operating system (Linux, macOS)
 - Clang and LLVM
 - Odin programming language (properly built and in PATH)
 
