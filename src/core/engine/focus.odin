@@ -39,4 +39,6 @@ OST_FOCUS_RECORD :: proc(t: string, o: string, rO: string) -> (string, string, s
 OST_UNFOCUS :: proc() {
 	types.focus.t_ = ""
 	types.focus.o_ = ""
+	types.focus.p_o = ""
+	types.focus.ro_ = ""
 }
