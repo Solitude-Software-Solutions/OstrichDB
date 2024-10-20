@@ -119,6 +119,49 @@ OST_GET_FS :: proc(file: string) -> os.File_Info {
 	fileSize, _ := os.stat(file)
 	return fileSize
 }
+//this will get the size of the file and then subtract the size of the metadata header
+//then return the difference
+OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
+    fileInfo, err := os.stat(file)
+    if err != 0 {
+        utils.log_err("Error getting file info", #procedure)
+        return -1, -1
+    }
+
+    totalSize := int(fileInfo.size)
+
+    data, readSuccess := os.read_entire_file(file)
+    if !readSuccess {
+        utils.log_err("Error reading file", #procedure)
+        return -1, -1
+    }
+    defer delete(data)
+
+    content := string(data)
+    lines := strings.split(content, "\n")
+    defer delete(lines)
+
+    metadataEndIndex := -1
+    for i in 0..<len(lines) {
+        line := lines[i]
+        if strings.has_prefix(line, "# [Ostrich File Header End]") {
+            metadataEndIndex = i
+            break
+        }
+    }
+
+    if metadataEndIndex == -1 {
+        utils.log_err("Metadata end marker not found", #procedure)
+        return -1, -1
+    }
+
+    metadataSize := 0
+    for i := 0; i <= metadataEndIndex; i += 1 {
+        metadataSize += len(lines[i]) + 1 // +1 for newline character
+    }
+
+    return totalSize - metadataSize, metadataSize
+}
 
 
 // Generates a random 32 char checksum for .ost files.
@@ -239,8 +282,13 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 			}
 		case 3:
 			if strings.has_prefix(line, "# File Size:") {
-				lines[i] = fmt.tprintf("# File Size: %d Bytes", file_size)
-				updated = true
+				actualSize, _ := OST_SUBTRACT_METADATA_SIZE(fn)
+				if actualSize != -1 {
+					lines[i] = fmt.tprintf("# File Size: %d Bytes", actualSize)
+					updated = true
+				} else {
+					fmt.println("Error calculating file size")
+				}
 			}
 			break
 		case 4:
@@ -421,3 +469,7 @@ OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
 	}
 	return true
 }
+
+
+
+

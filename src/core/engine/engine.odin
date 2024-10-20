@@ -159,6 +159,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
 		result := OST_EXECUTE_COMMAND(&cmd)
+
 		switch (result) 
 		{
 		case 0:
@@ -231,4 +232,6 @@ OST_REBUILD :: proc() {
 	libc.system("../scripts/build.sh")
 	os.exit(0)  // Add this line to ensure a clean exit
 }
+
+
 
