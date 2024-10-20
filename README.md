@@ -109,15 +109,32 @@ Modifiers are additional parameters that modify the behavior of a command:
    git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
    ```
 
-2. Navigate to the project's src directory:
+2. Navigate to the project directory:
    ```bash
-   cd your/path/to/OstrichDB/src
+   cd OstrichDB
    ```
 
-3. Build and run OstrichDB:
+3. Make the build and control scripts executable:
    ```bash
-   odin build main && ./main.bin
+   chmod +x scripts/build.sh scripts/restart.sh
    ```
+
+4. Build OstrichDB:
+   ```bash
+   ./scripts/build.sh
+   ```
+
+5. To rebuild or restart OstrichDB, use the control script:
+   ```bash
+
+   # To restart
+   ./scripts/restart.sh
+
+   # To rebuild and restart
+   ./scripts/build.sh
+   ```
+
+These scripts will build OstrichDB, place the executable in the appropriate directory, and allow you to manage the application's lifecycle.
 
 ## Contributing
 
@@ -145,7 +162,6 @@ OstrichDB is released under the Apache License 2.0. For full license text, see [
   - `LOCK`: Prevent data modification
   - `UNLOCK`: Allow data modification
   - `RESTORE`: Undo recent changes
-  - `COUNT`: Display the number of objects within a scope
   - `MERGE`: Combine multiple collections or clusters into one
   - `ALL`: Perform operations on all objects within a scope
   - `AND`: Execute multiple operations in one command
