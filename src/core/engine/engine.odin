@@ -7,6 +7,7 @@ import "../types"
 import "./data"
 import "./data/metadata"
 import "./security"
+import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -63,32 +64,34 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 
 }
 OST_START_ENGINE :: proc() -> int {
-	//Initialize data integrity system
-	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
+    //Initialize data integrity system
+    OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
 
-	switch (types.engine.Initialized) 
-	{
-	case false:
-		config.main()
-		security.OST_INIT_ADMIN_SETUP()
-		break
+    switch (types.engine.Initialized) 
+    {
+    case false:
+        config.main()
+        security.OST_INIT_ADMIN_SETUP()
+        break
 
-	case true:
-		userSignedIn := OST_RUN_SIGNIN()
-		switch (userSignedIn) 
-		{
-		case true:
-			OST_START_SESSION_TIMER()
-			utils.log_runtime_event("User Signed In", "User successfully logged into OstrichDB")
-			result := OST_ENGINE_COMMAND_LINE()
-			return result
+    case true:
+        for {
+            userSignedIn := OST_RUN_SIGNIN()
+            switch (userSignedIn) 
+            {
+            case true:
+                OST_START_SESSION_TIMER()
+                utils.log_runtime_event("User Signed In", "User successfully logged into OstrichDB")
+                result := OST_ENGINE_COMMAND_LINE()
+                return result
 
-		case false:
-			OST_START_ENGINE()
-			break
-		}
-	}
-	return 0
+            case false:
+                fmt.printfln("Sign in failed. Please try again.")
+                continue
+            }
+        }
+    }
+    return 0
 }
 
 
@@ -126,7 +129,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 		//append the last command to the history file
 		data.OST_APPEND_RECORD_TO_CLUSTER(
-			"../bin/history.ost",
+			"./history.ost",
 			types.current_user.username.Value,
 			strings.to_upper(recordName),
 			strings.to_upper(strings.clone(input)),
@@ -135,7 +138,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 		//get value of the command that was just stored as a record
 		historyRecordValue := data.OST_READ_RECORD_VALUE(
-			"../bin/history.ost",
+			"./history.ost",
 			types.current_user.username.Value,
 			"COMMAND",
 			strings.to_upper(recordName),
@@ -148,7 +151,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		)
 
 		//update the history file size value in the metadata
-		metadata.OST_UPDATE_METADATA_VALUE("../bin/history.ost", 3)
+		metadata.OST_UPDATE_METADATA_VALUE("./history.ost", 3)
 
 		//COMMAND HISTORY STUFF
 
@@ -217,3 +220,15 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 	}
 
 }
+
+
+OST_RESTART :: proc() {
+	libc.system("../scripts/restart.sh")
+	os.exit(0)  // Add this line to ensure a clean exit
+}
+
+OST_REBUILD :: proc() {
+	libc.system("../scripts/build.sh")
+	os.exit(0)  // Add this line to ensure a clean exit
+}
+
