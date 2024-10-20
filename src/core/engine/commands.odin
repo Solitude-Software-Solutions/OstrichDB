@@ -63,7 +63,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		fmt.printfln("Logging out...")
 		OST_USER_LOGOUT(0)
 		return 0
-
+	case const.RESTART:
+		OST_RESTART()
+		os.exit(0)
+	case const.REBUILD:
+		OST_REBUILD()
+		os.exit(0)
 	case const.UNFOCUS:
 		utils.log_runtime_event(
 			"Improperly used UNFOCUS command",
@@ -83,18 +88,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		data.OST_GET_DATABASE_TREE()
 
 	//COMMAND HISTORY CLUSTER FUCK START :(
-	case const.HISTORY:
-		utils.log_runtime_event(
-			"Used HISTORY command",
-			"User requested to view the command history.",
-		)
-		commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
-
-		for cmd, index in commandHistory {
-			fmt.printfln("%d: %s", index + 1, cmd)
-		}
-		fmt.println("Enter command to repeat: \nTo exit,press enter.")
-
+		case const.HISTORY:
+			utils.log_runtime_event(
+				"Used HISTORY command",
+				"User requested to view the command history.",
+			)
+			commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
+		
+			for cmd, index in commandHistory {
+				fmt.printfln("%d: %s", index + 1, cmd)
+			}
+			fmt.println("Enter command to repeat: \nTo exit,press enter.")
+		
 		// Get index of command to re-execute from user
 		inputNumber: [1024]byte
 		n, inputSuccess := os.read(os.stdin, inputNumber[:])
@@ -109,7 +114,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 
 		// convert string to index
-
 		commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
 		// check boundaries
 		if commandIndex >= i64(len(commandHistory)) || commandIndex < 0 {

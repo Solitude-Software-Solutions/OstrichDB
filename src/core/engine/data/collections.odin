@@ -235,7 +235,7 @@ OST_PREFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 }
 
 
-//checks if the passed in ost file exists in "../bin/clusters". see usage in OST_CHOOSE_COLLECTION()
+//checks if the passed in ost file exists in "./clusters". see usage in OST_CHOOSE_COLLECTION()
 //type 0 is for standard collection files, type 1 is for secure files
 OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	switch (type) {

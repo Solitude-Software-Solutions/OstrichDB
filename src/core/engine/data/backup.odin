@@ -14,7 +14,7 @@ import "core:strings"
 //=========================================================//
 
 OST_CREATE_BACKUP_DIR :: proc() {
-	os.make_directory("../bin/backups")
+	os.make_directory("./backups")
 }
 
 

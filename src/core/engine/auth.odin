@@ -34,10 +34,15 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		)
 		utils.throw_err(error1)
 		utils.log_err("Could not read user input during sign in", #procedure)
+		return false
 	}
 
-
 	userName := strings.trim_right(string(buf[:n]), "\r\n")
+	if len(userName) == 0 {
+		fmt.printfln("Username cannot be empty. Please try again.")
+		return false
+	}
+
 	found, userSecCollection := data.OST_FIND_SEC_COLLECTION(userName)
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
@@ -95,10 +100,17 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		)
 		utils.throw_err(error3)
 		utils.log_err("Could not read user input during sign in", #procedure)
+		libc.system("stty echo")
 		return false
 	}
 	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
 	libc.system("stty echo")
+
+	if len(enteredPassword) == 0 {
+		fmt.printfln("Password cannot be empty. Please try again.")
+		return false
+	}
+
 	//conver the return algo method string to an int
 	algoAsInt := strconv.atoi(algoMethod)
 

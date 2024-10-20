@@ -26,7 +26,7 @@ main :: proc() {
 
 //creates a cache used to store all generated cluster ids
 OST_CREATE_CACHE_FILE :: proc() {
-	cacheFile, createSuccess := os.open("../bin/cluster_id_cache", os.O_CREATE, 0o666)
+	cacheFile, createSuccess := os.open("./cluster_id_cache", os.O_CREATE, 0o666)
 	if createSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_CREATE_FILE,
@@ -197,7 +197,7 @@ checks the cluster id cache file to see if the id already exists
 OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
 	buf: [32]byte
 	result: bool
-	openCacheFile, openSuccess := os.open("../bin/cluster_id_cache", os.O_RDONLY, 0o666)
+	openCacheFile, openSuccess := os.open("./cluster_id_cache", os.O_RDONLY, 0o666)
 	if openSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
@@ -241,7 +241,7 @@ OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
 */
 OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
 	buf: [32]byte
-	cacheFile, openSuccess := os.open("../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
+	cacheFile, openSuccess := os.open("./cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
@@ -348,7 +348,7 @@ Used to add a newline character to the end of each id entry in the cluster cache
 See usage in OST_ADD_ID_TO_CACHE_FILE()
 */
 OST_NEWLINE_CHAR :: proc() {
-	cacheFile, openSuccess := os.open("../bin/cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
+	cacheFile, openSuccess := os.open("./cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
@@ -920,3 +920,4 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 
 	return cluster_count
 }
+
