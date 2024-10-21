@@ -65,11 +65,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
 	types.user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
 	data.OST_CREATE_COLLECTION("history", 2)
-	data.OST_CREATE_CLUSTER_BLOCK(
-		"./history.ost",
-		types.user.user_id,
-		types.user.username.Value,
-	)
+	data.OST_CREATE_CLUSTER_BLOCK("./history.ost", types.user.user_id, types.user.username.Value)
 	inituserName = fmt.tprintf("secure_%s", inituserName)
 	data.OST_CREATE_COLLECTION(inituserName, 1)
 	OST_STORE_USER_CREDS(
@@ -603,6 +599,13 @@ OST_CREATE_NEW_USER :: proc() -> int {
 		types.new_user.user_id,
 		"store_method",
 		algoMethodAsString,
+	)
+
+	//lastly, create a history cluster for the new user
+	data.OST_CREATE_CLUSTER_BLOCK(
+		"./history.ost",
+		types.user.user_id,
+		types.new_user.username.Value,
 	)
 	return 0
 }
