@@ -1155,6 +1155,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.RECORD:
+			collection_name := cmd.o_token[0]
+			cluster_name := cmd.o_token[1]
+			record_name := cmd.o_token[2]
+			result:= data.OST_PURGE_RECORD(collection_name, cluster_name, record_name)
+			switch result {
+			case true:
+				fmt.printfln("Successfully purged record: %s%s%s in cluster: %s%s%s in collection: %s%s%s", utils.BOLD_UNDERLINE, record_name, utils.RESET, utils.BOLD_UNDERLINE, cluster_name, utils.RESET, utils.BOLD_UNDERLINE, collection_name, utils.RESET)
+				break
+			case false:
+				fmt.printfln("Failed to purge record: %s%s%s in cluster: %s%s%s in collection: %s%s%s", utils.BOLD, record_name, utils.RESET, utils.BOLD, cluster_name, utils.RESET, utils.BOLD, collection_name, utils.RESET)
+				break
+			}
 			break
 		}
 
