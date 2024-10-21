@@ -921,3 +921,104 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 	return cluster_count
 }
 
+//deletes all data from a cluster except identifier data such as cluster name and id
+//Dude...THIS IS A FUCKING MESS AND ITS ALL AI GENERATED AND WORKS LMAO
+// Added some comments to help explain as best as I can - SchoolyB
+OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
+    collection_path := fmt.tprintf(
+        "%s%s%s",
+        const.OST_COLLECTION_PATH,
+        fn,
+        const.OST_FILE_EXTENSION,
+    )
+
+    // Read the entire file
+    data, readSuccess := os.read_entire_file(collection_path)
+    if !readSuccess {
+        utils.throw_err(
+            utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+        )
+        utils.log_err("Error reading collection file", #procedure)
+        return false
+    }
+    defer delete(data)
+
+//Have to make these 4 vars because transmute wont allow a non-typed string...dumb I know
+	openBrace:= "{"
+	openBraceWithNewline := "{\n"
+	closeBrace := "}"
+	closeBraceWithComma := "},"
+
+	//split the content into clusters
+    content := string(data)
+    clusters := strings.split(content, "{")
+    new_content := make([dynamic]u8)
+    defer delete(new_content)
+
+	//check if the cluster exists
+    clusterFound := false
+    for i := 0; i < len(clusters); i += 1 {
+        if i == 0 {
+            // Preserve the metadata header and its following whitespace
+            append(&new_content, ..transmute([]u8)clusters[i])
+            continue
+        }
+        //concatenate the open brace with the cluster
+        cluster := strings.concatenate([]string{openBrace,clusters[i]})
+		//if the cluster name matches the one we want to purge, we need to preserve the cluster's data
+        if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+            clusterFound = true
+            lines := strings.split(cluster, "\n")
+            append(&new_content, ..transmute([]u8)openBraceWithNewline)
+			emptyLineAdded := false
+            for line ,line_index in lines {
+				trimmed_line := strings.trim_space(line)
+                if strings.contains(trimmed_line, "cluster_name :identifier:") ||
+                   strings.contains(trimmed_line, "cluster_id :identifier:") {
+					
+					//preserves the indentation 
+					indent:= strings.index(line, trimmed_line)
+					if indent > 0{
+						append(&new_content, ..transmute([]u8)line[:indent])
+					}
+					//adds the line line and a newline character to the new_content array
+                    append(&new_content, ..transmute([]u8)strings.trim_space(line))
+                    append(&new_content, '\n')
+
+					//this ensures that the cluster_id line is followed by an empty line for formatting purposes
+					if strings.contains(trimmed_line, "cluster_id :identifier:") && !emptyLineAdded{
+						if line_index +1 < len(lines) && len(strings.trim_space(lines[line_index + 1])) == 0{
+							append(&new_content, '\n')
+							emptyLineAdded = true
+						}
+					} 
+                }
+            }
+            append(&new_content, ..transmute([]u8)closeBrace)
+            
+			//this ensures that the closing brace is followed by any trailing whitespace
+            if last_brace := strings.last_index(cluster, "}"); last_brace != -1 {
+                append(&new_content, ..transmute([]u8)cluster[last_brace+1:])
+            }
+        } else {
+            append(&new_content, ..transmute([]u8)cluster)
+        }
+    }
+
+    if !clusterFound {
+        utils.throw_err(utils.new_err(.CANNOT_FIND_CLUSTER, utils.get_err_msg(.CANNOT_FIND_CLUSTER), #procedure))
+        utils.log_err("Error finding cluster in collection", #procedure)
+        return false
+    }
+//write the new content to the collection file
+    writeSuccess := os.write_entire_file(collection_path, new_content[:])
+    if !writeSuccess {
+        utils.throw_err(utils.new_err(.CANNOT_WRITE_TO_FILE, utils.get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+        utils.log_err("Error writing to collection file", #procedure)
+        return false
+    }
+    
+    return true
+	
+}
+
