@@ -1022,3 +1022,22 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	
 }
 
+OST_GET_CLUSTER_SIZE :: proc(collection_name: string, cluster_name: string) -> (size: int, success: bool) {
+    collection_path := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, collection_name, const.OST_FILE_EXTENSION)
+    data, read_success := os.read_entire_file(collection_path)
+    if !read_success {
+        return 0, false
+    }
+    defer delete(data)
+
+    content := string(data)
+    clusters := strings.split(content, "},")
+
+    for cluster in clusters {
+        if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
+            return len(cluster), true
+        }
+    }
+
+    return 0, false
+}

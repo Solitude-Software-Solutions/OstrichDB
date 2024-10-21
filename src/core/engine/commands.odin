@@ -25,6 +25,78 @@ OST_CONCAT_OBJECT_EXT :: proc(obj: string) -> string {
 	return strings.concatenate([]string{path, const.OST_FILE_EXTENSION})
 }
 
+OST_GET_RECORD_SIZE :: proc(
+	collection_name: string,
+	cluster_name: string,
+	record_name: string,
+) -> (
+	size: int,
+	success: bool,
+) {
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collection_name,
+		const.OST_FILE_EXTENSION,
+	)
+	data, read_success := os.read_entire_file(collection_path)
+	if !read_success {
+		return 0, false
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
+			lines := strings.split(cluster, "\n")
+			for line in lines {
+				if strings.has_prefix(line, record_name) {
+					parts := strings.split(line, ":")
+					if len(parts) >= 3 {
+						record_value := strings.trim_space(strings.join(parts[2:], ":"))
+						return len(record_value), true
+					}
+				}
+			}
+		}
+	}
+
+	return 0, false
+}
+
+OST_GET_CLUSTER_SIZE :: proc(
+	collection_name: string,
+	cluster_name: string,
+) -> (
+	size: int,
+	success: bool,
+) {
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collection_name,
+		const.OST_FILE_EXTENSION,
+	)
+	data, read_success := os.read_entire_file(collection_path)
+	if !read_success {
+		return 0, false
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
+			return len(cluster), true
+		}
+	}
+
+	return 0, false
+}
+
 OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	incompleteCommandErr := utils.new_err(
 		.INCOMPLETE_COMMAND,
@@ -88,18 +160,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		data.OST_GET_DATABASE_TREE()
 
 	//COMMAND HISTORY CLUSTER FUCK START :(
-		case const.HISTORY:
-			utils.log_runtime_event(
-				"Used HISTORY command",
-				"User requested to view the command history.",
-			)
-			commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
-		
-			for cmd, index in commandHistory {
-				fmt.printfln("%d: %s", index + 1, cmd)
-			}
-			fmt.println("Enter command to repeat: \nTo exit,press enter.")
-		
+	case const.HISTORY:
+		utils.log_runtime_event(
+			"Used HISTORY command",
+			"User requested to view the command history.",
+		)
+		commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
+
+		for cmd, index in commandHistory {
+			fmt.printfln("%d: %s", index + 1, cmd)
+		}
+		fmt.println("Enter command to repeat: \nTo exit,press enter.")
+
 		// Get index of command to re-execute from user
 		inputNumber: [1024]byte
 		n, inputSuccess := os.read(os.stdin, inputNumber[:])
@@ -1116,7 +1188,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
-			collection_name:= cmd.o_token[0]
+			collection_name := cmd.o_token[0]
 			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collection_name, 0)
 			switch exists 
 			{
@@ -1125,51 +1197,196 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				switch result 
 				{
 				case true:
-					fmt.printfln("Successfully purged collection: %s%s%s", utils.BOLD_UNDERLINE, cmd.o_token[0], utils.RESET)
+					fmt.printfln(
+						"Successfully purged collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cmd.o_token[0],
+						utils.RESET,
+					)
 					metadata.OST_UPDATE_METADATA_VALUE(collection_name, 3)
 					break
 				case false:
-					fmt.printfln("Failed to purge collection: %s%s%s", utils.BOLD, cmd.o_token[0], utils.RESET)
+					fmt.printfln(
+						"Failed to purge collection: %s%s%s",
+						utils.BOLD,
+						cmd.o_token[0],
+						utils.RESET,
+					)
 					break
 				}
 			case false:
-				fmt.printfln("Collection: %s%s%s not found in OstrichDB.", utils.BOLD, cmd.o_token[0], utils.RESET)
-				utils.log_runtime_event("Invalid PURGE command", "User tried to purge a collection that does not exist.")
+				fmt.printfln(
+					"Collection: %s%s%s not found in OstrichDB.",
+					utils.BOLD,
+					cmd.o_token[0],
+					utils.RESET,
+				)
+				utils.log_runtime_event(
+					"Invalid PURGE command",
+					"User tried to purge a collection that does not exist.",
+				)
 				break
 			}
 			break
 		case const.CLUSTER:
 			collection_name := cmd.o_token[0]
 			cluster_name := cmd.o_token[1]
-			if len(cmd.o_token) >=2 && const.WITHIN in cmd.m_token || cmd.isUsingDotNotation == true {
-				
-			result := data.OST_PURGE_CLUSTER(collection_name, cluster_name)
-			switch result {
-			case true:
-				fmt.printfln("Successfully purged cluster: %s%s%s in collection: %s%s%s", utils.BOLD_UNDERLINE, cluster_name, utils.RESET, utils.BOLD_UNDERLINE, collection_name, utils.RESET)
-				break
-			case false:
-				fmt.printfln("Failed to purge cluster: %s%s%s in collection: %s%s%s", utils.BOLD, cluster_name, utils.RESET, utils.BOLD, collection_name, utils.RESET)
-				break
-			}
+			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
+			   cmd.isUsingDotNotation == true {
+
+				result := data.OST_PURGE_CLUSTER(collection_name, cluster_name)
+				switch result {
+				case true:
+					fmt.printfln(
+						"Successfully purged cluster: %s%s%s in collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case false:
+					fmt.printfln(
+						"Failed to purge cluster: %s%s%s in collection: %s%s%s",
+						utils.BOLD,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				}
 			}
 			break
 		case const.RECORD:
 			collection_name := cmd.o_token[0]
 			cluster_name := cmd.o_token[1]
 			record_name := cmd.o_token[2]
-			result:= data.OST_PURGE_RECORD(collection_name, cluster_name, record_name)
+			result := data.OST_PURGE_RECORD(collection_name, cluster_name, record_name)
 			switch result {
 			case true:
-				fmt.printfln("Successfully purged record: %s%s%s in cluster: %s%s%s in collection: %s%s%s", utils.BOLD_UNDERLINE, record_name, utils.RESET, utils.BOLD_UNDERLINE, cluster_name, utils.RESET, utils.BOLD_UNDERLINE, collection_name, utils.RESET)
+				fmt.printfln(
+					"Successfully purged record: %s%s%s in cluster: %s%s%s in collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					record_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					cluster_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+				)
 				break
 			case false:
-				fmt.printfln("Failed to purge record: %s%s%s in cluster: %s%s%s in collection: %s%s%s", utils.BOLD, record_name, utils.RESET, utils.BOLD, cluster_name, utils.RESET, utils.BOLD, collection_name, utils.RESET)
+				fmt.printfln(
+					"Failed to purge record: %s%s%s in cluster: %s%s%s in collection: %s%s%s",
+					utils.BOLD,
+					record_name,
+					utils.RESET,
+					utils.BOLD,
+					cluster_name,
+					utils.RESET,
+					utils.BOLD,
+					collection_name,
+					utils.RESET,
+				)
 				break
 			}
 			break
 		}
 
+		break
+	//SIZE_OF command
+	case const.SIZE_OF:
+		utils.log_runtime_event("Used SIZE_OF command", "")
+		if len(cmd.o_token) >= 1 {
+			switch cmd.t_token {
+			case const.COLLECTION:
+				collection_name := cmd.o_token[0]
+				file_path := fmt.tprintf(
+					"%s%s%s",
+					const.OST_COLLECTION_PATH,
+					collection_name,
+					const.OST_FILE_EXTENSION,
+				)
+				actual_size, metadata_size := metadata.OST_SUBTRACT_METADATA_SIZE(file_path)
+				if actual_size != -1 {
+					fmt.printf(
+						"Size of collection %s: %d bytes (excluding %d bytes of metadata)\n",
+						collection_name,
+						actual_size,
+						metadata_size,
+					)
+				} else {
+					fmt.printf("Failed to get size of collection %s\n", collection_name)
+				}
+			case const.CLUSTER:
+				if cmd.isUsingDotNotation {
+					collection_name := cmd.o_token[0]
+					cluster_name := cmd.o_token[1]
+					size, success := OST_GET_CLUSTER_SIZE(collection_name, cluster_name)
+					if success {
+						fmt.printf(
+							"Size of cluster %s.%s: %d bytes\n",
+							collection_name,
+							cluster_name,
+							size,
+						)
+					} else {
+						fmt.printf(
+							"Failed to get size of cluster %s.%s\n",
+							collection_name,
+							cluster_name,
+						)
+					}
+				} else {
+					fmt.println(
+						"Invalid command. Use dot notation for clusters: SIZE_OF CLUSTER collection_name.cluster_name",
+					)
+				}
+			case const.RECORD:
+				if cmd.isUsingDotNotation && len(cmd.o_token) == 3 {
+					collection_name := cmd.o_token[0]
+					cluster_name := cmd.o_token[1]
+					record_name := cmd.o_token[2]
+					size, success := OST_GET_RECORD_SIZE(
+						collection_name,
+						cluster_name,
+						record_name,
+					)
+					if success {
+						fmt.printf(
+							"Size of record %s.%s.%s: %d bytes\n",
+							collection_name,
+							cluster_name,
+							record_name,
+							size,
+						)
+					} else {
+						fmt.printf(
+							"Failed to get size of record %s.%s.%s\n",
+							collection_name,
+							cluster_name,
+							record_name,
+						)
+					}
+				} else {
+					fmt.println(
+						"Invalid command. Use dot notation for records: SIZE_OF RECORD collection_name.cluster_name.record_name",
+					)
+				}
+			case:
+				fmt.println(
+					"Invalid SIZE_OF command. Use SIZE_OF COLLECTION, SIZE_OF CLUSTER, or SIZE_OF RECORD.",
+				)
+			}
+		} else {
+			fmt.println("Incomplete SIZE_OF command. Please specify what to get the size of.")
+		}
 		break
 	//FOCUS and UNFOCUS: Enter at own peril.
 	case const.FOCUS:

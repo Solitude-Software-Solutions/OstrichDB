@@ -1668,3 +1668,33 @@ OST_PURGE_RECORD :: proc(fn, cn, rn: string) -> bool {
 
     return true
 }
+
+OST_GET_RECORD_SIZE :: proc(collection_name: string, cluster_name: string, record_name: string) -> (size: int, success: bool) {
+    collection_path := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, collection_name, const.OST_FILE_EXTENSION)
+    data, read_success := os.read_entire_file(collection_path)
+    if !read_success {
+        return 0, false
+    }
+    defer delete(data)
+
+    content := string(data)
+    clusters := strings.split(content, "},")
+
+    for cluster in clusters {
+        if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
+            lines := strings.split(cluster, "\n")
+            for line in lines {
+                if strings.has_prefix(line, record_name) {
+                    parts := strings.split(line, ":")
+                    if len(parts) >= 3 {
+                        record_value := strings.trim_space(strings.join(parts[2:], ":"))
+                        return len(record_value), true
+                    }
+                }
+            }
+        }
+    }
+
+    return 0, false
+}
+
