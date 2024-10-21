@@ -14,7 +14,7 @@ import "core:strings"
 
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	using const
-	validModifiers := []string{AND, WITHIN, IN, OF_TYPE, TYPE, ALL_OF, TO, DOT}
+	validModifiers := []string{AND, WITHIN, IN, OF_TYPE, TYPE, ALL_OF, TO}
 	for modifier in validModifiers {
 		if strings.to_upper(token) == modifier {
 			return true

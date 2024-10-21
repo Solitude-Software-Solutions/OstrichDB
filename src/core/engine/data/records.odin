@@ -1580,3 +1580,6 @@ OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
 
 	return recordCount
 }
+
+//deletes the data value of the passed in record but keeps the name and type
+// OST_PURGE_RECORD :: proc(fn,cn,rn:string) -> bool {}

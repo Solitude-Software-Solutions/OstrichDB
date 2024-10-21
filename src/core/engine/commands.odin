@@ -1110,6 +1110,55 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		break
+	//PURGE command
+	case const.PURGE:
+		utils.log_runtime_event("Used PURGE command", "")
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTION:
+			collection_name:= cmd.o_token[0]
+			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collection_name, 0)
+			switch exists 
+			{
+			case true:
+				result := data.OST_PURGE_COLLECTION(cmd.o_token[0])
+				switch result 
+				{
+				case true:
+					fmt.printfln("Successfully purged collection: %s%s%s", utils.BOLD_UNDERLINE, cmd.o_token[0], utils.RESET)
+					metadata.OST_UPDATE_METADATA_VALUE(collection_name, 3)
+					break
+				case false:
+					fmt.printfln("Failed to purge collection: %s%s%s", utils.BOLD, cmd.o_token[0], utils.RESET)
+					break
+				}
+			case false:
+				fmt.printfln("Collection: %s%s%s not found in OstrichDB.", utils.BOLD, cmd.o_token[0], utils.RESET)
+				utils.log_runtime_event("Invalid PURGE command", "User tried to purge a collection that does not exist.")
+				break
+			}
+			break
+		case const.CLUSTER:
+			collection_name := cmd.o_token[0]
+			cluster_name := cmd.o_token[1]
+			if len(cmd.o_token) >=2 && const.WITHIN in cmd.m_token || cmd.isUsingDotNotation == true {
+				
+			result := data.OST_PURGE_CLUSTER(collection_name, cluster_name)
+			switch result {
+			case true:
+				fmt.printfln("Successfully purged cluster: %s%s%s in collection: %s%s%s", utils.BOLD_UNDERLINE, cluster_name, utils.RESET, utils.BOLD_UNDERLINE, collection_name, utils.RESET)
+				break
+			case false:
+				fmt.printfln("Failed to purge cluster: %s%s%s in collection: %s%s%s", utils.BOLD, cluster_name, utils.RESET, utils.BOLD, collection_name, utils.RESET)
+				break
+			}
+			}
+			break
+		case const.RECORD:
+			break
+		}
+
+		break
 	//FOCUS and UNFOCUS: Enter at own peril.
 	case const.FOCUS:
 		utils.log_runtime_event("Used FOCUS command", "")
