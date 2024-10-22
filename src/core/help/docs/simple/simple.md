@@ -72,10 +72,6 @@ Groups of related records within a collection.
 Individual pieces of data stored in clusters.
 ### RECORD END
 
-### WITHIN START
-Specifies location. Use: `<action> <object> WITHIN <parent_object>`.
-### WITHIN END
-
 ### TO START
 Used with RENAME to specify the new name.
 ### TO END

@@ -19,5 +19,4 @@
 |CLUSTER    |Target         |                 |Specifies that the target is a cluster                              |
 |RECORD     |Target         |                 |Specifies that the target is a record                               |
 |TO         |Modifier       |                 |Used with the RENAME action to specify the new name of the target   |
-|WITHIN     |Scope Modifier |                 |Specifies the scope of the target in which the action should be performed|
 |ATOM/ATOMS |Help Target    |                 |Only Used with the HELP action to show information about atoms|

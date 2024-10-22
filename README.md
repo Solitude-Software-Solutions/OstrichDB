@@ -26,17 +26,16 @@ Commands in OstrichDB are parsed into tokens also called ATOMs. This structured 
 - **(A)ction token**: Specifies the operation to be performed (e.g., NEW, ERASE, RENAME)
 - **(T)arget token**: Indicates the type of object the action is performed on (e.g., CLUSTER, RECORD)
 - **(O)bject token**: Represents the name or identifier of the target
-- **(M)odifier**: Additional parameters that modify the command's behavior (e.g., WITHIN)
+- **(M)odifier**: Additional parameters that modify the command's behavior (e.g., TO)
 
 Note: Not all commands require all ATOMs. The number of ATOMs required depends on the command and its context.
 
-Example: `NEW CLUSTER foo WITHIN COLLECTION bar`
+Example: `RENAME CLUSTER foo TO bar`
 
 In this example:
 - `NEW` is the Action token
 - `CLUSTER` is the Target token
 - `foo` is the Object token (name of the cluster) given by the user
-- `WITHIN` is a special modifier called a scope modifier
 - `COLLECTION bar` specifies where the new cluster should be created
 
 ## Supported Commands
@@ -70,15 +69,14 @@ In this example:
 
 Example usage of multi-token commands:
 ```bash
-NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Creates a new cluster within the specified collection
-ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Erase the cluster with the specified name
+NEW COLLECTION <collection_name> //Creates a new collection
 RENAME RECORD <old_name> TO <new_name> //Renames the record with the specified old name to the new name
 FETCH COLLECTION <collection_name> //Fetches all data within the collection of specified name
 SET RECORD <record_name> TO <value> //Sets the value of the specified record
 BACKUP COLLECTION <collection_name> //Creates a backup of the specified collection
 HELP COLLECTION //Displays information about collections
 NEW RECORD <record_name> OF_TYPE <record_type>
-FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>  //Focuses on the specified cluster within the specified collection
+FOCUS COLLECTION <collection_name> //Focuses on the specified collection
 ```
 
 **Note: The `FOCUS` command is used to set the current context to a specific object. ALL subsequent commands will be executed in the context of the focused object.**
@@ -87,7 +85,6 @@ FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>  //Focuses on t
 
 Modifiers are additional parameters that modify the behavior of a command:
 
-- `WITHIN`: A scope modifier used to specify the parent object of the target object
 - `TO`: Used with the RENAME and SET command to specify the new name or value of the object
 - `ATOMS`: A special modifier ONLY used with the HELP command to display detailed information about the command's ATOMs
 - `OF_TYPE`: ONLY used with the NEW RECORD command to specify the type of record being created

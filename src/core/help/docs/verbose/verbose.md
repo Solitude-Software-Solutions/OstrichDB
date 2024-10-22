@@ -73,10 +73,6 @@ Clusters are objects made up of related data called "records". Clusters are stor
 Records are individual pieces of data that are stored within clusters. Records are similar to "key-value pairs" in JSON. Records are made up of a record name and a record value. Record names are created by the user and record values are the data that is stored within the record itself. Records are the smallest unit of data that can be stored in OstrichDB.
 ### RECORD END
 
-### WITHIN START
-The `WITHIN` token is a special modifier token called a scope modifier. It is used to specify the location of an object(target) within another object(parent). `WITHIN` MUST be followed by a target token such as `COLLECTION` or `CLUSTER` and an object name. This tells the parser to set the scope of the target that the action will be performed on. For example: `NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>` will create a new cluster with the specified name within the specified collection.
-### WITHIN END
-
 ### TO START
 The `TO` token is used with the `RENAME` token to specify the new name of an object. `TO` MUST be followed by the new name of the object. For example: `RENAME COLLECTION <collection_name> TO <new_collection_name>` will rename the collection with the specified name to the new specified name.
 ### TO END

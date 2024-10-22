@@ -330,15 +330,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case const.CLUSTER:
 			cluster_name: string
 			collection_name: string
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
-			   cmd.isUsingDotNotation == true {
-				//using dot notation
+			if len(cmd.o_token) >= 2 && cmd.isUsingDotNotation == true {
 				if cmd.isUsingDotNotation == true {
 					collection_name = cmd.o_token[0]
 					cluster_name = cmd.o_token[1]
-				} else { 	//using within
-					cluster_name = cmd.o_token[0]
-					collection_name = cmd.o_token[1]
 				}
 				fmt.printf(
 					"Creating cluster: %s%s%s within collection: %s%s%s\n",
@@ -389,7 +384,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.printfln(
-					"Incomplete command. Correct Usage: NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> \nAlternatively, you can use dot notation: NEW CLUSTER <collection_name>.<cluster_name>",
+					"Invalid command. Correct Usage: NEW CLUSTER <collection_name>.<cluster_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete NEW command",
@@ -506,7 +501,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.printfln(
-					"Incomplete command. Correct Usage: NEW RECORD <record_name> OF_TYPE <record_type>\nAlternatively, you can use dot notation: NEW RECORD <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
+					"Incomplete command. Correct Usage: NEW RECORD <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
 				)
 				utils.log_runtime_event(
 					"Incomplete NEW RECORD command",
@@ -596,9 +591,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			cluster_name: string
 			collection_name: string
 
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token && const.TO in cmd.m_token ||
-			   cmd.isUsingDotNotation == true {
-				// if cmd.isUsingDotNotation == true {}
+			if len(cmd.o_token) >= 2 && const.TO in cmd.m_token && cmd.isUsingDotNotation == true {
 				old_name := cmd.o_token[1]
 				collection_name := cmd.o_token[0]
 				new_name := cmd.m_token[const.TO]
@@ -638,7 +631,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: RENAME CLUSTER <old_name> WITHIN <collection_name> TO <new_name>",
+					"Incomplete command. Correct Usage: RENAME CLUSTER <collection_name>.<old_name> TO <new_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete RENAME command",
@@ -706,7 +699,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: RENAME RECORD <old_name> TO <new_name>\nAlternativley use dot notation: RENAME RECORD <collection_name>.<cluster_name>.<old_name> TO <new_name>",
+					"Incomplete command. Correct Usage: RENAME RECORD <collection_name>.<cluster_name>.<old_name> TO <new_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete RENAME command",
@@ -743,8 +736,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collection_name: string
 			cluster_name: string
 
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
-			   cmd.isUsingDotNotation == true {
+			if len(cmd.o_token) >= 2 && cmd.isUsingDotNotation == true {
 				collection_name := cmd.o_token[0]
 				cluster := cmd.o_token[1]
 				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
@@ -782,7 +774,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+					"Incomplete command. Correct Usage: ERASE CLUSTER <collection_name>.<cluster_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete ERASE command",
@@ -795,8 +787,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			cluster_name: string
 			record_name: string
 
-			if len(cmd.o_token) == 3 && const.WITHIN in cmd.m_token ||
-			   cmd.isUsingDotNotation == true {
+			if len(cmd.o_token) == 3 && cmd.isUsingDotNotation == true {
 				collection_name := cmd.o_token[0]
 				cluster_name := cmd.o_token[1]
 				record_name := cmd.o_token[2]
@@ -841,7 +832,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case:
 			fmt.printfln(
-				"Invalid command structure. Correct Usage: ERASE <Target> <Targets_name>\nAlternativley use dot notation: ERASE <collection_name>.<cluster_name>.<record_name>",
+				"Invalid command structure. Correct Usage: ERASE <collection_name>.<cluster_name>.<record_name>",
 			)
 			utils.log_runtime_event(
 				"Invalid ERASE command",
@@ -870,8 +861,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTER:
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
-			   cmd.isUsingDotNotation == true {
+			if len(cmd.o_token) >= 2 && cmd.isUsingDotNotation == true {
 				collection := cmd.o_token[0]
 				cluster := cmd.o_token[1]
 				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
@@ -885,7 +875,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(clusterContent)
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: FETCH CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+					"Incomplete command. Correct Usage: FETCH CLUSTER <collection_name>.<cluster_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete FETCH command",
@@ -897,8 +887,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			colllection_name: string
 			cluster_name: string
 			record_name: string
-			if len(cmd.o_token) == 3 && const.WITHIN in cmd.m_token ||
-			   cmd.isUsingDotNotation == true {
+			if len(cmd.o_token) == 3 && cmd.isUsingDotNotation == true {
 				collection_name := cmd.o_token[0]
 				cluster_name := cmd.o_token[1]
 				record_name := cmd.o_token[2]
@@ -929,7 +918,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			} else {
 				fmt.printfln(
-					"Incomplete command. Correct Usage: FETCH RECORD <record_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+					"Incomplete command. Correct Usage: FETCH RECORD <collection_name>.<cluster_name>.<record_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete FETCH command",
@@ -1062,7 +1051,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			} else {
 				fmt.printfln(
-					"Invalid command structure. Correct Usage: COUNT CLUSTERS WITHIN COLLECTION <collection_name>\nIf using dot notation: COUNT CLUSTERS <collection_name>",
+					"Invalid command structure. Correct Usage: COUNT CLUSTERS <collection_name>",
 				)
 				utils.log_runtime_event(
 					"Invalid COUNT command",
@@ -1172,7 +1161,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.printfln(
-					"Invalid command structure. Correct Usage: COUNT RECORDS WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>\nIf using dot notation: COUNT RECORDS <collection_name>.<cluster_name>",
+					"Invalid command structure. Correct Usage: COUNT RECORDS <collection_name>.<cluster_name>",
 				)
 				utils.log_runtime_event(
 					"Invalid COUNT command",
@@ -1231,9 +1220,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case const.CLUSTER:
 			collection_name := cmd.o_token[0]
 			cluster_name := cmd.o_token[1]
-			if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token ||
-			   cmd.isUsingDotNotation == true {
-
+			if len(cmd.o_token) >= 2 && cmd.isUsingDotNotation == true {
 				result := data.OST_PURGE_CLUSTER(collection_name, cluster_name)
 				switch result {
 				case true:
@@ -1389,139 +1376,139 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	//FOCUS and UNFOCUS: Enter at own peril.
-	case const.FOCUS:
-		utils.log_runtime_event("Used FOCUS command", "")
+	// case const.FOCUS:
+	// 	utils.log_runtime_event("Used FOCUS command", "")
 
-		switch (cmd.t_token) 
-		{
-		case const.COLLECTION:
-			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.o_token[0], 0)
-			fmt.println(exists)
-			switch exists {
-			case true:
-				types.focus.flag = true
-				if len(cmd.o_token) > 0 {
-					collection := cmd.o_token[0]
-					storedT, storedO, _ := OST_FOCUS(const.COLLECTION, collection, "[NO PARENT]")
-				} else {
-					fmt.println(
-						invalidCommandErr,
-						"Incomplete command. Correct Usage: NEW COLLECTION <collection_name>",
-					)
-					utils.log_runtime_event(
-						"Incomplete FOCUS command",
-						"User did not provide a valid collection name to focus.",
-					)
-				}
-				break
-			case false:
-				fmt.printfln(
-					"Collection: %s%s%s not found in OstrichDB.",
-					utils.BOLD_UNDERLINE,
-					cmd.o_token[0],
-					utils.RESET,
-				)
-				utils.log_runtime_event(
-					"Invalid FOCUS command",
-					"User tried to focus on a collection that does not exist.",
-				)
-				types.focus.flag = false
-				break
-			}
+	// 	switch (cmd.t_token)
+	// 	{
+	// 	case const.COLLECTION:
+	// 		exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.o_token[0], 0)
+	// 		fmt.println(exists)
+	// 		switch exists {
+	// 		case true:
+	// 			types.focus.flag = true
+	// 			if len(cmd.o_token) > 0 {
+	// 				collection := cmd.o_token[0]
+	// 				storedT, storedO, _ := OST_FOCUS(const.COLLECTION, collection, "[NO PARENT]")
+	// 			} else {
+	// 				fmt.println(
+	// 					invalidCommandErr,
+	// 					"Incomplete command. Correct Usage: NEW COLLECTION <collection_name>",
+	// 				)
+	// 				utils.log_runtime_event(
+	// 					"Incomplete FOCUS command",
+	// 					"User did not provide a valid collection name to focus.",
+	// 				)
+	// 			}
+	// 			break
+	// 		case false:
+	// 			fmt.printfln(
+	// 				"Collection: %s%s%s not found in OstrichDB.",
+	// 				utils.BOLD_UNDERLINE,
+	// 				cmd.o_token[0],
+	// 				utils.RESET,
+	// 			)
+	// 			utils.log_runtime_event(
+	// 				"Invalid FOCUS command",
+	// 				"User tried to focus on a collection that does not exist.",
+	// 			)
+	// 			types.focus.flag = false
+	// 			break
+	// 		}
 
-		case const.CLUSTER:
-			collectionNamePath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, cmd.o_token[1])
-			fullCollectionPath := fmt.tprintf("%s%s", collectionNamePath, const.OST_FILE_EXTENSION)
+	// 	case const.CLUSTER:
+	// 		collectionNamePath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, cmd.o_token[1])
+	// 		fullCollectionPath := fmt.tprintf("%s%s", collectionNamePath, const.OST_FILE_EXTENSION)
 
-			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(cmd.o_token[1])
-			switch (checks) 
-			{
-			case -1:
-				return -1
-			}
+	// 		checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(cmd.o_token[1])
+	// 		switch (checks)
+	// 		{
+	// 		case -1:
+	// 			return -1
+	// 		}
 
-			exists := data.OST_CHECK_IF_CLUSTER_EXISTS(fullCollectionPath, cmd.o_token[0])
-			switch exists {
-			case true:
-				types.focus.flag = true
-				if len(cmd.o_token) >= 2 && const.WITHIN in cmd.m_token {
-					cluster := cmd.o_token[0]
-					collection := cmd.o_token[1]
-					storedT, storedO, _ := OST_FOCUS(const.CLUSTER, cluster, cmd.o_token[1]) //storing the Target and Objec that the user wants to focus)
-				} else {
-					fmt.println(
-						"Incomplete command. Correct Usage: FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
-					)
-					utils.log_runtime_event(
-						"Incomplete FOCUS command",
-						"User did not provide a valid cluster name to focus.",
-					)
-				}
-				break
-			case false:
-				fmt.printfln(
-					"Cluster: %s%s%s does not exist within collection: %s%s%s.",
-					utils.BOLD,
-					cmd.o_token[0],
-					utils.RESET,
-					utils.BOLD,
-					cmd.o_token[1],
-					utils.RESET,
-				)
-				types.focus.flag = false
-				break
-			}
-		case const.RECORD:
-			types.focus.flag = true
-			if len(cmd.o_token) >= 3 && const.WITHIN in cmd.m_token {
-				record := cmd.o_token[0]
-				cluster := cmd.o_token[1]
-				collection := cmd.o_token[2]
+	// 		exists := data.OST_CHECK_IF_CLUSTER_EXISTS(fullCollectionPath, cmd.o_token[0])
+	// 		switch exists {
+	// 		case true:
+	// 			types.focus.flag = true
+	// 			if len(cmd.o_token) >= 2 && isUSingDotNotation == true {
+	// 				cluster := cmd.o_token[0]
+	// 				collection := cmd.o_token[1]
+	// 				storedT, storedO, _ := OST_FOCUS(const.CLUSTER, cluster, cmd.o_token[1]) //storing the Target and Objec that the user wants to focus)
+	// 			} else {
+	// 				fmt.println(
+	// 					"Incomplete command. Correct Usage: FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+	// 				)
+	// 				utils.log_runtime_event(
+	// 					"Incomplete FOCUS command",
+	// 					"User did not provide a valid cluster name to focus.",
+	// 				)
+	// 			}
+	// 			break
+	// 		case false:
+	// 			fmt.printfln(
+	// 				"Cluster: %s%s%s does not exist within collection: %s%s%s.",
+	// 				utils.BOLD,
+	// 				cmd.o_token[0],
+	// 				utils.RESET,
+	// 				utils.BOLD,
+	// 				cmd.o_token[1],
+	// 				utils.RESET,
+	// 			)
+	// 			types.focus.flag = false
+	// 			break
+	// 		}
+	// 	case const.RECORD:
+	// 		types.focus.flag = true
+	// 		if len(cmd.o_token) >= 3 && isUsingDotNotation == true {
+	// 			record := cmd.o_token[0]
+	// 			cluster := cmd.o_token[1]
+	// 			collection := cmd.o_token[2]
 
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
+	// 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
+	// 			switch (checks)
+	// 			{
+	// 			case -1:
+	// 				return -1
+	// 			}
 
-				storedParentT, storedParentO, storedRO := OST_FOCUS_RECORD(
-					collection,
-					cluster,
-					record,
-				)
-				fmt.printfln(
-					"Focused on record: %s%s%s in cluster: %s%s%s within collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
-					record,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					cluster,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					collection,
-					utils.RESET,
-				)
-				//storing the Target and Objec that the user wants to focus)
-			} else {
-				fmt.printfln(
-					"Incomplete command. Correct Usage: FOCUS RECORD <record_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
-				)
-				utils.log_runtime_event(
-					"Incomplete FOCUS command",
-					"User did not provide a valid record name to focus.",
-				)
-			}
-			break
-		case:
-			fmt.printfln("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
-			utils.log_runtime_event(
-				"Invalid FOCUS command",
-				"User did not provide a valid target.",
-			)
-			break
-		}
-		break
+	// 			storedParentT, storedParentO, storedRO := OST_FOCUS_RECORD(
+	// 				collection,
+	// 				cluster,
+	// 				record,
+	// 			)
+	// 			fmt.printfln(
+	// 				"Focused on record: %s%s%s in cluster: %s%s%s within collection: %s%s%s",
+	// 				utils.BOLD_UNDERLINE,
+	// 				record,
+	// 				utils.RESET,
+	// 				utils.BOLD_UNDERLINE,
+	// 				cluster,
+	// 				utils.RESET,
+	// 				utils.BOLD_UNDERLINE,
+	// 				collection,
+	// 				utils.RESET,
+	// 			)
+	// 			//storing the Target and Objec that the user wants to focus)
+	// 		} else {
+	// 			fmt.printfln(
+	// 				"Incomplete command. Correct Usage: FOCUS RECORD <record_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
+	// 			)
+	// 			utils.log_runtime_event(
+	// 				"Incomplete FOCUS command",
+	// 				"User did not provide a valid record name to focus.",
+	// 			)
+	// 		}
+	// 		break
+	// 	case:
+	// 		fmt.printfln("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
+	// 		utils.log_runtime_event(
+	// 			"Invalid FOCUS command",
+	// 			"User did not provide a valid target.",
+	// 		)
+	// 		break
+	// 	}
+	// 	break
 
 
 	case:

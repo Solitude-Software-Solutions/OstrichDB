@@ -81,11 +81,6 @@ Backups are stored in `/bin/backups` with `.ost` extension.
 
 ## Modifiers
 
-### WITHIN
-A scope modifier specifying location.
-Syntax: `<action> <object> WITHIN <parent_object>`
-Example: `NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>`
-
 ### TO
 Used with RENAME to specify the new name.
 Example: `RENAME COLLECTION <old_name> TO <new_name>`
