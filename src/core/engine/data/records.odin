@@ -1449,36 +1449,36 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 //reads over the passed in collection file and
 //the specified cluster and stores the value of each record into the array
 OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
-    records: [dynamic]string
-    histBuf: [1024]byte
+	records: [dynamic]string
+	histBuf: [1024]byte
 
-    data, readSuccess := os.read_entire_file("./history.ost")
-    	if !readSuccess {
+	data, readSuccess := os.read_entire_file("./history.ost")
+	if !readSuccess {
 		error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
 		utils.throw_err(error)
 		utils.log_err("Error reading collection file", #procedure)
 		return records
 	}
 
-    content := string(data)
-    clusters := strings.split(content, "},")
+	content := string(data)
+	clusters := strings.split(content, "},")
 
-    for cluster, i in clusters {
-        if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-            lines := strings.split(cluster, "\n")
-            for line, j in lines {
-                if strings.contains(line, ":COMMAND:") {
-                    parts := strings.split(line, ":COMMAND:")
-                    if len(parts) >= 2 {
-                        value := strings.trim_space(parts[1])
-                        append(&records, value)
-                    } 
-                }
-            }
-            break
-        }
-    }
-    return records
+	for cluster, i in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			lines := strings.split(cluster, "\n")
+			for line, j in lines {
+				if strings.contains(line, ":COMMAND:") {
+					parts := strings.split(line, ":COMMAND:")
+					if len(parts) >= 2 {
+						value := strings.trim_space(parts[1])
+						append(&records, value)
+					}
+				}
+			}
+			break
+		}
+	}
+	return records
 }
 
 
@@ -1583,118 +1583,138 @@ OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
 
 //deletes the data value of the passed in record but keeps the name and type
 OST_PURGE_RECORD :: proc(fn, cn, rn: string) -> bool {
-    collection_path := fmt.tprintf(
-        "%s%s%s",
-        const.OST_COLLECTION_PATH,
-        fn,
-        const.OST_FILE_EXTENSION,
-    )
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
 
-    // Read the entire file
-    data, readSuccess := os.read_entire_file(collection_path)
-    if !readSuccess {
-        utils.throw_err(
-            utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-        )
-        utils.log_err("Error reading collection file", #procedure)
-        return false
-    }
-    defer delete(data)
+	// Read the entire file
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		utils.log_err("Error reading collection file", #procedure)
+		return false
+	}
+	defer delete(data)
 
-    content := string(data)
-    lines := strings.split(content, "\n")
-    defer delete(lines)
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
 
-    newLines := make([dynamic]string)
-    defer delete(newLines)
+	newLines := make([dynamic]string)
+	defer delete(newLines)
 
-    inTargetCluster := false
-    recordPurged := false
+	inTargetCluster := false
+	recordPurged := false
 
-    for line in lines {
-        trimmedLine := strings.trim_space(line)
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
 
-        if trimmedLine == "{" {
-            inTargetCluster = false
-        }
+		if trimmedLine == "{" {
+			inTargetCluster = false
+		}
 
-        if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-            inTargetCluster = true
-        }
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+		}
 
-        if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
-            parts := strings.split(trimmedLine, ":")
-            if len(parts) >= 3 {
-                // Keep the record name and type, but remove the value
-                // Maintain the original indentation and spacing
-                leadingWhitespace := strings.split(line, rn)[0]
-                newLine := fmt.tprintf("%s%s :%s:", leadingWhitespace, strings.trim_space(parts[0]), strings.trim_space(parts[1]))
-                append(&newLines, newLine)
-                recordPurged = true
-            } else {
-                append(&newLines, line)
-            }
-        } else {
-            append(&newLines, line)
-        }
+		if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
+			parts := strings.split(trimmedLine, ":")
+			if len(parts) >= 3 {
+				// Keep the record name and type, but remove the value
+				// Maintain the original indentation and spacing
+				leadingWhitespace := strings.split(line, rn)[0]
+				newLine := fmt.tprintf(
+					"%s%s :%s:",
+					leadingWhitespace,
+					strings.trim_space(parts[0]),
+					strings.trim_space(parts[1]),
+				)
+				append(&newLines, newLine)
+				recordPurged = true
+			} else {
+				append(&newLines, line)
+			}
+		} else {
+			append(&newLines, line)
+		}
 
-        if inTargetCluster && trimmedLine == "}," {
-            inTargetCluster = false
-        }
-    }
+		if inTargetCluster && trimmedLine == "}," {
+			inTargetCluster = false
+		}
+	}
 
-    if !recordPurged {
-        fmt.printfln(
-            "Record %s%s%s not found in cluster %s%s%s",
-            utils.BOLD_UNDERLINE,
-            rn,
-            utils.RESET,
-            utils.BOLD_UNDERLINE,
-            cn,
-            utils.RESET,
-        )
-        return false
-    }
+	if !recordPurged {
+		fmt.printfln(
+			"Record %s%s%s not found in cluster %s%s%s",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+		)
+		return false
+	}
 
-    newContent := strings.join(newLines[:], "\n")
-    writeSuccess := os.write_entire_file(collection_path, transmute([]byte)newContent)
-    if !writeSuccess {
-        utils.throw_err(
-            utils.new_err(.CANNOT_WRITE_TO_FILE, utils.get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure),
-        )
-        utils.log_err("Error writing updated content to file", #procedure)
-        return false
-    }
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := os.write_entire_file(collection_path, transmute([]byte)newContent)
+	if !writeSuccess {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		utils.log_err("Error writing updated content to file", #procedure)
+		return false
+	}
 
-    return true
+	return true
 }
 
-OST_GET_RECORD_SIZE :: proc(collection_name: string, cluster_name: string, record_name: string) -> (size: int, success: bool) {
-    collection_path := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, collection_name, const.OST_FILE_EXTENSION)
-    data, read_success := os.read_entire_file(collection_path)
-    if !read_success {
-        return 0, false
-    }
-    defer delete(data)
+OST_GET_RECORD_SIZE :: proc(
+	collection_name: string,
+	cluster_name: string,
+	record_name: string,
+) -> (
+	size: int,
+	success: bool,
+) {
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collection_name,
+		const.OST_FILE_EXTENSION,
+	)
+	data, read_success := os.read_entire_file(collection_path)
+	if !read_success {
+		return 0, false
+	}
+	defer delete(data)
 
-    content := string(data)
-    clusters := strings.split(content, "},")
+	content := string(data)
+	clusters := strings.split(content, "},")
 
-    for cluster in clusters {
-        if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
-            lines := strings.split(cluster, "\n")
-            for line in lines {
-                if strings.has_prefix(line, record_name) {
-                    parts := strings.split(line, ":")
-                    if len(parts) >= 3 {
-                        record_value := strings.trim_space(strings.join(parts[2:], ":"))
-                        return len(record_value), true
-                    }
-                }
-            }
-        }
-    }
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
+			lines := strings.split(cluster, "\n")
+			for line in lines {
+				if strings.has_prefix(line, record_name) {
+					parts := strings.split(line, ":")
+					if len(parts) >= 3 {
+						record_value := strings.trim_space(strings.join(parts[2:], ":"))
+						return len(record_value), true
+					}
+				}
+			}
+		}
+	}
 
-    return 0, false
+	return 0, false
 }
-

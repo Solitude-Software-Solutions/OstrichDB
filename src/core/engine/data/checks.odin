@@ -16,7 +16,7 @@ import "core:strings"
 
 //preform cluster_id compliancy check on the passed collection
 OST_VALIDATE_IDS :: proc(fn: string) -> bool {
-	types.data_integrity_checks.Cluster_IDs.Compliant = true  // Assume compliant initially
+	types.data_integrity_checks.Cluster_IDs.Compliant = true // Assume compliant initially
 	idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
 	defer delete(idsFoundInCollection)
 	defer delete(idsAsStringArray)
@@ -26,7 +26,7 @@ OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 		if !idFoundInCache {
 			utils.log_err(fmt.tprintf("Cluster ID %v not found in cache", id), #procedure)
 			types.data_integrity_checks.Cluster_IDs.Compliant = false
-			break  
+			break
 		}
 	}
 	return types.data_integrity_checks.Cluster_IDs.Compliant
@@ -73,7 +73,6 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 	checkOneResult := OST_VALIDATE_IDS(fn)
 	checkTwoResult := OST_VALIDATE_FILE_SIZE(fn)
 	checkThreeResult := OST_VALIDATE_COLLECTION_FORMAT(fn)
-	fmt.println("File format integrity check was: ", checkThreeResult)
 	//integrity check one - cluster ids
 	switch checkOneResult {
 	case false:

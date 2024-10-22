@@ -64,34 +64,37 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 
 }
 OST_START_ENGINE :: proc() -> int {
-    //Initialize data integrity system
-    OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
+	//Initialize data integrity system
+	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
 
-    switch (types.engine.Initialized) 
-    {
-    case false:
-        config.main()
-        security.OST_INIT_ADMIN_SETUP()
-        break
+	switch (types.engine.Initialized) 
+	{
+	case false:
+		config.main()
+		security.OST_INIT_ADMIN_SETUP()
+		break
 
-    case true:
-        for {
-            userSignedIn := OST_RUN_SIGNIN()
-            switch (userSignedIn) 
-            {
-            case true:
-                OST_START_SESSION_TIMER()
-                utils.log_runtime_event("User Signed In", "User successfully logged into OstrichDB")
-                result := OST_ENGINE_COMMAND_LINE()
-                return result
+	case true:
+		for {
+			userSignedIn := OST_RUN_SIGNIN()
+			switch (userSignedIn) 
+			{
+			case true:
+				OST_START_SESSION_TIMER()
+				utils.log_runtime_event(
+					"User Signed In",
+					"User successfully logged into OstrichDB",
+				)
+				result := OST_ENGINE_COMMAND_LINE()
+				return result
 
-            case false:
-                fmt.printfln("Sign in failed. Please try again.")
-                continue
-            }
-        }
-    }
-    return 0
+			case false:
+				fmt.printfln("Sign in failed. Please try again.")
+				continue
+			}
+		}
+	}
+	return 0
 }
 
 
@@ -225,13 +228,10 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 
 OST_RESTART :: proc() {
 	libc.system("../scripts/restart.sh")
-	os.exit(0)  // Add this line to ensure a clean exit
+	os.exit(0) // Add this line to ensure a clean exit
 }
 
 OST_REBUILD :: proc() {
 	libc.system("../scripts/build.sh")
-	os.exit(0)  // Add this line to ensure a clean exit
+	os.exit(0) // Add this line to ensure a clean exit
 }
-
-
-

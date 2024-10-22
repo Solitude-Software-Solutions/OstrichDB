@@ -142,11 +142,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		OST_REBUILD()
 		os.exit(0)
 	case const.UNFOCUS:
-		utils.log_runtime_event(
-			"Improperly used UNFOCUS command",
-			"User requested to unfocus while not in FOCUS mode.",
-		)
-		fmt.printfln("Cannot Unfocus becuase you are currently not in focus mode.")
+		if types.focus.flag == false {
+			utils.log_runtime_event(
+				"Improperly used UNFOCUS command",
+				"User requested to unfocus while not in FOCUS mode.",
+			)
+			fmt.printfln("Cannot Unfocus becuase you are currently not in focus mode.")
+		}
+
 		break
 	case const.CLEAR:
 		utils.log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
@@ -400,7 +403,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			collection_name: string
 			cluster_name: string
-			if len(cmd.o_token) == 1 && const.OF_TYPE in cmd.m_token ||
+			if len(cmd.o_token) == 3 &&
+			   const.OF_TYPE in cmd.m_token &&
 			   cmd.isUsingDotNotation == true {
 				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[2])
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
@@ -414,7 +418,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						rType,
 						utils.RESET,
 					)
-					//All hail the re-engineered paser - Marshall Burns aka @SchoolyB
+					//All hail the re-engineered parser - Marshall Burns aka @SchoolyB
 					if cmd.isUsingDotNotation == true {
 						collection_name = cmd.o_token[0]
 						cluster_name = cmd.o_token[1]
@@ -436,7 +440,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						}
 					}
 
-					//using within and all that other lame old v0.2 stuff ROFL - Marshall Burns aka @SchoolyB
 					data.OST_GET_ALL_COLLECTION_NAMES(false)
 					collection_name, cluster_name := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
 					filePath := fmt.tprintf(
@@ -1005,7 +1008,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		{
 		case const.COLLECTIONS:
 			result := data.OST_COUNT_COLLECTIONS()
-			fmt.printfln("There are %d collections in the database", result)
+			switch (result) {
+			case -1:
+				fmt.printfln("Failed to count collections")
+				break
+			case 0:
+				fmt.printfln("There are no collections in the database")
+				break
+			case 1:
+				fmt.printfln("There is %d collection in the database", result)
+				break
+			case:
+				fmt.printfln("There are %d collections in the database", result)
+				break
+			}
 			break
 		case const.CLUSTERS:
 			fmt.println("cmd,o_tokens: ", cmd.o_token)
@@ -1375,445 +1391,354 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.println("Incomplete SIZE_OF command. Please specify what to get the size of.")
 		}
 		break
-	//FOCUS and UNFOCUS: Enter at own peril.
-	// case const.FOCUS:
-	// 	utils.log_runtime_event("Used FOCUS command", "")
+	// FOCUS: Enter at own peril.
+	case const.FOCUS:
+		utils.log_runtime_event("Used FOCUS command", "")
 
-	// 	switch (cmd.t_token)
-	// 	{
-	// 	case const.COLLECTION:
-	// 		exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.o_token[0], 0)
-	// 		fmt.println(exists)
-	// 		switch exists {
-	// 		case true:
-	// 			types.focus.flag = true
-	// 			if len(cmd.o_token) > 0 {
-	// 				collection := cmd.o_token[0]
-	// 				storedT, storedO, _ := OST_FOCUS(const.COLLECTION, collection, "[NO PARENT]")
-	// 			} else {
-	// 				fmt.println(
-	// 					invalidCommandErr,
-	// 					"Incomplete command. Correct Usage: NEW COLLECTION <collection_name>",
-	// 				)
-	// 				utils.log_runtime_event(
-	// 					"Incomplete FOCUS command",
-	// 					"User did not provide a valid collection name to focus.",
-	// 				)
-	// 			}
-	// 			break
-	// 		case false:
-	// 			fmt.printfln(
-	// 				"Collection: %s%s%s not found in OstrichDB.",
-	// 				utils.BOLD_UNDERLINE,
-	// 				cmd.o_token[0],
-	// 				utils.RESET,
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Invalid FOCUS command",
-	// 				"User tried to focus on a collection that does not exist.",
-	// 			)
-	// 			types.focus.flag = false
-	// 			break
-	// 		}
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTION:
+			if len(cmd.o_token) > 0 {
+				collection := cmd.o_token[0]
+				exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collection, 0)
+				if exists {
+					types.focus.flag = true
+					storedT, storedO, _ := OST_FOCUS(const.COLLECTION, collection, "[NO PARENT]")
+					fmt.printfln(
+						"Focused on collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection,
+						utils.RESET,
+					)
+				} else {
+					fmt.printfln(
+						"Collection: %s%s%s not found in OstrichDB.",
+						utils.BOLD_UNDERLINE,
+						collection,
+						utils.RESET,
+					)
+					utils.log_runtime_event(
+						"Invalid FOCUS command",
+						"User tried to focus on a collection that does not exist.",
+					)
+				}
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: FOCUS COLLECTION <collection_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FOCUS command",
+					"User did not provide a valid collection name to focus.",
+				)
+			}
+			break
 
-	// 	case const.CLUSTER:
-	// 		collectionNamePath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, cmd.o_token[1])
-	// 		fullCollectionPath := fmt.tprintf("%s%s", collectionNamePath, const.OST_FILE_EXTENSION)
+		case const.CLUSTER:
+			if len(cmd.o_token) == 2 && cmd.isUsingDotNotation {
+				collection := cmd.o_token[0]
+				cluster := cmd.o_token[1]
+				fullCollectionPath := fmt.tprintf(
+					"%s%s%s",
+					const.OST_COLLECTION_PATH,
+					collection,
+					const.OST_FILE_EXTENSION,
+				)
 
-	// 		checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(cmd.o_token[1])
-	// 		switch (checks)
-	// 		{
-	// 		case -1:
-	// 			return -1
-	// 		}
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
+				if checks == -1 {
+					return -1
+				}
 
-	// 		exists := data.OST_CHECK_IF_CLUSTER_EXISTS(fullCollectionPath, cmd.o_token[0])
-	// 		switch exists {
-	// 		case true:
-	// 			types.focus.flag = true
-	// 			if len(cmd.o_token) >= 2 && isUSingDotNotation == true {
-	// 				cluster := cmd.o_token[0]
-	// 				collection := cmd.o_token[1]
-	// 				storedT, storedO, _ := OST_FOCUS(const.CLUSTER, cluster, cmd.o_token[1]) //storing the Target and Objec that the user wants to focus)
-	// 			} else {
-	// 				fmt.println(
-	// 					"Incomplete command. Correct Usage: FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
-	// 				)
-	// 				utils.log_runtime_event(
-	// 					"Incomplete FOCUS command",
-	// 					"User did not provide a valid cluster name to focus.",
-	// 				)
-	// 			}
-	// 			break
-	// 		case false:
-	// 			fmt.printfln(
-	// 				"Cluster: %s%s%s does not exist within collection: %s%s%s.",
-	// 				utils.BOLD,
-	// 				cmd.o_token[0],
-	// 				utils.RESET,
-	// 				utils.BOLD,
-	// 				cmd.o_token[1],
-	// 				utils.RESET,
-	// 			)
-	// 			types.focus.flag = false
-	// 			break
-	// 		}
-	// 	case const.RECORD:
-	// 		types.focus.flag = true
-	// 		if len(cmd.o_token) >= 3 && isUsingDotNotation == true {
-	// 			record := cmd.o_token[0]
-	// 			cluster := cmd.o_token[1]
-	// 			collection := cmd.o_token[2]
+				exists := data.OST_CHECK_IF_CLUSTER_EXISTS(fullCollectionPath, cluster)
+				if exists {
+					types.focus.flag = true
+					storedT, storedO, _ := OST_FOCUS(const.CLUSTER, cluster, collection)
+					fmt.printfln(
+						"Focused on cluster: %s%s%s in collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cluster,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection,
+						utils.RESET,
+					)
+				} else {
+					fmt.printfln(
+						"Cluster: %s%s%s does not exist within collection: %s%s%s.",
+						utils.BOLD,
+						cluster,
+						utils.RESET,
+						utils.BOLD,
+						collection,
+						utils.RESET,
+					)
+				}
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: FOCUS CLUSTER <collection_name>.<cluster_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FOCUS command",
+					"User did not provide a valid cluster name to focus.",
+				)
+			}
+			break
 
-	// 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
-	// 			switch (checks)
-	// 			{
-	// 			case -1:
-	// 				return -1
-	// 			}
+		// 	case const.RECORD:
+		// 		if len(cmd.o_token) == 3 && cmd.isUsingDotNotation {
+		// 			collection := cmd.o_token[0]
+		// 			cluster := cmd.o_token[1]
+		// 			record := cmd.o_token[2]
 
-	// 			storedParentT, storedParentO, storedRO := OST_FOCUS_RECORD(
-	// 				collection,
-	// 				cluster,
-	// 				record,
-	// 			)
-	// 			fmt.printfln(
-	// 				"Focused on record: %s%s%s in cluster: %s%s%s within collection: %s%s%s",
-	// 				utils.BOLD_UNDERLINE,
-	// 				record,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				cluster,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				collection,
-	// 				utils.RESET,
-	// 			)
-	// 			//storing the Target and Objec that the user wants to focus)
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Incomplete command. Correct Usage: FOCUS RECORD <record_name> WITHIN CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Incomplete FOCUS command",
-	// 				"User did not provide a valid record name to focus.",
-	// 			)
-	// 		}
-	// 		break
-	// 	case:
-	// 		fmt.printfln("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
-	// 		utils.log_runtime_event(
-	// 			"Invalid FOCUS command",
-	// 			"User did not provide a valid target.",
-	// 		)
-	// 		break
-	// 	}
-	// 	break
+		// 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
+		// 			if checks == -1 {
+		// 				return -1
+		// 			}
+
+		// 			storedParentT, storedParentO, storedRO := OST_FOCUS_RECORD(collection, cluster, record)
+		// 			types.focus.flag = true
+		// 			fmt.printfln(
+		// 				"Focused on record: %s%s%s in cluster: %s%s%s within collection: %s%s%s",
+		// 				utils.BOLD_UNDERLINE,
+		// 				record,
+		// 				utils.RESET,
+		// 				utils.BOLD_UNDERLINE,
+		// 				cluster,
+		// 				utils.RESET,
+		// 				utils.BOLD_UNDERLINE,
+		// 				collection,
+		// 				utils.RESET,
+		// 			)
+		// 		} else {
+		// 			fmt.println("Incomplete command. Correct Usage: FOCUS RECORD <collection_name>.<cluster_name>.<record_name>")
+		// 			utils.log_runtime_event(
+		// 				"Incomplete FOCUS command",
+		// 				"User did not provide a valid record name to focus.",
+		// 			)
+		// 		}
+		// 		break
+
+		// 	case:
+		// 		fmt.println("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
+		// 		utils.log_runtime_event(
+		// 			"Invalid FOCUS command",
+		// 			"User did not provide a valid target.",
+		// 		)
+		// 		break
+		// 	}
+		// 	break
 
 
-	case:
-		fmt.printfln(
-			"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
-			utils.BOLD_UNDERLINE,
-			cmd.a_token,
-			utils.RESET,
-		)
-		utils.log_runtime_event("Invalid command", "User entered an invalid command.")
+		case:
+			fmt.printfln(
+				"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
+				utils.BOLD_UNDERLINE,
+				cmd.a_token,
+				utils.RESET,
+			)
+			utils.log_runtime_event("Invalid command", "User entered an invalid command.")
+		}
 	}
 	return 1
 }
-// =======================<FOCUS MODE>=======================//
-// =======================<FOCUS MODE>=======================//
-// =======================<FOCUS MODE>=======================//
+// =======================<FOCUS MODE COMMAND LINE>=======================//
+// =======================<FOCUS MODE COMMAND LINE>=======================//
+// =======================<FOCUS MODE COMMAND LINE>=======================//
+// =======================<FOCUS MODE COMMAND LINE>=======================//
 EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	cmd: ^types.Command,
 	focusTarget: string,
 	focusObject: string,
 	focusParentObject: ..string,
 ) -> int {
-	utils.log_runtime_event("Entered FOCUS mode", "User has succesfully entered FOCUS mode")
-	incompleteCommandErr := utils.new_err(
-		.INCOMPLETE_COMMAND,
-		utils.get_err_msg(.INCOMPLETE_COMMAND),
-		#procedure,
-	)
-
-	invalidCommandErr := utils.new_err(
-		.INVALID_COMMAND,
-		utils.get_err_msg(.INVALID_COMMAND),
-		#procedure,
-	)
+	utils.log_runtime_event("Entered FOCUS mode", "User has successfully entered FOCUS mode")
 	defer delete(cmd.o_token)
-
 
 	switch (cmd.a_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
-	case const.EXIT:
-		utils.log_runtime_event(
-			"Used EXIT command while in FOCUS mode",
-			"This action cannot be performed while in FOCUS mode",
-		)
-		fmt.printf("Cannot Exit OStrichDB while in FOCUS mode...\n")
-		break
-	case const.LOGOUT:
-		utils.log_runtime_event(
-			"Used LOGOUT command while in FOCUS mode",
-			"This action cannot be performed while in FOCUS mode",
-		)
-		fmt.printf("Cannot Logout while in FOCUS mode...\n")
+	case const.EXIT, const.LOGOUT:
+		fmt.printf("Cannot %s while in FOCUS mode. Use UNFOCUS first.\n", cmd.a_token)
 		break
 	case const.UNFOCUS:
 		types.focus.flag = false
-		utils.log_runtime_event("Used UNFOCUS command", "User has succesfully exited FOCUS mode")
-		break
+		utils.log_runtime_event("Used UNFOCUS command", "User has successfully exited FOCUS mode")
+		return 0
 	case const.CLEAR:
 		utils.log_runtime_event("Used CLEAR command while in FOCUS mode", "")
 		libc.system("clear")
 		break
-	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
-	case const.HELP:
-		utils.log_runtime_event(
-			"Used HELP command while in FOCUS mode",
-			"Displaying help menu for FOCUS mode",
-		)
-		fmt.println(
-			"Help mode is currently not supported in FOCUS mode.Check for updates in a future release.",
-		)
+	case const.TREE:
+		utils.log_runtime_event("Used TREE command while in FOCUS mode", "")
+		data.OST_GET_DATABASE_TREE()
+		break
+
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	case const.NEW:
 		utils.log_runtime_event("Used NEW command while in FOCUS mode", "")
 		switch (cmd.t_token) 
 		{
 		case const.COLLECTION:
-			fmt.printf("Cannot create a new collection while in FOCUS mode...\n")
-			break
+			fmt.println("Cannot create a new collection while in FOCUS mode.")
 		case const.CLUSTER:
-			if len(cmd.o_token) >= 1 {
-				cluster_name := cmd.o_token[0]
-				collection_name := focusObject
-
-				id := data.OST_GENERATE_CLUSTER_ID()
-				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
-				switch (result) 
-				{
-				case -1:
-					fmt.printfln(
-						"Cluster: %s%s%s already exists within collection: %s%s%s. Failed to create cluster.",
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
-					)
-					break
-				case 1, 2, 3:
-					error1 := utils.new_err(
-						.CANNOT_CREATE_CLUSTER,
-						utils.get_err_msg(.CANNOT_CREATE_CLUSTER),
-						#procedure,
-					)
-					utils.throw_custom_err(
-						error1,
-						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
-					)
-					break
-				}
-
-				fn := OST_CONCAT_OBJECT_EXT(collection_name)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-			} else {
-				fmt.println("Incomplete command. Correct Usage: NEW CLUSTER <collection_name>")
-				utils.log_runtime_event(
-					"Incomplete NEW command while in FOCUS mode",
-					"User did not provide a valid cluster name.",
-				)
-			}
-			break
-		case const.RECORD:
-			break
-		case:
-			fmt.println("Invalid command. Correct Usage: NEW <target> <target_name>")
-			utils.log_runtime_event(
-				"Invalid NEW command while in FOCUS mode",
-				"User did not provide a valid target.",
-			)
-			break
-		}
-		break
-	case const.FETCH:
-		utils.log_runtime_event("Used FETCH command while in FOCUS mode", "")
-		switch (cmd.t_token) 
-		{
-		case const.COLLECTION:
-			fmt.printf("Cannot fetch a collection while in FOCUS mode...\n")
-			break
-		case const.CLUSTER:
-			if len(cmd.o_token) >= 1 {
-				cluster := cmd.o_token[0]
-				collection := focusObject
-				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
-				fmt.printfln(clusterContent)
-			} else {
-				fmt.println("Incomplete command. Correct Usage: FETCH CLUSTER <cluster_name>")
-				utils.log_runtime_event(
-					"Incomplete FETCH command while in FOCUS mode",
-					"User did not provide a valid cluster name.",
-				)
-			}
-			break
-		case const.RECORD:
-			break
-		case:
-			fmt.println("Invalid command. Correct Usage: FETCH <target> <target_name>")
-			utils.log_runtime_event(
-				"Invalid FETCH command while in FOCUS mode",
-				"User did not provide a valid target.",
-			)
-			break
-		}
-		break
-	case const.ERASE:
-		utils.log_runtime_event("Used ERASE command while in FOCUS mode", "")
-		switch (cmd.t_token) 
-		{
-		case const.COLLECTION:
-			fmt.println("Cannot erase a collection while in FOCUS mode.")
-			break
-		case const.CLUSTER:
-			if len(cmd.o_token) >= 1 {
-				cluster_name := cmd.o_token[0]
-				collection_name := focusObject
-				if data.OST_ERASE_CLUSTER(collection_name, cluster_name) == true {
-					fmt.printfln(
-						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
-					)
-				} else {
-					fmt.printfln(
-						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
-					)
-				}
-				fn := OST_CONCAT_OBJECT_EXT(collection_name)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-			} else {
-				fmt.println("Incomplete command. Correct Usage: ERASE CLUSTER <cluster_name>")
-				utils.log_runtime_event(
-					"Incomplete ERASE command while in FOCUS mode",
-					"User did not provide a valid cluster name.",
-				)
-			}
-			break
-		case const.RECORD:
-			break
-		case:
-			fmt.println("Invalid command. Correct Usage: ERASE <target> <target_name>")
-			utils.log_runtime_event(
-				"Invalid ERASE command while in FOCUS mode",
-				"User did not provide a valid target.",
-			)
-			break
-		}
-		break
-	case const.RENAME:
-		utils.log_runtime_event("Used RENAME command while in FOCUS mode", "")
-		switch (cmd.t_token) 
-		{
-		case const.COLLECTION:
-			fmt.println("Cannot rename a collection while in FOCUS mode.")
-			break
-		case const.CLUSTER:
-			if len(cmd.o_token) >= 1 && const.TO in cmd.m_token {
-				old_name := focusObject
-				new_name := cmd.m_token[const.TO]
-				collection_name := types.focus.p_o
-				fmt.printfln(
-					"Renaming cluster %s%s%s to %s%s%s in collection %s%s%s",
-					utils.BOLD_UNDERLINE,
-					old_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					new_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					collection_name,
-					utils.RESET,
-				)
-				success := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
-				if success {
-					fmt.printf(
-						"Successfully renamed cluster %s%s%s to %s%s%s in collection %s%s%s\n",
-						utils.BOLD_UNDERLINE,
-						old_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						new_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
-					)
+			if focusTarget == const.COLLECTION {
+				if len(cmd.o_token) >= 1 {
+					cluster_name := cmd.o_token[0]
+					collection_name := focusObject
+					id := data.OST_GENERATE_CLUSTER_ID()
+					result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+					switch (result) 
+					{
+					case 0:
+						fmt.printfln(
+							"Successfully created new cluster: %s%s%s within collection %s%s%s",
+							utils.BOLD_UNDERLINE,
+							cluster_name,
+							utils.RESET,
+							utils.BOLD_UNDERLINE,
+							collection_name,
+							utils.RESET,
+						)
+						break
+					case -1:
+						fmt.printfln(
+							"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
+							utils.BOLD_UNDERLINE,
+							cluster_name,
+							utils.RESET,
+							utils.BOLD_UNDERLINE,
+							collection_name,
+							utils.RESET,
+						)
+						break
+					case 1, 2, 3:
+						error1 := utils.new_err(
+							.CANNOT_CREATE_CLUSTER,
+							utils.get_err_msg(.CANNOT_CREATE_CLUSTER),
+							#procedure,
+						)
+						utils.throw_custom_err(
+							error1,
+							"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
+						)
+						utils.log_err("Failed to create new cluster.", #procedure)
+						break
+					}
 					fn := OST_CONCAT_OBJECT_EXT(collection_name)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
-					// quickly unfocus the old object and update it to refocus on the new object
-					types.focus.flag = false
-					storedT, storedO, _ := OST_FOCUS(collection_name, new_name, types.focus.p_o)
-					types.focus.flag = true
 				} else {
-					fmt.println("Failed to rename cluster. Please check error messages.")
+					fmt.println("Incomplete command. Correct Usage: NEW CLUSTER <cluster_name>")
 				}
-				break
 			} else {
-				fmt.println(
-					"Incomplete command. Correct Usage: RENAME CLUSTER <cluster_name> TO <new_name>",
-				)
-				utils.log_runtime_event(
-					"Incomplete RENAME command while in FOCUS mode",
-					"User did not provide a valid cluster name or new name.",
-				)
+				fmt.println("Can only create clusters when focused on a collection.")
 			}
-			break
 		case const.RECORD:
-			break
-		case:
-			fmt.println(
-				"Invalid command. Correct Usage: RENAME <target> <target_name> TO <new_name>",
-			)
-			utils.log_runtime_event(
-				"Invalid RENAME command while in FOCUS mode",
-				"User did not provide a valid target.",
-			)
+			switch (focusTarget) {
+			case const.COLLECTION:
+				if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true {
+					collection_name := focusObject
+					cluster_name := cmd.o_token[0]
+					record_type := cmd.m_token[const.OF_TYPE]
+
+					rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[1])
+					rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
+
+					if nameSuccess == 0 && typeSuccess == 0 {
+						fmt.printfln(
+							"Creating record: %s%s%s of type: %s%s%s",
+							utils.BOLD_UNDERLINE,
+							rName,
+							utils.RESET,
+							utils.BOLD_UNDERLINE,
+							rType,
+							utils.RESET,
+						)
+						//All hail the re-engineered parser - Marshall Burns aka @SchoolyB
+						filePath := fmt.tprintf(
+							"%s%s%s",
+							const.OST_COLLECTION_PATH,
+							collection_name,
+							const.OST_FILE_EXTENSION,
+						)
+						appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
+							filePath,
+							cluster_name,
+							rName,
+							"",
+							rType,
+						)
+						if appendSuccess == 0 {
+							break
+						}
+					}
+				}
+			case const.CLUSTER:
+				if len(cmd.o_token) >= 1 && const.OF_TYPE in cmd.m_token {
+					record_type := cmd.m_token[const.OF_TYPE]
+					cluster_name := focusObject
+					collection_name := focusParentObject[0]
+
+					rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[0])
+					rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
+
+					if nameSuccess == 0 && typeSuccess == 0 {
+						fmt.printfln(
+							"Creating record: %s%s%s of type: %s%s%s",
+							utils.BOLD_UNDERLINE,
+							rName,
+							utils.RESET,
+							utils.BOLD_UNDERLINE,
+							rType,
+							utils.RESET,
+						)
+						//All hail the re-engineered parser - Marshall Burns aka @SchoolyB
+						filePath := fmt.tprintf(
+							"%s%s%s",
+							const.OST_COLLECTION_PATH,
+							collection_name,
+							const.OST_FILE_EXTENSION,
+						)
+						appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
+							filePath,
+							cluster_name,
+							rName,
+							"",
+							rType,
+						)
+						if appendSuccess == 0 {
+							break
+						}
+
+
+					}
+				}
+			case const.RECORD:
+				fmt.println("Cannot create a new record while focused on a record.")
+				break
+			case:
+				fmt.println("INVALID COMMAND")
+				break
+			}
 			break
 		}
 		break
-	case:
-		fmt.printfln(
-			"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
-			utils.BOLD_UNDERLINE,
-			cmd.a_token,
-			utils.RESET,
-		)
-		utils.log_runtime_event(
-			"Invalid command while in FOCUS mode",
-			"User entered an invalid command.",
-		)
+
+	case const.RENAME:
+		switch (cmd.t_token) {
+		case const.COLLECTION:
+			//if the user is using the RENAME command WHILE focused on a collection
+			if focusTarget == const.COLLECTION {
+				fmt.println("Cannot rename a collection while in FOCUS mode.")
+			}
+			break
+		// case const.CLUSTER:
+		//   if focusTarget
+		}
 		break
+
+
 	}
-	return 0
+	return 1
 }
