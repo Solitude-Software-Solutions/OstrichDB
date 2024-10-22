@@ -32,7 +32,6 @@ validCommands := []string {
 	"ERASE",
 	"RENAME",
 	"FETCH",
-	"WITHIN",
 	"TO",
 }
 //called when user only enters the "HELP" command without any arguments

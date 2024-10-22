@@ -14,7 +14,7 @@ import "core:strings"
 
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	using const
-	validModifiers := []string{AND, WITHIN, IN, OF_TYPE, TYPE, ALL_OF, TO}
+	validModifiers := []string{AND, OF_TYPE, TYPE, ALL_OF, TO}
 	for modifier in validModifiers {
 		if strings.to_upper(token) == modifier {
 			return true
@@ -41,7 +41,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 
 	cmd.a_token = tokens[0] //setting the action token
 	state := 0 //state machine exclusively used for modifier token shit
-	currentModifier := "" //stores the current modifier such as TO or WITHIN
+	currentModifier := "" //stores the current modifier such as TO
 
 	//iterate over remaining ATOM tokens and set/append them to the cmd
 	for i := 1; i < len(tokens); i += 1 {

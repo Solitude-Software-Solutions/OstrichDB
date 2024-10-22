@@ -67,9 +67,6 @@ OF_TYPE :: "OF_TYPE"
 TYPE :: "TYPE"
 ALL_OF :: "ALL_OF"
 TO :: "TO"
-//Scope Tokens
-WITHIN :: "WITHIN"
-IN :: "IN"
 //Type Tokens
 STRING :: "STRING"
 STR :: "STR"
