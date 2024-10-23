@@ -137,10 +137,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		return 0
 	case const.RESTART:
 		OST_RESTART()
-		os.exit(0)
 	case const.REBUILD:
 		OST_REBUILD()
-		os.exit(0)
 	case const.UNFOCUS:
 		if types.focus.flag == false {
 			utils.log_runtime_event(
@@ -1572,17 +1570,24 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 		utils.log_runtime_event("Used TREE command while in FOCUS mode", "")
 		data.OST_GET_DATABASE_TREE()
 		break
+	case const.REBUILD:
+		utils.log_runtime_event("Used REBUILD command while in FOCUS mode", "")
+		OST_REBUILD()
+		break
 
+	// mulit token commands in focus mods command line works a bit differently
+	// instead of first evaluating the target token we evaluate the current focus target. trust me this
+	// will spare me and you from looking at even more shitty nesting
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	case const.NEW:
-		utils.log_runtime_event("Used NEW command while in FOCUS mode", "")
-		switch (cmd.t_token) 
-		{
+		switch (focusTarget) {
 		case const.COLLECTION:
-			fmt.println("Cannot create a new collection while in FOCUS mode.")
-		case const.CLUSTER:
-			if focusTarget == const.COLLECTION {
-				if len(cmd.o_token) >= 1 {
+			switch (cmd.t_token) { 	//evauluating if the user wants to create a new collection, cluster or record while focused on a collection
+			case const.COLLECTION:
+				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
+				break
+			case const.CLUSTER:
+				if len(cmd.o_token) == 1 {
 					cluster_name := cmd.o_token[0]
 					collection_name := focusObject
 					id := data.OST_GENERATE_CLUSTER_ID()
@@ -1631,12 +1636,8 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				} else {
 					fmt.println("Incomplete command. Correct Usage: NEW CLUSTER <cluster_name>")
 				}
-			} else {
-				fmt.println("Can only create clusters when focused on a collection.")
-			}
-		case const.RECORD:
-			switch (focusTarget) {
-			case const.COLLECTION:
+				break
+			case const.RECORD:
 				if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true {
 					collection_name := focusObject
 					cluster_name := cmd.o_token[0]
@@ -1674,15 +1675,28 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 						}
 					}
 				}
+				break
+			} //END OF NEW WHILE FOCUSED ON COLLECTION
+			break
+		case const.CLUSTER:
+			switch (cmd.t_token) {
+			case const.COLLECTION:
+				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
+				break
 			case const.CLUSTER:
-				if len(cmd.o_token) >= 1 && const.OF_TYPE in cmd.m_token {
-					record_type := cmd.m_token[const.OF_TYPE]
-					cluster_name := focusObject
-					collection_name := focusParentObject[0]
+				fmt.println("Cannot create a cluster while in FOCUS mode. Use UNFOCUS first.")
+				break
+			case const.RECORD:
+				collection_name, cluster_name, record_name, record_type: string
+				//manipulating the record "layer" while in focused on a cluster allows for the use of dot notation or not.
+				if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true { 	//if using dot notation
+					collection_name = focusParentObject[0]
+					cluster_name = cmd.o_token[0] //could also just use `focusObject` but fuck it we ball
+					record_name = cmd.o_token[1]
+					record_type = cmd.m_token[const.OF_TYPE]
 
-					rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[0])
-					rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
-
+					rName, nameSuccess := data.OST_SET_RECORD_NAME(record_name)
+					rType, typeSuccess := data.OST_SET_RECORD_TYPE(record_type)
 					if nameSuccess == 0 && typeSuccess == 0 {
 						fmt.printfln(
 							"Creating record: %s%s%s of type: %s%s%s",
@@ -1693,52 +1707,42 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 							rType,
 							utils.RESET,
 						)
-						//All hail the re-engineered parser - Marshall Burns aka @SchoolyB
-						filePath := fmt.tprintf(
-							"%s%s%s",
-							const.OST_COLLECTION_PATH,
-							collection_name,
-							const.OST_FILE_EXTENSION,
-						)
-						appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
-							filePath,
-							cluster_name,
-							rName,
-							"",
-							rType,
-						)
-						if appendSuccess == 0 {
-							break
-						}
-
-
+					} else {
+						fmt.println("ERROR CREATING NEW RECORD")
 					}
+				} else {
+					//non dot notation
+					collection_name = focusParentObject[0]
+					cluster_name = focusObject
+					record_name = cmd.o_token[0]
+					record_type = cmd.m_token[const.OF_TYPE]
+
+					rName, nameSuccess := data.OST_SET_RECORD_NAME(record_name)
+					rType, typeSuccess := data.OST_SET_RECORD_TYPE(record_type)
+					if nameSuccess == 0 && typeSuccess == 0 {
+						fmt.printfln(
+							"Creating record: %s%s%s of type: %s%s%s",
+							utils.BOLD_UNDERLINE,
+							rName,
+							utils.RESET,
+							utils.BOLD_UNDERLINE,
+							rType,
+							utils.RESET,
+						)
+					}
+
 				}
-			case const.RECORD:
-				fmt.println("Cannot create a new record while focused on a record.")
-				break
-			case:
-				fmt.println("INVALID COMMAND")
-				break
+
+
 			}
 			break
-		}
-		break
-
-	case const.RENAME:
-		switch (cmd.t_token) {
-		case const.COLLECTION:
-			//if the user is using the RENAME command WHILE focused on a collection
-			if focusTarget == const.COLLECTION {
-				fmt.println("Cannot rename a collection while in FOCUS mode.")
-			}
+		case const.RECORD:
 			break
-		// case const.CLUSTER:
-		//   if focusTarget
 		}
-		break
+		break //END OF NEW COMMAND
 
-
+	//END OF ACTION EVALUATION
 	}
 	return 1
+	//END OF PROCEDURE
 }

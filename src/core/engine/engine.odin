@@ -221,6 +221,8 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 		// fmt.printfln("Command: %v", cmd) //debugging
 		EXECUTE_COMMANDS_WHILE_FOCUSED(&cmd, types.focus.t_, types.focus.o_, types.focus.p_o)
 		//Command line end
+
+
 	}
 
 }
@@ -228,10 +230,10 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 
 OST_RESTART :: proc() {
 	libc.system("../scripts/restart.sh")
-	os.exit(0) // Add this line to ensure a clean exit
+	os.exit(0)
 }
 
 OST_REBUILD :: proc() {
 	libc.system("../scripts/build.sh")
-	os.exit(0) // Add this line to ensure a clean exit
+	os.exit(0)
 }

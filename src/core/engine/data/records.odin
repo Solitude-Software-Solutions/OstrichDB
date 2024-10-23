@@ -416,12 +416,11 @@ OST_RENAME_RECORD :: proc(
 	paramTwo: string
 	if dotNotation == true {
 		//accessing params
-		// if len(params) > 0 {
 		paramOne = params[0]
 		paramTwo = params[1]
-		fmt.printfln("paramone %s: ", paramOne)
-		fmt.printfln("paramtwo %s: ", paramTwo)
-		// }
+		// fmt.printfln("paramone %s: ", paramOne) //debugging
+		// fmt.printfln("paramtwo %s: ", paramTwo) //debugging
+
 
 		fn = paramOne //collection name from command line
 		cn = paramTwo //cluster name from command line
@@ -429,7 +428,8 @@ OST_RENAME_RECORD :: proc(
 		//since thse value are coming from command line itself no need to uppercase :)
 
 
-	} else {fmt.printfln(
+	} else {
+		fmt.printfln(
 			"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
 			utils.BOLD_UNDERLINE,
 			old,
