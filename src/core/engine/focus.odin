@@ -18,8 +18,21 @@ import "core:strings"
 OST_FOCUS :: proc(t: string, o: string, p: ..string) -> (string, string, string, string) {
 	types.focus.t_ = t
 	types.focus.o_ = o
-	types.focus.p_o = p[0]
-	types.focus.gp_o = p[1] //the second passed in parent is the grandparent
+
+	switch (len(p)) 
+	{
+	case 1:
+		types.focus.p_o = p[0]
+		types.focus.gp_o = ""
+		break
+	case 2:
+		types.focus.p_o = p[0]
+		types.focus.gp_o = p[1]
+		break
+	case:
+		types.focus.p_o = ""
+		types.focus.gp_o = ""
+	}
 
 	return strings.clone(
 		types.focus.t_,

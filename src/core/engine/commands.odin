@@ -1402,7 +1402,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if exists {
 					types.focus.flag = true
 					//collection have no parent nor gparent
-					OST_FOCUS(const.COLLECTION, "[NO PARENT]", collection)
+					OST_FOCUS(const.COLLECTION, collection)
 					fmt.printfln(
 						"Focused on collection: %s%s%s",
 						utils.BOLD_UNDERLINE,
@@ -1735,31 +1735,62 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 							utils.RESET,
 						)
 					}
-
 				}
-
 			}
 			break
 		case const.RECORD:
 			// START OF NEW WHILE FOCUSED ON RECORD
 			switch (cmd.t_token) {
-			case const.COLLECTION:
-				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
-				break
-			case const.CLUSTER:
-				fmt.println("Cannot create a cluster while in FOCUS mode. Use UNFOCUS first.")
-				break
-			case const.RECORD:
-				// if len(cmd.o_token) == 3 && cmd.isUsingDotNotation == true {
-				// 	collection_name := focusParentObject[0]
-				// } //if using dot notation
+			case const.COLLECTION, const.CLUSTER, const.RECORD:
+				fmt.println(
+					"Cannot create a new data object while in FOCUS mode. Use UNFOCUS first.",
+				)
 				break
 			}
 			break
 		}
 		break //END OF NEW COMMAND
+	case const.RENAME:
+		//START OF RENAME COMMAND
+		switch (focusTarget) 
+		{
+		case const.COLLECTION:
+			//if the user is focused on a collection
+			switch (cmd.t_token) 
+			{
+			case const.COLLECTION:
+				//if focused on a collection and tries to rename a collection cant do it ;)
+				fmt.println("Cannot rename a collection while in FOCUS mode. Use UNFOCUS first.")
+				break
+			case const.CLUSTER:
+				if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true {
+					collection_name := focusObject
+					old_name := cmd.o_token[1]
+					new_name := cmd.m_token[const.TO]
+					result := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
+					if (result == true) {
+						fmt.printfln(
+							"Renamed cluster %s%s%s to %s%s%s",
+							utils.BOLD_UNDERLINE,
+							old_name,
+							utils.RESET,
+							utils.BOLD_UNDERLINE,
+							new_name,
+							utils.RESET,
+						)
+					} else {
+						fmt.println("ERROR RENAMING CLUSTER")
+					}
+				} else {}
+				break
+			case const.RECORD:
+				break
+			}
 
-	//END OF ACTION EVALUATION
+		}
+		break
+	//END OF RENAME COMMAND
+	//END OF ALL ACTION EVALUATION
 	}
 	return 1
 	//END OF PROCEDURE

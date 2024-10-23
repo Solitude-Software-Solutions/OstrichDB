@@ -197,7 +197,23 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 	for types.focus.flag == true {
 		//Command line start
 		buf: [1024]byte
-		if len(types.focus.gp_o) > 0 {
+		switch (types.focus.t_) 
+		{
+		case const.COLLECTION:
+			fmt.printf("%sFOCUSING: %v%s>>> ", utils.BOLD, types.focus.o_, utils.RESET)
+			break
+		case const.CLUSTER:
+			fmt.printf(
+				"%sFOCUSING: %v%s | %s%v%s>>> ",
+				utils.BOLD,
+				types.focus.p_o,
+				utils.RESET,
+				utils.BOLD,
+				types.focus.o_,
+				utils.RESET,
+			)
+			break
+		case const.RECORD:
 			fmt.printf(
 				"%sFOCUSING: %v%s | %s%v%s | %s%v%s>>> ",
 				utils.BOLD,
@@ -210,16 +226,7 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 				types.focus.o_,
 				utils.RESET,
 			)
-		} else {
-			fmt.printf(
-				"%sFOCUSING: %v%s | %s%v%s>>> ",
-				utils.BOLD,
-				types.focus.p_o,
-				utils.RESET,
-				utils.BOLD,
-				types.focus.o_,
-				utils.RESET,
-			)
+			break
 		}
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
