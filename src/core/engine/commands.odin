@@ -1508,36 +1508,35 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collection,
 					utils.RESET,
 				)
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: FOCUS RECORD <collection_name>.<cluster_name>.<record_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FOCUS command",
+					"User did not provide a valid record name to focus.",
+				)
 			}
-			//  else {
-			// 			fmt.println("Incomplete command. Correct Usage: FOCUS RECORD <collection_name>.<cluster_name>.<record_name>")
-			// 			utils.log_runtime_event(
-			// 				"Incomplete FOCUS command",
-			// 				"User did not provide a valid record name to focus.",
-			// 			)
-			// 		}
-			// 		break
-
-			// 	case:
-			// 		fmt.println("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
-			// 		utils.log_runtime_event(
-			// 			"Invalid FOCUS command",
-			// 			"User did not provide a valid target.",
-			// 		)
-			// 		break
-			// 	}
 			break
 
-
 		case:
-			fmt.printfln(
-				"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
-				utils.BOLD_UNDERLINE,
-				cmd.a_token,
-				utils.RESET,
+			fmt.println("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
+			utils.log_runtime_event(
+				"Invalid FOCUS command",
+				"User did not provide a valid target.",
 			)
-			utils.log_runtime_event("Invalid command", "User entered an invalid command.")
+			break
 		}
+	//END OF ACTION TOKEN EVALUATION
+	case:
+		fmt.printfln(
+			"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
+			utils.BOLD_UNDERLINE,
+			cmd.a_token,
+			utils.RESET,
+		)
+		utils.log_runtime_event("Invalid command", "User entered an invalid command.")
+
 	}
 	return 1
 }
@@ -1763,8 +1762,9 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 				fmt.println("Cannot rename a collection while in FOCUS mode. Use UNFOCUS first.")
 				break
 			case const.CLUSTER:
+				//todo: fix this. this is so fucked....
 				if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true {
-					collection_name := focusObject
+					collection_name := focusParentObject
 					old_name := cmd.o_token[1]
 					new_name := cmd.m_token[const.TO]
 					result := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
@@ -1781,7 +1781,9 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 					} else {
 						fmt.println("ERROR RENAMING CLUSTER")
 					}
-				} else {}
+				} else {
+					collection_name := focusP
+				}
 				break
 			case const.RECORD:
 				break
