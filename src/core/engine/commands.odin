@@ -1482,49 +1482,50 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 
-		// 	case const.RECORD:
-		// 		if len(cmd.o_token) == 3 && cmd.isUsingDotNotation {
-		// 			collection := cmd.o_token[0]
-		// 			cluster := cmd.o_token[1]
-		// 			record := cmd.o_token[2]
+		case const.RECORD:
+			if len(cmd.o_token) == 3 && cmd.isUsingDotNotation {
+				collection := cmd.o_token[0]
+				cluster := cmd.o_token[1]
+				record := cmd.o_token[2]
 
-		// 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
-		// 			if checks == -1 {
-		// 				return -1
-		// 			}
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
+				if checks == -1 {
+					return -1
+				}
 
-		// 			storedParentT, storedParentO, storedRO := OST_FOCUS_RECORD(collection, cluster, record)
-		// 			types.focus.flag = true
-		// 			fmt.printfln(
-		// 				"Focused on record: %s%s%s in cluster: %s%s%s within collection: %s%s%s",
-		// 				utils.BOLD_UNDERLINE,
-		// 				record,
-		// 				utils.RESET,
-		// 				utils.BOLD_UNDERLINE,
-		// 				cluster,
-		// 				utils.RESET,
-		// 				utils.BOLD_UNDERLINE,
-		// 				collection,
-		// 				utils.RESET,
-		// 			)
-		// 		} else {
-		// 			fmt.println("Incomplete command. Correct Usage: FOCUS RECORD <collection_name>.<cluster_name>.<record_name>")
-		// 			utils.log_runtime_event(
-		// 				"Incomplete FOCUS command",
-		// 				"User did not provide a valid record name to focus.",
-		// 			)
-		// 		}
-		// 		break
+				storedT, storedO, storedP := OST_FOCUS(const.RECORD, record, cluster)
+				types.focus.flag = true
+				fmt.printfln(
+					"Focused on record: %s%s%s in cluster: %s%s%s within collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					record,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					cluster,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					collection,
+					utils.RESET,
+				)
+			}
+			//  else {
+			// 			fmt.println("Incomplete command. Correct Usage: FOCUS RECORD <collection_name>.<cluster_name>.<record_name>")
+			// 			utils.log_runtime_event(
+			// 				"Incomplete FOCUS command",
+			// 				"User did not provide a valid record name to focus.",
+			// 			)
+			// 		}
+			// 		break
 
-		// 	case:
-		// 		fmt.println("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
-		// 		utils.log_runtime_event(
-		// 			"Invalid FOCUS command",
-		// 			"User did not provide a valid target.",
-		// 		)
-		// 		break
-		// 	}
-		// 	break
+			// 	case:
+			// 		fmt.println("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
+			// 		utils.log_runtime_event(
+			// 			"Invalid FOCUS command",
+			// 			"User did not provide a valid target.",
+			// 		)
+			// 		break
+			// 	}
+			break
 
 
 		case:
@@ -1555,7 +1556,9 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	switch (cmd.a_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
-	case const.EXIT, const.LOGOUT:
+	case const.EXIT:
+		os.exit(0)
+	case const.LOGOUT:
 		fmt.printf("Cannot %s while in FOCUS mode. Use UNFOCUS first.\n", cmd.a_token)
 		break
 	case const.UNFOCUS:
@@ -1679,6 +1682,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 			} //END OF NEW WHILE FOCUSED ON COLLECTION
 			break
 		case const.CLUSTER:
+			// START OF NEW WHILE FOCUSED ON CLUSTER
 			switch (cmd.t_token) {
 			case const.COLLECTION:
 				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
@@ -1733,10 +1737,23 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 
 				}
 
-
 			}
 			break
 		case const.RECORD:
+			// START OF NEW WHILE FOCUSED ON RECORD
+			switch (cmd.t_token) {
+			case const.COLLECTION:
+				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
+				break
+			case const.CLUSTER:
+				fmt.println("Cannot create a cluster while in FOCUS mode. Use UNFOCUS first.")
+				break
+			case const.RECORD:
+				// if len(cmd.o_token) == 3 && cmd.isUsingDotNotation == true {
+				// 	collection_name := focusParentObject[0]
+				// } //if using dot notation
+				break
+			}
 			break
 		}
 		break //END OF NEW COMMAND
