@@ -35,6 +35,13 @@ OST_FOCUS_RECORD :: proc(t: string, o: string, rO: string) -> (string, string, s
 	), strings.clone(types.focus.o_), strings.clone(types.focus.ro_)
 }
 
+//Updates the context of the focus
+OST_REFRESH_FOCUS :: proc(t: string, o: string, p: string) {
+	types.focus.t_ = t
+	types.focus.o_ = o
+	types.focus.p_o = p
+
+}
 //Clears the focus
 OST_UNFOCUS :: proc() {
 	types.focus.t_ = ""
