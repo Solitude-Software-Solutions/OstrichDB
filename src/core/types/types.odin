@@ -133,9 +133,6 @@ Focus :: struct {
 	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
 	p_o:  string, // The parent object of the primary object (e.g., "myCluster" or "myCollection")
 	gp_o: string, // The grandparent object of the primary object (e.g.,"myCollection" in relation to a record in "myCluster")
-	// The related target and object are used to provide futher context for the focus
-	rt_:  string, // The related target (e.g., "RECORD")
-	ro_:  string, // The related object (e.g., "myRecord")
 	flag: bool, // If the focus is active
 }
 

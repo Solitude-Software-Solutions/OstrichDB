@@ -2,6 +2,7 @@ package engine
 
 import "../const"
 import "../types"
+import "core:fmt"
 import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
@@ -12,34 +13,26 @@ import "core:strings"
 
 //t - target
 //o - object(name of the target)
-//p - the parent object of the target to focus on.
+//p - the parent object of the target to focus on as well as the parent of the parent(grandparent)
 //only used to focus collection and clusters
-OST_FOCUS :: proc(t: string, o: string, p: ..string) -> (string, string, string) {
+OST_FOCUS :: proc(t: string, o: string, p: ..string) -> (string, string, string, string) {
 	types.focus.t_ = t
 	types.focus.o_ = o
-	for p in p {
-		types.focus.p_o = p
-	}
-	return strings.clone(
-		types.focus.t_,
-	), strings.clone(types.focus.o_), strings.clone(types.focus.p_o)
-}
+	types.focus.p_o = p[0]
+	types.focus.gp_o = p[1] //the second passed in parent is the grandparent
 
-// only used to focus records
-OST_FOCUS_RECORD :: proc(t: string, o: string, rO: string) -> (string, string, string) {
-	types.focus.t_ = t
-	types.focus.o_ = o
-	types.focus.ro_ = rO
 	return strings.clone(
 		types.focus.t_,
-	), strings.clone(types.focus.o_), strings.clone(types.focus.ro_)
+	), strings.clone(types.focus.o_), strings.clone(types.focus.p_o), strings.clone(types.focus.gp_o)
 }
 
 //Updates the context of the focus
-OST_REFRESH_FOCUS :: proc(t: string, o: string, p: string) {
+//currently only useful in the event of a data objects rename
+OST_REFRESH_FOCUS :: proc(t, o, p, gp: string) {
 	types.focus.t_ = t
 	types.focus.o_ = o
 	types.focus.p_o = p
+	types.focus.gp_o = gp
 
 }
 //Clears the focus
@@ -47,5 +40,5 @@ OST_UNFOCUS :: proc() {
 	types.focus.t_ = ""
 	types.focus.o_ = ""
 	types.focus.p_o = ""
-	types.focus.ro_ = ""
+	types.focus.gp_o = ""
 }

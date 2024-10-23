@@ -1401,7 +1401,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collection, 0)
 				if exists {
 					types.focus.flag = true
-					storedT, storedO, _ := OST_FOCUS(const.COLLECTION, collection, "[NO PARENT]")
+					//collection have no parent nor gparent
+					OST_FOCUS(const.COLLECTION, "[NO PARENT]", collection)
 					fmt.printfln(
 						"Focused on collection: %s%s%s",
 						utils.BOLD_UNDERLINE,
@@ -1450,7 +1451,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				exists := data.OST_CHECK_IF_CLUSTER_EXISTS(fullCollectionPath, cluster)
 				if exists {
 					types.focus.flag = true
-					storedT, storedO, _ := OST_FOCUS(const.CLUSTER, cluster, collection)
+					//clusters have no gparent
+					OST_FOCUS(const.CLUSTER, cluster, collection)
 					fmt.printfln(
 						"Focused on cluster: %s%s%s in collection: %s%s%s",
 						utils.BOLD_UNDERLINE,
@@ -1492,8 +1494,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if checks == -1 {
 					return -1
 				}
-
-				storedT, storedO, storedP := OST_FOCUS(const.RECORD, record, cluster)
+				OST_FOCUS(const.RECORD, record, cluster, collection)
 				types.focus.flag = true
 				fmt.printfln(
 					"Focused on record: %s%s%s in cluster: %s%s%s within collection: %s%s%s",
