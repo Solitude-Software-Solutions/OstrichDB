@@ -46,7 +46,7 @@ This section guides you through submitting an enhancement suggestion for Ostrich
    - Use clear and descriptive commit messages.
 
 5. **Code Review:**
-   - Be open to feedback. Just because tou submit a PR, it doesn't mean it will be merged as is.
+   - Be open to feedback. Just because you submit a PR, it doesn't mean it will be merged as is.
    - Make requested changes promptly.
 
 ### Issue and Pull Request Labels
@@ -67,7 +67,7 @@ For something that is bigger than a one or two line fix:
 3. If you like the change and think the project could use it:
    * Be sure you have followed the code style for the project.
    * Submit a pull request to the main repository.
-*IMPORTANT*: Submit the PR to the latest branch NOT `main`. Look for the branch starting with `Pre_Rel_` and contains the highest number. *IMPORTANT*
+*IMPORTANT*: Submit the PR to the `development ` NOT `main`.
 
 As a rule of thumb, changes are obvious fixes if they do not introduce any new functionality or creative thinking. As long as the change does not affect functionality, some likely examples include the following:
 

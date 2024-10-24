@@ -13,8 +13,8 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-OST_CREAT_BACKUP_DIR :: proc() {
-	os.make_directory("../bin/backups")
+OST_CREATE_BACKUP_DIR :: proc() {
+	os.make_directory("./backups")
 }
 
 

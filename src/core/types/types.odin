@@ -16,11 +16,12 @@ Helpful Hint: Commands are built of ATOMs (A)ction, (T)arget, (O)bject, (M)odifi
 Usage Locations: commands.odin & parser.odin
 */
 Command :: struct {
-	a_token: string, //action token
-	t_token: string, //object token
-	o_token: [dynamic]string, //target token
-	m_token: map[string]string, //modifier token
-	s_token: map[string]string, //scope token
+	a_token:            string, //action token
+	t_token:            string, //object token
+	o_token:            [dynamic]string, //target token
+	m_token:            map[string]string, //modifier token
+	s_token:            map[string]string, //scope token
+	isUsingDotNotation: bool, //if the command is using dot notation
 }
 //=================================================/src/core/data/=================================================//
 /*
@@ -43,31 +44,6 @@ Desc: Used to define the structure of an ENGINE SPECIFIC utils. Not to
         be confused with the standard errors located in utils.odin
 Usage Locations: NOT YET IMPLEMENTED but wil be used in several places
 */
-Engine_Error :: struct {
-	Code:      enum {
-		None          = 0,
-		InvalidRecord = 1,
-		InvalidObject = 2,
-		InvalidAction = 3,
-	},
-	Message:   string,
-	Acion:     string, // the action/operation that caused the error
-	Procedure: string, // the specific procedure that the error occurred in
-}
-
-/*
-Type: Task_Flag
-Desc: Used to define the status of a task within the Ostrich Engine
-        Tasks are the operations run when a command is executed
-*/
-Task_Flag :: enum {
-	None      = 0,
-	Queued    = 10,
-	Running   = 20,
-	Completed = 30,
-	Failed    = 40,
-}
-
 
 /*
 Type: Engine
@@ -90,16 +66,6 @@ Engine :: struct {
 	ClustersDeleted: int,
 	ClustersUpdated: int,
 	//Tasking stuff
-	Tasking:         struct {
-		NameOfTask:     string,
-		TaskNumber:     int,
-		TaskElapsed:    time.Duration,
-		ProgressOfTask: f32, // will be a percentage
-		TargetDatabase: string, // will be the path to the database file
-		Error:          Engine_Error,
-		StatusOfTask:   Task_Flag,
-	},
-	// State: int //running or stopped 1 is running 0 is stopped
 }
 
 //=================================================/src/core/security/=================================================//
@@ -128,6 +94,7 @@ Desc: Used to define the structure of a user within the Ostrich Database
 Usage Locations: credentials.odin
 */
 user: User
+current_user: User //used to track the user of the current session
 new_user: User //used for creating new accounts post initialization
 User :: struct {
 	user_id:        i64, //randomly generated user id
@@ -139,6 +106,17 @@ User :: struct {
 	salt:           []u8,
 	hashedPassword: []u8, //this is the hashed password without the salt
 	store_method:   int,
+	//below is literally for the users command HISTORY
+	commandHistory: CommandHistory,
+}
+
+//a users command history
+CommandHistory :: struct {
+	cHistoryNamePrefix: string, //will always be "history_"
+	cHistoryValues:     [dynamic]string,
+	cHistoryCount:      int, //the total
+	cHistoryIndex:      int, //the current index of the history array
+	cHistoryPrevious:   string,
 }
 
 
@@ -154,10 +132,7 @@ Focus :: struct {
 	t_:   string, // The primary target (e.g., "CLUSTER" or "COLLECTION")
 	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
 	p_o:  string, // The parent object of the primary object (e.g., "myCluster" or "myCollection")
-	// gp_o: string, // The grandparent object of the primary object (e.g.,"myCollection" in relation to a record in "myCluster")
-	// The related target and object are used to provide futher context for the focus
-	rt_:  string, // The related target (e.g., "RECORD")
-	ro_:  string, // The related object (e.g., "myRecord")
+	gp_o: string, // The grandparent object of the primary object (e.g.,"myCollection" in relation to a record in "myCluster")
 	flag: bool, // If the focus is active
 }
 
@@ -204,13 +179,7 @@ Message_Color: string //used in checks.odin
 Severity_Code: int //used in checks.odin
 
 
-schema: Colletion_File_Schema
-Colletion_File_Schema :: struct {
+schema: Collection_File_Schema
+Collection_File_Schema :: struct {
 	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
-}
-
-//literally only a place to store values that for some reason are lost in translation
-trashHeap: TrashHeap
-TrashHeap :: struct {
-	TrashValueOne: string,
 }

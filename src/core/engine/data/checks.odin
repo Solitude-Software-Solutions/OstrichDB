@@ -16,17 +16,15 @@ import "core:strings"
 
 //preform cluster_id compliancy check on the passed collection
 OST_VALIDATE_IDS :: proc(fn: string) -> bool {
-	types.data_integrity_checks.Cluster_IDs.Compliant = false
+	types.data_integrity_checks.Cluster_IDs.Compliant = true // Assume compliant initially
 	idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
 	defer delete(idsFoundInCollection)
 	defer delete(idsAsStringArray)
 
 	for id in idsFoundInCollection {
 		idFoundInCache := OST_CHECK_CACHE_FOR_ID(id)
-		if idFoundInCache == true {
-			types.data_integrity_checks.Cluster_IDs.Compliant = true
-		} else {
-			utils.log_err("Cluster ID not found in cache", #procedure)
+		if !idFoundInCache {
+			utils.log_err(fmt.tprintf("Cluster ID %v not found in cache", id), #procedure)
 			types.data_integrity_checks.Cluster_IDs.Compliant = false
 			break
 		}
@@ -99,6 +97,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 		utils.throw_err(error2)
 		utils.log_err("File size is not compliant", #procedure)
 	}
+	//integrity check three - collection formatting
 	switch checkThreeResult {
 	case false:
 		types.Severity_Code = 2
@@ -121,7 +120,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 }
 
 //handles the results of the data integrity checks...duh
-OST_HANDLE_INTGRITY_CHECK_RESULT :: proc(fn: string) -> int {
+OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 	integrityResults := OST_VALIDATE_DATA_INTEGRITY(fn)
 	for result in integrityResults {
 		if result == false {

@@ -16,7 +16,7 @@ import "core:strings"
 //=========================================================//
 
 
-validCommnads := []string {
+validCommands := []string {
 	"HELP",
 	"LOGOUT",
 	"EXIT",
@@ -32,7 +32,6 @@ validCommnads := []string {
 	"ERASE",
 	"RENAME",
 	"FETCH",
-	"WITHIN",
 	"TO",
 }
 //called when user only enters the "HELP" command without any arguments
@@ -59,7 +58,7 @@ OST_SET_HELP_MODE :: proc() -> bool {
 
 OST_CHECK_HELP_EXISTS :: proc(cmd: string) -> bool {
 	cmdUpper := strings.to_upper(cmd)
-	for validCmd in validCommnads {
+	for validCmd in validCommands {
 		if cmdUpper == validCmd {
 			return true
 		}

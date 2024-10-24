@@ -28,11 +28,11 @@ FAILED_SIGN_IN_TIMER := time.MIN_DURATION //this will be used to track the time 
 OST_GEN_SECURE_DIR :: proc() -> int {
 
 	//perform a check to see if the secure directory already exists to prevent errors and overwriting
-	_, err := os.stat("../bin/secure")
+	_, err := os.stat("./secure")
 	if err == nil {
 		return 0
 	}
-	createDirSuccess := os.make_directory("../bin/secure")
+	createDirSuccess := os.make_directory("./secure")
 	if createDirSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_CREATE_DIRECTORY,
@@ -64,7 +64,8 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {buf: [256]byte
 	hashAsString := string(types.user.hashedPassword)
 	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
 	types.user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
-
+	data.OST_CREATE_COLLECTION("history", 2)
+	data.OST_CREATE_CLUSTER_BLOCK("./history.ost", types.user.user_id, types.user.username.Value)
 	inituserName = fmt.tprintf("secure_%s", inituserName)
 	data.OST_CREATE_COLLECTION(inituserName, 1)
 	OST_STORE_USER_CREDS(
@@ -134,7 +135,7 @@ OST_GEN_USER_ID :: proc() -> i64 {
 OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	buf: [32]byte
 	result: bool
-	openCacheFile, openSuccess := os.open("../bin/cluster_id_cache", os.O_RDONLY, 0o666)
+	openCacheFile, openSuccess := os.open("./cluster_id_cache", os.O_RDONLY, 0o666)
 
 	if openSuccess != 0 {
 		error1 := utils.new_err(
@@ -599,13 +600,20 @@ OST_CREATE_NEW_USER :: proc() -> int {
 		"store_method",
 		algoMethodAsString,
 	)
+
+	//lastly, create a history cluster for the new user
+	data.OST_CREATE_CLUSTER_BLOCK(
+		"./history.ost",
+		types.user.user_id,
+		types.new_user.username.Value,
+	)
 	return 0
 }
 
 
 OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
 	for i := 0; i < len(const.BannedUserNames); i += 1 {
-		if strings.contains(un, const.BannedUserNames[0]) {
+		if strings.contains(un, const.BannedUserNames[i]) {
 			return true
 		}
 	}

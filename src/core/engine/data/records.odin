@@ -29,7 +29,7 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 			#procedure,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Could not real collection file", #procedure)
+		utils.log_err("Could not read collection file", #procedure)
 		return false
 	}
 	defer delete(data)
@@ -206,7 +206,6 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rType: string, rn: string)
 	}
 
 	type := fmt.tprintf(":%s:", rType)
-	// Check if the record exists within the cluster
 	for i in cluster_start ..= closing_brace {
 		if strings.contains(lines[i], rn) {
 			record := strings.split(lines[i], type)
@@ -223,7 +222,7 @@ OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rType: string, rn: string)
 
 //set the record name, if the name is too long, return an error
 OST_SET_RECORD_NAME :: proc(rn: string) -> (string, int) {
-	if len(rn) > 256 {
+	if len(rn) > 128 {
 		fmt.println("The entered record name is too long. Please try again.")
 		return "", 1
 	}
@@ -276,7 +275,7 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 		OST_CHOOSE_RECORD_LOCATION(rName, rType)
 	}
 
-	checks := OST_HANDLE_INTGRITY_CHECK_RESULT(collectionNameUpper)
+	checks := OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionNameUpper)
 	switch (checks) 
 	{
 	case -1:
@@ -317,6 +316,7 @@ OST_CHOOSE_RECORD_LOCATION :: proc(rName: string, rType: string) -> (col: string
 	return col, clu
 }
 //gets every record of the passed in rName and returns the record type, the records data, the cluster it is in, and the collection it is in
+//exclusivley used with the RENAME command if the user is NOT using dot notation
 OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 	allRecords := make([dynamic]string)
 	defer delete(allRecords)
@@ -398,34 +398,61 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 }
 
 //Does what it says, renames a record
-OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
+//So basically since I started implementing dot notation on the command line I had to rework a lot of shit.
+//"params" is only given an arg when used during dot notation. We will call this a temp fix but lets be real... - Marshall Burns aka @SchoolyB Oct5th 2024
+OST_RENAME_RECORD :: proc(
+	old: string,
+	new: string,
+	dotNotation: bool,
+	params: ..string,
+) -> (
+	result: int,
+) {
 	OST_FETCH_EVERY_RECORD_BY_NAME(old)
 	buf := make([]byte, 1024)
 	defer delete(buf)
 	fn, cn: string
+	paramOne: string
+	paramTwo: string
+	if dotNotation == true {
+		//accessing params
+		paramOne = params[0]
+		paramTwo = params[1]
+		// fmt.printfln("paramone %s: ", paramOne) //debugging
+		// fmt.printfln("paramtwo %s: ", paramTwo) //debugging
 
-	fmt.printfln(
-		"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
-		utils.BOLD_UNDERLINE,
-		old,
-		utils.RESET,
-	)
 
-	col, colInputSuccess := os.read(os.stdin, buf)
-	if colInputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
+		fn = paramOne //collection name from command line
+		cn = paramTwo //cluster name from command line
+
+		//since thse value are coming from command line itself no need to uppercase :)
+
+
+	} else {
+		fmt.printfln(
+			"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
+			utils.BOLD_UNDERLINE,
+			old,
+			utils.RESET,
 		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read user input for collection name", #procedure)
+
+		col, colInputSuccess := os.read(os.stdin, buf)
+		if colInputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Could not read user input for collection name", #procedure)
+		}
+		fn = strings.trim_right(string(buf[:col]), "\r\n")
+		fn = strings.to_upper(fn)
 	}
-	fn = strings.trim_right(string(buf[:col]), "\r\n")
-	fn = strings.to_upper(fn)
+
 
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
-		fmt.printfln("Collection with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)
+		fmt.printfln("Collection with name:%s%s%s does not exist", utils.BOLD, fn, utils.RESET)
 		fmt.println("Please try again with a different name")
 		return -1
 	}
@@ -438,34 +465,37 @@ OST_RENAME_RECORD :: proc(old: string, new: string) -> (result: int) {
 	)
 
 
-	checks := OST_HANDLE_INTGRITY_CHECK_RESULT(fn)
+	checks := OST_HANDLE_INTEGRITY_CHECK_RESULT(fn)
 	switch (checks) 
 	{
 	case -1:
 		return -1
 	}
 
-	fmt.printfln(
-		"Enter the name of the cluster that contains the record: %s%s%s that you would like to rename.",
-		utils.BOLD,
-		old,
-		utils.RESET,
-	)
 
-	buf = make([]byte, 1024)
-	clu, cluInputSuccess := os.read(os.stdin, buf)
-	if cluInputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
+	if dotNotation == false {
+		//do this if NOT using dot notation
+		fmt.printfln(
+			"Enter the name of the cluster that contains the record: %s%s%s that you would like to rename.",
+			utils.BOLD,
+			old,
+			utils.RESET,
 		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read user input for cluster name", #procedure)
-	}
-	cn = strings.trim_right(string(buf[:clu]), "\r\n")
-	cn = strings.to_upper(cn)
 
+		buf = make([]byte, 1024)
+		clu, cluInputSuccess := os.read(os.stdin, buf)
+		if cluInputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Could not read user input for cluster name", #procedure)
+		}
+		cn = strings.trim_right(string(buf[:clu]), "\r\n")
+		cn = strings.to_upper(cn)
+	}
 
 	if !OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn) {
 		fmt.printfln("Cluster with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)
@@ -1162,4 +1192,529 @@ OST_UPDATE_RECORD_IN_FILE :: proc(
 		return false
 	}
 	return writeSuccess
+}
+
+
+//used to fetch a the all data for the passed in record and display it
+// fn - collection name, cn - cluster name, rn - record name
+OST_FETCH_RECORD :: proc(fn: string, cn: string, rn: string) -> (types.Record, bool) {
+	clusterContent: string
+	recordContent: string
+	collectionPath := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
+
+
+	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
+	if !clusterExists {
+		fmt.printfln(
+			"Cluster %s%s%s does not exist in collection %s%s%s",
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			fn,
+			utils.RESET,
+		)
+		return types.Record{}, false
+	}
+
+
+	recordExists := OST_CHECK_IF_RECORD_EXISTS(collectionPath, cn, rn)
+	if !recordExists {
+		fmt.printfln(
+			"Record %s%s%s does not exist in cluster %s%s%s",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+		)
+		return types.Record{}, false
+	}
+
+	//read the file and find the passed in cluster
+	data, readSuccess := os.read_entire_file(collectionPath)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		return types.Record{}, false
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "}")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			// Find the start of the cluster (opening brace)
+			start_index := strings.index(cluster, "{")
+			if start_index != -1 {
+				// Extract the content between braces
+				clusterContent = cluster[start_index + 1:]
+				// Trim any leading or trailing whitespace
+				clusterContent = strings.trim_space(clusterContent)
+				// return strings.clone(clusterContent)
+			}
+		}
+	}
+
+	for line in strings.split_lines(clusterContent) {
+		if strings.contains(line, rn) {
+			return OST_PARSE_RECORD(line), true
+		}
+	}
+	return types.Record{}, false
+}
+
+//Used to send records back in 3 parts
+OST_PARSE_RECORD :: proc(record: string) -> types.Record {
+	recordParts := strings.split(record, ":")
+	if len(recordParts) < 2 {
+		return types.Record{}
+	}
+	recordName := strings.trim_space(recordParts[0])
+	recordType := strings.trim_space(recordParts[1])
+	recordValue := strings.trim_space(recordParts[2])
+	return types.Record {
+		name = strings.clone(recordName),
+		type = strings.clone(recordType),
+		value = strings.clone(recordValue),
+	}
+}
+
+//deletes a arecord from a cluster
+OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
+	buf: [64]byte
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
+	fmt.printfln(
+		"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
+		utils.BOLD,
+		cn,
+		utils.RESET,
+		utils.BOLD,
+		fn,
+		utils.RESET,
+	)
+
+	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		utils.throw_err(error1)
+	}
+
+	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+	// Too fat, tired, and lazy to do this by hand;
+	// anything in this procedure below this line is AI generated - Marshall Burns aka @SchoolyB 06Oct2024
+	cap := strings.to_upper(confirmation)
+
+	switch cap {
+	case const.YES:
+		data, readSuccess := os.read_entire_file(collection_path)
+		if !readSuccess {
+			utils.throw_err(
+				utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+			)
+			utils.log_err("Error reading collection file", #procedure)
+			return false
+		}
+		defer delete(data)
+
+		content := string(data)
+		clusters := strings.split(content, "},")
+		newContent := make([dynamic]u8)
+		defer delete(newContent)
+		recordFound := false
+		clusterFound := false
+
+		for cluster in clusters {
+			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+				clusterFound = true
+				clusterLines := strings.split(cluster, "\n")
+				newClusterLines := make([dynamic]string)
+				defer delete(newClusterLines)
+
+				for line in clusterLines {
+					if strings.contains(line, fmt.tprintf("%s :", rn)) {
+						recordFound = true
+					} else {
+						append(&newClusterLines, line)
+					}
+				}
+
+				if recordFound {
+					newCluster := strings.join(newClusterLines[:], "\n")
+					append(&newContent, ..transmute([]u8)newCluster)
+					append(&newContent, "},")
+				} else {
+					append(&newContent, ..transmute([]u8)cluster)
+					append(&newContent, "},")
+				}
+			} else {
+				append(&newContent, ..transmute([]u8)cluster)
+				append(&newContent, "},")
+			}
+		}
+
+		if !clusterFound {
+			utils.throw_err(
+				utils.new_err(
+					.CANNOT_FIND_CLUSTER,
+					fmt.tprintf(
+						"Cluster: %s%s%s not found in collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cn,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						fn,
+						utils.RESET,
+					),
+					#procedure,
+				),
+			)
+			utils.log_err("Error finding cluster in collection", #procedure)
+			return false
+		}
+
+		if !recordFound {
+			utils.throw_err(
+				utils.new_err(
+					.CANNOT_FIND_RECORD,
+					fmt.tprintf(
+						"Record: %s%s%s not found in cluster: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						rn,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						cn,
+						utils.RESET,
+					),
+					#procedure,
+				),
+			)
+			utils.log_err("Error finding record in cluster", #procedure)
+			return false
+		}
+
+		writeSuccess := os.write_entire_file(collection_path, newContent[:])
+		if !writeSuccess {
+			utils.throw_err(
+				utils.new_err(
+					.CANNOT_WRITE_TO_FILE,
+					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+					#procedure,
+				),
+			)
+			utils.log_err("Error writing to collection file", #procedure)
+			return false
+		}
+		utils.log_runtime_event(
+			"Database Record",
+			"User confirmed deletion of record and it was successfully deleted.",
+		)
+
+	case const.NO:
+		utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
+		return false
+	case:
+		utils.log_runtime_event(
+			"User entered invalid input",
+			"User entered invalid input when trying to delete record",
+		)
+		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		return false
+	}
+	return true
+
+}
+
+
+//used for the history command,
+//reads over the passed in collection file and
+//the specified cluster and stores the value of each record into the array
+OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
+	records: [dynamic]string
+	histBuf: [1024]byte
+
+	data, readSuccess := os.read_entire_file("./history.ost")
+	if !readSuccess {
+		error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
+		utils.throw_err(error)
+		utils.log_err("Error reading collection file", #procedure)
+		return records
+	}
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster, i in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			lines := strings.split(cluster, "\n")
+			for line, j in lines {
+				if strings.contains(line, ":COMMAND:") {
+					parts := strings.split(line, ":COMMAND:")
+					if len(parts) >= 2 {
+						value := strings.trim_space(parts[1])
+						append(&records, value)
+					}
+				}
+			}
+			break
+		}
+	}
+	return records
+}
+
+
+//reads over the passed in collection file and the specified cluster and returns the number of records in that cluster
+//excluding the cluster_name and cluster_id records. potential way of doing this would be to get all of them and just subtract 2
+//the isCounting param is set to true if this proc is being called during the COUNT command
+OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
+	collectionPath: string
+	if isCounting == true {
+		collectionPath = fmt.tprintf(
+			"%s%s%s",
+			const.OST_COLLECTION_PATH,
+			fn,
+			const.OST_FILE_EXTENSION,
+		)
+	} else if isCounting == false {
+		collectionPath = fmt.tprintf("%s%s%s", const.OST_BIN_PATH, fn, const.OST_FILE_EXTENSION)
+	}
+
+	data, readSuccess := os.read_entire_file(collectionPath)
+	if !readSuccess {
+		error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
+		utils.throw_err(error)
+		utils.log_err("Error reading collection file", #procedure)
+		return -1
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+	// fmt.printfln("clusters: %s", clusters)
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			lines := strings.split(cluster, "\n")
+			recordCount := 0
+
+			for line in lines {
+				trimmedLine := strings.trim_space(line)
+				if len(trimmedLine) > 0 &&
+				   !strings.has_prefix(trimmedLine, "cluster_name") &&
+				   !strings.has_prefix(trimmedLine, "cluster_id") &&
+				   strings.contains(trimmedLine, ":") {
+					recordCount += 1
+				}
+			}
+			return recordCount
+		}
+	}
+
+	fmt.printfln(
+		"Cluster %s%s%s not found in collection %s%s%s",
+		utils.BOLD_UNDERLINE,
+		cn,
+		utils.RESET,
+		utils.BOLD_UNDERLINE,
+		fn,
+		utils.RESET,
+	)
+	return -1
+}
+
+//reads over the passed in collection file and returns the number of records in that collection
+OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
+	collectionPath := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
+	data, readSuccess := os.read_entire_file(collectionPath)
+	if !readSuccess {
+		error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
+		utils.throw_err(error)
+		utils.log_err("Error reading collection file", #procedure)
+		return -1
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+	recordCount := 0
+	for cluster in clusters {
+		if !strings.contains(cluster, "cluster_name :identifier:") {
+			continue // Skip non-cluster content
+		}
+		lines := strings.split(cluster, "\n")
+		for line in lines {
+			trimmedLine := strings.trim_space(line)
+			if len(trimmedLine) > 0 &&
+			   !strings.has_prefix(trimmedLine, "cluster_name") &&
+			   !strings.has_prefix(trimmedLine, "cluster_id") &&
+			   strings.contains(trimmedLine, ":") &&
+			   !strings.contains(trimmedLine, "[Ostrich File Header Start]") &&
+			   !strings.contains(trimmedLine, "[Ostrich File Header End]") {
+				recordCount += 1
+			}
+		}
+	}
+
+	return recordCount
+}
+
+//deletes the data value of the passed in record but keeps the name and type
+OST_PURGE_RECORD :: proc(fn, cn, rn: string) -> bool {
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
+
+	// Read the entire file
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		utils.log_err("Error reading collection file", #procedure)
+		return false
+	}
+	defer delete(data)
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	newLines := make([dynamic]string)
+	defer delete(newLines)
+
+	inTargetCluster := false
+	recordPurged := false
+
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+
+		if trimmedLine == "{" {
+			inTargetCluster = false
+		}
+
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+		}
+
+		if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
+			parts := strings.split(trimmedLine, ":")
+			if len(parts) >= 3 {
+				// Keep the record name and type, but remove the value
+				// Maintain the original indentation and spacing
+				leadingWhitespace := strings.split(line, rn)[0]
+				newLine := fmt.tprintf(
+					"%s%s :%s:",
+					leadingWhitespace,
+					strings.trim_space(parts[0]),
+					strings.trim_space(parts[1]),
+				)
+				append(&newLines, newLine)
+				recordPurged = true
+			} else {
+				append(&newLines, line)
+			}
+		} else {
+			append(&newLines, line)
+		}
+
+		if inTargetCluster && trimmedLine == "}," {
+			inTargetCluster = false
+		}
+	}
+
+	if !recordPurged {
+		fmt.printfln(
+			"Record %s%s%s not found in cluster %s%s%s",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+		)
+		return false
+	}
+
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := os.write_entire_file(collection_path, transmute([]byte)newContent)
+	if !writeSuccess {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		utils.log_err("Error writing updated content to file", #procedure)
+		return false
+	}
+
+	return true
+}
+
+OST_GET_RECORD_SIZE :: proc(
+	collection_name: string,
+	cluster_name: string,
+	record_name: string,
+) -> (
+	size: int,
+	success: bool,
+) {
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collection_name,
+		const.OST_FILE_EXTENSION,
+	)
+	data, read_success := os.read_entire_file(collection_path)
+	if !read_success {
+		return 0, false
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
+			lines := strings.split(cluster, "\n")
+			for line in lines {
+				if strings.has_prefix(line, record_name) {
+					parts := strings.split(line, ":")
+					if len(parts) >= 3 {
+						record_value := strings.trim_space(strings.join(parts[2:], ":"))
+						return len(record_value), true
+					}
+				}
+			}
+		}
+	}
+
+	return 0, false
 }

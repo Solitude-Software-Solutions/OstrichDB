@@ -1,150 +1,178 @@
-# NOTICE
-From its inception OstrichDB was developed and intended to to be used in a Linux environment. It also was developed on an older build of Odin Lang.
-I am now working on a patchto ensure Mac support and utilization a more recent version of Odin Lang. 
+# **OstrichDB**
 
--Marshall aka SchoolyB 24/Sep/2024
+OstrichDB is a lightweight, document-based NoSQL JSON-esquw database written in the Odin programming language. It focuses on simplicity and is designed for local data testing and manipulation, making it an ideal solution for developers looking for a straightforward database without the need for complex setups. With a flexible command structure, OstrichDB makes it easy to manage data using both single and multi-token commands.
 
+---
 
-# OstrichDB
+## **Features**
 
-OstrichDB is a lightweight, document-based, key-value NoSQL database designed for ease of use and local application data testing/manipulation. Written in the Odin programming language, it offers a flexible architecture and a simple command syntax, making it ideal for developers and users who need a simple yet versatile database solution.
+- Serverless Architecture
+- User Authentication
+- Multi-User Support
+- JSON-like Hierarchical Data Structure
+- Command Based Operations
+- Dot Notation Syntax
+- Basic CRUD Operations
+- macOS & Linux Support
+---
 
-## Features
+## **Data Structure Overview**
 
-- Serverless architecture (current implementation)
-- User authentication
-- JSON-like hierarchical data structures
-- Intuitive yet simple command syntax with multi-token and single-token commands
-- Basic CRUD operations
-- Focus mode for streamlined operations within a context
+OstrichDB organizes data into three levels:
 
-## Data Structure
+- **Records**: The smallest unit of data (e.g., user name, age, or product details).
+- **Clusters**: Groups of related records (e.g., related information about a person or product).
+- **Collections**: Files that hold multiple clusters (e.g., a database holding multiple product categories).
 
-OstrichDB uses a hierarchical data structure:
+This structure makes it easy to store and retrieve logically grouped data.
 
-- **Records**: Individual sets of data
-- **Clusters**: Groups of related records
-- **Collections**: Files containing clusters (also known as a database)
+---
 
-## Command Structure
+## **Command Structure (ATOMs)**
 
-Commands in OstrichDB are parsed into tokens also called ATOMs. This structured approach allows for complex operations while maintaining readability. Here's a breakdown of the command structure as ATOM(s):
+In ObstrichDB, commands are broken into **four types of tokens**, called **ATOMs**, to improve readability and ensure clear instructions.
 
-- **(A)ction token**: Specifies the operation to be performed (e.g., NEW, ERASE, RENAME)
-- **(T)arget token**: Indicates the type of object the action is performed on (e.g., CLUSTER, RECORD)
-- **(O)bject token**: Represents the name or identifier of the target
-- **(M)odifier**: Additional parameters that modify the command's behavior (e.g., WITHIN)
+**Note:** Not all commands require all four tokens.
 
-Note: Not all commands require all ATOMs. The number of ATOMs required depends on the command and its context.
+1. **(A)ction Token**: Specifies the operation to perform (e.g., `NEW`, `ERASE`, `RENAME`).
+2. **(T)arget Token**: The type of object that the action is being performed on (e.g., `CLUSTER`, `RECORD`).
+3. **(O)bject Token**: The name of the target object (e.g., `foo`, `bar`).
+4. **(M)odifier Token**: Additional parameters that change the behavior of the command (e.g.,`TO`, `OF_TYPE`).
 
-Example: `NEW CLUSTER foo WITHIN COLLECTION bar`
+---
 
-In this example:
-- `NEW` is the Action token
-- `CLUSTER` is the Target token
-- `foo` is the Object token (name of the cluster) given by the user
-- `WITHIN` is a special modifier called a scope modifier
-- `COLLECTION bar` specifies where the new cluster should be created
+### **Command Example**
 
-## Supported Commands
-
-### Single Token Commands
-
-- `VERSION`: Display current version
-- `LOGOUT`: Log out current user
-- `EXIT`: Exit database session
-- `UNFOCUS`: Remove focus from current data structure
-- `CLEAR`: Clear the screen of clutter
-- `HELP`: Display general help information
-- `TREE`: Display the hierarchical structure of the database
-- `HISTORY`: Display OStrichDB usage command history
-**Note: The `HELP` command can also be a multi-token command to get more detailed information**
-
-### Multi-Token Commands
-
-**Note: Multi-token commands require both a Target and Object token**
-
-- `NEW`: Create new collection, cluster, or record
-- `ERASE`: Delete collection, cluster, or record
-- `RENAME`: Change name of collection, cluster, or record
-- `FETCH`: Retrieve data from collection, cluster, or record
-- `SET`: Set the value of a record or config
-- `BACKUP`: Create a backup of a collection
-- `FOCUS`: Set the current context to on specific collection, cluster, or record
-- `HELP`: Display detailed information when chained with a specific token such as COLLECTION, FETCH, NEW, ATOMS, etc.
-
-**Note: Some commands CANNOT be used while focusing on a specific object**
-
-Example usage of multi-token commands:
 ```bash
-NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Creates a new cluster within the specified collection
-ERASE CLUSTER <cluster_name> WITHIN COLLECTION <collection_name> //Erase the cluster with the specified name
-RENAME RECORD <old_name> TO <new_name> //Renames the record with the specified old name to the new name
-FETCH COLLECTION <collection_name> //Fetches all data within the collection of specified name
-SET RECORD <record_name> TO <value> //Sets the value of the specified record
-BACKUP COLLECTION <collection_name> //Creates a backup of the specified collection
-HELP COLLECTION //Displays information about collections
-NEW RECORD <record_name> OF_TYPE <record_type>
-FOCUS CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>  //Focuses on the specified cluster within the specified collection
+NEW CLUSTER foo.bar
 ```
 
-**Note: The `FOCUS` command is used to set the current context to a specific object. ALL subsequent commands will be executed in the context of the focused object.**
+Explanation:
+- **`NEW`**: Create a new object (Action token).
+- **`CLUSTER`**: The type of object to be created (Target token).
+- **`foo`**: The parent object that the new cluster will be created in (Object token). 
+- **`bar`**: The name of the new cluster (Object token).
 
-### Modifiers
+---
 
-Modifiers are additional parameters that modify the behavior of a command:
+## **Supported Commands**
 
-- `WITHIN`: A scope modifier used to specify the parent object of the target object
-- `TO`: Used with the RENAME and SET command to specify the new name or value of the object
-- `ATOMS`: A special modifier ONLY used with the HELP command to display detailed information about the command's ATOMs
-- `OF_TYPE`: ONLY used with the NEW RECORD command to specify the type of record being created
+### **Single-Token Commands**
+These commands perform simple tasks without needing additional arguments.
 
-**Note: Currently, the only supported record types are `STRING`, `INTEGER`, `BOOL`, and `FLOAT`. Although when setting a record type, you can use shorthand such as `STR`, `INT`, `BOOL`, and `FLT`.**
+- **`VERSION`**: Displays the current version of OstrichDB.
+- **`LOGOUT`**: Logs out the current user.
+- **`EXIT`**: Ends the session and closes the database.
+- **`RESTART`**: Restarts the program. 
+- **`REBUILD`**: Rebuilds the database and restarts the program.
+- **`HELP`**: Displays general help information or detailed help when chained with specific tokens.
+- **`TREE`**: Displays the entire data structure in a tree format.
+- **`CLEAR`**: Clears the console screen.
+- **`HISTORY`**: Shows the current users command history.
 
-## Installation
+---
 
-### Prerequisites
+### **Multi-Token Commands**
+These commands allow you to perform more complex operations.
 
-- Linux environment
-- Clang and LLVM
-- Odin programming language (properly built and in PATH)
+- **`NEW`**: Create a new collection, cluster, record, or user.
+- **`ERASE`**: Delete a collection, cluster, or record.
+- **`RENAME`**: Rename an existing object.
+- **`FETCH`**: Retrieve data from a collection, cluster, or record.
+- **`SET`**: Assign a value to a record or configuration.
+- **`BACKUP`**: Create a backup of a specific collection.
+- **`PURGE`**: Removes all data from an object while maintining the object structure.
+- **`COUNT`**: Returns the number of objects within a scope. Paired with the plural form of the object type (e.g., `RECORDS`, `CLUSTERS`).
+- **`SIZE_OF`**: Returns the size in bytes of an object.
+---
 
-### Steps
+### **Modifiers in Commands**
 
-1. Clone the repository:
+Modifiers adjust the behavior of commands. The current supported modifiers are:
+- **`TO`**: Used to assign a new value or name (e.g., renaming an object or setting a record's value).
+- **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR).
+
+Examples:
+```bash
+NEW RECORD foo.bar.baz OF_TYPE INT
+RENAME CLUSTER foo.bar TO foo.baz
+SET CONFIG help TO verbose
+```
+
+
+---
+
+## **Installation**
+
+### **Prerequisites:**
+- A Unix-based system (macOS, Linux).
+- Clang & LLVM installed on your system.
+- The Odin programming language installed, built, and properly set in the system's PATH.
+
+
+### **Steps:**
+
+1. **Clone the Repository**:
    ```bash
    git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
    ```
 
-2. Navigate to the project's src directory:
+2. **Navigate to the OstrichDB Directory**:
    ```bash
-   cd your/path/to/OstrichDB/src
+   cd path/to/OstrichDB
    ```
 
-3. Build and run OstrichDB:
+3. **Make the Build & Restart Scripts Executable**:
    ```bash
-   odin build main && ./main.bin
+   chmod +x scripts/build.sh scripts/restart.sh
    ```
 
-## Contributing
+3. **Run The Build Script**:
+   ```bash
+   ./scripts/build.sh
+   ```
 
-Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to OstrichDB.
+---
 
-## License
+## **Usage Examples**
 
-OstrichDB is released under the Apache License 2.0. For full license text, see [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+   ```bash
+   # Create a new collection:
+   NEW COLLECTION staff
+   # Create a new cluster:
+   NEW CLUSTER staff.engineers
+   # Create a new record:
+   NEW RECORD staff.engineers.lead OF_TYPE STR
+   # Set a record value:
+   SET RECORD staff.engineers.lead TO "John Doe"
+   # Fetch the record value:
+   FETCH RECORD staff.engineers.lead
+   # Rename a cluster:
+   RENAME CLUSTER staff.engineers TO developers
+   # Get the size of a cluster:
+   SIZE_OF CLUSTER staff.developers
+   # Erase a record:
+   ERASE RECORD staff.developers.lead
+   # Get a count of all collections in the database:
+   COUNT COLLECTIONS
+   # Get help on a specific ATOM
+   HELP RECORD
+   # Get general help information
+   HELP
+   # Create a new user
+   NEW USER
 
-## Future Plans
+   ```
 
-- More data operations on records
-- Enhanced user interface
-- Improved configuration options
+---
+
+
+
+## **Future Plans**
+
+- More configuration options
 - Database file compression and zipping
-- Multi-user support with role-based access control
 - Several new command tokens:
-  - `STATS`: Display database statistics
-  - `PURGE`: Clear data while retaining structure
-  - `SIZE`: Show object size in bytes
   - `SORT`: Sort records or clusters by field
   - `IMPORT`: Load data from external sources(JSON, CSV, etc.)
   - `EXPORT`: Export data to various formats
@@ -152,14 +180,26 @@ OstrichDB is released under the Apache License 2.0. For full license text, see [
   - `LOCK`: Prevent data modification
   - `UNLOCK`: Allow data modification
   - `RESTORE`: Undo recent changes
-  - `COUNT`: Display the number of objects within a scope
   - `MERGE`: Combine multiple collections or clusters into one
   - `ALL`: Perform operations on all objects within a scope
-  - `AND`: Execute multiple operations in one command
-  - `INTO`: Specify the destination for data operations
 - Support for additional data types
 - Enhanced security (database encryption/decryption, secure deletion)
-- Performance optimizations
+- Commnad chaining for complex operations
+- Server-based architecture
 - External API support for popular programming languages
-- Windows & macOS compatibility
+- Windows ßsupport
 - Integration with the planned Ostrich query language!
+
+---
+
+## **Contributing**
+
+Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on how to contribute.
+
+---
+
+## **License**
+
+OstrichDB is released under the **Apache License 2.0**. For the full license text, see [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+---

@@ -39,7 +39,7 @@ OST_CHOOSE_COLLECTION_NAME :: proc() {
 Creates a new collection file with metadata within the DB
 collections are "collectiions" of clusters stored in a .ost file
 Params: fileName - the desired file(cluster) name
-				type - the type of file to create, 0 is standard, 1 is secure
+	    type - the type of file to create, 0 is standard, 1 is secure or 2 if it is the history file
 */
 OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
@@ -97,7 +97,30 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
 		defer os.close(createFile)
-
+		break
+	case 2:
+		//history file
+		pathNameExtension := fmt.tprintf(
+			"%s%s%s",
+			const.OST_BIN_PATH,
+			fileName,
+			const.OST_FILE_EXTENSION,
+		)
+		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o644)
+		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
+		if createSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_CREATE_FILE,
+				utils.get_err_msg(.CANNOT_CREATE_FILE),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error creating .ost file", #procedure)
+			return false
+		}
+		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
+		defer os.close(createFile)
+		break
 	}
 	return true
 }
@@ -212,7 +235,7 @@ OST_PREFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 }
 
 
-//checks if the passed in ost file exists in "../bin/clusters". see usage in OST_CHOOSE_COLLECTION()
+//checks if the passed in ost file exists in "./clusters". see usage in OST_CHOOSE_COLLECTION()
 //type 0 is for standard collection files, type 1 is for secure files
 OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	switch (type) {
@@ -384,4 +407,71 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (found: bool, name: string) {
 
 	}
 	return found, ""
+}
+
+//gets the number of collections in the collections directory
+OST_COUNT_COLLECTIONS :: proc() -> int {
+	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+	defer os.close(collectionsDir)
+	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
+	collectionNames := make([dynamic]string)
+	defer delete(collectionNames)
+
+	for file in foundFiles {
+		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+			append(&collectionNames, file.name)
+		}
+	}
+	return len(collectionNames)
+}
+
+//deletes all data from a collection file but keeps the metadata header
+OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
+    collection_path := fmt.tprintf(
+        "%s%s%s",
+        const.OST_COLLECTION_PATH,
+        fn,
+        const.OST_FILE_EXTENSION,
+    )
+
+    // Read the entire file
+    data, readSuccess := os.read_entire_file(collection_path)
+    if !readSuccess {
+        utils.throw_err(
+            utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+        )
+        utils.log_err("Error reading collection file", #procedure)
+        return false
+    }
+    defer delete(data)
+
+    // Find the end of the metadata header
+    content := string(data)
+    headerEndIndex := strings.index(content, "}")
+    if headerEndIndex == -1 {
+        utils.throw_err(
+            utils.new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #procedure),
+        )
+        utils.log_err("Invalid collection file format", #procedure)
+        return false
+    }
+
+    // Extract the metadata header
+    header := content[:headerEndIndex+1]
+
+    // Write back only the header
+    writeSuccess := os.write_entire_file(collection_path, transmute([]byte)header)
+    if !writeSuccess {
+        utils.throw_err(
+            utils.new_err(.CANNOT_WRITE_TO_FILE, utils.get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure),
+        )
+        utils.log_err("Error writing purged collection file", #procedure)
+        return false
+    }
+    utils.log_runtime_event(
+        "Collection purged",
+        fmt.tprintf("User purged collection: %s", fn),
+    )
+
+    return true
 }

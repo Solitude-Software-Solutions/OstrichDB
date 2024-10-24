@@ -13,14 +13,15 @@ import "core:time"
 //=========================================================//
 
 
-LOG_DIR_PATH :: "../bin/logs/"
+LOG_DIR_PATH :: "./logs/"
 RUNTIME_LOG :: "runtime.log"
 ERROR_LOG :: "errors.log"
 
 main :: proc() {
-	os.make_directory("../bin/")
+	os.make_directory("./")
 	os.make_directory(LOG_DIR_PATH)
 	create_log_files()
+
 }
 
 

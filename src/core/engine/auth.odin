@@ -34,10 +34,15 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		)
 		utils.throw_err(error1)
 		utils.log_err("Could not read user input during sign in", #procedure)
+		return false
 	}
 
-
 	userName := strings.trim_right(string(buf[:n]), "\r\n")
+	if len(userName) == 0 {
+		fmt.printfln("Username cannot be empty. Please try again.")
+		return false
+	}
+
 	found, userSecCollection := data.OST_FIND_SEC_COLLECTION(userName)
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
@@ -54,8 +59,6 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	} else if userRole == "guest" {
 		types.user.role.Value = "guest"
 	}
-
-	fmt.printfln("Username that was found: %s", userNameFound)
 
 	if (userNameFound != userName) {
 		error2 := utils.new_err(
@@ -97,10 +100,17 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		)
 		utils.throw_err(error3)
 		utils.log_err("Could not read user input during sign in", #procedure)
+		libc.system("stty echo")
 		return false
 	}
 	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
 	libc.system("stty echo")
+
+	if len(enteredPassword) == 0 {
+		fmt.printfln("Password cannot be empty. Please try again.")
+		return false
+	}
+
 	//conver the return algo method string to an int
 	algoAsInt := strconv.atoi(algoMethod)
 
@@ -113,8 +123,10 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	switch authPassed {
 	case true:
 		OST_START_SESSION_TIMER()
-		fmt.printfln("Auth Passed! User has been signed in!")
+		fmt.printfln("\n\nSucessfully signed in!")
+		fmt.printfln("Welcome, %s!\n", userNameFound)
 		types.USER_SIGNIN_STATUS = true
+		types.current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
 		userLoggedInValue := config.OST_READ_CONFIG_VALUE(const.configThree)
 		if userLoggedInValue == "false" {
 			config.OST_TOGGLE_CONFIG(const.configThree)
