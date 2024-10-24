@@ -6,7 +6,7 @@ The `HELP` command displays helpful information about OstrichDB.'
 
 ### VERSION START
 The `VERSION` command fetches the current installed version of OstrichDB. The versioning scheme for OstrichDB is `release type._major version.minor version.patch version_build type`.
-For example: `Pre_Rel_v0.2.0_dev`.
+For example: `Pre_Rel_v0.4.0_dev`.
 ### VERSION END
 
 ### EXIT START
@@ -16,6 +16,14 @@ The `EXIT` command safely exits OstrichDB. Execution of this command will safely
 ### LOGOUT START
 The `LOGOUT` command logs out the current user WITHOUT closing OstrichDB. This command is useful for switching between users without closing the application. NOTE: Users will be logged out automatically after 3 days.
 ### LOGOUT END
+
+### RESTART START
+The `RESTART` command restarts OstrichDB. This command makes a function call that then calls the built-in restart script. 
+### RESTART END
+
+### REBUILD START
+The `REBUILD` command rebuilds the database and restarts OstrichDB. This command is useful for making changes to the source code and rebuilding the database.
+### REBUILD END
 
 ### CLEAR START
 The `CLEAR` command clears the screen of clutter. This command is useful for clearing the screen of previous commands and outputs assisting in keeping the command line clean and organized.
@@ -30,15 +38,15 @@ THe `HISTORY` token is a single-token action. It is used to display a history of
 ### HISTORY END
 
 ### NEW START
-The `NEW` token is an multi-token action. It is used to create new objects within OstrichDB. `NEW` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name. This tells the parser exactly what object to create and what to name it. For example: `NEW COLLECTION <collection_name>` will create a new collection with the specified name.
+The `NEW` token is a multi-token action. It is used to create new objects within OstrichDB. `NEW` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name. This tells the parser exactly what object to create and what to name it. For example: `NEW COLLECTION <collection_name>` will create a new collection with the specified name. For clusters and records, use dot notation: `NEW CLUSTER <collection_name>.<cluster_name>` or `NEW RECORD <collection_name>.<cluster_name>.<record_name>`.
 ### NEW END
 
 ### FETCH START
-The `FETCH` token is a multi-token action. It is used to retrieve objects within OstrichDB. `FETCH` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name. This tells the parser where to look and what data to retrieve. For example: `FETCH COLLECTION <collection_name>` will retrieve ALL the data from collection with the specified name.
+The `FETCH` token is a multi-token action. It is used to retrieve objects within OstrichDB. `FETCH` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name using dot notation. This tells the parser where to look and what data to retrieve. For example: `FETCH COLLECTION <collection_name>` will retrieve ALL the data from the collection with the specified name. For clusters and records: `FETCH CLUSTER <collection_name>.<cluster_name>` or `FETCH RECORD <collection_name>.<cluster_name>.<record_name>`.
 ### FETCH END
 
 ### SET START
-The `SET` token is a multi-token action. It is used to set the value of a record or config. `SET` MUST be followed by a target token such as `RECORD` and the object name. This tells the parser exactly what object to set the value of and what to set it to. For example: `SET RECORD <record_name> TO <record_value>` will set the value of the record with the specified name to the specified value.
+The `SET` token is a multi-token action. It is used to set the value of a record or config. `SET` MUST be followed by a target token such as `RECORD` or `CONFIG` and the object name using dot notation for records. This tells the parser exactly what object to set the value of and what to set it to. For example: `SET RECORD <collection_name>.<cluster_name>.<record_name> TO <record_value>` will set the value of the record with the specified name to the specified value. For configs: `SET CONFIG <config_name> TO <value>`.
 ### SET END
 
 ### RENAME START
@@ -49,13 +57,17 @@ The `RENAME` token is a multi-token action. It is used to change the name of obj
 The `ERASE` token is a multi-token action. It is used to delete objects within OstrichDB. `ERASE` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name. This tells the parser exactly what object to delete and what to name it. For example: `ERASE COLLECTION <collection_name>` will delete the collection with the specified name.
 ### ERASE END
 
-### FOCUS START
-The `FOCUS` token is a multi-token action. It is used to change the current context of "focus" of the target within OstrichDB. `FOCUS` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name. This tells the parser exactly what object to focus on. For example: `FOCUS COLLECTION <collection_name>` will change the current focus to the collection with the specified name. Once focus has been set all subsequent actions will be preformed on the focused object. Using the example above, if you wanted to create a new cluster within the focused collection you would use the command `NEW CLUSTER <cluster_name>` as opposed to `NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>`.
-### FOCUS END
+### PURGE START
+The `PURGE` token is a multi-token action. It is used to remove all data from an object while maintaining the object structure. `PURGE` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` for example: `PURGE COLLECTION <collection_name>` will remove all data from the collection with the specified name.
+### PURGE END
 
-### UNFOCUS START
-The `UNFOCUS` token is a single-token action. It is used to remove the current context or "focus" of the target within OstrichDB. This tells the parser to stop focusing on the current object. For example: `UNFOCUS` will remove the current focus from the object that is currently being focused on. And the user will be returned to the default context to use the command line as normal.
-### UNFOCUS END
+### COUNT START
+The `COUNT` token is a multi-token action. It is used to return the number of objects within a scope. `COUNT` MUST be followed by a target token such as `RECORDS`, `CLUSTERS`, or `COLLECTIONS` and an object name using dot notation where applicable. For example: `COUNT CLUSTERS <collection_name>` will return the number of clusters in the specified collection.
+### COUNT END
+
+### SIZE_OF START
+The `SIZE_OF` token is a multi-token action. It is used to return the size in bytes of an object. `SIZE_OF` MUST be followed by a target token such as `RECORD`, `CLUSTER`, or `COLLECTION` and an object name. For example: `SIZE_OF COLLECTION <collection_name>` will return the size in bytes of the collection with the specified name.
+### SIZE_OF END
 
 ### BACKUP START
 The `BACKUP` token is a multi-token action. It is used to create a backup of all data within OstrichDB. `BACKUP` MUST be followed by the target token `COLLECTION` and an object name. For example: `BACKUP COLLECTION <collection_name>` will create a backup of the collection with the specified name. Backups are stored in the `/bin/backups` directory and end with the `.ost` file extension.
@@ -66,7 +78,7 @@ Collections are individual databases that are "collections" of smaller data obje
 ### COLLECTION END
 
 ### CLUSTER START
-Clusters are objects made up of related data called "records". Clusters are stored within collections. If you are familiar with JSON, clusters are similar to "objects" in JSON. To maintain data integrity, clusters MUST have a cluster name and cluster ID. Cluster names are created by the user and cluster IDs are automatically generated by OstrichDB. Within the OstrichDB command line `CLUSTER` a target token. This is used to specify that an action will be preformed on a cluster. For example: `NEW CLUSTER <cluster_name> WITHIN COLLECTION <collection_name>` will create a new cluster with the specified name within the specified collection.
+Clusters are objects made up of related data called "records". Clusters are stored within collections. If you are familiar with JSON, clusters are similar to "objects" in JSON. To maintain data integrity, clusters MUST have a cluster name and cluster ID. Cluster names are created by the user and cluster IDs are automatically generated by OstrichDB. Within the OstrichDB command line `CLUSTER` a target token. This is used to specify that an action will be preformed on a cluster. For example: `NEW CLUSTER <collection_name>.<cluster_name>` will create a new cluster with the specified name within the specified collection.
 ### CLUSTER END
 
 ### RECORD START
