@@ -6,17 +6,21 @@
 |LOGOUT     |Action         |Single           |Logs out the current user WITHOUT closing OstrichDB                 |
 |TREE       |Action         |Single           |Displays a hierarchical tree of all collections and thier clusters  |
 |HISTORY    |Action         |Single           |Displays the history of all actions performed in the current session|
-|NEW        |Action         |Multi            |Creates a new collection, cluster, or record                        |
+|CLEAR      |Action         |Single           |Clears the screen of clutter                                        |
+|RESTART    |Action         |Single           |Restarts OstrichDB                                                  |
+|REBUILD    |Action         |Single           |Rebuilds and restarts OstrichDB                                     |
+|NEW        |Action         |Multi            |Creates a new collection, cluster, record or user                   |
 |ERASE      |Action         |Multi            |Deletes a collection, cluster, or record                            |
 |RENAME     |Action         |Multi            |Renames a collection, cluster, or record                            |
-|SET        |Action         |Multi            |Sets the value of a record ot config                                |
+|SET        |Action         |Multi            |Sets the value of a record or config                                 |
 |BACKUP     |Action         |Multi            |Creates a backup of a collection                                    |
 |FETCH      |Action         |Multi            |Fetches all data of the specified collection, cluster, or record    |
-|FOCUS      |Action         |Multi            |Sets the current context to the specified collection, cluster, or record|
-|UNFOCUS    |Action         |Single           |Unsets the current context if any                                   |
-|CLEAR      |Action         |Single           |Clears the screen of clutter                                        |
-|COLLECTION |Target         |                 |Specifies that the target is a collection                           |
-|CLUSTER    |Target         |                 |Specifies that the target is a cluster                              |
-|RECORD     |Target         |                 |Specifies that the target is a record                               |
-|TO         |Modifier       |                 |Used with the RENAME action to specify the new name of the target   |
-|ATOM/ATOMS |Help Target    |                 |Only Used with the HELP action to show information about atoms|
+|COUNT      |Action         |Multi            |Counts the number of records in a collection or cluster            |
+|PURGE      |Action         |Multi            |Removed data from an object while mainting it's structure          |
+|SIZE_OF    |Action         |Multi            |Displays the size of a collection, cluster, or record in bytes     |
+|COLLECTION |Target         |                 |Specifies target is a collection. Plural if paired with COUNT       |
+|CLUSTER    |Target         |                 |Specifies target is a cluster. Plural if paired with COUNT          |
+|RECORD     |Target         |                 |Specifies target is a record. Plural if paired with COUNT           |
+|TO         |Modifier        |                 |Used with the RENAME action to specify the new name of the target  |
+|OF_TYPE    |Modifier        |                 |Used to specify the type of a record or the new name of and object  |
+|<Any Token> |Help Target   |                 |Paired with the HELP action to show information about the token     |
