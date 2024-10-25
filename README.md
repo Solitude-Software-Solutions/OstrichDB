@@ -1,6 +1,6 @@
 # **OstrichDB**
 
-OstrichDB is a lightweight, document-based NoSQL JSON-esquw database written in the Odin programming language. It focuses on simplicity and is designed for local data testing and manipulation, making it an ideal solution for developers looking for a straightforward database without the need for complex setups. With a flexible command structure, OstrichDB makes it easy to manage data using both single and multi-token commands.
+OstrichDB is a lightweight, document-based NoSQL JSON-esque database written in the Odin programming language. It focuses on simplicity and is designed for local data testing and manipulation, making it an ideal solution for developers looking for a straightforward database without the need for complex setups. With a flexible command structure, OstrichDB makes it easy to manage data using both single and multi-token commands.
 
 ---
 
@@ -23,8 +23,6 @@ OstrichDB organizes data into three levels:
 - **Records**: The smallest unit of data (e.g., user name, age, or product details).
 - **Clusters**: Groups of related records (e.g., related information about a person or product).
 - **Collections**: Files that hold multiple clusters (e.g., a database holding multiple product categories).
-
-This structure makes it easy to store and retrieve logically grouped data.
 
 ---
 
@@ -127,15 +125,14 @@ SET CONFIG help TO verbose
    chmod +x scripts/build.sh scripts/restart.sh
    ```
 
-3. **Run The Build Script**:
+4. **Run The Build Script**:
    ```bash
    ./scripts/build.sh
    ```
-
 ---
 
-## **Usage Examples**
 
+## **Usage Examples**
    ```bash
    # Create a new collection:
    NEW COLLECTION staff
@@ -163,10 +160,7 @@ SET CONFIG help TO verbose
    NEW USER
 
    ```
-
 ---
-
-
 
 ## **Future Plans**
 
@@ -187,10 +181,11 @@ SET CONFIG help TO verbose
 - Commnad chaining for complex operations
 - Server-based architecture
 - External API support for popular programming languages
-- Windows ßsupport
-- Integration with the planned Ostrich query language!
+- Windows support
+- Integration with the planned FeatherQL query language!
 
 ---
+
 
 ## **Contributing**
 
@@ -201,5 +196,3 @@ Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines o
 ## **License**
 
 OstrichDB is released under the **Apache License 2.0**. For the full license text, see [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
-
----
