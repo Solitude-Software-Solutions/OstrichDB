@@ -22,7 +22,7 @@ main :: proc() {
 
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	configExists: bool
-	binDir, e := os.open("../bin")
+	binDir, e := os.open(".")
 	defer os.close(binDir)
 
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)
