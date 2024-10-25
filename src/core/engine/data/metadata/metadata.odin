@@ -119,6 +119,49 @@ OST_GET_FS :: proc(file: string) -> os.File_Info {
 	fileSize, _ := os.stat(file)
 	return fileSize
 }
+//this will get the size of the file and then subtract the size of the metadata header
+//then return the difference
+OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
+    fileInfo, err := os.stat(file)
+    if err != 0 {
+        utils.log_err("Error getting file info", #procedure)
+        return -1, -1
+    }
+
+    totalSize := int(fileInfo.size)
+
+    data, readSuccess := os.read_entire_file(file)
+    if !readSuccess {
+        utils.log_err("Error reading file", #procedure)
+        return -1, -1
+    }
+    defer delete(data)
+
+    content := string(data)
+    lines := strings.split(content, "\n")
+    defer delete(lines)
+
+    metadataEndIndex := -1
+    for i in 0..<len(lines) {
+        line := lines[i]
+        if strings.has_prefix(line, "# [Ostrich File Header End]") {
+            metadataEndIndex = i
+            break
+        }
+    }
+
+    if metadataEndIndex == -1 {
+        utils.log_err("Metadata end marker not found", #procedure)
+        return -1, -1
+    }
+
+    metadataSize := 0
+    for i := 0; i <= metadataEndIndex; i += 1 {
+        metadataSize += len(lines[i]) + 1 // +1 for newline character
+    }
+
+    return totalSize - metadataSize, metadataSize
+}
 
 
 // Generates a random 32 char checksum for .ost files.
@@ -239,8 +282,13 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 			}
 		case 3:
 			if strings.has_prefix(line, "# File Size:") {
-				lines[i] = fmt.tprintf("# File Size: %d Bytes", file_size)
-				updated = true
+				actualSize, _ := OST_SUBTRACT_METADATA_SIZE(fn)
+				if actualSize != -1 {
+					lines[i] = fmt.tprintf("# File Size: %d Bytes", actualSize)
+					updated = true
+				} else {
+					fmt.println("Error calculating file size")
+				}
 			}
 			break
 		case 4:
@@ -323,7 +371,7 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 
 	ffvf, openSuccess := os.open(pathAndName)
 	if openSuccess != 0 {
-		utils.log_err("Could not open file format verson file", #procedure)
+		utils.log_err("Could not open file format version file", #procedure)
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {
@@ -333,7 +381,12 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 }
 
 //looks over the metadata header in a collection file and verifies the formatting of it
-OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: bool) {
+OST_SCAN_METADATA_HEADER_FORMAT :: proc(
+	fn: string,
+) -> (
+	scanSuccess: int,
+	invalidHeaderFormat: bool,
+) {
 	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
 
 	types.schema.Metadata_Header_Body = [5]string {
@@ -359,9 +412,36 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: 
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
+	//checks if the metadata header is the appropriate length
 	if len(lines) < 7 {
+		utils.log_err(
+			"Invalid metadata header detected\n The metadata header was not the appropriate length",
+			#procedure,
+		)
 		return 1, true
 	}
+	//checks if the file format verion file and the projects version file match
+	versionMatch := OST_VALIDATE_FILE_FORMAT_VERSION()
+	if !versionMatch {
+		utils.log_err("Invalid file format version being used", #procedure)
+		return 1, true
+	}
+
+
+	//get the FFV of the passed in collection file
+	collectionVersionValue := strings.split(lines[1], ": ")[1]
+
+	//compares the collections to the version in the FFV tmp file. Due to alreay checking if the FFV and the project file
+	//match, now have to ensure the collection file matches as well.
+	FFV := OST_GET_FILE_FORMAT_VERSION()
+	if strings.compare(collectionVersionValue, string(FFV)) != 0 {
+		utils.log_err(
+			"File format version in collection file does not match the file format version",
+			#procedure,
+		)
+		return 1, true
+	}
+
 
 	// check if the header start and end markers are present at the correct lines
 	if !strings.has_prefix(lines[0], "# [Ostrich File Header Start]") ||
@@ -374,5 +454,22 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scan: int, validFormat: 
 			return 1, true
 		}
 	}
+
+
 	return 0, false
 }
+
+//checks that the FFV tmp file matches the projects version file
+OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
+	FFV := string(OST_GET_FILE_FORMAT_VERSION()) //this is from the .tmp file
+
+	if (strings.compare(FFV, string(utils.get_ost_version())) != 0) {
+		utils.log_err("File format version mismatch", #procedure)
+		return false
+	}
+	return true
+}
+
+
+
+

@@ -5,9 +5,12 @@ import "../config"
 import "../const"
 import "../types"
 import "./data"
+import "./data/metadata"
 import "./security"
+import "core:c/libc"
 import "core:fmt"
 import "core:os"
+import "core:strconv"
 import "core:strings"
 import "core:time"
 //=========================================================//
@@ -41,7 +44,7 @@ run :: proc() {
 
 
 //initialize the data integrity system
-OST_INIT_INEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
+OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
 	types.data_integrity_checks.File_Size.Severity = .LOW
 	types.data_integrity_checks.File_Format_Version.Severity = .MEDIUM
 	types.data_integrity_checks.Cluster_IDs.Severity = .HIGH
@@ -62,7 +65,7 @@ OST_INIT_INEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) ->
 }
 OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
-	OST_INIT_INEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
+	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
 
 	switch (types.engine.Initialized) 
 	{
@@ -72,18 +75,23 @@ OST_START_ENGINE :: proc() -> int {
 		break
 
 	case true:
-		userSignedIn := OST_RUN_SIGNIN()
-		switch (userSignedIn) 
-		{
-		case true:
-			OST_START_SESSION_TIMER()
-			utils.log_runtime_event("User Signed In", "User successfully logged into OstrichDB")
-			result := OST_ENGINE_COMMAND_LINE()
-			return result
+		for {
+			userSignedIn := OST_RUN_SIGNIN()
+			switch (userSignedIn) 
+			{
+			case true:
+				OST_START_SESSION_TIMER()
+				utils.log_runtime_event(
+					"User Signed In",
+					"User successfully logged into OstrichDB",
+				)
+				result := OST_ENGINE_COMMAND_LINE()
+				return result
 
-		case false:
-			OST_START_ENGINE()
-			break
+			case false:
+				fmt.printfln("Sign in failed. Please try again.")
+				continue
+			}
 		}
 	}
 	return 0
@@ -96,6 +104,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 	for {
 		//Command line start
 		buf: [1024]byte
+		histBuf: [1024]byte
 		fmt.print(const.ost_carrot, "\t")
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
@@ -109,11 +118,51 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 
-		append(&const.CommandHistory, strings.clone(input))
+
+		//COMMAND HISTORY STUFF START
+		//append the last command to the history buffer
+		types.current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
+			"history",
+			types.current_user.username.Value,
+			false,
+		)
+		// types.current_user.commandHistory.cHistoryNamePrefix = "history_" dont need this shit tbh - SchoolyB
+		histCountStr := strconv.itoa(histBuf[:], types.current_user.commandHistory.cHistoryCount)
+		recordName := fmt.tprintf("%s%s", "history_", histCountStr)
+
+		//append the last command to the history file
+		data.OST_APPEND_RECORD_TO_CLUSTER(
+			"./history.ost",
+			types.current_user.username.Value,
+			strings.to_upper(recordName),
+			strings.to_upper(strings.clone(input)),
+			"COMMAND",
+		)
+
+		//get value of the command that was just stored as a record
+		historyRecordValue := data.OST_READ_RECORD_VALUE(
+			"./history.ost",
+			types.current_user.username.Value,
+			"COMMAND",
+			strings.to_upper(recordName),
+		)
+
+		//append the command from the file to the command history buffer
+		append(
+			&types.current_user.commandHistory.cHistoryValues,
+			strings.clone(historyRecordValue),
+		)
+
+		//update the history file size value in the metadata
+		metadata.OST_UPDATE_METADATA_VALUE("./history.ost", 3)
+
+		//COMMAND HISTORY STUFF
+
 
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
 		result := OST_EXECUTE_COMMAND(&cmd)
+
 		switch (result) 
 		{
 		case 0:
@@ -148,15 +197,37 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 	for types.focus.flag == true {
 		//Command line start
 		buf: [1024]byte
-		fmt.printf(
-			"%sFOCUSING: %v%s | %s%v%s>>> ",
-			utils.BOLD,
-			types.focus.p_o,
-			utils.RESET,
-			utils.BOLD,
-			types.focus.o_,
-			utils.RESET,
-		)
+		switch (types.focus.t_) 
+		{
+		case const.COLLECTION:
+			fmt.printf("%sFOCUSING: %v%s>>> ", utils.BOLD, types.focus.o_, utils.RESET)
+			break
+		case const.CLUSTER:
+			fmt.printf(
+				"%sFOCUSING: %v%s | %s%v%s>>> ",
+				utils.BOLD,
+				types.focus.p_o,
+				utils.RESET,
+				utils.BOLD,
+				types.focus.o_,
+				utils.RESET,
+			)
+			break
+		case const.RECORD:
+			fmt.printf(
+				"%sFOCUSING: %v%s | %s%v%s | %s%v%s>>> ",
+				utils.BOLD,
+				types.focus.gp_o,
+				utils.RESET,
+				utils.BOLD,
+				types.focus.p_o,
+				utils.RESET,
+				utils.BOLD,
+				types.focus.o_,
+				utils.RESET,
+			)
+			break
+		}
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
 			error := utils.new_err(
@@ -169,9 +240,29 @@ OST_FOCUSED_COMMAND_LINE :: proc() {
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 		cmd := OST_PARSE_COMMAND(input)
-		// fmt.printfln("Command: %v", cmd) //debugging
-		EXECUTE_COMMANDS_WHILE_FOCUSED(&cmd, types.focus.t_, types.focus.o_, types.focus.p_o)
+		fmt.printfln("Command: %v", cmd) //debugging
+
+		EXECUTE_COMMANDS_WHILE_FOCUSED(
+			&cmd,
+			types.focus.t_,
+			types.focus.o_,
+			types.focus.p_o,
+			types.focus.gp_o,
+		)
 		//Command line end
+
+
 	}
 
+}
+
+
+OST_RESTART :: proc() {
+	libc.system("../scripts/restart.sh")
+	os.exit(0)
+}
+
+OST_REBUILD :: proc() {
+	libc.system("../scripts/build.sh")
+	os.exit(0)
 }
