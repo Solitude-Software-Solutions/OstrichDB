@@ -126,7 +126,6 @@ OST_FIND_ALL_CONFIGS :: proc(configs: ..string) -> bool {
 	return true
 }
 
-
 OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 	file, openSuccess := os.open(const.OST_CONFIG_PATH, os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {

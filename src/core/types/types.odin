@@ -183,3 +183,8 @@ schema: Collection_File_Schema
 Collection_File_Schema :: struct {
 	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
 }
+
+
+Server_Config :: struct {
+	port: int,
+}
