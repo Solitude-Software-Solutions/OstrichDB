@@ -28,7 +28,6 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	//Seems like using net.listen_tcp() already binds the socket to the endpoint - Marshall Burns aka SchoolyB
 	defer net.close(net.TCP_Socket(listen_socket))
 
-
 	fmt.printf("Server listening on port %d\n", config.port)
 
 	//Main server loop
@@ -50,16 +49,16 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 //Tells the server what to do when upon accepting a connection
 handle_connection :: proc(socket: net.TCP_Socket) {
 	defer net.close(socket)
-	
+
 	// Use fixed buffer instead of dynamic
 	buf: [1024]byte
-	
+
 	fmt.println("Connection handler started")
-	
+
 	for {
 		fmt.println("Waiting to receive data...")
 		bytes_read, read_err := net.recv(socket, buf[:])
-		
+
 		if read_err != nil {
 			fmt.println("Error reading from socket: ", read_err)
 			return
@@ -73,15 +72,15 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 		response := "Hello From The OstrichDB Server!\n"
 		response_bytes := transmute([]byte)response
-		
+
 		fmt.printf("Sending response: %s\n", response)
 		writeSuccess, write_err := net.send(socket, response_bytes)
-		
+
 		if write_err != nil {
 			fmt.println("Error writing to socket: ", write_err)
 			return
 		}
-		
+
 		fmt.printf("Response sent successfully: %d bytes\n", writeSuccess)
 	}
 }

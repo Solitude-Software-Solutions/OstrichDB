@@ -27,6 +27,7 @@ configOne :: "OST_ENGINE_INIT"
 configTwo :: "OST_ENGINE_LOGGING"
 configThree :: "OST_USER_LOGGED_IN"
 configFour :: "OST_HELP"
+configFive :: "OST_SERVER_MODE_ON"
 
 //ATOM TOKEN CONSTANTS
 VERSION :: "VERSION"
@@ -41,7 +42,7 @@ HISTORY :: "HISTORY"
 //Action Tokens
 NEW :: "NEW"
 BACKUP :: "BACKUP"
-ERASE :: "ERASE"
+ERASE :: "ERASE"`
 RENAME :: "RENAME"
 FETCH :: "FETCH"
 COUNT :: "COUNT"
@@ -113,3 +114,4 @@ BannedUserNames := []string {
 	"administrator",
 	"superuser",
 }
+

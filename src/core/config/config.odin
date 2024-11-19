@@ -79,12 +79,14 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 		const.configTwo,
 		const.configThree,
 		const.configFour,
+		const.configFive,
 	)
 	if !configsFound {
 		OST_APPEND_AND_SET_CONFIG(const.configOne, "false")
 		OST_APPEND_AND_SET_CONFIG(const.configTwo, "simple")
 		OST_APPEND_AND_SET_CONFIG(const.configThree, "false")
 		OST_APPEND_AND_SET_CONFIG(const.configFour, "verbose")
+		OST_APPEND_AND_SET_CONFIG(const.configFive, "false")
 	}
 	return true
 }
