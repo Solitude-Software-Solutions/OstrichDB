@@ -185,6 +185,30 @@ Collection_File_Schema :: struct {
 }
 
 
+//Server Stuff
+//Server Stiff
+//Server Stuff
+
 Server_Config :: struct {
 	port: int,
+}
+
+HttpStatusCode :: enum {
+	OK           = 200,
+	BAD_REQUEST  = 400,
+	NOT_FOUND    = 404,
+	SERVER_ERROR = 500,
+}
+
+HttpStatus :: struct {
+	code: HttpStatusCode,
+	text: string,
+}
+
+//IDk what the fuck #sparse does but the language server stopped yelling at me when I added it so fuck it - Marshall aka SchoolyB
+HttpStatusText :: #sparse[HttpStatusCode]string {
+	.OK           = "OK",
+	.BAD_REQUEST  = "Bad Request",
+	.NOT_FOUND    = "Not Found",
+	.SERVER_ERROR = "Internal Server Error",
 }

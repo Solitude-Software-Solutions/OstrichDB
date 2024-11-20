@@ -42,7 +42,7 @@ HISTORY :: "HISTORY"
 //Action Tokens
 NEW :: "NEW"
 BACKUP :: "BACKUP"
-ERASE :: "ERASE"`
+ERASE :: "ERASE"
 RENAME :: "RENAME"
 FETCH :: "FETCH"
 COUNT :: "COUNT"
@@ -114,4 +114,3 @@ BannedUserNames := []string {
 	"administrator",
 	"superuser",
 }
-

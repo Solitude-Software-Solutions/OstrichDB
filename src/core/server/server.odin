@@ -50,7 +50,6 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 handle_connection :: proc(socket: net.TCP_Socket) {
 	defer net.close(socket)
 
-	// Use fixed buffer instead of dynamic
 	buf: [1024]byte
 
 	fmt.println("Connection handler started")
@@ -68,19 +67,59 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 			return
 		}
 
+
+		//parse incoming request
+		method, path, headers := OST_PARSE_REQUEST(buf[:bytes_read])
+		fmt.printf("Parsed request - Method: %s, Path: %s\n", method, path)
+		for key, value in headers {
+			fmt.printf("Header - %s: %s\n", key, value)
+		}
+
+
+		//create response headers
+		responseHeaders := make(map[string]string)
+		responseHeaders["Content-Type"] = "text/plain"
+		responseHeaders["Server"] = "OstrichDB"
+
+		// prep response based on request
+		status: types.HttpStatus
+		responseBody: string
+
+		//if the method of path are empty, return a 400 Bad Request
+		if method == " " || path == "" {
+			status = types.HttpStatus {
+				code = .BAD_REQUEST,
+				text = types.HttpStatusText[.BAD_REQUEST],
+			}
+			responseBody = "Bad Request: Invalid HTTP request form\n"
+		} else {
+			status = types.HttpStatus {
+				code = .OK,
+				text = types.HttpStatusText[.OK],
+			}
+			responseBody = fmt.tprintf(
+				"Request processed succesfully!\nMethod: %s\nPath: %s\n",
+				method,
+				path,
+			)
+		}
+
+		//now build the response
+		response := OST_BUILD_RESPONSE(status, responseHeaders, responseBody)
+
+
 		fmt.printf("Received %d bytes: %s\n", bytes_read, string(buf[:bytes_read]))
 
-		response := "Hello From The OstrichDB Server!\n"
 		response_bytes := transmute([]byte)response
 
 		fmt.printf("Sending response: %s\n", response)
-		writeSuccess, write_err := net.send(socket, response_bytes)
+		_, write_err := net.send(socket, response)
 
 		if write_err != nil {
-			fmt.println("Error writing to socket: ", write_err)
+			fmt.println("Error writing to socket:", write_err)
 			return
 		}
 
-		fmt.printf("Response sent successfully: %d bytes\n", writeSuccess)
+		fmt.println("Response sent successfully")
 	}
 }
