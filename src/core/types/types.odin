@@ -185,9 +185,9 @@ Collection_File_Schema :: struct {
 }
 
 
-//Server Stuff
-//Server Stiff
-//Server Stuff
+//Server Stuff Below
+//Server Stiff Below
+//Server Stuff Below
 
 Server_Config :: struct {
 	port: int,
@@ -203,6 +203,30 @@ HttpStatusCode :: enum {
 HttpStatus :: struct {
 	code: HttpStatusCode,
 	text: string,
+}
+
+HttpMethod :: enum {
+	GET,
+	POST,
+	PUT,
+	DELETE,
+}
+
+RouteHanlder :: proc(
+	method: string,
+	path: string,
+	headers: map[string]string,
+) -> (
+	HttpStatus,
+	string,
+)
+Route :: struct {
+	method:  HttpMethod,
+	path:    string,
+	handler: RouteHanlder,
+}
+Router :: struct {
+	routes: [dynamic]Route,
 }
 
 //IDk what the fuck #sparse does but the language server stopped yelling at me when I added it so fuck it - Marshall aka SchoolyB

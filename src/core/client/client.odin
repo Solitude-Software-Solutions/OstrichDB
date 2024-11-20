@@ -13,7 +13,6 @@ import "core:net"
 //=========================================================//
 
 //This file is purely for testing server functionality and interaction with a client
-
 OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 	endpoint := net.Endpoint{net.IP4_Address{127, 0, 0, 1}, config.port}
 
@@ -25,18 +24,20 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 	}
 	defer net.close(client_socket)
 
+	//test request to get server version on /version endpoint
+	request := fmt.tprintf(
+		"GET /version HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		config.port,
+	)
+	request_bytes := transmute([]byte)request
 
-	message := "Test message from client\n"
-	message_bytes := transmute([]byte)message
-
-	fmt.println("Sending message to server...")
-	_, send_err := net.send(client_socket, message_bytes)
+	fmt.println("Sending HTTP GET request to /version...")
+	_, send_err := net.send(client_socket, request_bytes)
 	if send_err != nil {
-		fmt.println("Error sending message:", send_err)
+		fmt.println("Error sending request:", send_err)
 		return -1
 	}
 
-	// Receive response
 	buf: [1024]byte
 	fmt.println("Waiting for server response...")
 	bytes_read, recv_err := net.recv(client_socket, buf[:])
@@ -45,6 +46,6 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 		return -1
 	}
 
-	fmt.printf("Server response: %s\n", string(buf[:bytes_read]))
+	fmt.printf("Server response:\n%s\n", string(buf[:bytes_read]))
 	return 0
 }

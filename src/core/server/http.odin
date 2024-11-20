@@ -1,5 +1,6 @@
 package server
 
+import "../../utils"
 import "../types"
 import "core:fmt"
 import "core:strings"
@@ -65,6 +66,7 @@ OST_PARSE_REQUEST :: proc(
 	return method, path, headers
 }
 
+
 //builds an HTTP respons with the passed in status code, headers, and body.
 //returns the response as a byte array
 OST_BUILD_RESPONSE :: proc(
@@ -72,12 +74,13 @@ OST_BUILD_RESPONSE :: proc(
 	headers: map[string]string,
 	body: string,
 ) -> []byte {
-	// Start with status line
+
 	var := types.HttpStatusText
+	dbversion := fmt.tprintf("Server: %s\r\n", string(utils.get_ost_version()))
 	response := fmt.tprintf("HTTP/1.1 %d %s\r\n", int(status.code), var[status.code])
 
 	// Add default headers
-	response = strings.concatenate([]string{response, "Server: OstrichDB v0.5.0\r\n"})
+	response = strings.concatenate([]string{response, dbversion})
 	response = strings.concatenate(
 		[]string{response, fmt.tprintf("Content-Length: %d\r\n", len(body))},
 	)
@@ -86,15 +89,13 @@ OST_BUILD_RESPONSE :: proc(
 		response = strings.concatenate([]string{response, fmt.tprintf("%s: %s\r\n", key, value)})
 	}
 
-	// Add blank line to separate headers from body
+
 	response = strings.concatenate([]string{response, "\r\n"})
 
-	// Add body if present
+	//if theres a body, add it to the response
 	if len(body) > 0 {
 		response = strings.concatenate([]string{response, body})
 	}
 
 	return transmute([]byte)response
 }
-
-//Procedure that handles a GET request from the OstrichDB server

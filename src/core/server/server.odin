@@ -11,9 +11,13 @@ import "core:net"
 // Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
+router: ^types.Router
 
 OST_START_SERVER :: proc(config: types.Server_Config) -> int {
+	router = OST_NEW_ROUTER()
 
+	//test route
+	OST_ADD_ROUTE(router, .GET, "/version", handle_version_request)
 	//Create a new endpoint to listen on
 	endpoint := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, config.port} //listen on all interfaces
 
@@ -51,7 +55,6 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 	defer net.close(socket)
 
 	buf: [1024]byte
-
 	fmt.println("Connection handler started")
 
 	for {
@@ -59,7 +62,7 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 		bytes_read, read_err := net.recv(socket, buf[:])
 
 		if read_err != nil {
-			fmt.println("Error reading from socket: ", read_err)
+			fmt.println("Error reading from socket:", read_err)
 			return
 		}
 		if bytes_read == 0 {
@@ -67,52 +70,20 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 			return
 		}
 
-
-		//parse incoming request
+		// Parse incoming request
 		method, path, headers := OST_PARSE_REQUEST(buf[:bytes_read])
-		fmt.printf("Parsed request - Method: %s, Path: %s\n", method, path)
-		for key, value in headers {
-			fmt.printf("Header - %s: %s\n", key, value)
-		}
+		fmt.printf("Parsed request - Method: %s, Path: %s\n", method, path) //debuggging
 
+		// Create response headers
+		response_headers := make(map[string]string)
+		response_headers["Content-Type"] = "text/plain"
+		response_headers["Server"] = "OstrichDB"
 
-		//create response headers
-		responseHeaders := make(map[string]string)
-		responseHeaders["Content-Type"] = "text/plain"
-		responseHeaders["Server"] = "OstrichDB"
+		// Handle the request using router
+		status, response_body := OST_HANDLE_REQUEST(router, method, path, headers)
 
-		// prep response based on request
-		status: types.HttpStatus
-		responseBody: string
-
-		//if the method of path are empty, return a 400 Bad Request
-		if method == " " || path == "" {
-			status = types.HttpStatus {
-				code = .BAD_REQUEST,
-				text = types.HttpStatusText[.BAD_REQUEST],
-			}
-			responseBody = "Bad Request: Invalid HTTP request form\n"
-		} else {
-			status = types.HttpStatus {
-				code = .OK,
-				text = types.HttpStatusText[.OK],
-			}
-			responseBody = fmt.tprintf(
-				"Request processed succesfully!\nMethod: %s\nPath: %s\n",
-				method,
-				path,
-			)
-		}
-
-		//now build the response
-		response := OST_BUILD_RESPONSE(status, responseHeaders, responseBody)
-
-
-		fmt.printf("Received %d bytes: %s\n", bytes_read, string(buf[:bytes_read]))
-
-		response_bytes := transmute([]byte)response
-
-		fmt.printf("Sending response: %s\n", response)
+		// Build and send response
+		response := OST_BUILD_RESPONSE(status, response_headers, response_body)
 		_, write_err := net.send(socket, response)
 
 		if write_err != nil {
