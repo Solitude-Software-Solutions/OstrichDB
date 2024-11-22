@@ -26,6 +26,11 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 		"GET /version HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
 		config.port,
 	)
+	//test request to get a specific cluster on /collection/foo/cluster/bar endpoint
+	// request := fmt.tprintf(
+	// 	"GET /collection/foo/cluster/bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+	// 	config.port,
+	// )
 	request_bytes := transmute([]byte)request
 
 	fmt.println("Sending HTTP GET request to /version...")

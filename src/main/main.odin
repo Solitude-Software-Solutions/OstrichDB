@@ -41,7 +41,7 @@ main :: proc() {
 	// if config.OST_READ_CONFIG_VALUE(const.configFive) == "true" {
 	// server.OST_START_SERVER(Config) //When testing the server, uncomment this line and comment out the client.OST_TEST_CLIENT(Config) line
 	// }
-	// client.OST_TEST_CLIENT(Config) //When testing the client, uncomment this line and comment out the server.OST_START_SERVER(Config) line
+	client.OST_TEST_CLIENT(Config) //When testing the client, uncomment this line and comment out the server.OST_START_SERVER(Config) line
 
 	engine.run()
 }
