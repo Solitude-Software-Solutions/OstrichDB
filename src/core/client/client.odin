@@ -1,10 +1,7 @@
 package client
-
 import "../types"
 import "core:fmt"
 import "core:net"
-
-
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //

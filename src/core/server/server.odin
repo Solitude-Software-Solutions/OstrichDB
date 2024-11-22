@@ -1,10 +1,8 @@
 package server
-
 import "../../utils"
 import "../types"
 import "core:fmt"
 import "core:net"
-
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
@@ -17,7 +15,7 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	router = OST_NEW_ROUTER()
 
 	//test route
-	OST_ADD_ROUTE(router, .GET, "/version", handle_version_request)
+	OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_VERSION_REQ)
 	//Create a new endpoint to listen on
 	endpoint := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, config.port} //listen on all interfaces
 

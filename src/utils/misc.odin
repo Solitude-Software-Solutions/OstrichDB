@@ -1,5 +1,4 @@
 package utils
-
 import "../core/types"
 import "core:fmt"
 import "core:os"

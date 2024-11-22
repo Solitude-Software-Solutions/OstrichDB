@@ -17,7 +17,7 @@ import "core:time"
 //=========================================================//
 
 //moves the passed in collection file from the collections dir to the quarantine dir
-OST_QURANTINE_COLLECTION :: proc(fn: string) -> int {
+OST_QUARANTINE_COLLECTION :: proc(fn: string) -> int {
 	collectionFile := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,

@@ -1,5 +1,4 @@
 package server
-
 import "../../utils"
 import "../types"
 import "core:fmt"

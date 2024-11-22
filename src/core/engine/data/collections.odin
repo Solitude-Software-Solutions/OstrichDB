@@ -48,7 +48,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	{
 	case 0:
 		//standard cluster file
-		if OST_PREFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
+		if OST_PERFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
 			return false
 		}
 		pathNameExtension := fmt.tprintf(
@@ -74,7 +74,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		break
 	case 1:
 		//secure file
-		if OST_PREFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
+		if OST_PERFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
 			return false
 		}
 		pathNameExtension := fmt.tprintf(
@@ -205,7 +205,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 }
 
 
-OST_PREFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
+OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 	nameAsBytes := transmute([]byte)fn
 	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH_AS_BYTES) {
 		fmt.printfln("Given file name is too long, Cannot exceed 512 bytes")

@@ -1,5 +1,4 @@
 package server
-
 import "../types"
 import "core:fmt"
 import "core:strings"
@@ -23,13 +22,13 @@ OST_ADD_ROUTE :: proc(
 	router: ^types.Router,
 	method: types.HttpMethod,
 	path: string,
-	handler: types.RouteHanlder,
+	handler: types.RouteHandler,
 ) {
 
 	route := types.Route {
-		method  = method,
-		path    = path,
-		handler = handler,
+		m = method,
+		p = path,
+		h = handler,
 	}
 	append(&router.routes, route)
 }
@@ -45,8 +44,8 @@ OST_HANDLE_REQUEST :: proc(
 	response: string,
 ) {
 	for route in router.routes {
-		if strings.compare(path, route.path) == 0 {
-			return route.handler(method, path, headers)
+		if strings.compare(path, route.p) == 0 {
+			return route.h(method, path, headers)
 		}
 	}
 

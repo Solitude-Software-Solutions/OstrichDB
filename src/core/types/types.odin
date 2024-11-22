@@ -152,7 +152,7 @@ data_integrity_checks: Data_Integrity_Checks
 
 
 Data_Integrity_Checks :: struct {
-	File_Size:           Data_Integrity_Info, //ensure file size isnt larger thant const.MAX_FILE_SIZE. LOW SEVERITY
+	File_Size:           Data_Integrity_Info, //ensure file size isnt larger than const.MAX_FILE_SIZE. LOW SEVERITY
 	File_Format:         Data_Integrity_Info, //ensure proper format of the file ie closing brackets, commas, etc... HIGH SEVERITY
 	File_Format_Version: Data_Integrity_Info, //ensure that the file format version is compliant with the current version. MEDIUM SEVERITY
 	Cluster_IDs:         Data_Integrity_Info, //ensure that the value of all cluster ids within a collection are in the cache. HIGH SEVERITY
@@ -212,18 +212,14 @@ HttpMethod :: enum {
 	DELETE,
 }
 
-RouteHanlder :: proc(
-	method: string,
-	path: string,
-	headers: map[string]string,
-) -> (
-	HttpStatus,
-	string,
-)
+// m -  method p - path h - headers
+RouteHandler :: proc(m: string, p: string, h: map[string]string) -> (HttpStatus, string)
+
+
 Route :: struct {
-	method:  HttpMethod,
-	path:    string,
-	handler: RouteHanlder,
+	m: HttpMethod, //method
+	p: string, //path
+	h: RouteHandler, //handler
 }
 Router :: struct {
 	routes: [dynamic]Route,
