@@ -206,6 +206,7 @@ HttpStatus :: struct {
 }
 
 HttpMethod :: enum {
+	HEAD,
 	GET,
 	POST,
 	PUT,

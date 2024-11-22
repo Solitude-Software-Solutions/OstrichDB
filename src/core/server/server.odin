@@ -14,9 +14,11 @@ router: ^types.Router
 OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	router = OST_NEW_ROUTER()
 
-	//test route
-	OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
-	OST_ADD_ROUTE(router, .GET, "/collection/foo/cluster/bar", OST_HANDLE_GET_REQ) //todo this is a test. will end up linking with SDK and allowing user to define routes
+	//test routes
+	//todo all these are test endpoints. will end up linking with SDK and allowing user to define routes
+	OST_ADD_ROUTE(router, .HEAD, "/collection/foo/cluster/bar", OST_HANDLE_HEAD_REQ)
+	// OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
+	// OST_ADD_ROUTE(router, .GET, "/collection/foo/cluster/bar", OST_HANDLE_GET_REQ)
 	//Create a new endpoint to listen on
 	endpoint := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, config.port} //listen on all interfaces
 

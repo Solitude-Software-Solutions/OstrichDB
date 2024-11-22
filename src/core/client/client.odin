@@ -20,20 +20,28 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 		return -1
 	}
 	defer net.close(client_socket)
+	request: string
 
 	//test request to get server version on /version endpoint
-	request := fmt.tprintf(
-		"GET /version HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
-		config.port,
-	)
+	// request = fmt.tprintf(
+	// 	"GET /version HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+	// 	config.port,
+	// )
+
 	//test request to get a specific cluster on /collection/foo/cluster/bar endpoint
-	// request := fmt.tprintf(
+	// request = fmt.tprintf(
 	// 	"GET /collection/foo/cluster/bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
 	// 	config.port,
 	// )
+
+	// test request to get header information using HEAD method on /collection/foo/cluster/bar endpoint
+	request = fmt.tprintf(
+		"HEAD /collection/foo/cluster/bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		config.port,
+	)
+
 	request_bytes := transmute([]byte)request
 
-	fmt.println("Sending HTTP GET request to /version...")
 	_, send_err := net.send(client_socket, request_bytes)
 	if send_err != nil {
 		fmt.println("Error sending request:", send_err)

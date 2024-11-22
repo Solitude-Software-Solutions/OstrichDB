@@ -14,6 +14,10 @@ import "core:strings"
 // Note: Although some procs follow the `RouteHandler` procdure signature, they dont all use the params that are expected. But, they all MUST follow this signature
 // because they are all called by the `OST_ADD_ROUTE` proc in server.odin which expects them to have this signature - Marshall A Burns aka @SchoolyB
 
+OST_PATH_SPLITTER :: proc(p: string) -> []string {
+	return strings.split(strings.trim_prefix(p, "/"), "/")
+}
+
 //Handles all GET requests from the client
 OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpStatus, string) {
 	if m != "GET" {
@@ -24,7 +28,7 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 	collectionName, clusterName, recordName: string
 
 	// Split the path into segments
-	pathSegments := strings.split(strings.trim_prefix(p, "/"), "/")
+	pathSegments := OST_PATH_SPLITTER(p)
 	segments := len(pathSegments)
 
 	defer delete(pathSegments)
@@ -71,14 +75,6 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 		}
 		break
 	case "version":
-		if m != "GET" {
-			return types.HttpStatus {
-					code = .BAD_REQUEST,
-					text = types.HttpStatusText[.BAD_REQUEST],
-				},
-				"Method not allowed\n"
-		}
-
 		version := utils.get_ost_version()
 		return types.HttpStatus {
 			code = .OK,
@@ -88,4 +84,65 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 	}
 	return types.HttpStatus{code = .NOT_FOUND, text = types.HttpStatusText[.NOT_FOUND]},
 		"Not Found\n"
+}
+
+// Handles the HEAD request from the client
+// Sends the http status code, metadata like the server name and version, content type, and content length
+OST_HANDLE_HEAD_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpStatus, string) {
+	fmt.printfln("Method: %s", m)
+	fmt.printfln("Path: %s", p)
+	fmt.printfln("Headers: %s", h)
+	if m != "HEAD" {
+		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+			"Method not allowed\n"
+	}
+	headers: string
+	//The responsebody is NOT returned in the HEAD request. Only used to calculate the content length
+	status, responseBody := OST_HANDLE_GET_REQ("GET", strings.to_upper(p), h)
+	fmt.printfln("Status code: %s", status.code)
+	fmt.printfln("Response body: %s", responseBody)
+
+	if status.code != .OK {
+		return status, ""
+	}
+	pathSegments := OST_PATH_SPLITTER(p)
+	switch (len(pathSegments)) {
+	case 0:
+		//there is no path, so we are just fetching the root
+		contentLength := len(responseBody)
+
+		headers := fmt.tprintf(
+			"Server: %s/%s\n" +
+			"Content-Type: text/plain\n" +
+			"Content-Length: %d\n" +
+			"Accept-Ranges: bytes\n" +
+			"Cache-Control: no-cache\n" +
+			"Connection: keep-alive\n",
+			"OstrichDB",
+			string(utils.get_ost_version()),
+			contentLength,
+		)
+		break
+	case:
+		// collectionName := strings.to_upper(pathSegments[1])
+		// clusterName := strings.to_upper(pathSegments[3])
+		// recordName := strings.to_upper(pathSegments[5])
+		contentLength := len(responseBody)
+
+		headers := fmt.tprintf(
+			"Server: %s/%s\n" +
+			"Content-Type: text/plain\n" +
+			"Content-Length: %d\n" +
+			"Accept-Ranges: bytes\n" +
+			"Cache-Control: no-cache\n" +
+			"Connection: keep-alive\n",
+			"OstrichDB",
+			string(utils.get_ost_version()),
+			contentLength,
+		)
+		break
+	}
+
+
+	return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]}, headers
 }
