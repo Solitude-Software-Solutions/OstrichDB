@@ -154,6 +154,7 @@ OST_HANDLE_PUT_REQ :: proc(
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Record type required\n"
 	}
+	recordType = strings.to_upper(recordType)
 	//TODO: This one is gonna fuckin suck.
 	// Need to do several things for each data object/layer
 	// need to gather what the user is trying to 'PUT' from the client side
@@ -166,15 +167,19 @@ OST_HANDLE_PUT_REQ :: proc(
 
 	defer delete(pathSegments)
 
-	collectionName := pathSegments[1]
-	clusterName := pathSegments[3]
-	recordName := pathSegments[5]
+	collectionName := strings.to_upper(pathSegments[1])
+	clusterName := strings.to_upper(pathSegments[3])
+	recordName := strings.to_upper(pathSegments[5])
 
 	switch (pathSegments[0]) 
 	{
 	case "collection":
-		// In the event of something like: /collection/collecion_name
-		if segments == 2 {
+		switch (segments) 
+		{
+		case 2:
+			// In the event of something like: /collection/collecion_name
+			// //TODO: What about if the user wants to rename a collection???
+			//Answer: Will need to use query params like I am doing for records below....
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
 				data.OST_CREATE_COLLECTION(collectionName, 0)
@@ -188,9 +193,8 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.BAD_REQUEST],
 				}, fmt.tprintf("COLLECTION: %s already exists", collectionName)
 			}
-			//TODO: What about if the user wants to rename a collection???
-			//Answer: Will need to use query params like I am doing for records below....
-		} else if segments == 4 { 	// In the event of something like: /collection/collection_name/cluster_name
+		case 4:
+			// In the event of something like: /collection/collection_name/cluster_name
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
 				return types.HttpStatus {
@@ -207,7 +211,8 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.OK],
 				}, fmt.tprintf("New CLUSTER: %s created sucessfully", clusterName)
 			}
-		} else if segments == 6 { 	// in the event of something like: /collection/collection_name/cluster/cluster_name/record/record_name
+		case 6:
+			// in the event of something like: /collection/collection_name/cluster/cluster_name/record/record_name
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
 				return types.HttpStatus {
@@ -244,14 +249,15 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.BAD_REQUEST],
 				}, fmt.tprintf("RECORD: %s already exists", pathSegments[5])
 			}
-
 		}
 
 	}
-
+	return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+		"Invalid path\n"
 }
 
 
+//helper proc to parse query string into a map
 parse_query_string :: proc(query: string) -> map[string]string {
 	params := make(map[string]string)
 	pairs := strings.split(query, "&")
