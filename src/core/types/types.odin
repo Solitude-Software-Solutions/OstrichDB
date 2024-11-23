@@ -214,7 +214,15 @@ HttpMethod :: enum {
 }
 
 // m -  method p - path h - headers
-RouteHandler :: proc(m: string, p: string, h: map[string]string) -> (HttpStatus, string)
+RouteHandler :: proc(
+	m: string,
+	p: string,
+	h: map[string]string,
+	params: ..string,
+) -> (
+	HttpStatus,
+	string,
+)
 
 
 Route :: struct {

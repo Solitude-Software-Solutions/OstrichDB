@@ -20,7 +20,6 @@ OST_PATH_SPLITTER :: proc(p: string) -> []string {
 
 //Handles all GET requests from the client
 OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpStatus, string) {
-	fmt.printfln("Method: %s", m)
 	if m != "GET" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Method not allowed\n"
@@ -123,4 +122,145 @@ OST_HANDLE_HEAD_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSt
 		contentLength,
 	)
 	return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]}, headers
+}
+
+
+//Handles PUT requests from the client
+//PUT allows the client to update/overwrite a collection, cluster or record in the database or create a new one if none exists
+OST_HANDLE_PUT_REQ :: proc(
+	m, p: string,
+	h: map[string]string,
+	params: ..string,
+) -> (
+	types.HttpStatus,
+	string,
+) {
+	if m != "PUT" {
+		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+			"Method not allowed\n"
+	}
+
+	pathAndQuery := strings.split(p, "?")
+	if len(pathAndQuery) != 2 {
+		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+			"Query parameters required\n"
+	}
+
+	query := pathAndQuery[1]
+	queryParams := parse_query_string(query) //found below this proc
+
+	recordType, typeExists := queryParams["type"]
+	if !typeExists {
+		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+			"Record type required\n"
+	}
+	//TODO: This one is gonna fuckin suck.
+	// Need to do several things for each data object/layer
+	// First ensure the data layer exists
+	// Second need to gather what the user is trying to 'PUT' from the client side
+	// Third need to perform the PUT request. These steps need to be done for each data object as well as the following non-destructive DB operations:
+	// NEW, RENAME, and mayeb PURGE???
+	collectionName, clusterName, recordName: string
+	colExists, cluExists, recExists: bool
+
+	pathSegments := OST_PATH_SPLITTER(p)
+	segments := len(pathSegments)
+
+	defer delete(pathSegments)
+
+	switch (pathSegments[0]) 
+	{
+	case "collection":
+		// In the event of something like: /collection/collecion_name
+		if segments == 2 {
+			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(pathSegments[1], 0)
+			if !colExists {
+				data.OST_CREATE_COLLECTION(pathSegments[1], 0)
+				return types.HttpStatus {
+					code = .OK,
+					text = types.HttpStatusText[.OK],
+				}, fmt.tprintf("New COLLECTION: %s created sucessfully", pathSegments[1])
+			} else {
+				return types.HttpStatus {
+					code = .BAD_REQUEST,
+					text = types.HttpStatusText[.BAD_REQUEST],
+				}, fmt.tprintf("COLLECTION: %s already exists", pathSegments[1])
+			}
+			//TODO: What about if the user wants to rename a collection???
+		} else if segments == 4 { 	// In the event of something like: /collection/collection_name/cluster_name
+			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(pathSegments[1], 0)
+			if !colExists {
+				return types.HttpStatus {
+					code = .NOT_FOUND,
+					text = types.HttpStatusText[.NOT_FOUND],
+				}, fmt.tprintf("COLLECTION: %s not found", pathSegments[1])
+			}
+			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(pathSegments[1], pathSegments[3])
+			if !cluExists {
+				id := data.OST_GENERATE_CLUSTER_ID()
+				data.OST_CREATE_CLUSTER_FROM_CL(pathSegments[1], pathSegments[3], id)
+				return types.HttpStatus {
+					code = .OK,
+					text = types.HttpStatusText[.OK],
+				}, fmt.tprintf("New CLUSTER: %s created sucessfully", pathSegments[3])
+			}
+		} else if segments == 6 { 	// in the event of something like: /collection/collection_name/cluster/cluster_name/record/record_name
+			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(pathSegments[1], 0)
+			if !colExists {
+				return types.HttpStatus {
+					code = .NOT_FOUND,
+					text = types.HttpStatusText[.NOT_FOUND],
+				}, fmt.tprintf("COLLECTION: %s not found", pathSegments[1])
+			}
+			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(pathSegments[1], pathSegments[3])
+			if !cluExists {
+				return types.HttpStatus {
+					code = .NOT_FOUND,
+					text = types.HttpStatusText[.NOT_FOUND],
+				}, fmt.tprintf("CLUSTER: %s not found", pathSegments[3])
+			}
+
+			recExists = data.OST_CHECK_IF_RECORD_EXISTS(
+				pathSegments[1],
+				pathSegments[3],
+				pathSegments[5],
+			)
+			if !recExists {
+				//using query parameters to get/set the record data
+				// Example: /collection/collection_name/cluster/cluster_name/record/record_name?type=string&value=hello
+				data.OST_APPEND_RECORD_TO_CLUSTER(
+					pathSegments[1],
+					pathSegments[3],
+					pathSegments[5],
+					queryParams["value"],
+					recordType,
+				)
+				return types.HttpStatus {
+					code = .OK,
+					text = types.HttpStatusText[.OK],
+				}, fmt.tprintf("New RECORD: %s created sucessfully", pathSegments[5])
+			} else {
+				return types.HttpStatus {
+					code = .BAD_REQUEST,
+					text = types.HttpStatusText[.BAD_REQUEST],
+				}, fmt.tprintf("RECORD: %s already exists", pathSegments[5])
+			}
+
+		}
+
+	}
+
+}
+
+
+parse_query_string :: proc(query: string) -> map[string]string {
+	params := make(map[string]string)
+	pairs := strings.split(query, "&")
+	for pair in pairs {
+		kv := strings.split(pair, "=")
+		if len(kv) == 2 {
+			params[kv[0]] = kv[1]
+		}
+	}
+	return params
 }
