@@ -41,7 +41,7 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 	case "collection":
 		if len(pathSegments) == 2 {
 			// Get entire collection
-			collectionName = pathSegments[1]
+			collectionName = collectionName
 
 			return types.HttpStatus {
 				code = .OK,
@@ -49,14 +49,14 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 			}, data.OST_FETCH_COLLECTION(strings.to_upper(collectionName))
 		} else if len(pathSegments) == 4 {
 			// /collection/collectionName/cluster
-			collectionName = pathSegments[1]
+			collectionName = collectionName
 			clusterName = pathSegments[3]
 			return types.HttpStatus {
 				code = .OK,
 				text = types.HttpStatusText[.OK],
 			}, data.OST_FETCH_CLUSTER(strings.to_upper(collectionName), strings.to_upper(clusterName))
 		} else if len(pathSegments) == 6 {
-			collectionName = pathSegments[1]
+			collectionName = collectionName
 			clusterName = pathSegments[3]
 			recordName = pathSegments[5]
 
@@ -160,7 +160,6 @@ OST_HANDLE_PUT_REQ :: proc(
 	// Second need to gather what the user is trying to 'PUT' from the client side
 	// Third need to perform the PUT request. These steps need to be done for each data object as well as the following non-destructive DB operations:
 	// NEW, RENAME, and mayeb PURGE???
-	collectionName, clusterName, recordName: string
 	colExists, cluExists, recExists: bool
 
 	pathSegments := OST_PATH_SPLITTER(p)
@@ -168,70 +167,70 @@ OST_HANDLE_PUT_REQ :: proc(
 
 	defer delete(pathSegments)
 
+	collectionName := pathSegments[1]
+	clusterName := pathSegments[3]
+	recordName := pathSegments[5]
+
 	switch (pathSegments[0]) 
 	{
 	case "collection":
 		// In the event of something like: /collection/collecion_name
 		if segments == 2 {
-			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(pathSegments[1], 0)
+			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
-				data.OST_CREATE_COLLECTION(pathSegments[1], 0)
+				data.OST_CREATE_COLLECTION(collectionName, 0)
 				return types.HttpStatus {
 					code = .OK,
 					text = types.HttpStatusText[.OK],
-				}, fmt.tprintf("New COLLECTION: %s created sucessfully", pathSegments[1])
+				}, fmt.tprintf("New COLLECTION: %s created sucessfully", collectionName)
 			} else {
 				return types.HttpStatus {
 					code = .BAD_REQUEST,
 					text = types.HttpStatusText[.BAD_REQUEST],
-				}, fmt.tprintf("COLLECTION: %s already exists", pathSegments[1])
+				}, fmt.tprintf("COLLECTION: %s already exists", collectionName)
 			}
 			//TODO: What about if the user wants to rename a collection???
 		} else if segments == 4 { 	// In the event of something like: /collection/collection_name/cluster_name
-			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(pathSegments[1], 0)
+			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
 				return types.HttpStatus {
 					code = .NOT_FOUND,
 					text = types.HttpStatusText[.NOT_FOUND],
-				}, fmt.tprintf("COLLECTION: %s not found", pathSegments[1])
+				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
 			}
-			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(pathSegments[1], pathSegments[3])
+			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName)
 			if !cluExists {
 				id := data.OST_GENERATE_CLUSTER_ID()
-				data.OST_CREATE_CLUSTER_FROM_CL(pathSegments[1], pathSegments[3], id)
+				data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
 				return types.HttpStatus {
 					code = .OK,
 					text = types.HttpStatusText[.OK],
-				}, fmt.tprintf("New CLUSTER: %s created sucessfully", pathSegments[3])
+				}, fmt.tprintf("New CLUSTER: %s created sucessfully", clusterName)
 			}
 		} else if segments == 6 { 	// in the event of something like: /collection/collection_name/cluster/cluster_name/record/record_name
-			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(pathSegments[1], 0)
+			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
 				return types.HttpStatus {
 					code = .NOT_FOUND,
 					text = types.HttpStatusText[.NOT_FOUND],
-				}, fmt.tprintf("COLLECTION: %s not found", pathSegments[1])
+				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
 			}
-			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(pathSegments[1], pathSegments[3])
+			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName)
 			if !cluExists {
 				return types.HttpStatus {
 					code = .NOT_FOUND,
 					text = types.HttpStatusText[.NOT_FOUND],
-				}, fmt.tprintf("CLUSTER: %s not found", pathSegments[3])
+				}, fmt.tprintf("CLUSTER: %s not found", clusterName)
 			}
 
-			recExists = data.OST_CHECK_IF_RECORD_EXISTS(
-				pathSegments[1],
-				pathSegments[3],
-				pathSegments[5],
-			)
+			recExists = data.OST_CHECK_IF_RECORD_EXISTS(collectionName, clusterName, recordName)
 			if !recExists {
 				//using query parameters to get/set the record data
 				// Example: /collection/collection_name/cluster/cluster_name/record/record_name?type=string&value=hello
 				data.OST_APPEND_RECORD_TO_CLUSTER(
-					pathSegments[1],
-					pathSegments[3],
-					pathSegments[5],
+					collectionName,
+					clusterName,
+					recordName,
 					queryParams["value"],
 					recordType,
 				)
