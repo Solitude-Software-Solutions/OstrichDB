@@ -156,10 +156,9 @@ OST_HANDLE_PUT_REQ :: proc(
 	}
 	//TODO: This one is gonna fuckin suck.
 	// Need to do several things for each data object/layer
-	// First ensure the data layer exists
-	// Second need to gather what the user is trying to 'PUT' from the client side
-	// Third need to perform the PUT request. These steps need to be done for each data object as well as the following non-destructive DB operations:
-	// NEW, RENAME, and mayeb PURGE???
+	// need to gather what the user is trying to 'PUT' from the client side
+	// need to perform the PUT request. These steps need to be done for each data object as well as the following non-destructive DB operations:
+	// NEW, RENAME, and SET
 	colExists, cluExists, recExists: bool
 
 	pathSegments := OST_PATH_SPLITTER(p)
@@ -190,6 +189,7 @@ OST_HANDLE_PUT_REQ :: proc(
 				}, fmt.tprintf("COLLECTION: %s already exists", collectionName)
 			}
 			//TODO: What about if the user wants to rename a collection???
+			//Answer: Will need to use query params like I am doing for records below....
 		} else if segments == 4 { 	// In the event of something like: /collection/collection_name/cluster_name
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
@@ -231,7 +231,7 @@ OST_HANDLE_PUT_REQ :: proc(
 					collectionName,
 					clusterName,
 					recordName,
-					queryParams["value"],
+					queryParams["value"], //So when using this proc from command line the value is an empty string but from client it is the value the user wants to set
 					recordType,
 				)
 				return types.HttpStatus {
