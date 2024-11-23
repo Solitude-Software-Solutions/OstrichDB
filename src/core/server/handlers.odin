@@ -20,6 +20,7 @@ OST_PATH_SPLITTER :: proc(p: string) -> []string {
 
 //Handles all GET requests from the client
 OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpStatus, string) {
+	fmt.printfln("Method: %s", m)
 	if m != "GET" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Method not allowed\n"
@@ -35,7 +36,7 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 	// Handle different path GET routes patterns
 
 	// when fetching unqueryied data the first segment will always be the word collection
-	fmt.println("Length of segments in path: %s", len(pathSegments)) //debugging
+	// fmt.println("Length of segments in path: %d", len(pathSegments)) //debugging
 
 	switch (pathSegments[0]) {
 	case "collection":
@@ -73,7 +74,6 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 			record := fmt.tprintf("%s%s%s", recordName, recordType, recordValue)
 			return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]}, record
 		}
-		break
 	case "version":
 		version := utils.get_ost_version()
 		return types.HttpStatus {
@@ -89,60 +89,38 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 // Handles the HEAD request from the client
 // Sends the http status code, metadata like the server name and version, content type, and content length
 OST_HANDLE_HEAD_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpStatus, string) {
-	fmt.printfln("Method: %s", m)
-	fmt.printfln("Path: %s", p)
-	fmt.printfln("Headers: %s", h)
+	// fmt.printfln("Method: %s", m) //debugging
+	// fmt.printfln("Path: %s", p) //debugging
+	// fmt.printfln("Headers: %s", h) //debugging
 	if m != "HEAD" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Method not allowed\n"
 	}
-	headers: string
 	//The responsebody is NOT returned in the HEAD request. Only used to calculate the content length
-	status, responseBody := OST_HANDLE_GET_REQ("GET", strings.to_upper(p), h)
-	fmt.printfln("Status code: %s", status.code)
-	fmt.printfln("Response body: %s", responseBody)
+	status, responseBody := OST_HANDLE_GET_REQ("GET", p, h)
+	// fmt.printfln("Status code: %s", status.code) //debugging
+	// fmt.printfln("Response body: %s", responseBody) //debugging
 
 	if status.code != .OK {
 		return status, ""
 	}
 	pathSegments := OST_PATH_SPLITTER(p)
-	switch (len(pathSegments)) {
-	case 0:
-		//there is no path, so we are just fetching the root
-		contentLength := len(responseBody)
-
-		headers := fmt.tprintf(
-			"Server: %s/%s\n" +
-			"Content-Type: text/plain\n" +
-			"Content-Length: %d\n" +
-			"Accept-Ranges: bytes\n" +
-			"Cache-Control: no-cache\n" +
-			"Connection: keep-alive\n",
-			"OstrichDB",
-			string(utils.get_ost_version()),
-			contentLength,
-		)
-		break
-	case:
-		// collectionName := strings.to_upper(pathSegments[1])
-		// clusterName := strings.to_upper(pathSegments[3])
-		// recordName := strings.to_upper(pathSegments[5])
-		contentLength := len(responseBody)
-
-		headers := fmt.tprintf(
-			"Server: %s/%s\n" +
-			"Content-Type: text/plain\n" +
-			"Content-Length: %d\n" +
-			"Accept-Ranges: bytes\n" +
-			"Cache-Control: no-cache\n" +
-			"Connection: keep-alive\n",
-			"OstrichDB",
-			string(utils.get_ost_version()),
-			contentLength,
-		)
-		break
-	}
+	// fmt.printfln("Path segments: %s", pathSegments) //debugging
+	// fmt.printfln("Length of path segments: %ss", len(pathSegments)) //debugging
+	//there is no path, so we are just fetching the root
+	contentLength := len(responseBody)
 
 
+	headers := fmt.tprintf(
+		"Server: %s/%s\n" +
+		"Content-Type: text/plain\n" +
+		"Content-Length: %d\n" +
+		"Accept-Ranges: bytes\n" +
+		"Cache-Control: no-cache\n" +
+		"Connection: keep-alive\n",
+		"OstrichDB",
+		string(utils.get_ost_version()),
+		contentLength,
+	)
 	return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]}, headers
 }

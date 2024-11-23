@@ -23,10 +23,10 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 	request: string
 
 	//test request to get server version on /version endpoint
-	// request = fmt.tprintf(
-	// 	"GET /version HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
-	// 	config.port,
-	// )
+	request = fmt.tprintf(
+		"GET /version HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		config.port,
+	)
 
 	//test request to get a specific cluster on /collection/foo/cluster/bar endpoint
 	// request = fmt.tprintf(
@@ -35,10 +35,10 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 	// )
 
 	// test request to get header information using HEAD method on /collection/foo/cluster/bar endpoint
-	request = fmt.tprintf(
-		"HEAD /collection/foo/cluster/bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
-		config.port,
-	)
+	// request = fmt.tprintf(
+	// 	"HEAD /collection/foo/cluster/bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+	// 	config.port,
+	// )
 
 	request_bytes := transmute([]byte)request
 
