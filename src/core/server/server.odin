@@ -15,19 +15,20 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	router = OST_NEW_ROUTER()
 
 	//test routes
-	//todo: all these are test endpoints. will end up linking with SDK and allowing user to define routes
+	//todo: all these are test routes. will end up linking with SDK and allowing user to define routes
 	//todo: seems like only one route can be added at a time. If more than one is added we
 	// get "Method Not Found"...idk why - Marshall Burns aka SchoolyB
 
 	// OST_ADD_ROUTE(router, .HEAD, "/collection/foo/cluster/bar", OST_HANDLE_HEAD_REQ)
 	// OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
 	// OST_ADD_ROUTE(router, .GET, "/collection/foo/cluster/bar", OST_HANDLE_GET_REQ)
-	OST_ADD_ROUTE(
-		router,
-		.PUT,
-		"/collection/foo/cluster/bar/record/baz?type=string&value=goodbye",
-		OST_HANDLE_PUT_REQ,
-	)
+	// OST_ADD_ROUTE(
+	// 	router,
+	// 	.PUT,
+	// 	"/collection/foo/cluster/bar/record/baz?type=string&value=goodbye",
+	// 	OST_HANDLE_PUT_REQ,
+	// )
+	OST_ADD_ROUTE(router, .DELETE, "/collection/foo", OST_HANDLE_DELETE_REQ)
 	// fmt.println("Routes after adding: ", router.routes) //debugging
 
 	//Create a new endpoint to listen on

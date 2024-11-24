@@ -67,8 +67,6 @@ OST_HANDLE_GET_REQ :: proc(
 			clusterName = pathSegments[3]
 			recordName = pathSegments[5]
 
-			//todo: the fetch record proc doesnt just return a string value, it returns a type AND a bool so this will need to be updated
-			//had to write some filthy code to get this to work
 			recordData, fetchSuccess := data.OST_FETCH_RECORD(
 				strings.to_upper(collectionName),
 				strings.to_upper(clusterName),
@@ -190,8 +188,6 @@ OST_HANDLE_PUT_REQ :: proc(
 		{
 		case 2:
 			// In the event of something like: /collection/collecion_name
-			// //TODO: What about if the user wants to rename a collection???
-			//Answer: Will need to use query params like I am doing for records below....
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
 				data.OST_CREATE_COLLECTION(collectionName, 0)
@@ -303,7 +299,72 @@ OST_HANDLE_PUT_REQ :: proc(
 		"Invalid path\n"
 }
 
+// handles the DELETE request from the client
+OST_HANDLE_DELETE_REQ :: proc(
+	m, p: string,
+	h: map[string]string,
+	params: ..string,
+) -> (
+	types.HttpStatus,
+	string,
+) {
 
+	if m != "DELETE" {
+		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+			"Invalid method\n"
+	}
+
+	pathSegments := OST_PATH_SPLITTER(p)
+	segments := len(pathSegments)
+	defer delete(pathSegments)
+	collectionName, clusterName, recordName: string
+
+	collectionName = strings.to_upper(pathSegments[1])
+	if len(pathSegments) == 4 {
+		clusterName = strings.to_upper(pathSegments[3])
+	}
+	if len(pathSegments) == 6 {
+		recordName = strings.to_upper(pathSegments[5])
+	}
+
+	collectionNamePath := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collectionName,
+		const.OST_FILE_EXTENSION,
+	)
+
+
+	switch (segments) {
+	case 2:
+		// /collection/collecion_name
+		data.OST_ERASE_COLLECTION(collectionName)
+		return types.HttpStatus {
+			code = .OK,
+			text = types.HttpStatusText[.OK],
+		}, fmt.tprintf("COLLECTION: %s erased successfully", collectionName)
+	case 4:
+		// /collection/collection_name/cluster/cluster_name
+		data.OST_ERASE_CLUSTER(collectionName, clusterName)
+		return types.HttpStatus {
+			code = .OK,
+			text = types.HttpStatusText[.OK],
+		}, fmt.tprintf("CLUSTER: %s erased successfully", clusterName)
+	case 6:
+		// /collection/collection_name/cluster/cluster_name/record/record_name
+		data.OST_ERASE_RECORD(collectionName, clusterName, recordName)
+		return types.HttpStatus {
+			code = .OK,
+			text = types.HttpStatusText[.OK],
+		}, fmt.tprintf("RECORD: %s erased successfully", recordName)
+	}
+
+	return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+		"Invalid path\n"
+}
+
+
+//TODO: Move me somewhere else...possibly in a utils or helper file
 //helper proc to parse query string into a map
 parse_query_string :: proc(query: string) -> map[string]string {
 	params := make(map[string]string)

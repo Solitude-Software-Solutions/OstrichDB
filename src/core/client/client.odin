@@ -42,11 +42,17 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 
 
 	// test request to set the value and type of a specific record on /collection/foo/cluster/bar/record/baz endpoint
+	// request = fmt.tprintf(
+	// 	"PUT /collection/foo/cluster/bar/record/baz?type=string&value=goodbye HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+	// 	config.port,
+	// )
+
+
+	//test request to delete the cluster at the /collection/foo/cluster/bar endpoint
 	request = fmt.tprintf(
-		"PUT /collection/foo/cluster/bar/record/baz?type=string&value=goodbye HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		"DELETE /collection/foo HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
 		config.port,
 	)
-
 
 	request_bytes := transmute([]byte)request
 
