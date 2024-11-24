@@ -183,7 +183,10 @@ OST_HANDLE_PUT_REQ :: proc(
 
 	collectionName := strings.to_upper(pathSegments[1])
 	clusterName := strings.to_upper(pathSegments[3])
-	recordName := strings.to_upper(pathSegments[5])
+
+	//have to do this in the event of query parmas on a record
+	recordName := strings.split(pathSegments[5], "?")
+	slicedRecordName := strings.to_upper(recordName[0])
 
 	switch (pathSegments[0]) 
 	{
@@ -251,26 +254,31 @@ OST_HANDLE_PUT_REQ :: proc(
 				}, fmt.tprintf("CLUSTER: %s not found", clusterName)
 			}
 			fmt.println("recordName: ", recordName)
-			recExists = data.OST_CHECK_IF_RECORD_EXISTS(collectionName, clusterName, recordName)
+			recExists = data.OST_CHECK_IF_RECORD_EXISTS(
+				collectionName,
+				clusterName,
+				slicedRecordName,
+			)
 			if !recExists {
 				//using query parameters to get/set the record data
 				// Example: /collection/collection_name/cluster/cluster_name/record/record_name?type=string&value=hello
+				fmt.println("query params: ", queryParams["type"])
 				data.OST_APPEND_RECORD_TO_CLUSTER(
 					collectionName,
 					clusterName,
-					recordName,
+					slicedRecordName,
 					queryParams["value"], //So when using this proc from command line the value is an empty string but from client it is the value the user wants to set
 					recordType,
 				)
 				return types.HttpStatus {
 					code = .OK,
 					text = types.HttpStatusText[.OK],
-				}, fmt.tprintf("New RECORD: %s created sucessfully", pathSegments[5])
+				}, fmt.tprintf("New RECORD: %s created sucessfully", slicedRecordName)
 			} else {
 				return types.HttpStatus {
 					code = .BAD_REQUEST,
 					text = types.HttpStatusText[.BAD_REQUEST],
-				}, fmt.tprintf("RECORD: %s already exists", pathSegments[5])
+				}, fmt.tprintf("RECORD: %s already exists", slicedRecordName)
 			}
 		}
 
