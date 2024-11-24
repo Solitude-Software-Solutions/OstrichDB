@@ -40,7 +40,7 @@ Record :: struct {
 //=================================================/src/core/engine/=================================================//
 /*
 Type: Engine_Error
-Desc: Used to define the structure of an ENGINE SPECIFIC utils. Not to
+Desc: Used to define the structure of an ENGINE SPECIFIC error. Not to
         be confused with the standard errors located in utils.odin
 Usage Locations: NOT YET IMPLEMENTED but wil be used in several places
 */
@@ -123,8 +123,8 @@ CommandHistory :: struct {
 //=================================================/src/core/focus/=================================================//
 /*
 Type: Focus
-Desc: Used to determin which layer of data the user is focusing on to shorten the
-      amount of ATOM tokns that the user needs to enter when executing a command
+Desc: Used to determine which layer of data the user is focusing on to shorten the
+      amount of ATOM tokens that the user needs to enter when executing a command
 Usage Locations: focus.odin
 */
 focus: Focus
@@ -186,7 +186,7 @@ Collection_File_Schema :: struct {
 
 
 //Server Stuff Below
-//Server Stiff Below
+//Server Stuff Below
 //Server Stuff Below
 
 Server_Config :: struct {

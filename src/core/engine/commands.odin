@@ -1614,7 +1614,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	case const.NEW:
 		switch (focusTarget) {
 		case const.COLLECTION:
-			switch (cmd.t_token) { 	//evauluating if the user wants to create a new collection, cluster or record while focused on a collection
+			switch (cmd.t_token) { 	//evaluating if the user wants to create a new collection, cluster or record while focused on a collection
 			case const.COLLECTION:
 				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
 				break

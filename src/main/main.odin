@@ -29,7 +29,7 @@ main :: proc() {
 
 	//Print the Ostrich logo and version
 	fmt.printfln(utils.ostrich_art)
-	version := transmute(string)utils.get_ost_version()
+	version := string(utils.get_ost_version())
 	fmt.printfln("%sVersion: %s%s%s", utils.BOLD, utils.GREEN, version, utils.RESET)
 
 	if config.OST_READ_CONFIG_VALUE(const.configOne) == "true" {
@@ -44,4 +44,5 @@ main :: proc() {
 	client.OST_TEST_CLIENT(Config) //When testing the client, uncomment this line and comment out the server.OST_START_SERVER(Config) line
 
 	engine.run()
+
 }

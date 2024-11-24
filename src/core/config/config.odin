@@ -95,7 +95,7 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 // Returns true if found, false if not found
 OST_FIND_CONFIG :: proc(c: string) -> bool {
 	data, readSuccess := os.read_entire_file(const.OST_CONFIG_PATH)
-	if readSuccess != false {
+	if readSuccess == true {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
