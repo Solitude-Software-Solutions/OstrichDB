@@ -1,5 +1,6 @@
 package server
 import "../../utils"
+import "../const"
 import "../engine/data"
 import "../types"
 import "core:fmt"
@@ -19,7 +20,14 @@ OST_PATH_SPLITTER :: proc(p: string) -> []string {
 }
 
 //Handles all GET requests from the client
-OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpStatus, string) {
+OST_HANDLE_GET_REQ :: proc(
+	m, p: string,
+	h: map[string]string,
+	params: ..string,
+) -> (
+	types.HttpStatus,
+	string,
+) {
 	if m != "GET" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Method not allowed\n"
@@ -41,22 +49,21 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 	case "collection":
 		if len(pathSegments) == 2 {
 			// Get entire collection
-			collectionName = collectionName
-
+			collectionName = pathSegments[1]
 			return types.HttpStatus {
 				code = .OK,
 				text = types.HttpStatusText[.OK],
 			}, data.OST_FETCH_COLLECTION(strings.to_upper(collectionName))
 		} else if len(pathSegments) == 4 {
 			// /collection/collectionName/cluster
-			collectionName = collectionName
+			collectionName = pathSegments[1]
 			clusterName = pathSegments[3]
 			return types.HttpStatus {
 				code = .OK,
 				text = types.HttpStatusText[.OK],
 			}, data.OST_FETCH_CLUSTER(strings.to_upper(collectionName), strings.to_upper(clusterName))
 		} else if len(pathSegments) == 6 {
-			collectionName = collectionName
+			collectionName = pathSegments[1]
 			clusterName = pathSegments[3]
 			recordName = pathSegments[5]
 
@@ -87,7 +94,14 @@ OST_HANDLE_GET_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpSta
 
 // Handles the HEAD request from the client
 // Sends the http status code, metadata like the server name and version, content type, and content length
-OST_HANDLE_HEAD_REQ :: proc(m, p: string, h: map[string]string) -> (types.HttpStatus, string) {
+OST_HANDLE_HEAD_REQ :: proc(
+	m, p: string,
+	h: map[string]string,
+	params: ..string,
+) -> (
+	types.HttpStatus,
+	string,
+) {
 	// fmt.printfln("Method: %s", m) //debugging
 	// fmt.printfln("Path: %s", p) //debugging
 	// fmt.printfln("Headers: %s", h) //debugging
@@ -212,6 +226,9 @@ OST_HANDLE_PUT_REQ :: proc(
 				}, fmt.tprintf("New CLUSTER: %s created sucessfully", clusterName)
 			}
 		case 6:
+			fmt.println("collectionName: ", collectionName)
+			fmt.println("clusterName: ", clusterName)
+			fmt.println("recordName: ", recordName)
 			// in the event of something like: /collection/collection_name/cluster/cluster_name/record/record_name
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
@@ -220,6 +237,12 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
 			}
+			collectionName = fmt.tprintf(
+				"%s%s%s",
+				const.OST_COLLECTION_PATH,
+				collectionName,
+				const.OST_FILE_EXTENSION,
+			)
 			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName)
 			if !cluExists {
 				return types.HttpStatus {
@@ -227,7 +250,7 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("CLUSTER: %s not found", clusterName)
 			}
-
+			fmt.println("recordName: ", recordName)
 			recExists = data.OST_CHECK_IF_RECORD_EXISTS(collectionName, clusterName, recordName)
 			if !recExists {
 				//using query parameters to get/set the record data
