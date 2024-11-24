@@ -169,11 +169,6 @@ OST_HANDLE_PUT_REQ :: proc(
 			"Record type required\n"
 	}
 	recordType = strings.to_upper(recordType)
-	//TODO: This one is gonna fuckin suck.
-	// Need to do several things for each data object/layer
-	// need to gather what the user is trying to 'PUT' from the client side
-	// need to perform the PUT request. These steps need to be done for each data object as well as the following non-destructive DB operations:
-	// NEW, RENAME, and SET
 	colExists, cluExists, recExists: bool
 
 	pathSegments := OST_PATH_SPLITTER(p)
@@ -229,9 +224,9 @@ OST_HANDLE_PUT_REQ :: proc(
 				}, fmt.tprintf("New CLUSTER: %s created sucessfully", clusterName)
 			}
 		case 6:
-			fmt.println("collectionName: ", collectionName)
-			fmt.println("clusterName: ", clusterName)
-			fmt.println("recordName: ", recordName)
+			// fmt.println("collectionName: ", collectionName) //debugging
+			// fmt.println("clusterName: ", clusterName) //debugging
+			// fmt.println("recordName: ", recordName) //debugging
 			// in the event of something like: /collection/collection_name/cluster/cluster_name/record/record_name
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
@@ -240,13 +235,13 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
 			}
-			collectionName = fmt.tprintf(
+			collectionNamePath := fmt.tprintf(
 				"%s%s%s",
 				const.OST_COLLECTION_PATH,
 				collectionName,
 				const.OST_FILE_EXTENSION,
 			)
-			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName)
+			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionNamePath, clusterName)
 			if !cluExists {
 				return types.HttpStatus {
 					code = .NOT_FOUND,
@@ -255,16 +250,15 @@ OST_HANDLE_PUT_REQ :: proc(
 			}
 			fmt.println("recordName: ", recordName)
 			recExists = data.OST_CHECK_IF_RECORD_EXISTS(
-				collectionName,
+				collectionNamePath,
 				clusterName,
 				slicedRecordName,
 			)
 			if !recExists {
 				//using query parameters to get/set the record data
 				// Example: /collection/collection_name/cluster/cluster_name/record/record_name?type=string&value=hello
-				fmt.println("query params: ", queryParams["type"])
 				data.OST_APPEND_RECORD_TO_CLUSTER(
-					collectionName,
+					collectionNamePath,
 					clusterName,
 					slicedRecordName,
 					queryParams["value"], //So when using this proc from command line the value is an empty string but from client it is the value the user wants to set
@@ -274,6 +268,28 @@ OST_HANDLE_PUT_REQ :: proc(
 					code = .OK,
 					text = types.HttpStatusText[.OK],
 				}, fmt.tprintf("New RECORD: %s created sucessfully", slicedRecordName)
+			} else if recExists {
+				//if the record does exist overwrite it with the new data provided
+				eraseSuccess := data.OST_ERASE_RECORD(
+					collectionName,
+					clusterName,
+					slicedRecordName,
+				)
+				if eraseSuccess {
+					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
+						collectionNamePath,
+						clusterName,
+						slicedRecordName,
+						queryParams["value"],
+						recordType,
+					)
+					switch (appendSuccess) {
+					case 0:
+						fmt.println("Record appended successfully")
+					case:
+						fmt.println("Record append failed")
+					}
+				}
 			} else {
 				return types.HttpStatus {
 					code = .BAD_REQUEST,

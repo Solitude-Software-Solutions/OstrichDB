@@ -25,7 +25,7 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	OST_ADD_ROUTE(
 		router,
 		.PUT,
-		"/collection/foo/cluster/bar/record/baz?type=string&value=hello",
+		"/collection/foo/cluster/bar/record/baz?type=string&value=goodbye",
 		OST_HANDLE_PUT_REQ,
 	)
 	// fmt.println("Routes after adding: ", router.routes) //debugging
