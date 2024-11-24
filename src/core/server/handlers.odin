@@ -1,10 +1,8 @@
 package server
 import "../../utils"
-import "../const"
 import "../engine/data"
 import "../types"
 import "core:fmt"
-import "core:os"
 import "core:strings"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
@@ -173,10 +171,6 @@ OST_HANDLE_PUT_REQ :: proc(
 	clusterName := strings.to_upper(pathSegments[3])
 	recordName := strings.to_upper(pathSegments[5])
 
-	fmt.println("colName: ", collectionName)
-	fmt.println("cluName: ", clusterName)
-	fmt.println("recName: ", recordName)
-
 	switch (pathSegments[0]) 
 	{
 	case "collection":
@@ -233,46 +227,30 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("CLUSTER: %s not found", clusterName)
 			}
+
 			recExists = data.OST_CHECK_IF_RECORD_EXISTS(collectionName, clusterName, recordName)
 			if !recExists {
 				//using query parameters to get/set the record data
 				// Example: /collection/collection_name/cluster/cluster_name/record/record_name?type=string&value=hello
-				os.set_current_directory("/collections")
 				data.OST_APPEND_RECORD_TO_CLUSTER(
-					fmt.tprintf(
-						"%s%s%s",
-						const.OST_COLLECTION_PATH,
-						collectionName,
-						const.OST_FILE_EXTENSION,
-					),
+					collectionName,
 					clusterName,
 					recordName,
 					queryParams["value"], //So when using this proc from command line the value is an empty string but from client it is the value the user wants to set
 					recordType,
 				)
-				fmt.println("GETTING HERE1")
 				return types.HttpStatus {
 					code = .OK,
 					text = types.HttpStatusText[.OK],
 				}, fmt.tprintf("New RECORD: %s created sucessfully", pathSegments[5])
-			} else if recExists {
-				//if the record does exists, "overwrite" it. in this case delete it and re-append it to the cluster
-				data.OST_ERASE_RECORD(collectionName, clusterName, recordName)
-				data.OST_APPEND_RECORD_TO_CLUSTER(
-					collectionName,
-					clusterName,
-					recordName,
-					queryParams["value"],
-					recordType,
-				)
 			} else {
 				return types.HttpStatus {
 					code = .BAD_REQUEST,
 					text = types.HttpStatusText[.BAD_REQUEST],
-				}, fmt.tprintf("Internal error occured using PUT method on RECORD: %s", pathSegments[5])
+				}, fmt.tprintf("RECORD: %s already exists", pathSegments[5])
 			}
 		}
-	//could potentiall handle a few more cases here like if user wants to update an internal OstrichDB username/password
+
 	}
 	return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 		"Invalid path\n"

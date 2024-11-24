@@ -21,8 +21,7 @@ record: types.Record
 //can be used to check if a single record exists within a cluster
 OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 	using const
-	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
-	data, readSuccess := os.read_entire_file(file)
+	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
@@ -72,8 +71,6 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	rType: string,
 	ID: ..i64,
 ) -> int {
-	// fmt.println("CWD: ", os.get_current_directory())
-	fmt.println("Getting FN: ", fn)
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
 		error1 := utils.new_err(
@@ -106,22 +103,22 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	}
 
 	//check if the record name already exists if it does return
-	// recordExists := OST_CHECK_IF_RECORD_EXISTS(fn, cn, rn)
-	// if recordExists == true {
-	// 	fmt.printfln(
-	// 		"Record: %s%s%s already exists within Collection: %s%s%s. Located in Cluster: %s%s%s",
-	// 		utils.BOLD_UNDERLINE,
-	// 		rn,
-	// 		utils.RESET,
-	// 		utils.BOLD,
-	// 		fn,
-	// 		utils.RESET,
-	// 		utils.BOLD_UNDERLINE,
-	// 		cn,
-	// 		utils.RESET,
-	// 	)
-	// 	return 1
-	// }
+	recordExists := OST_CHECK_IF_RECORD_EXISTS(fn, cn, rn)
+	if recordExists == true {
+		fmt.printfln(
+			"Record: %s%s%s already exists within Collection: %s%s%s. Located in Cluster: %s%s%s",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+			utils.BOLD,
+			fn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+		)
+		return 1
+	}
 	//if the cluster is not found or the structure is invalid, return
 	if cluster_start == -1 || closing_brace == -1 {
 		error2 := utils.new_err(
