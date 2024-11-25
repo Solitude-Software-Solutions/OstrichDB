@@ -267,6 +267,7 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 
 
 OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
+	//todo: clean these 2 lines only need 1 tprintf
 	oldPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, old)
 	oldPathAndExt := fmt.tprintf("%s%s", oldPath, const.OST_FILE_EXTENSION)
 
@@ -427,51 +428,52 @@ OST_COUNT_COLLECTIONS :: proc() -> int {
 
 //deletes all data from a collection file but keeps the metadata header
 OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
-    collection_path := fmt.tprintf(
-        "%s%s%s",
-        const.OST_COLLECTION_PATH,
-        fn,
-        const.OST_FILE_EXTENSION,
-    )
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
 
-    // Read the entire file
-    data, readSuccess := os.read_entire_file(collection_path)
-    if !readSuccess {
-        utils.throw_err(
-            utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-        )
-        utils.log_err("Error reading collection file", #procedure)
-        return false
-    }
-    defer delete(data)
+	// Read the entire file
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		utils.log_err("Error reading collection file", #procedure)
+		return false
+	}
+	defer delete(data)
 
-    // Find the end of the metadata header
-    content := string(data)
-    headerEndIndex := strings.index(content, "}")
-    if headerEndIndex == -1 {
-        utils.throw_err(
-            utils.new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #procedure),
-        )
-        utils.log_err("Invalid collection file format", #procedure)
-        return false
-    }
+	// Find the end of the metadata header
+	content := string(data)
+	headerEndIndex := strings.index(content, "}")
+	if headerEndIndex == -1 {
+		utils.throw_err(
+			utils.new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #procedure),
+		)
+		utils.log_err("Invalid collection file format", #procedure)
+		return false
+	}
 
-    // Extract the metadata header
-    header := content[:headerEndIndex+1]
+	// Extract the metadata header
+	header := content[:headerEndIndex + 1]
 
-    // Write back only the header
-    writeSuccess := os.write_entire_file(collection_path, transmute([]byte)header)
-    if !writeSuccess {
-        utils.throw_err(
-            utils.new_err(.CANNOT_WRITE_TO_FILE, utils.get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure),
-        )
-        utils.log_err("Error writing purged collection file", #procedure)
-        return false
-    }
-    utils.log_runtime_event(
-        "Collection purged",
-        fmt.tprintf("User purged collection: %s", fn),
-    )
+	// Write back only the header
+	writeSuccess := os.write_entire_file(collection_path, transmute([]byte)header)
+	if !writeSuccess {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		utils.log_err("Error writing purged collection file", #procedure)
+		return false
+	}
+	utils.log_runtime_event("Collection purged", fmt.tprintf("User purged collection: %s", fn))
 
-    return true
+	return true
 }

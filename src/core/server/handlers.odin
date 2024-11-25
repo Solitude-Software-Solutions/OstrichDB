@@ -364,6 +364,25 @@ OST_HANDLE_DELETE_REQ :: proc(
 }
 
 
+OST_HANDLE_POST_REQ :: proc(
+	m, p: string,
+	h: map[string]string,
+	params: ..string,
+) -> (
+	types.HttpStatus,
+	string,
+) {
+	if m != "POST" {
+		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+			"Method not allowed\n"
+	}
+
+
+	return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+		"Invalid path\n"
+}
+
+
 //TODO: Move me somewhere else...possibly in a utils or helper file
 //helper proc to parse query string into a map
 parse_query_string :: proc(query: string) -> map[string]string {
