@@ -393,7 +393,7 @@ OST_HANDLE_POST_REQ :: proc(
 		if segments[1] == "collection" {
 			switch (len(segments)) {
 			case 3:
-				// /batch/collection/foo
+				// /batch/collection/foo&bar&baz
 				names := strings.split(segments[2], "&")
 
 				success, str := data.OST_HANDLE_COLLECTION_BATCH_REQ(names, .NEW)
@@ -410,23 +410,52 @@ OST_HANDLE_POST_REQ :: proc(
 
 			case 5:
 				// /batch/collection/foo/cluster/foo&bar or /batch/collection/foo&bar/cluster/foo&bar
-				collectionNames := strings.split(segments[2], "&")
-				clusternNames := strings.split(segments[4], "&")
+				if strings.contains(segments[2], "&") {
+					collectionNames := strings.split(segments[2], "&")
+					clusternNames := strings.split(segments[4], "&")
 
-				success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
-					collectionNames,
-					clusternNames,
-					.NEW,
-				)
-				if success == 0 {
-					return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
-						"Clusters created successfully\n"
+					fmt.println("Getting collection Names: ", collectionNames)
+					fmt.println("Getting cluster Names: ", clusternNames)
+
+					success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
+						collectionNames,
+						clusternNames,
+						.NEW,
+					)
+					if success == 0 {
+						return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+							"Clusters created successfully\n"
+					} else {
+						return types.HttpStatus {
+								code = .SERVER_ERROR,
+								text = types.HttpStatusText[.SERVER_ERROR],
+							},
+							"Failed to create clusters\n"
+					}
 				} else {
-					return types.HttpStatus {
-							code = .SERVER_ERROR,
-							text = types.HttpStatusText[.SERVER_ERROR],
-						},
-						"Failed to create clusters\n"
+
+
+					collectionNames := strings.split(segments[2], "")
+					clusterNames := strings.split(segments[4], "&")
+
+					success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
+						collectionNames,
+						clusterNames,
+						.NEW,
+					)
+
+					if success == 0 {
+						return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+							"Clusters created successfully\n"
+					} else {
+						return types.HttpStatus {
+								code = .SERVER_ERROR,
+								text = types.HttpStatusText[.SERVER_ERROR],
+							},
+							"Failed to create clusters\n"
+					}
+
+
 				}
 			}
 		}

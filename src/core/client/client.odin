@@ -23,10 +23,10 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 	request: string
 
 	//test request to get server version on /version endpoint
-	// request = fmt.tprintf(
-	// 	"GET /version HTTP/`.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
-	// 	config.port,
-	// )
+	request = fmt.tprintf(
+		"GET /version HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		config.port,
+	)
 
 	//test request to get a specific cluster on /collection/foo/cluster/bar endpoint
 	// request = fmt.tprintf(
@@ -52,9 +52,9 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 	// 	config.port,
 	// )
 
-	//test route to create a batch of 2 blusters within a batch of 2 collections
+	//test route to create a batch of 2 clusters within a batch of 2 collections
 	request = fmt.tprintf(
-		"POST /batch/collection/foo&bar/cluster/foo&bar	HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		"POST /batch/collection/foo&bar/cluster/foo&bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
 		config.port,
 	)
 

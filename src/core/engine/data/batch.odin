@@ -88,23 +88,25 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 
 	//first append the collection names to the dynamic array
 	for colName in collectionNames {
+		fmt.println("HANDLE_BATCH_REQ proc is getting collection name: ", colName)
 		append(&colNames, colName)
 	}
 
 	//next the cluster names
 	for cluName in clusterNames {
+		fmt.println("HANDLE_BATCH_REQ proc is getting cluster name: ", cluName)
 		append(&cluNames, cluName)
 	}
 
 	switch (operation) {
 	case .NEW:
 		for i in colNames {
+			fmt.printfln("Going to perform operation on collection: %s", i)
 			for j in cluNames {
+				fmt.printfln("Creating cluster: %s in collection %s", j, i)
 				id := OST_GENERATE_CLUSTER_ID()
 				if OST_CREATE_CLUSTER_FROM_CL(strings.to_upper(i), j, id) != 0 {
 					return 1, ""
-				} else {
-					return 0, "HOLY SHIT THAT WORKED??"
 				}
 			}
 		}

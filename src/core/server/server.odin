@@ -19,8 +19,8 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	//todo: seems like only one route can be added at a time. If more than one is added we
 	// get "Method Not Found"...idk why - Marshall Burns aka SchoolyB
 
-	// OST_ADD_ROUTE(router, .HEAD, "/collection/foo/cluster/bar", OST_HANDLE_HEAD_REQ)
 	// OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
+	// OST_ADD_ROUTE(router, .HEAD, "/collection/foo/cluster/bar", OST_HANDLE_HEAD_REQ)
 	// OST_ADD_ROUTE(router, .GET, "/collection/foo/cluster/bar", OST_HANDLE_GET_REQ)
 	// OST_ADD_ROUTE(
 	// 	router,
@@ -84,7 +84,8 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 			fmt.println("Connection closed by client")
 			return
 		}
-
+		fmt.println("Received %d bytes from client", bytes_read) //debugging
+		fmt.println("Data received: ", string(buf[:bytes_read])) //debugging
 		// Parse incoming request
 		method, path, headers := OST_PARSE_REQUEST(buf[:bytes_read])
 		fmt.printf("Parsed request - Method: %s, Path: %s\n", method, path) //debuggging
