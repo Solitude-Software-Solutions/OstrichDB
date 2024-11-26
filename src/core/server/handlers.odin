@@ -377,6 +377,33 @@ OST_HANDLE_POST_REQ :: proc(
 			"Method not allowed\n"
 	}
 
+	fmt.println("Path: ", p)
+
+	segments := OST_PATH_SPLITTER(p)
+
+	if len(segments) < 3 {
+		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
+			"Invalid path format\n"
+	}
+
+	switch segments[0] {
+	case "batch":
+		if segments[1] == "collection" {
+			names := strings.split(segments[2], "&")
+
+			success, str := data.OST_HANDLE_COLLECTION_BATCH_REQ(names, .NEW)
+			if success == 0 {
+				return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+					"Collections created successfully\n"
+			} else {
+				return types.HttpStatus {
+						code = .SERVER_ERROR,
+						text = types.HttpStatusText[.SERVER_ERROR],
+					},
+					"Failed to create collections\n"
+			}
+		}
+	}
 
 	return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 		"Invalid path\n"

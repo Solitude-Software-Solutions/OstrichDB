@@ -43,10 +43,10 @@ OST_HANDLE_REQUEST :: proc(
 	status: types.HttpStatus,
 	response: string,
 ) {
-	// 	fmt.println("router being passed to handle request proc: ", router) //debugging
-	// 	fmt.println("method being passed to handle request proc: ", method) //debugging
-	// 	fmt.println("path being passed to handle request proc: ", path) //debugging
-	// 	fmt.println("headers being passed to handle request proc: ", headers) //debugging
+	fmt.println("router being passed to handle request proc: ", router) //debugging
+	fmt.println("method being passed to handle request proc: ", method) //debugging
+	fmt.println("path being passed to handle request proc: ", path) //debugging
+	fmt.println("headers being passed to handle request proc: ", headers) //debugging
 	for route in router.routes {
 		if strings.compare(path, route.p) == 0 {
 			return route.h(method, path, headers)

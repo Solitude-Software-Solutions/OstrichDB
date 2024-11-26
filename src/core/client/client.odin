@@ -43,16 +43,21 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 
 	// test request to set the value and type of a specific record on /collection/foo/cluster/bar/record/baz endpoint
 	// request = fmt.tprintf(
-	// 	"PUT /collection/foo/cluster/bar/record/baz?type=string&value=goodbye HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
-	// 	config.port,
+	// "PUT /collection/foo/cluster/bar/record/baz?type=string&value=goodbye HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n", // 	config.port,
 	// )
+
+	//test route for using POST method to create a batch of collections. endpoint is root when using batch
+	request = fmt.tprintf(
+		"POST /batch/collection/foo&bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		config.port,
+	)
 
 
 	//test request to delete the cluster at the /collection/foo/cluster/bar endpoint
-	request = fmt.tprintf(
-		"DELETE /collection/foo HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
-		config.port,
-	)
+	// request = fmt.tprintf(
+	// 	"DELETE /collection/foo HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+	// 	config.port,
+	// )
 
 	request_bytes := transmute([]byte)request
 
