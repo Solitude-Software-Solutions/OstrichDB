@@ -30,17 +30,17 @@ OST_PARSE_REQUEST :: proc(
 		return "", "", nil
 	}
 
-	//split the request line into its parts
-	requestLine := strings.split(lines[0], " ")
+	// Split on whitespace and trim each part
+	requestParts := strings.fields(lines[0])
 
-	//a request line should have 3 parts: the method, the path, and the headers
-	//if the request line does not have 3 parts, return
-	if len(requestLine) != 3 {
+	if len(requestParts) != 3 {
+		fmt.println("Error: Request line does not have exactly 3 parts")
 		return "", "", nil
 	}
 
-	method = requestLine[0]
-	path = requestLine[1]
+	method = strings.trim_space(requestParts[0])
+	path = strings.trim_space(requestParts[1])
+	// protocol would be requestParts[2] if needed
 
 	//Create a map to store the headers
 	headers = make(map[string]string)
