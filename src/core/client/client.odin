@@ -47,8 +47,14 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 	// )
 
 	//test route for using POST method to create a batch of collections. endpoint is root when using batch
+	// request = fmt.tprintf(
+	// 	"POST /batch/collection/foo&bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+	// 	config.port,
+	// )
+
+	//test route to create a batch of 2 blusters within a batch of 2 collections
 	request = fmt.tprintf(
-		"POST /batch/collection/foo&bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		"POST /batch/collection/foo&bar/cluster/foo&bar	HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
 		config.port,
 	)
 

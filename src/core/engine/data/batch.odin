@@ -71,3 +71,61 @@ OST_RENAME_COLLECTIONS_BATCH :: proc(oldNames: []string, newNames: []string) -> 
 	}
 	return 0
 }
+
+
+OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
+	collectionNames: []string,
+	clusterNames: []string,
+	operation: types.BatchOperations,
+) -> (
+	int,
+	string,
+) {
+	colNames := make([dynamic]string)
+	cluNames := make([dynamic]string)
+	defer delete(collectionNames)
+	defer delete(clusterNames)
+
+	//first append the collection names to the dynamic array
+	for colName in collectionNames {
+		append(&colNames, colName)
+	}
+
+	//next the cluster names
+	for cluName in clusterNames {
+		append(&cluNames, cluName)
+	}
+
+	switch (operation) {
+	case .NEW:
+		for i in colNames {
+			for j in cluNames {
+				id := OST_GENERATE_CLUSTER_ID()
+				if OST_CREATE_CLUSTER_FROM_CL(strings.to_upper(i), j, id) != 0 {
+					return 1, ""
+				} else {
+					return 0, "HOLY SHIT THAT WORKED??"
+				}
+			}
+		}
+	case .ERASE:
+		for i in colNames {
+			for j in cluNames {
+				if !OST_ERASE_CLUSTER(i, j) {
+					return 1, ""
+				} else {
+					return 0, "NO WAY THAT WORKED."
+				}
+			}
+		}
+	case .FETCH:
+		for i in colNames {
+			for j in cluNames {
+				return 0, OST_FETCH_CLUSTER(i, j)
+			}
+		}
+
+	}
+
+	return 0, fmt.tprintfln("SUCCESS!")
+}

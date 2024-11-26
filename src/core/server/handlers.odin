@@ -381,6 +381,8 @@ OST_HANDLE_POST_REQ :: proc(
 
 	segments := OST_PATH_SPLITTER(p)
 
+
+	//todo: move me into the batch switch case below :)
 	if len(segments) < 3 {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Invalid path format\n"
@@ -389,22 +391,50 @@ OST_HANDLE_POST_REQ :: proc(
 	switch segments[0] {
 	case "batch":
 		if segments[1] == "collection" {
-			names := strings.split(segments[2], "&")
+			switch (len(segments)) {
+			case 3:
+				// /batch/collection/foo
+				names := strings.split(segments[2], "&")
 
-			success, str := data.OST_HANDLE_COLLECTION_BATCH_REQ(names, .NEW)
-			if success == 0 {
-				return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
-					"Collections created successfully\n"
-			} else {
-				return types.HttpStatus {
-						code = .SERVER_ERROR,
-						text = types.HttpStatusText[.SERVER_ERROR],
-					},
-					"Failed to create collections\n"
+				success, str := data.OST_HANDLE_COLLECTION_BATCH_REQ(names, .NEW)
+				if success == 0 {
+					return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+						"Collections created successfully\n"
+				} else {
+					return types.HttpStatus {
+							code = .SERVER_ERROR,
+							text = types.HttpStatusText[.SERVER_ERROR],
+						},
+						"Failed to create collections\n"
+				}
+
+			case 5:
+				// /batch/collection/foo/cluster/foo&bar or /batch/collection/foo&bar/cluster/foo&bar
+				collectionNames := strings.split(segments[2], "&")
+				clusternNames := strings.split(segments[4], "&")
+
+				success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
+					collectionNames,
+					clusternNames,
+					.NEW,
+				)
+				if success == 0 {
+					return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+						"Clusters created successfully\n"
+				} else {
+					return types.HttpStatus {
+							code = .SERVER_ERROR,
+							text = types.HttpStatusText[.SERVER_ERROR],
+						},
+						"Failed to create clusters\n"
+				}
 			}
 		}
 	}
 
+
+	// /batch/collection/foo/cluster/foo&bar user should be able to do this.
+	// /batch/collection/foo&bar/cluster/foo&bar //and this this is essentially saying the user wants to add two clusters foo and bar to each collection foo and bar..
 	return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 		"Invalid path\n"
 }
