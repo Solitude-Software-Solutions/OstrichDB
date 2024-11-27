@@ -101,10 +101,10 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 		response_headers["Server"] = "OstrichDB"
 
 
-		fmt.println("Headers From Server: ", headers) //debugging
-		fmt.println("Router From Server: ", router) //debugging
-		fmt.println("Method From Server: ", method) //debugging
-		fmt.println("Path From Server: ", path) //debugging
+		// fmt.println("Headers From Server: ", headers) //debugging
+		// fmt.println("Router From Server: ", router) //debugging
+		// fmt.println("Method From Server: ", method) //debugging
+		// fmt.println("Path From Server: ", path) //debugging
 
 		// Handle the request using router
 		status, response_body := OST_HANDLE_REQUEST(router, method, path, headers)

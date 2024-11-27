@@ -379,8 +379,8 @@ OST_NEWLINE_CHAR :: proc() {
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
 OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
-	fmt.println("Reading collection file: ", fn)
-	fmt.println("Checking if cluster exists: ", cn)
+	// fmt.println("Reading collection file: ", fn) //debugging
+	// fmt.println("Checking if cluster exists: ", cn) //debugging
 	data, read_success := os.read_entire_file(fn)
 	if !read_success {
 		error1 := utils.new_err(

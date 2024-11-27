@@ -377,7 +377,7 @@ OST_HANDLE_POST_REQ :: proc(
 			"Method not allowed\n"
 	}
 
-	fmt.println("Path: ", p)
+	// fmt.println("Path: ", p) //debugging
 
 	segments := OST_PATH_SPLITTER(p)
 

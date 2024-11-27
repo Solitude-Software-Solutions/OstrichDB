@@ -88,7 +88,6 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 
 	//first append the collection names to the dynamic array
 	for colName in collectionNames {
-		fmt.println("HANDLE_BATCH_REQ proc is getting collection name: ", colName)
 		append(&colNames, strings.to_upper(colName))
 	}
 
