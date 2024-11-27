@@ -53,8 +53,14 @@ OST_TEST_CLIENT :: proc(config: types.Server_Config) -> int {
 	// )
 
 	//test route to create a batch of 2 clusters within a batch of 2 collections
+	// request = fmt.tprintf(
+	// 	"POST /batch/collection/foo&bar/cluster/foo&bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+	// 	config.port,
+	// )
+
+	//test route to create a batch of 44 clusters in a single collection
 	request = fmt.tprintf(
-		"POST /batch/collection/foo&bar/cluster/foo&bar HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
+		"POST /batch/collection/foo/cluster/foo&bar&baz&goob HTTP/1.1\r\nHost: localhost:%d\r\nConnection: close\r\n\r\n",
 		config.port,
 	)
 

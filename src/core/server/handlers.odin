@@ -407,16 +407,11 @@ OST_HANDLE_POST_REQ :: proc(
 						},
 						"Failed to create collections\n"
 				}
-
 			case 5:
 				// /batch/collection/foo/cluster/foo&bar or /batch/collection/foo&bar/cluster/foo&bar
 				if strings.contains(segments[2], "&") {
 					collectionNames := strings.split(segments[2], "&")
 					clusternNames := strings.split(segments[4], "&")
-
-					fmt.println("Getting collection Names: ", collectionNames)
-					fmt.println("Getting cluster Names: ", clusternNames)
-
 					success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
 						collectionNames,
 						clusternNames,
@@ -433,9 +428,9 @@ OST_HANDLE_POST_REQ :: proc(
 							"Failed to create clusters\n"
 					}
 				} else {
-
-
-					collectionNames := strings.split(segments[2], "")
+					//create a slice with a single collection name in the event the batch is for a single collection
+					collectionNames := make([]string, 1)
+					collectionNames[0] = segments[2]
 					clusterNames := strings.split(segments[4], "&")
 
 					success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
@@ -443,7 +438,6 @@ OST_HANDLE_POST_REQ :: proc(
 						clusterNames,
 						.NEW,
 					)
-
 					if success == 0 {
 						return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
 							"Clusters created successfully\n"
@@ -454,16 +448,10 @@ OST_HANDLE_POST_REQ :: proc(
 							},
 							"Failed to create clusters\n"
 					}
-
-
 				}
 			}
 		}
 	}
-
-
-	// /batch/collection/foo/cluster/foo&bar user should be able to do this.
-	// /batch/collection/foo&bar/cluster/foo&bar //and this this is essentially saying the user wants to add two clusters foo and bar to each collection foo and bar..
 	return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 		"Invalid path\n"
 }

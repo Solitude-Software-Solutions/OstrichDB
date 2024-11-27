@@ -29,8 +29,13 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	// 	OST_HANDLE_PUT_REQ,
 	// )
 	// OST_ADD_ROUTE(router, .DELETE, "/collection/foo", OST_HANDLE_DELETE_REQ)
-	// OST_ADD_ROUTE(router, .POST, "/batch/collection/foo&bar", OST_HANDLE_POST_REQ)
-	OST_ADD_ROUTE(router, .POST, "/batch/collection/foo&bar/cluster/foo&bar", OST_HANDLE_POST_REQ)
+	OST_ADD_ROUTE(
+		router,
+		.POST,
+		"/batch/collection/foo/cluster/foo&bar&baz&goob",
+		OST_HANDLE_POST_REQ,
+	)
+	// OST_ADD_ROUTE(router, .POST, "/batch/collection/foo&bar/cluster/foo&bar", OST_HANDLE_POST_REQ)
 	// fmt.println("Routes after adding: ", router.routes) //debugging
 
 	//Create a new endpoint to listen on
