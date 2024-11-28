@@ -1,12 +1,14 @@
 # **OstrichDB**
 
-OstrichDB is a lightweight, document-based NoSQL JSON-esquw database written in the Odin programming language. It focuses on simplicity and is designed for local data testing and manipulation, making it an ideal solution for developers looking for a straightforward database without the need for complex setups. With a flexible command structure, OstrichDB makes it easy to manage data using both single and multi-token commands.
+OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin programming language. It can be run serverless from the command line or deployed in server mode, offering flexibility for different use cases. With a focus on simplicity and straightforward setup, OstrichDB provides an intuitive command structure for managing data using both single and multi-token commands.
 
 ---
 
 ## **Features**
 
-- Serverless Architecture
+- Dual Operation Modes:
+  - Serverless Command-line Interface
+  - Server Mode with HTTP API
 - User Authentication
 - Multi-User Support
 - JSON-like Hierarchical Data Structure
