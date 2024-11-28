@@ -251,7 +251,7 @@ OST_HANDLE_PUT_REQ :: proc(
 				slicedRecordName,
 			)
 			if !recExists {
-				//using query parameters to get/set the record data
+				//using query parameters to set the record data
 				// Example: /collection/collection_name/cluster/cluster_name/record/record_name?type=string&value=hello
 				data.OST_APPEND_RECORD_TO_CLUSTER(
 					collectionNamePath,
@@ -448,6 +448,105 @@ OST_HANDLE_POST_REQ :: proc(
 							},
 							"Failed to create clusters\n"
 					}
+				}
+			case 7:
+				// Handle batch record creation with multiple possible formats:
+				// Single type for all records:
+				// /batch/collection/foo&bar/cluster/baz/record/name1&name2?type=string&value=hello
+				// Different types per record:
+				// /batch/collection/foo/cluster/bar/record/name1&name2?types=string&bool&values=hello&true
+
+
+				if segments[1] != "collection" || segments[4] != "cluster" {
+					return types.HttpStatus {
+							code = .BAD_REQUEST,
+							text = types.HttpStatusText[.BAD_REQUEST],
+						},
+						"Invalid path format for batch record creation\n"
+				}
+
+
+				collectionNames := strings.split(segments[3], "&")
+				clusterNames := strings.split(segments[5], "&")
+
+				if segments[5] != "record" {
+					return types.HttpStatus {
+							code = .BAD_REQUEST,
+							text = types.HttpStatusText[.BAD_REQUEST],
+						},
+						"Invalid path format for batch record creation\n"
+				}
+
+				pathAndQuery := strings.split(p, "?")
+				if len(pathAndQuery) != 2 {
+					return types.HttpStatus {
+							code = .BAD_REQUEST,
+							text = types.HttpStatusText[.BAD_REQUEST],
+						},
+						"Query parameters required for batch record creation\n"
+				}
+
+				query := pathAndQuery[1]
+				queryParams := parse_query_string(query)
+				recordNames := strings.split(segments[6], "&")
+
+				// Check for single type/value format
+				singleType, hasSingleType := queryParams["type"]
+				singleValue, hasSingleValue := queryParams["value"]
+
+				// Check for multiple types/values format
+				multiTypes, hasMultiTypes := queryParams["types"]
+				multiValues, hasMultiValues := queryParams["values"]
+
+				recordTypeArray: []string
+				recordValueArray: []string
+
+				if hasSingleType && hasSingleValue {
+					// Use the same type and value for all records
+					recordTypeArray = make([]string, len(recordNames))
+					recordValueArray = make([]string, len(recordNames))
+					for i := 0; i < len(recordNames); i += 1 {
+						recordTypeArray[i] = singleType
+						recordValueArray[i] = singleValue
+					}
+				} else if hasMultiTypes && hasMultiValues {
+					// Use different types and values for each record
+					recordTypeArray = strings.split(multiTypes, "&")
+					recordValueArray = strings.split(multiValues, "&")
+
+					if len(recordTypeArray) != len(recordNames) ||
+					   len(recordValueArray) != len(recordNames) {
+						return types.HttpStatus {
+							code = .BAD_REQUEST,
+							text = types.HttpStatusText[.BAD_REQUEST],
+						}, fmt.tprintf("Number of types (%d) and values (%d) must match number of records (%d)\n", len(recordTypeArray), len(recordValueArray), len(recordNames))
+					}
+				} else {
+					return types.HttpStatus {
+							code = .BAD_REQUEST,
+							text = types.HttpStatusText[.BAD_REQUEST],
+						},
+						"Must provide either 'type&value' or 'types&values' in query parameters\n"
+				}
+
+				success, str := data.OST_HANDLE_RECORD_BATCH_REQ(
+					collectionNames,
+					clusterNames,
+					recordNames,
+					recordTypeArray,
+					recordValueArray,
+					.NEW,
+				)
+
+				if success == 0 {
+					return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+						"Records created successfully\n"
+				} else {
+					return types.HttpStatus {
+							code = .SERVER_ERROR,
+							text = types.HttpStatusText[.SERVER_ERROR],
+						},
+						"Failed to create records\n"
 				}
 			}
 		}
