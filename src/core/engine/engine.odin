@@ -29,12 +29,12 @@ run :: proc() {
 		config.OST_CREATE_CONFIG_FILE()
 		run()
 	case:
-		fmt.println("Starting OstrichDB")
+		fmt.println("Starting OstrichDB DBMS")
 		result := OST_START_ENGINE()
 		switch (result) 
 		{
 		case 1:
-			fmt.println("OstrichDB Engine started successfully")
+			fmt.println("OstrichDB DBMS Engine started successfully")
 			break
 		case 0:
 
@@ -99,8 +99,8 @@ OST_START_ENGINE :: proc() -> int {
 
 
 OST_ENGINE_COMMAND_LINE :: proc() -> int {
-	fmt.println("Welcome to the OstrichDB Command Line")
-	utils.log_runtime_event("Entered command line", "")
+	fmt.println("Welcome to the OstrichDB DBMS Command Line")
+	utils.log_runtime_event("Entered DBMS command line", "")
 	for {
 		//Command line start
 		buf: [1024]byte
