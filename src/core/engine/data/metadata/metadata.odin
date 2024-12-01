@@ -375,6 +375,8 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {
+		utils.log_err("Could not read file format version file", #procedure)
+		return nil
 	}
 	os.close(ffvf)
 	return data

@@ -4,6 +4,7 @@ import "../../utils"
 import "../config"
 import "../const"
 import "../help"
+import "../server"
 import "../types"
 import "./data"
 import "./data/metadata"
@@ -109,6 +110,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		utils.get_err_msg(.INVALID_COMMAND),
 		#procedure,
 	)
+
+	//Semi global Server shit
+	ServerConfig := types.Server_Config {
+		port = 8082,
+	}
 	defer delete(cmd.o_token)
 
 
@@ -136,8 +142,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		OST_USER_LOGOUT(0)
 		return 0
 	case const.RESTART:
+		utils.log_runtime_event("Used RESTART command", "User requested to restart OstrichDB.")
 		OST_RESTART()
 	case const.REBUILD:
+		utils.log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
 		OST_REBUILD()
 	case const.UNFOCUS:
 		if types.focus.flag == false {
@@ -989,9 +997,26 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						fmt.printfln("Successfully toggled HELP config")
 					}
 					help.OST_SET_HELP_MODE()
+				case "SERVER":
+					success := config.OST_TOGGLE_CONFIG(const.configFive)
+					if success == false {
+						fmt.printfln("Failed to toggle SERVER config")
+					} else {
+						fmt.printfln("Successfully toggled SERVER config")
+						if config.OST_READ_CONFIG_VALUE(const.configFive) == "true" {
+							fmt.printfln("Server is now ON")
+							server.OST_START_SERVER(ServerConfig)
+						} else {
+							fmt.printfln("Server is now OFF")
+						}
+					}
 				case:
 					fmt.printfln("Invalid config name. Valid config names are: 'HELP'")
 				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
+				)
 			}
 			break
 		case:
@@ -1589,7 +1614,7 @@ EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
 	case const.NEW:
 		switch (focusTarget) {
 		case const.COLLECTION:
-			switch (cmd.t_token) { 	//evauluating if the user wants to create a new collection, cluster or record while focused on a collection
+			switch (cmd.t_token) { 	//evaluating if the user wants to create a new collection, cluster or record while focused on a collection
 			case const.COLLECTION:
 				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
 				break

@@ -14,7 +14,7 @@ import "core:strings"
 //=========================================================//
 
 
-//preform cluster_id compliancy check on the passed collection
+//perform cluster_id compliancy check on the passed collection
 OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 	types.data_integrity_checks.Cluster_IDs.Compliant = true // Assume compliant initially
 	idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
@@ -32,7 +32,7 @@ OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 	return types.data_integrity_checks.Cluster_IDs.Compliant
 }
 
-//preform file size check on the passed collection
+//perform file size check on the passed collection
 OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 	types.Severity_Code = 0
 	types.data_integrity_checks.File_Size.Compliant = true
@@ -48,7 +48,7 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 	return types.data_integrity_checks.File_Size.Compliant
 }
 
-//preform collection format check on the passed collection
+//perform collection format check on the passed collection
 OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	types.data_integrity_checks.File_Format.Compliant = true
 	clusterScanSuccess, invalidClusterFound := OST_SCAN_CLUSTER_STRUCTURE(fn)
@@ -145,7 +145,7 @@ OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 				utils.RESET,
 			)
 			fmt.println("For more information, please see the error log file.")
-			OST_QURANTINE_COLLECTION(fn)
+			OST_QUARANTINE_COLLECTION(fn)
 			return -1
 		}
 	}

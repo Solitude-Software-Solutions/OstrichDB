@@ -27,6 +27,7 @@ configOne :: "OST_ENGINE_INIT"
 configTwo :: "OST_ENGINE_LOGGING"
 configThree :: "OST_USER_LOGGED_IN"
 configFour :: "OST_HELP"
+configFive :: "OST_SERVER_MODE_ON"
 
 //ATOM TOKEN CONSTANTS
 VERSION :: "VERSION"

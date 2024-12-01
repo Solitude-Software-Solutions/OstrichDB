@@ -53,10 +53,10 @@ This section guides you through submitting an enhancement suggestion for Ostrich
 
 This section lists the labels we use to help us track and manage issues and pull requests.
 
-* `Bug:` - Issues that are bugs.
-* `Feature:` - Issues that are feature requests.
-* `Documentation` - Issues that are related to documentation.
-* `Brainstorms` - Issues that are for brainstorming ideas that are not fully formed yet.
+* `Bug:` - Issues that are bugs in the DBMS
+* `Feature:` - Issues that are DBMS feature requests
+* `Documentation` - Issues that are related to DBMS documentation
+* `Brainstorms` - Issues that are for brainstorming DBMS features and improvements
 
 ## Getting Started
 

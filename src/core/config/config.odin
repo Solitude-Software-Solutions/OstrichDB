@@ -79,12 +79,14 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 		const.configTwo,
 		const.configThree,
 		const.configFour,
+		const.configFive,
 	)
 	if !configsFound {
 		OST_APPEND_AND_SET_CONFIG(const.configOne, "false")
 		OST_APPEND_AND_SET_CONFIG(const.configTwo, "simple")
 		OST_APPEND_AND_SET_CONFIG(const.configThree, "false")
 		OST_APPEND_AND_SET_CONFIG(const.configFour, "verbose")
+		OST_APPEND_AND_SET_CONFIG(const.configFive, "false")
 	}
 	return true
 }
@@ -93,7 +95,7 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 // Returns true if found, false if not found
 OST_FIND_CONFIG :: proc(c: string) -> bool {
 	data, readSuccess := os.read_entire_file(const.OST_CONFIG_PATH)
-	if readSuccess != false {
+	if readSuccess == true {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
@@ -125,7 +127,6 @@ OST_FIND_ALL_CONFIGS :: proc(configs: ..string) -> bool {
 	}
 	return true
 }
-
 
 OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
 	file, openSuccess := os.open(const.OST_CONFIG_PATH, os.O_APPEND | os.O_WRONLY, 0o666)
