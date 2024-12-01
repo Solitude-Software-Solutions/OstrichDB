@@ -38,13 +38,6 @@ Record :: struct {
 
 //=================================================/src/core/engine/=================================================//
 /*
-Type: Engine_Error
-Desc: Used to define the structure of an ENGINE SPECIFIC error. Not to
-        be confused with the standard errors located in utils.odin
-Usage Locations: NOT YET IMPLEMENTED but wil be used in several places
-*/
-
-/*
 Type: Engine
 Desc: Used to define the overall structure of the Ostrich Engine
       The engine is the core of the Ostrich Database and WILL
@@ -69,13 +62,7 @@ Engine :: struct {
 
 //=================================================/src/core/security/=================================================//
 /*
-Type: User_Role
-Desc: Used to define the roles that a user can have within the Ostrich Database
-      Roles are used to define the permissions that a user has within the database
-*/
 
-
-/*
 Type: User_Credential
 Desc: Used to define the structure of a user credential within the Ostrich Database
       User credentials are used to authenticate a user within the database
@@ -270,4 +257,10 @@ BatchOperation :: struct {
 	clusterName:    string,
 	recordName:     string,
 	record:         Record, //this will allow for the name,type and value of the record
+}
+
+//todo: move me :)
+errSupression: ErrorSuppression
+ErrorSuppression :: struct {
+	enabled: bool, //uses the OST_READ_CONFIG_VALUE to get the value of the error suppression config then set true or false
 }

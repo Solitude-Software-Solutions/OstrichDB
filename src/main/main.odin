@@ -26,7 +26,16 @@ main :: proc() {
 	utils.main()
 	data.main()
 	utils.log_runtime_event("OstrichDB Started", "")
-
+	//
+	res := config.OST_READ_CONFIG_VALUE(const.configSix)
+	if res == "true" {
+		types.errSupression.enabled = true
+	} else if res == "false" {
+		types.errSupression.enabled = false
+	} else {
+		utils.log_err("Error reading error suppression config", #procedure)
+	}
+	//
 	//Print the Ostrich logo and version
 	version := string(utils.get_ost_version())
 	fmt.printfln(fmt.tprintf(utils.ostrich_art, utils.GREEN, version, utils.RESET))

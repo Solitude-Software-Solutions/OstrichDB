@@ -18,6 +18,15 @@ main :: proc() {
 	if (OST_CHECK_IF_CONFIG_FILE_EXISTS() == false) {
 		OST_CREATE_CONFIG_FILE()
 	}
+	//check if the error supression config is enabled or not
+
+	// if OST_READ_CONFIG_VALUE(const.configSix) == "true" {
+	// 	types.errSupression.enabled = true
+	// } else if OST_READ_CONFIG_VALUE(const.configSix) == "false" {
+	// 	types.errSupression.enabled = false
+	// } else {
+	// 	utils.log_err("Error reading error suppression config", #procedure)
+	// }
 }
 
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
@@ -87,6 +96,7 @@ OST_CREATE_CONFIG_FILE :: proc() -> bool {
 		OST_APPEND_AND_SET_CONFIG(const.configThree, "false")
 		OST_APPEND_AND_SET_CONFIG(const.configFour, "verbose")
 		OST_APPEND_AND_SET_CONFIG(const.configFive, "false")
+		OST_APPEND_AND_SET_CONFIG(const.configSix, "false")
 	}
 	return true
 }

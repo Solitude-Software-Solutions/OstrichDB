@@ -28,7 +28,7 @@ configTwo :: "OST_ENGINE_LOGGING"
 configThree :: "OST_USER_LOGGED_IN"
 configFour :: "OST_HELP"
 configFive :: "OST_SERVER_MODE_ON"
-
+configSix :: "OST_ERROR_SUPPRESSION" //whether errors are printed to the console or not
 //ATOM TOKEN CONSTANTS
 VERSION :: "VERSION"
 HELP :: "HELP" //help can also be a multi token command.
