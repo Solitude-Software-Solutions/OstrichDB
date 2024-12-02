@@ -57,7 +57,7 @@ OST_INIT_TESTS :: proc() {
 	//Record tests
 	test_record_creation(&t)
 	test_record_deletion(&t)
-	// test_record_renaming(&t)
+	test_record_renaming(&t)
 }
 
 
