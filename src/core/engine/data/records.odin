@@ -1290,7 +1290,6 @@ OST_PARSE_RECORD :: proc(record: string) -> types.Record {
 
 //deletes a arecord from a cluster
 OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
-	buf: [64]byte
 	collection_path := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
@@ -1301,15 +1300,13 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 	// Skip confirmation if in testing mode
 	if !types.TESTING {
 		fmt.printfln(
-			"Are you sure that you want to delete Record: %s%s%s from Cluster: %s%s%s?\nThis action can not be undone.",
-			utils.BOLD,
+			"Are you sure that you want to delete Record: %s%s%s?\nThis action can not be undone.",
+			utils.BOLD_UNDERLINE,
 			rn,
-			utils.RESET,
-			utils.BOLD,
-			cn,
 			utils.RESET,
 		)
 		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+		buf: [64]byte
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
 			error1 := utils.new_err(
@@ -1318,6 +1315,7 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 				#procedure,
 			)
 			utils.throw_err(error1)
+			utils.log_err("Error reading user input", #procedure)
 			return false
 		}
 
@@ -1329,7 +1327,7 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 			utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
 			return false
 		case const.YES:
-			break
+			// Continue with deletion
 		case:
 			utils.log_runtime_event(
 				"User entered invalid input",
@@ -1341,7 +1339,6 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 		}
 	}
 
-	// Read the collection file
 	data, readSuccess := os.read_entire_file(collection_path)
 	if !readSuccess {
 		utils.throw_err(
@@ -1354,61 +1351,82 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 
 	content := string(data)
 	lines := strings.split(content, "\n")
-	defer delete(lines)
-
 	newLines := make([dynamic]string)
 	defer delete(newLines)
 
 	inTargetCluster := false
-	recordDeleted := false
+	recordFound := false
+	isLastRecord := false
+	recordCount := 0
 
+	// First pass - count records in target cluster
 	for line in lines {
 		trimmedLine := strings.trim_space(line)
-
-		if trimmedLine == "{" {
-			inTargetCluster = false
-		}
-
 		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			inTargetCluster = true
+			continue
 		}
-
-		if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
-			recordDeleted = true
-			continue // Skip this line to delete the record
-		}
-
-		append(&newLines, line)
-
-		if inTargetCluster && trimmedLine == "}," {
-			inTargetCluster = false
+		if inTargetCluster {
+			if trimmedLine == "}," {
+				inTargetCluster = false
+				continue
+			}
+			if len(trimmedLine) > 0 && 
+			   !strings.has_prefix(trimmedLine, "cluster_name") &&
+			   !strings.has_prefix(trimmedLine, "cluster_id") {
+				recordCount += 1
+			}
 		}
 	}
 
-	if !recordDeleted {
-		fmt.printfln(
-			"Record %s%s%s not found in cluster %s%s%s",
-			utils.BOLD_UNDERLINE,
-			rn,
-			utils.RESET,
-			utils.BOLD_UNDERLINE,
-			cn,
-			utils.RESET,
-		)
+	// Second pass - rebuild content
+	inTargetCluster = false
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+		
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+			append(&newLines, line)
+			continue
+		}
+
+		if inTargetCluster {
+			if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+				recordFound = true
+				if recordCount == 1 {
+					isLastRecord = true
+				}
+				continue
+			}
+			
+			if trimmedLine == "}," {
+				if !isLastRecord {
+					append(&newLines, line)
+				} else {
+					append(&newLines, "}")
+				}
+				inTargetCluster = false
+				continue
+			}
+		}
+		
+		if !inTargetCluster || !strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+			append(&newLines, line)
+		}
+	}
+
+	if !recordFound {
 		return false
 	}
 
+	// Write updated content
 	newContent := strings.join(newLines[:], "\n")
 	writeSuccess := os.write_entire_file(collection_path, transmute([]byte)newContent)
 	if !writeSuccess {
 		utils.throw_err(
-			utils.new_err(
-				.CANNOT_WRITE_TO_FILE,
-				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#procedure,
-			),
+			utils.new_err(.CANNOT_WRITE_TO_FILE, utils.get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure),
 		)
-		utils.log_err("Error writing updated content to file", #procedure)
+		utils.log_err("Error writing to collection file", #procedure)
 		return false
 	}
 
