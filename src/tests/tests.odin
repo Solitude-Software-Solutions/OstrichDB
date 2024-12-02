@@ -56,7 +56,8 @@ OST_INIT_TESTS :: proc() {
 	test_cluster_renamimg(&t)
 	//Record tests
 	test_record_creation(&t)
-
+	test_record_deletion(&t)
+	// test_record_renaming(&t)
 }
 
 
@@ -198,13 +199,15 @@ test_record_creation :: proc(t: ^testing.T) {
 	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
 	defer data.OST_ERASE_COLLECTION(collectionName)
 
-	result := data.OST_APPEND_RECORD_TO_CLUSTER(
+
+	col := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
 		collectionName,
-		clusterName,
-		recordName,
-		"",
-		"STRING",
+		const.OST_FILE_EXTENSION,
 	)
+
+	result := data.OST_APPEND_RECORD_TO_CLUSTER(col, clusterName, recordName, "", "STRING")
 
 	if result == 0 {
 		testing.expect(t, true, "record should be created successfully")
@@ -214,6 +217,74 @@ test_record_creation :: proc(t: ^testing.T) {
 		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
 	}
 
+
+}
+
+test_record_deletion :: proc(t: ^testing.T) {
+	test_counter += 1
+	fmt.printf("Test %d: %stest_record_deletion%s...", test_counter, utils.BOLD, utils.RESET)
+
+	data.OST_CREATE_COLLECTION(collectionName, 0)
+	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
+
+	col := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collectionName,
+		const.OST_FILE_EXTENSION,
+	)
+	data.OST_APPEND_RECORD_TO_CLUSTER(
+		col,
+		clusterName,
+		recordName,
+		"This is a test string",
+		"STRING",
+	)
+	defer data.OST_ERASE_COLLECTION(collectionName)
+
+	result := data.OST_ERASE_RECORD(collectionName, clusterName, recordName)
+
+	if result {
+		testing.expect(t, true, "record should be deleted successfully")
+		fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+	} else {
+		testing.expect(t, false, "record should be deleted successfully")
+		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+	}
+}
+
+test_record_renaming :: proc(t: ^testing.T) {
+	test_counter += 1
+	fmt.printf("Test %d: %stest_record_renaming%s...", test_counter, utils.BOLD, utils.RESET)
+
+	data.OST_CREATE_COLLECTION(collectionName, 0)
+	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
+
+	col := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collectionName,
+		const.OST_FILE_EXTENSION,
+	)
+
+	data.OST_APPEND_RECORD_TO_CLUSTER(
+		col,
+		clusterName,
+		recordName,
+		"This is a test string",
+		"STRING",
+	)
+	defer data.OST_ERASE_COLLECTION(collectionName)
+
+	result := data.OST_RENAME_RECORD(recordName, newRecordName, true, collectionName, clusterName)
+
+	if result == 0 {
+		testing.expect(t, true, "record should be renamed successfully")
+		fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+	} else {
+		testing.expect(t, false, "record should be renamed successfully")
+		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+	}
 
 }
 

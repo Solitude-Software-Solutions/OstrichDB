@@ -136,7 +136,6 @@ get_err_msg :: proc(type: ErrorType) -> string {
 }
 
 throw_err :: proc(err: Error) -> int {
-	fmt.printfln("Error supression is: %v", types.errSupression.enabled)
 	if types.errSupression.enabled { 	//if error supression is off return
 		return 0
 	} else {
