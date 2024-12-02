@@ -18,6 +18,7 @@ OST_CREATE_BACKUP_DIR :: proc() {
 }
 
 
+
 OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	using utils
 	//retirve the data from the src collection file

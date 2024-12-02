@@ -11,6 +11,7 @@ import "../core/types"
 import "../utils"
 import "core:fmt"
 import "core:strings"
+import "../tests"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
@@ -26,6 +27,7 @@ main :: proc() {
 	utils.main()
 	data.main()
 	utils.log_runtime_event("OstrichDB Started", "")
+	tests.OST_INIT_TESTS()
 	//
 	res := config.OST_READ_CONFIG_VALUE(const.configSix)
 	if res == "true" {
