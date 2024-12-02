@@ -47,8 +47,6 @@ RENAME :: "RENAME"
 FETCH :: "FETCH"
 COUNT :: "COUNT"
 SET :: "SET"
-FOCUS :: "FOCUS"
-UNFOCUS :: "UNFOCUS"
 PURGE :: "PURGE"
 SIZE_OF :: "SIZE_OF"
 //Target Tokens

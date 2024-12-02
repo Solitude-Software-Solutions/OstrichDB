@@ -106,21 +106,6 @@ CommandHistory :: struct {
 }
 
 
-//=================================================/src/core/focus/=================================================//
-/*
-Type: Focus
-Desc: Used to determine which layer of data the user is focusing on to shorten the
-      amount of ATOM tokens that the user needs to enter when executing a command
-Usage Locations: focus.odin
-*/
-focus: Focus
-Focus :: struct {
-	t_:   string, // The primary target (e.g., "CLUSTER" or "COLLECTION")
-	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
-	p_o:  string, // The parent object of the primary object (e.g., "myCluster" or "myCollection")
-	gp_o: string, // The grandparent object of the primary object (e.g.,"myCollection" in relation to a record in "myCluster")
-	flag: bool, // If the focus is active
-}
 
 help_mode: Help_Mode
 Help_Mode :: struct {

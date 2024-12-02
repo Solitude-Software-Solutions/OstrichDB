@@ -23,8 +23,6 @@ validCommands := []string {
 	"VERSION",
 	"CLEAR",
 	"BACKUP",
-	"FOCUS",
-	"UNFOCUS",
 	"COLLECTION",
 	"CLUSTER",
 	"RECORD",

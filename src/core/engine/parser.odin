@@ -23,7 +23,6 @@ OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	return false
 }
 
-//the params arg is only used when in FOCUS mode to pass the focus targets and objects
 OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
