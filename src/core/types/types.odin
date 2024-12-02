@@ -264,3 +264,6 @@ errSupression: ErrorSuppression
 ErrorSuppression :: struct {
 	enabled: bool, //uses the OST_READ_CONFIG_VALUE to get the value of the error suppression config then set true or false
 }
+
+
+TESTING: bool   // Global flag to indicate if running in test mode

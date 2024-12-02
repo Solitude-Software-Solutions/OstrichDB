@@ -18,13 +18,11 @@ OST_CREATE_BACKUP_DIR :: proc() {
 }
 
 
-
 OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	using utils
 	//retirve the data from the src collection file
-	srcNameAndPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, src)
-	srcFullPath := fmt.tprintf("%s%s", srcNameAndPath, const.OST_FILE_EXTENSION)
-	f, readSuccess := os.read_entire_file(srcFullPath)
+	srcPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, src, const.OST_FILE_EXTENSION)
+	f, readSuccess := os.read_entire_file(srcPath)
 	if !readSuccess {
 		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
 		throw_custom_err(error1, "Could not read collection file for backup")

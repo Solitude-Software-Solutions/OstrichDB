@@ -6,6 +6,7 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+import "../../types"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
@@ -139,68 +140,72 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 		)
 		return false
 	}
-	fmt.printfln(
-		"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
-		utils.BOLD_UNDERLINE,
-		fileName,
-		utils.RESET,
-	)
-	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading user input", #procedure)
-	}
 
-	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-	cap := strings.to_upper(confirmation)
-
-	switch (cap) 
-	{
-	case const.YES:
-		// /delete the file
-		pathAndName := strings.concatenate([]string{const.OST_COLLECTION_PATH, fileName})
-		pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
-		deleteSuccess := os.remove(pathNameExtension)
-		if deleteSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_DELETE_FILE,
-				utils.get_err_msg(.CANNOT_DELETE_FILE),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Error deleting .ost file", #procedure)
-			return false
-		}
+	// Skip confirmation if in testing mode
+	if !types.TESTING {
 		fmt.printfln(
-			"Collection with name:%s%s%s has been deleted",
-			utils.BOLD,
+			"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
+			utils.BOLD_UNDERLINE,
 			fileName,
 			utils.RESET,
 		)
-		utils.log_runtime_event(
-			"Collection deleted",
-			"User confirmed deletion of collection and it was successfully deleted .",
-		)
-		break
+		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error reading user input", #procedure)
+		}
 
-	case const.NO:
-		utils.log_runtime_event("User canceled deletion", "User canceled deletion of collection")
-		return false
-	case:
-		utils.log_runtime_event(
-			"User entered invalid input",
-			"User entered invalid input when trying to delete collection",
+		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+		cap := strings.to_upper(confirmation)
+
+		switch (cap) {
+		case const.NO:
+			utils.log_runtime_event("User canceled deletion", "User canceled deletion of collection")
+			return false
+		case const.YES:
+			// Continue with deletion
+		case:
+			utils.log_runtime_event(
+				"User entered invalid input",
+				"User entered invalid input when trying to delete collection",
+			)
+			error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			return false
+		}
+	}
+
+	// Delete the file
+	pathAndName := strings.concatenate([]string{const.OST_COLLECTION_PATH, fileName})
+	pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
+	deleteSuccess := os.remove(pathNameExtension)
+	if deleteSuccess != 0 {
+		error1 := utils.new_err(
+			.CANNOT_DELETE_FILE,
+			utils.get_err_msg(.CANNOT_DELETE_FILE),
+			#procedure,
 		)
-		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
-		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		utils.throw_err(error1)
+		utils.log_err("Error deleting .ost file", #procedure)
 		return false
 	}
+
+	fmt.printfln(
+		"Collection with name:%s%s%s has been deleted",
+		utils.BOLD,
+		fileName,
+		utils.RESET,
+	)
+	utils.log_runtime_event(
+		"Collection deleted",
+		"User confirmed deletion of collection and it was successfully deleted .",
+	)
 	return true
 }
 

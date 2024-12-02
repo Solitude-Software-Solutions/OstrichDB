@@ -605,109 +605,114 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 		fn,
 		const.OST_FILE_EXTENSION,
 	)
-	fmt.printfln(
-		"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
-		utils.BOLD,
-		cn,
-		utils.RESET,
-		utils.BOLD,
-		fn,
-		utils.RESET,
-	)
-	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-	}
 
-	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-	cap := strings.to_upper(confirmation)
-	switch cap 
-	{
-	case const.YES:
-		data, readSuccess := os.read_entire_file(collection_path)
-		if !readSuccess {
-			utils.throw_err(
-				utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+	// Skip confirmation if in testing mode
+	if !types.TESTING {
+		fmt.printfln(
+			"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
+			utils.BOLD,
+			cn,
+			utils.RESET,
+			utils.BOLD,
+			fn,
+			utils.RESET,
+		)
+		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
 			)
-			utils.log_err("Error reading collection file", #procedure)
+			utils.throw_err(error1)
 			return false
 		}
-		defer delete(data)
 
-		content := string(data)
-		clusterClosingBrace := strings.split(content, "}")
-		newContent := make([dynamic]u8)
-		defer delete(newContent)
-		clusterFound := false
+		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+		cap := strings.to_upper(confirmation)
+		
+		switch cap {
+		case const.NO:
+			utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
+			return false
+		case const.YES:
+			// Continue with deletion
+		case:
+			utils.log_runtime_event(
+				"User entered invalid input",
+				"User entered invalid input when trying to delete cluster",
+			)
+			error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			return false
+		}
+	}
+
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		utils.log_err("Error reading collection file", #procedure)
+		return false
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusterClosingBrace := strings.split(content, "}")
+	newContent := make([dynamic]u8)
+	defer delete(newContent)
+	clusterFound := false
 
 
-		for i := 0; i < len(clusterClosingBrace); i += 1 {
-			cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
-			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-				clusterFound = true
-			} else if len(strings.trim_space(cluster)) > 0 {
-				append(&newContent, ..transmute([]u8)cluster) // Add closing brace
-				if i < len(clusterClosingBrace) - 1 {
-					append(&newContent, "}")
-				}
+	for i := 0; i < len(clusterClosingBrace); i += 1 {
+		cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			clusterFound = true
+		} else if len(strings.trim_space(cluster)) > 0 {
+			append(&newContent, ..transmute([]u8)cluster) // Add closing brace
+			if i < len(clusterClosingBrace) - 1 {
+				append(&newContent, "}")
 			}
 		}
+	}
 
-		if !clusterFound {
-			utils.throw_err(
-				utils.new_err(
-					.CANNOT_FIND_CLUSTER,
-					fmt.tprintf(
-						"Cluster: %s%s%s not found in collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						cn,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						fn,
-						utils.RESET,
-					),
-					#procedure,
+	if !clusterFound {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_FIND_CLUSTER,
+				fmt.tprintf(
+					"Cluster: %s%s%s not found in collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					cn,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					fn,
+					utils.RESET,
 				),
-			)
-			utils.log_err("Error finding cluster in collection", #procedure)
-			return false
-		}
-		writeSuccess := os.write_entire_file(collection_path, newContent[:])
-		if !writeSuccess {
-			utils.throw_err(
-				utils.new_err(
-					.CANNOT_WRITE_TO_FILE,
-					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-					#procedure,
-				),
-			)
-			utils.log_err("Error writing to collection file", #procedure)
-			return false
-		}
-		utils.log_runtime_event(
-			"Database Cluster",
-			"User confirmed deletion of cluster and it was successfully deleted.",
+				#procedure,
+			),
 		)
-		break
-
-	case const.NO:
-		utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
-		return false
-	case:
-		utils.log_runtime_event(
-			"User entered invalid input",
-			"User entered invalid input when trying to delete cluster",
-		)
-		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
-		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		utils.log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
+	writeSuccess := os.write_entire_file(collection_path, newContent[:])
+	if !writeSuccess {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		utils.log_err("Error writing to collection file", #procedure)
+		return false
+	}
+	utils.log_runtime_event(
+		"Database Cluster",
+		"User confirmed deletion of cluster and it was successfully deleted.",
+	)
 	return true
 }
 

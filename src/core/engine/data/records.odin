@@ -1297,151 +1297,122 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 		fn,
 		const.OST_FILE_EXTENSION,
 	)
-	fmt.printfln(
-		"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
-		utils.BOLD,
-		cn,
-		utils.RESET,
-		utils.BOLD,
-		fn,
-		utils.RESET,
-	)
 
-	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
+	// Skip confirmation if in testing mode
+	if !types.TESTING {
+		fmt.printfln(
+			"Are you sure that you want to delete Record: %s%s%s from Cluster: %s%s%s?\nThis action can not be undone.",
+			utils.BOLD,
+			rn,
+			utils.RESET,
+			utils.BOLD,
+			cn,
+			utils.RESET,
 		)
-		utils.throw_err(error1)
+		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			return false
+		}
+
+		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+		cap := strings.to_upper(confirmation)
+		
+		switch cap {
+		case const.NO:
+			utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
+			return false
+		case const.YES:
+			break
+		case:
+			utils.log_runtime_event(
+				"User entered invalid input",
+				"User entered invalid input when trying to delete record",
+			)
+			error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			return false
+		}
 	}
 
-	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-	// Too fat, tired, and lazy to do this by hand;
-	// anything in this procedure below this line is AI generated - Marshall Burns aka @SchoolyB 06Oct2024
-	cap := strings.to_upper(confirmation)
-
-	switch cap {
-	case const.YES:
-		data, readSuccess := os.read_entire_file(collection_path)
-		if !readSuccess {
-			utils.throw_err(
-				utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-			)
-			utils.log_err("Error reading collection file", #procedure)
-			return false
-		}
-		defer delete(data)
-
-		content := string(data)
-		clusters := strings.split(content, "},")
-		newContent := make([dynamic]u8)
-		defer delete(newContent)
-		recordFound := false
-		clusterFound := false
-
-		for cluster in clusters {
-			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-				clusterFound = true
-				clusterLines := strings.split(cluster, "\n")
-				newClusterLines := make([dynamic]string)
-				defer delete(newClusterLines)
-
-				for line in clusterLines {
-					if strings.contains(line, fmt.tprintf("%s :", rn)) {
-						recordFound = true
-					} else {
-						append(&newClusterLines, line)
-					}
-				}
-
-				if recordFound {
-					newCluster := strings.join(newClusterLines[:], "\n")
-					append(&newContent, ..transmute([]u8)newCluster)
-					append(&newContent, "},")
-				} else {
-					append(&newContent, ..transmute([]u8)cluster)
-					append(&newContent, "},")
-				}
-			} else {
-				append(&newContent, ..transmute([]u8)cluster)
-				append(&newContent, "},")
-			}
-		}
-
-		if !clusterFound {
-			utils.throw_err(
-				utils.new_err(
-					.CANNOT_FIND_CLUSTER,
-					fmt.tprintf(
-						"Cluster: %s%s%s not found in collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						cn,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						fn,
-						utils.RESET,
-					),
-					#procedure,
-				),
-			)
-			utils.log_err("Error finding cluster in collection", #procedure)
-			return false
-		}
-
-		if !recordFound {
-			utils.throw_err(
-				utils.new_err(
-					.CANNOT_FIND_RECORD,
-					fmt.tprintf(
-						"Record: %s%s%s not found in cluster: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						rn,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						cn,
-						utils.RESET,
-					),
-					#procedure,
-				),
-			)
-			utils.log_err("Error finding record in cluster", #procedure)
-			return false
-		}
-
-		writeSuccess := os.write_entire_file(collection_path, newContent[:])
-		if !writeSuccess {
-			utils.throw_err(
-				utils.new_err(
-					.CANNOT_WRITE_TO_FILE,
-					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-					#procedure,
-				),
-			)
-			utils.log_err("Error writing to collection file", #procedure)
-			return false
-		}
-		utils.log_runtime_event(
-			"Database Record",
-			"User confirmed deletion of record and it was successfully deleted.",
+	// Read the collection file
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
 		)
-
-	case const.NO:
-		utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
-		return false
-	case:
-		utils.log_runtime_event(
-			"User entered invalid input",
-			"User entered invalid input when trying to delete record",
-		)
-		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
-		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		utils.log_err("Error reading collection file", #procedure)
 		return false
 	}
+	defer delete(data)
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	newLines := make([dynamic]string)
+	defer delete(newLines)
+
+	inTargetCluster := false
+	recordDeleted := false
+
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+
+		if trimmedLine == "{" {
+			inTargetCluster = false
+		}
+
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+		}
+
+		if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
+			recordDeleted = true
+			continue // Skip this line to delete the record
+		}
+
+		append(&newLines, line)
+
+		if inTargetCluster && trimmedLine == "}," {
+			inTargetCluster = false
+		}
+	}
+
+	if !recordDeleted {
+		fmt.printfln(
+			"Record %s%s%s not found in cluster %s%s%s",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+		)
+		return false
+	}
+
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := os.write_entire_file(collection_path, transmute([]byte)newContent)
+	if !writeSuccess {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		utils.log_err("Error writing updated content to file", #procedure)
+		return false
+	}
+
 	return true
-
 }
 
 
