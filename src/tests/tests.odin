@@ -1,5 +1,4 @@
 package tests
-
 import "../core/config"
 import "../core/const"
 import "../core/engine/data"
@@ -7,13 +6,16 @@ import "../core/types"
 import "../utils"
 import "core:fmt"
 import "core:testing"
-
+//=========================================================//
+// Author: Marshall A Burns aka @SchoolyB
+//
+// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+// Licensed under Apache License 2.0 (see LICENSE file for details)
+//=========================================================//
 
 //need the following tests:
-//new user creation
 //collection,cluster, record purging
 //appending a new command to the history cluster
-//all operations on cluster and records
 
 test_counter := 0
 id: i64 = 000000000000
@@ -287,6 +289,3 @@ test_record_renaming :: proc(t: ^testing.T) {
 	}
 
 }
-
-
-test_secure_collection_creation :: proc() {}

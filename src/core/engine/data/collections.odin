@@ -1,12 +1,12 @@
 package data
 import "../../../utils"
 import "../../const"
+import "../../types"
 import "./metadata"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-import "../../types"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
@@ -166,10 +166,13 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 
 		switch (cap) {
 		case const.NO:
-			utils.log_runtime_event("User canceled deletion", "User canceled deletion of collection")
+			utils.log_runtime_event(
+				"User canceled deletion",
+				"User canceled deletion of collection",
+			)
 			return false
 		case const.YES:
-			// Continue with deletion
+		// Continue with deletion
 		case:
 			utils.log_runtime_event(
 				"User entered invalid input",
@@ -196,12 +199,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 		return false
 	}
 
-	fmt.printfln(
-		"Collection with name:%s%s%s has been deleted",
-		utils.BOLD,
-		fileName,
-		utils.RESET,
-	)
+	fmt.printfln("Collection with name:%s%s%s has been deleted", utils.BOLD, fileName, utils.RESET)
 	utils.log_runtime_event(
 		"Collection deleted",
 		"User confirmed deletion of collection and it was successfully deleted .",
@@ -240,7 +238,7 @@ OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 }
 
 
-//checks if the passed in ost file exists in "./clusters". see usage in OST_CHOOSE_COLLECTION()
+//checks if the passed in ost file exists in "./collections". see usage in OST_CHOOSE_COLLECTION()
 //type 0 is for standard collection files, type 1 is for secure files
 OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	switch (type) {
