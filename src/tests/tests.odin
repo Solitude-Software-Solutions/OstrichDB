@@ -143,7 +143,7 @@ test_cluster_deletion :: proc(t: ^testing.T) {
 	id: i64 = 000000000000
 	data.OST_CREATE_COLLECTION(collectionName, 0)
 	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
-	result := data.OST_ERASE_CLUSTER(clusterName, collectionName)
+	result := data.OST_ERASE_CLUSTER(collectionName, clusterName)
 	defer data.OST_ERASE_COLLECTION(collectionName)
 
 	if result {
