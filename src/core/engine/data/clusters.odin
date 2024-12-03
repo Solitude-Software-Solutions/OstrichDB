@@ -336,7 +336,6 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
-	fmt.println("Please re-launch OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0
@@ -631,13 +630,13 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
 		cap := strings.to_upper(confirmation)
-		
+
 		switch cap {
 		case const.NO:
 			utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
 			return false
 		case const.YES:
-			// Continue with deletion
+		// Continue with deletion
 		case:
 			utils.log_runtime_event(
 				"User entered invalid input",

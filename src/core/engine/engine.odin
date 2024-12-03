@@ -71,7 +71,7 @@ OST_START_ENGINE :: proc() -> int {
 	{
 	case false:
 		config.main()
-		security.OST_INIT_ADMIN_SETUP()
+	security.OST_INIT_ADMIN_SETUP()
 		break
 
 	case true:

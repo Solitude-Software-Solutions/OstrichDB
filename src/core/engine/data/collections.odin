@@ -70,7 +70,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 			utils.log_err("Error creating new collection file", #procedure)
 			return false
 		}
-		metadata.OST_METADATA_ON_CREATE(pathNameExtension) 
+		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
 		defer os.close(createFile)
 		break
 	case 1:
@@ -199,7 +199,7 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 		return false
 	}
 
-	fmt.printfln("Collection with name:%s%s%s has been deleted", utils.BOLD, fileName, utils.RESET)
+	fmt.printfln("Collection: %s%s%s has been deleted", utils.BOLD, fileName, utils.RESET)
 	utils.log_runtime_event(
 		"Collection deleted",
 		"User confirmed deletion of collection and it was successfully deleted .",
