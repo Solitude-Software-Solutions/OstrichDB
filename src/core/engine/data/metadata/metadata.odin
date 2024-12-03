@@ -214,7 +214,8 @@ OST_GENERATE_CHECKSUM :: proc() -> string {
 //this appends the metadata header to the file as well as sets the time of creation
 OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	rawData, readSuccess := os.read_entire_file(fn)
-fmt.println(readSuccess)
+	defer delete(rawData)
+	fmt.println(readSuccess)
 	if !readSuccess {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,

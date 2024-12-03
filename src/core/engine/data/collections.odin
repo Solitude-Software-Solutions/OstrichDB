@@ -32,7 +32,7 @@ OST_CHOOSE_COLLECTION_NAME :: proc() {
 		utils.log_err("Error reading user input", #procedure)
 	}
 	name := strings.trim_right(string(buf[:n]), "\n")
-	OST_CREATE_COLLECTION(name, 0)
+	_ = OST_CREATE_COLLECTION(strings.clone(name), 0)
 }
 
 
@@ -72,7 +72,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
 		defer os.close(createFile)
-		break
+		return true
 	case 1:
 		//secure file
 		if OST_PERFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
@@ -98,7 +98,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
 		defer os.close(createFile)
-		break
+		return true
 	case 2:
 		//history file
 		pathNameExtension := fmt.tprintf(
@@ -121,9 +121,9 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
 		defer os.close(createFile)
-		break
+		return true
 	}
-	return true
+	return false
 }
 
 
