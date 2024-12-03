@@ -3,6 +3,7 @@ import "../core/config"
 import "../core/const"
 import "../core/engine/data"
 import "../core/types"
+import "../core/engine/security"
 import "../utils"
 import "core:fmt"
 import "core:testing"
@@ -18,14 +19,7 @@ import "core:testing"
 //appending a new command to the history cluster
 
 test_counter := 0
-id: i64 = 000000000000
-collectionName := "test_collection"
-clusterName := "test_cluster"
-recordName := "test_record"
-newCollectionName := "test_collection_new"
-newClusterName := "test_cluster_new"
-newRecordName := "test_record_new"
-backupCollectionName := "test_collection_backup"
+
 
 
 main :: proc() {
@@ -60,6 +54,8 @@ OST_INIT_TESTS :: proc() {
 	test_record_creation(&t)
 	test_record_deletion(&t)
 	test_record_renaming(&t)
+	//User tests
+	test_user_creation(&t)
 }
 
 
@@ -67,16 +63,20 @@ test_collection_creation :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_collection_creation%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	defer data.OST_ERASE_COLLECTION(collectionName)
+	utils.log_runtime_event("Test Started", "Running test_collection_creation")
+	
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
-	result := data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+	result := data.OST_CHECK_IF_COLLECTION_EXISTS(const.TEST_COLLECTION, 0)
 	testing.expect(t, result, "collection should exist")
 
 	if result {
 		fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+		utils.log_runtime_event("Test Passed", "test_collection_creation completed successfully")
 	} else {
 		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+		utils.log_runtime_event("Test Failed", "test_collection_creation failed")
 	}
 }
 
@@ -84,16 +84,20 @@ test_collection_deletion :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_collection_deletion%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	data.OST_ERASE_COLLECTION(collectionName)
+	utils.log_runtime_event("Test Started", "Running test_collection_deletion")
+	
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
-	result := !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+	result := !data.OST_CHECK_IF_COLLECTION_EXISTS(const.TEST_COLLECTION, 0)
 	testing.expect(t, result, "collection should not exist")
 
 	if result {
 		fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+		utils.log_runtime_event("Test Passed", "test_collection_deletion completed successfully")
 	} else {
 		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+		utils.log_runtime_event("Test Failed", "test_collection_deletion failed")
 	}
 }
 
@@ -101,32 +105,35 @@ test_collection_renaming :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_collection_renaming%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	defer data.OST_ERASE_COLLECTION(collectionName)
-	defer data.OST_ERASE_COLLECTION(newCollectionName)
+	utils.log_runtime_event("Test Started", "Running test_collection_renaming")
 
-	data.OST_RENAME_COLLECTION(collectionName, newCollectionName)
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
+	defer data.OST_ERASE_COLLECTION(const.TEST_NEW_COLLECTION)
 
-	result1 := !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
-	result2 := data.OST_CHECK_IF_COLLECTION_EXISTS(newCollectionName, 0)
+	data.OST_RENAME_COLLECTION(const.TEST_COLLECTION, const.TEST_NEW_COLLECTION)
+
+	result1 := !data.OST_CHECK_IF_COLLECTION_EXISTS(const.TEST_COLLECTION, 0)
+	result2 := data.OST_CHECK_IF_COLLECTION_EXISTS(const.TEST_NEW_COLLECTION, 0)
 	testing.expect(t, result1, "old collection should not exist")
 	testing.expect(t, result2, "new collection should exist")
 
 	if result1 && result2 {
 		fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+		utils.log_runtime_event("Test Passed", "test_collection_renaming completed successfully")
 	} else {
 		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+		utils.log_runtime_event("Test Failed", "test_collection_renaming failed")
 	}
-
 }
 
 test_collection_backup :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_collection_backup%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	defer data.OST_ERASE_COLLECTION(collectionName)
-	result := data.OST_CREATE_BACKUP_COLLECTION(backupCollectionName, collectionName)
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
+	result := data.OST_CREATE_BACKUP_COLLECTION(const.TEST_BACKUP_COLLECTION, const.TEST_COLLECTION)
 	testing.expect(t, result, "backup should be created successfully")
 
 	if result {
@@ -140,16 +147,20 @@ test_cluster_creation :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_cluster_creation%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	result := data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
-	defer data.OST_ERASE_COLLECTION(collectionName) //clean up
+	utils.log_runtime_event("Test Started", "Running test_cluster_creation")
+
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	result := data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION) //clean up
 
 	if result == 0 {
 		testing.expect(t, true, "cluster should be created successfully")
 		fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+		utils.log_runtime_event("Test Passed", "test_cluster_creation completed successfully")
 	} else {
 		testing.expect(t, false, "cluster should be created successfully")
 		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+		utils.log_runtime_event("Test Failed", "test_cluster_creation failed")
 	}
 }
 
@@ -158,10 +169,10 @@ test_cluster_deletion :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_cluster_deletion%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
-	result := data.OST_ERASE_CLUSTER(collectionName, clusterName)
-	defer data.OST_ERASE_COLLECTION(collectionName)
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	result := data.OST_ERASE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 	if result {
 		testing.expect(t, true, "cluster should be deleted successfully")
@@ -177,10 +188,10 @@ test_cluster_renamimg :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_cluster_renamimg%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
-	result := data.OST_RENAME_CLUSTER(collectionName, clusterName, newClusterName)
-	defer data.OST_ERASE_COLLECTION(collectionName)
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	result := data.OST_RENAME_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_NEW_CLUSTER)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 	if result {
 		testing.expect(t, true, "cluster should be renamed successfully")
@@ -197,19 +208,19 @@ test_record_creation :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_record_creation%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
-	defer data.OST_ERASE_COLLECTION(collectionName)
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 
 	col := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
-		collectionName,
+		const.TEST_COLLECTION,
 		const.OST_FILE_EXTENSION,
 	)
 
-	result := data.OST_APPEND_RECORD_TO_CLUSTER(col, clusterName, recordName, "", "STRING")
+	result := data.OST_APPEND_RECORD_TO_CLUSTER(col, const.TEST_CLUSTER, const.TEST_RECORD, "", "STRING")
 
 	if result == 0 {
 		testing.expect(t, true, "record should be created successfully")
@@ -226,25 +237,25 @@ test_record_deletion :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_record_deletion%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 
 	col := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
-		collectionName,
+		const.TEST_COLLECTION,
 		const.OST_FILE_EXTENSION,
 	)
 	data.OST_APPEND_RECORD_TO_CLUSTER(
 		col,
-		clusterName,
-		recordName,
+		const.TEST_CLUSTER,
+		const.TEST_RECORD,
 		"This is a test string",
 		"STRING",
 	)
-	defer data.OST_ERASE_COLLECTION(collectionName)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
-	result := data.OST_ERASE_RECORD(collectionName, clusterName, recordName)
+	result := data.OST_ERASE_RECORD(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_RECORD)
 
 	if result {
 		testing.expect(t, true, "record should be deleted successfully")
@@ -259,33 +270,67 @@ test_record_renaming :: proc(t: ^testing.T) {
 	test_counter += 1
 	fmt.printf("Test %d: %stest_record_renaming%s...", test_counter, utils.BOLD, utils.RESET)
 
-	data.OST_CREATE_COLLECTION(collectionName, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
+	utils.log_runtime_event("Test Started", "Running test_record_renaming")
+
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 
 	col := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
-		collectionName,
+		const.TEST_COLLECTION,
 		const.OST_FILE_EXTENSION,
 	)
 
 	data.OST_APPEND_RECORD_TO_CLUSTER(
 		col,
-		clusterName,
-		recordName,
+		const.TEST_CLUSTER,
+		const.TEST_RECORD,
 		"This is a test string",
 		"STRING",
 	)
-	defer data.OST_ERASE_COLLECTION(collectionName)
+	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
-	result := data.OST_RENAME_RECORD(recordName, newRecordName, true, collectionName, clusterName)
+	result := data.OST_RENAME_RECORD(const.TEST_RECORD, const.TEST_NEW_RECORD, true, const.TEST_COLLECTION, const.TEST_CLUSTER)
 
 	if result == 0 {
 		testing.expect(t, true, "record should be renamed successfully")
 		fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+		utils.log_runtime_event("Test Passed", "test_record_renaming completed successfully")
 	} else {
 		testing.expect(t, false, "record should be renamed successfully")
 		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+		utils.log_runtime_event("Test Failed", "test_record_renaming failed")
 	}
 
+}
+
+test_user_creation :: proc(t: ^testing.T) {
+    test_counter += 1
+    fmt.printf("Test %d: %stest_user_creation%s...", test_counter, utils.BOLD, utils.RESET)
+
+    utils.log_runtime_event("Test Started", "Running test_user_creation")
+
+	// Set up admin role for test since only admins can create users
+    types.user.role.Value = "admin"
+    types.user.username.Value = "test_user_head"
+    
+    // Create test user
+    types.new_user.role.Value = const.TEST_ROLE
+    types.new_user.username.Value = const.TEST_USERNAME
+    
+    result := security.OST_CREATE_NEW_USER(const.TEST_USERNAME, const.TEST_PASSWORD, const.TEST_ROLE)
+	defer security.OST_DELETE_USER(types.new_user.username.Value)
+    
+    // Check if secure collection was created for the user
+    exists, _ := data.OST_FIND_SEC_COLLECTION(const.TEST_USERNAME)
+    testing.expect(t, exists, "secure collection should exist for new user")
+    
+    if result == 0 && exists {
+        fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+        utils.log_runtime_event("Test Passed", "test_user_creation completed successfully")
+    } else {
+        fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+        utils.log_runtime_event("Test Failed", "test_user_creation failed")
+    }
 }
