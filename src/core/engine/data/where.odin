@@ -40,14 +40,14 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
         if target == const.CLUSTER {
             collectionPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collection)
             if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
-                fmt.printfln("Cluster: %s -> Collection: %s", targetName, collection)
+                fmt.printfln("Cluster: %s%s%s -> Collection: %s%s%s", utils.BOLD_UNDERLINE, targetName, utils.RESET, utils.BOLD_UNDERLINE, collection, utils.RESET)
                 found = true
                 // Remove the return here to continue searching
             }
         } else if target == const.RECORD {
             colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
             if success {
-                fmt.printfln("Record: %s -> Cluster: %s -> Collection: %s", targetName, cluName, colName)
+                fmt.printfln("Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s", utils.BOLD_UNDERLINE, targetName, utils.RESET, utils.BOLD_UNDERLINE, cluName, utils.RESET, utils.BOLD_UNDERLINE, colName, utils.RESET)
                 found = true
                 // Remove the return here to continue searching
             }
