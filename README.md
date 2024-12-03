@@ -181,7 +181,7 @@ SET CONFIG help TO verbose
   - `VALIDATE`: Check data integrity
   - `LOCK`: Prevent data modification
   - `UNLOCK`: Allow data modification
-  - `RESTORE`: Undo recent changes
+  - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
   - `ALL`: Perform operations on all objects within a scope
 - Support for additional data types
