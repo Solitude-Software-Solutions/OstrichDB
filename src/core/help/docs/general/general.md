@@ -78,6 +78,11 @@ Example: `COUNT CLUSTERS <collection_name>`
 Returns the size in bytes of an object.
 Example: `SIZE_OF COLLECTION <collection_name>`
 
+### WHERE
+Either searches all or a specific collection for the location of a cluster or record.
+Example: `WHERE CLUSTER <cluster_name>`
+or
+`WHERE <object_name>`
 
 ## Data Structure Concepts
 

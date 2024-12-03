@@ -68,6 +68,10 @@ Returns the number of objects within a scope. Use: `COUNT <object_type>`.
 Returns the size in bytes of an object. Use: `SIZE_OF <object_type>`.
 ### SIZE_OF END
 
+### WHERE START
+Either searches all or a specific collection for the location of a cluster or record. Use: `WHERE <object_name>`.
+### WHERE END
+
 ### BACKUP START
 Creates a backup of DBMS data and configurations. Use: `BACKUP COLLECTION <name>`.
 ### BACKUP END

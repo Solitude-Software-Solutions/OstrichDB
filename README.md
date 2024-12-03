@@ -86,6 +86,7 @@ These commands allow you to perform more complex operations.
 - **`PURGE`**: Removes all data from an object while maintining the object structure.
 - **`COUNT`**: Returns the number of objects within a scope. Paired with the plural form of the object type (e.g., `RECORDS`, `CLUSTERS`).
 - **`SIZE_OF`**: Returns the size in bytes of an object.
+- **`WHERE`**: Searches all collections for the location of a cluster or record.
 ---
 
 ### **Modifiers in Commands**

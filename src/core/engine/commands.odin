@@ -217,6 +217,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			help.OST_GET_SPECIFIC_HELP(cmd.t_token)
 		}
 		break
+	//=======================<MULTI-TOKEN COMMANDS>=======================//
+	//WHERE: Used to search for a specific object within the DBMS
 	case const.WHERE:
 		utils.log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
 		switch (cmd.t_token) {
@@ -235,7 +237,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 		}
 		break
-	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
 	case const.BACKUP:
 		utils.log_runtime_event("Used BACKUP command", "User requested to backup data.")

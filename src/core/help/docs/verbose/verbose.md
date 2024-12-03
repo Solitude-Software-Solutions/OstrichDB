@@ -69,6 +69,10 @@ The `COUNT` token is a multi-token action. It is used to return the number of ob
 The `SIZE_OF` token is a multi-token action. It is used to return the size in bytes of an object. `SIZE_OF` MUST be followed by a target token such as `RECORD`, `CLUSTER`, or `COLLECTION` and an object name. For example: `SIZE_OF COLLECTION <collection_name>` will return the size in bytes of the collection with the specified name.
 ### SIZE_OF END
 
+### WHERE START
+The `WHERE` token is a multi-token action. It is used to search for the location of a cluster or record within OstrichDB. `WHERE` can be followed by the target token ie `CLUSTER` or `RECORD` then the target object name or just the object name. For example: `WHERE RECORD <record_name>` will search all collections for the location of any record with the specified name.
+### WHERE END
+
 ### BACKUP START
 The `BACKUP` token is a multi-token action. It is used to create a backup of all data within OstrichDB. `BACKUP` MUST be followed by the target token `COLLECTION` and an object name. For example: `BACKUP COLLECTION <collection_name>` will create a backup of the collection with the specified name. Backups are stored in the `/bin/backups` directory and end with the `.ost` file extension.
 ### BACKUP END

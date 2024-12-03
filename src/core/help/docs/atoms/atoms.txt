@@ -9,6 +9,7 @@
 |CLEAR      |Action         |Single           |Clears the screen of clutter                                        |
 |RESTART    |Action         |Single           |Restarts OstrichDB                                                  |
 |REBUILD    |Action         |Single           |Rebuilds and restarts OstrichDB                                     |
+|WHERE      |Action         |Multi            |Searches for a specific object within the DBMS                  |
 |NEW        |Action         |Multi            |Creates a new collection, cluster, record or user                   |
 |ERASE      |Action         |Multi            |Deletes a collection, cluster, or record                            |
 |RENAME     |Action         |Multi            |Renames a collection, cluster, or record                            |
