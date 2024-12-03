@@ -492,121 +492,115 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 // creates a new user account post engine initialization
 //also determines if the currently logged in user has permission to create a new user account
-OST_CREATE_NEW_USER :: proc() -> int {
+//allows for test mode to be used to create a new user without the need for interactive input
+OST_CREATE_NEW_USER :: proc(username: string = "", password: string = "", role: string = "") -> int {
 	buf: [1024]byte
-	role: string
+
 	types.new_user.user_id = OST_GEN_USER_ID()
-	if types.user.role.Value == "admin" {
-		fmt.println("Please enter role you would like to assign the new account")
-		fmt.printf("1. Admin\n2. User\n3. Guest\n")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			fmt.printfln("Error reading input")
+
+	if types.TESTING {
+		// In testing mode, use provided test values
+		if role == "" || username == "" || password == "" {
+			fmt.println("Error: Required test parameters are missing")
+			return 1 
+		}
+		
+		// Set role based on test input
+		switch strings.to_upper(role) {
+		case "ADMIN":
+			types.new_user.role.Value = "admin"
+		case "USER":
+			types.new_user.role.Value = "user"
+		case "GUEST":
+			types.new_user.role.Value = "guest"
+		case:
 			return 1
 		}
+		
+		types.new_user.username.Value = username
+		types.new_user.password.Value = password
+		
+	} else {
+		if types.user.role.Value == "admin" {
+			fmt.println("Please enter role you would like to assign the new account")
+			fmt.printf("1. Admin\n2. User\n3. Guest\n")
+			n, inputSuccess := os.read(os.stdin, buf[:])
+			if inputSuccess != 0 {
+				fmt.printfln("Error reading input")
+				return 1
+			}
 
-		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
-		if inputToCap == "1" || inputToCap == "ADMIN" {
-			types.new_user.role.Value = "admin"
-		} else if inputToCap == "2" || inputToCap == "USER" {
-			types.new_user.role.Value = "user"
-
-		} else if inputToCap == "3" || inputToCap == "GUEST" {
+			inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
+			if inputToCap == "1" || inputToCap == "ADMIN" {
+				types.new_user.role.Value = "admin"
+			} else if inputToCap == "2" || inputToCap == "USER" {
+				types.new_user.role.Value = "user"
+			} else if inputToCap == "3" || inputToCap == "GUEST" {
+				types.new_user.role.Value = "guest"
+			} else {
+				fmt.printfln("Invalid role entered")
+				return 1
+			}
+		} else if (types.user.role.Value == "user") {
 			types.new_user.role.Value = "guest"
 		} else {
-			fmt.printfln("Invalid role entered")
+			fmt.println("You do not have the required permissions to create a new account")
+			fmt.printfln("To create a new account you must be logged in as an admin or user account")
 			return 1
 		}
-	} else if (types.user.role.Value == "user") { 	//users can only create guest accounts
-		types.new_user.role.Value = "guest"
-	} else {
-		fmt.println("You do not have the required permissions to create a new account")
-		fmt.printfln("To create a new account you must be logged in as an admin or user account")
+		
+		newUserName := OST_GET_USERNAME(false)
+		types.new_user.username.Value = newUserName
+	}
+
+	// Common validation logic for both test and interactive modes
+	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(types.new_user.username.Value)
+	if isBannedUsername {
+		fmt.printfln("Username is banned. Please enter a different username")
+		fmt.println("Cannot create user with name: ", types.new_user.username.Value)
 		return 1
 	}
-	newUserName := OST_GET_USERNAME(false)
 
-	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(newUserName)
-	if isBannedUsername == true {
-		fmt.printfln("Username is banned. Please enter a different username")
-		OST_CREATE_NEW_USER()
-	}
-	newColName := fmt.tprintf("secure_%s", newUserName)
+	newColName := fmt.tprintf("secure_%s", types.new_user.username.Value)
 	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
 
 	if exists {
 		fmt.printfln(
 			"There is already a user with the name: %s%s%s\nPlease try again.",
 			utils.BOLD_UNDERLINE,
-			newUserName,
+			types.new_user.username.Value,
 			utils.RESET,
 		)
 		return 1
 	}
-	data.OST_CREATE_COLLECTION(newColName, 1) //create a new secure collection for each new user
 
-
-	if types.new_user.role.Value == "admin" {
-		fmt.printfln("Please enter a username for the new admin account")
-	} else if types.new_user.role.Value == "user" {
-		fmt.printfln("Please enter a username for the new user account")
-	} else {
-		fmt.printfln("Please enter a username for the new guest account")
+	result := data.OST_CREATE_COLLECTION(newColName, 1)
+	if !types.TESTING {
+		fmt.printf(
+			"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
+		)
+		libc.system("stty -echo")
+		initpassword := OST_GET_PASSWORD(false)
+		libc.system("stty echo")
+		types.new_user.password.Value = initpassword
 	}
-	fmt.printf(
-		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
-	)
-	libc.system("stty -echo")
-	initpassword := OST_GET_PASSWORD(false)
-	libc.system("stty echo")
+
 	saltAsString := string(types.new_user.salt)
 	hashAsString := string(types.new_user.hashedPassword)
 	algoMethodAsString := strconv.itoa(buf[:], types.new_user.store_method)
-	types.new_user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
-	colFileName := fmt.tprintf("secure_%s", newUserName)
-	OST_STORE_USER_CREDS(
-		colFileName,
-		types.new_user.username.Value,
-		types.new_user.user_id,
-		"user_name",
-		types.new_user.username.Value,
-	)
-	OST_STORE_USER_CREDS(
-		colFileName,
-		types.new_user.username.Value,
-		types.new_user.user_id,
-		"role",
-		types.new_user.role.Value,
-	)
+	types.new_user.user_id = data.OST_GENERATE_CLUSTER_ID()
 
-	OST_STORE_USER_CREDS(
-		colFileName,
-		types.new_user.username.Value,
-		types.new_user.user_id,
-		"salt",
-		saltAsString,
-	)
-	OST_STORE_USER_CREDS(
-		colFileName,
-		types.new_user.username.Value,
-		types.new_user.user_id,
-		"hash",
-		hashAsString,
-	)
-	OST_STORE_USER_CREDS(
-		colFileName,
-		types.new_user.username.Value,
-		types.new_user.user_id,
-		"store_method",
-		algoMethodAsString,
-	)
+	// Store user credentials
+	OST_STORE_USER_CREDS(newColName, types.new_user.username.Value, types.new_user.user_id, "user_name", types.new_user.username.Value)
+	OST_STORE_USER_CREDS(newColName, types.new_user.username.Value, types.new_user.user_id, "role", types.new_user.role.Value)
+	OST_STORE_USER_CREDS(newColName, types.new_user.username.Value, types.new_user.user_id, "salt", saltAsString)
+	OST_STORE_USER_CREDS(newColName, types.new_user.username.Value, types.new_user.user_id, "hash", hashAsString)
+	OST_STORE_USER_CREDS(newColName, types.new_user.username.Value, types.new_user.user_id, "store_method", algoMethodAsString)
 
-	//lastly, create a history cluster for the new user
-	data.OST_CREATE_CLUSTER_BLOCK(
-		"./history.ost",
-		types.user.user_id,
-		types.new_user.username.Value,
-	)
+	// Create history cluster. 
+	//TODO: This is the reason the "Please Re-luanch OstrichDB..." message is displayed a second time...
+	data.OST_CREATE_CLUSTER_BLOCK("./history.ost", types.user.user_id, types.new_user.username.Value)
+	
 	return 0
 }
 
@@ -618,4 +612,108 @@ OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
 		}
 	}
 	return false
+}
+
+OST_DELETE_USER :: proc(username: string) -> bool {
+    // Only admins can delete users
+    if types.user.role.Value != "admin" {
+        fmt.printfln("You do not have permission to delete users. Only administrators can perform this action.")
+        return false
+    }
+
+    // Cannot delete your own account
+    if username == types.user.username.Value {
+        fmt.printfln("You cannot delete your own account.")
+        return false
+    }
+
+    // Check if user exists
+    secureColName := fmt.tprintf("secure_%s", username)
+    exists, _ := data.OST_FIND_SEC_COLLECTION(secureColName)
+    if !exists {
+        fmt.printfln(
+            "User %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            username,
+            utils.RESET,
+        )
+        return false
+    }
+
+    // Get confirmation
+    if !types.TESTING {
+        buf: [64]byte
+        fmt.printfln(
+            "Are you sure you want to delete user: %s%s%s?\nThis action cannot be undone.",
+            utils.BOLD_UNDERLINE,
+            username,
+            utils.RESET,
+        )
+        fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+        
+        n, inputSuccess := os.read(os.stdin, buf[:])
+        if inputSuccess != 0 {
+            error1 := utils.new_err(
+                .CANNOT_READ_INPUT,
+                utils.get_err_msg(.CANNOT_READ_INPUT),
+                #procedure,
+            )
+            utils.throw_err(error1)
+            return false
+        }
+
+        confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+        cap := strings.to_upper(confirmation)
+        
+        switch cap {
+        case const.NO:
+            utils.log_runtime_event("User canceled deletion", "User canceled deletion of user account")
+            return false
+        case const.YES:
+			//continue
+        case:
+            utils.log_runtime_event(
+                "User entered invalid input",
+                "User entered invalid input when trying to delete user",
+            )
+            error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+            utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+            return false
+        }
+    }
+
+    // Delete users secure collection
+    secureFilePath := fmt.tprintf(
+        "%s%s%s",
+        const.OST_SECURE_COLLECTION_PATH,
+        secureColName,
+        const.OST_FILE_EXTENSION,
+    )
+    
+    deleteSuccess := os.remove(secureFilePath)
+    if deleteSuccess != 0 {
+        error1 := utils.new_err(
+            .CANNOT_DELETE_FILE,
+            utils.get_err_msg(.CANNOT_DELETE_FILE),
+            #procedure,
+        )
+        utils.throw_err(error1)
+        utils.log_err("Error deleting user's secure collection file", #procedure)
+        return false
+    }
+
+    // Remove  users histrory
+    data.OST_ERASE_CLUSTER("history", username)
+
+    fmt.printfln(
+        "Successfully deleted user: %s%s%s",
+        utils.BOLD_UNDERLINE,
+        username,
+        utils.RESET,
+    )
+    utils.log_runtime_event(
+        "User deleted",
+        fmt.tprintf("Administrator %s deleted user %s", types.user.username.Value, username),
+    )
+    return true
 }
