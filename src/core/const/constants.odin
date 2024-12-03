@@ -113,3 +113,17 @@ BannedUserNames := []string {
 	"administrator",
 	"superuser",
 }
+
+//TEST CONSTANTS
+TEST_ID :i64: 000000000000
+TEST_COLLECTION :string: "test_collection"
+TEST_CLUSTER :string: "test_cluster"
+TEST_RECORD :string: "test_record"
+TEST_NEW_COLLECTION :: "test_new_collection"
+TEST_NEW_CLUSTER :string: "test_new_cluster"
+TEST_NEW_RECORD :string: "test_new_record"
+TEST_BACKUP_COLLECTION :string: "test_collection_backup"
+
+TEST_USERNAME :string: "foobar"
+TEST_PASSWORD :string: "@Foobar1"
+TEST_ROLE :string: "user"
