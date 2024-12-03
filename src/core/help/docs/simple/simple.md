@@ -28,6 +28,10 @@ Rebuilds the database and restarts OstrichDB.
 Clears the screen of clutter.
 ### LOGOUT END
 
+### TEST START
+Runs the test suite for OstrichDB.
+### TEST END
+
 ### TREE START
 Used to display all collections and the cluster within them. Use: `TREE`.
 ### TREE END

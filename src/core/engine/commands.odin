@@ -13,6 +13,7 @@ import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "../../tests"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
@@ -147,6 +148,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case const.REBUILD:
 		utils.log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
 		OST_REBUILD()
+	case const.TEST:
+		utils.log_runtime_event("Used TEST command", "User requested to run tests.")
+		tests.main()
 	case const.CLEAR:
 		utils.log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")

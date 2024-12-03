@@ -68,6 +68,7 @@ These commands perform simple tasks without needing additional arguments.
 - **`RESTART`**: Restarts the program. 
 - **`REBUILD`**: Rebuilds the database and restarts the program.
 - **`HELP`**: Displays general help information or detailed help when chained with specific tokens.
+- **`TEST`**: Runs the test suite for OstrichDB.
 - **`TREE`**: Displays the entire data structure in a tree format.
 - **`CLEAR`**: Clears the console screen.
 - **`HISTORY`**: Shows the current users command history.

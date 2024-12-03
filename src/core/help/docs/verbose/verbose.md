@@ -29,6 +29,10 @@ The `REBUILD` command rebuilds the database and restarts OstrichDB. This command
 The `CLEAR` command clears the screen of clutter. This command is useful for clearing the screen of previous commands and outputs assisting in keeping the command line clean and organized.
 ### CLEAR END
 
+### TEST START
+The `TEST` command runs the test suite for OstrichDB. This command is useful for testing the database and ensuring that it is working correctly.
+### TEST END
+
 ### TREE START
 The `TREE` token is a single-token action. It is used to display a tree like structure of all the collections and clusters within OstrichDB. This command is useful for visualizing the structure of the database. Example: `TREE`.
 ### TREE END

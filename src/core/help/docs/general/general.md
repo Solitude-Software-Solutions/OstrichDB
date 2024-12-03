@@ -27,6 +27,9 @@ Rebuilds the database and restarts OstrichDB. Useful if you are making changes t
 ### CLEAR
 Clears the screen, helping to keep the command line organized.
 
+### TEST
+Runs the test suite for OstrichDB.
+
 ### TREE
 Displays a tree view all collections and thier clusters within OstrichDB
 
