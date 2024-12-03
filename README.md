@@ -189,7 +189,7 @@ SET CONFIG help TO verbose
 - Commnad chaining for complex operations
 - Server-based architecture
 - External API support for popular programming languages
-- Windows ßsupport
+- Windows support
 - Integration with the planned Ostrich query language!
 
 ---
