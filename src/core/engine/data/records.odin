@@ -803,13 +803,12 @@ OST_SCAN_COLLECTION_FOR_RECORD :: proc(collectionName, recordName: string) -> (c
 		name_end := strings.index(cluster[name_start:], "\n")
 		if name_end == -1 do continue
 		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
-
 		// Look for record in this cluster
 		lines := strings.split(cluster, "\n")
 		for line in lines {
 			line := strings.trim_space(line)
 			if strings.has_prefix(line, fmt.tprintf("%s :", recordName)) {
-				return collectionName, currentClusterName, true
+				return strings.clone(collectionName), strings.clone(currentClusterName), true
 			}
 		}
 	}
