@@ -270,7 +270,6 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 
 
 OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
-	//todo: clean these 2 lines only need 1 tprintf
 	colPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, old, const.OST_FILE_EXTENSION)
 
 	file, readSuccess := os.read_entire_file_from_filename(colPath)
@@ -366,7 +365,6 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 			len(collectionNames),
 		)}
 
-	// TODO: consider the clusters and records in the size as well, rather than just collections
 	if len(collectionNames) > const.MAX_COLLECTION_TO_DISPLAY {
 		fmt.printf("There is %d collections to display, display all? (y/N) ", len(collectionNames))
 		buf: [1024]byte

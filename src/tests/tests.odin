@@ -394,7 +394,7 @@ test_command_history :: proc(t: ^testing.T) {
 	types.new_user.username.Value = const.TEST_USERNAME
 	security.OST_CREATE_NEW_USER(const.TEST_USERNAME, const.TEST_PASSWORD, const.TEST_ROLE)
 	defer security.OST_DELETE_USER(types.new_user.username.Value)
-
+	defer data.OST_ERASE_HISTORY_CLUSTER(const.TEST_USERNAME)
 
 	types.current_user.username.Value = const.TEST_USERNAME
 

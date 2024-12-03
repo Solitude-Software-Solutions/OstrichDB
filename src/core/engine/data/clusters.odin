@@ -1072,3 +1072,75 @@ OST_GET_CLUSTER_SIZE :: proc(
 
 	return 0, false
 }
+
+
+//removes a users history from the history collecion. Used when DELETING a user and tests
+OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
+
+	historyPath := "./history.ost"
+	data, readSuccess := os.read_entire_file(historyPath)
+	defer delete(data)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		utils.log_err("Error reading collection file", #procedure)
+		return false
+	}
+	content := string(data)
+	clusterClosingBrace := strings.split(content, "}")
+	newContent := make([dynamic]u8)
+	defer delete(newContent)
+	clusterFound := false
+
+
+	for i := 0; i < len(clusterClosingBrace); i += 1 {
+		cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", userName)) {
+			clusterFound = true
+		} else if len(strings.trim_space(cluster)) > 0 {
+			append(&newContent, ..transmute([]u8)cluster) // Add closing brace
+			if i < len(clusterClosingBrace) - 1 {
+				append(&newContent, "}")
+			}
+		}
+	}
+
+	if !clusterFound {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_FIND_CLUSTER,
+				fmt.tprintf(
+					"Cluster: %s%s%s not found in collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					userName,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					userName,
+					utils.RESET,
+				),
+				#procedure,
+			),
+		)
+		utils.log_err("Error finding cluster in collection", #procedure)
+		return false
+	}
+	writeSuccess := os.write_entire_file(historyPath, newContent[:])
+	if !writeSuccess {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		utils.log_err("Error writing to collection file", #procedure)
+		return false
+	}
+	utils.log_runtime_event(
+		"Database Cluster",
+		"User confirmed deletion of cluster and it was successfully deleted.",
+	)
+	return true
+
+}
