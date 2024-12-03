@@ -240,7 +240,6 @@ fmt.println(readSuccess)
 	blockAsBytes := transmute([]u8)strings.concatenate(METADATA_HEADER)
 
 	writter, ok := os.write(file, blockAsBytes)
-	fmt.println("Metadata on append complete")
 	return true
 }
 
@@ -325,7 +324,6 @@ OST_METADATA_ON_CREATE :: proc(fn: string) {
 	OST_UPDATE_METADATA_VALUE(fn, 3)
 	OST_UPDATE_METADATA_VALUE(fn, 4)
 	OST_UPDATE_METADATA_VALUE(fn, 5)
-	fmt.println("Metadata on create complete")
 }
 
 //Creates the file format version file in the temp dir

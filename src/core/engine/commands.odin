@@ -217,6 +217,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			help.OST_GET_SPECIFIC_HELP(cmd.t_token)
 		}
 		break
+	case const.WHERE:
+		utils.log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
+		data.OST_WHERE_OBJECT(cmd.t_token, cmd.o_token[0])
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
 	case const.BACKUP:

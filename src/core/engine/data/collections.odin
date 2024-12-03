@@ -70,8 +70,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 			utils.log_err("Error creating new collection file", #procedure)
 			return false
 		}
-		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
-		fmt.println("Metadata on create complete")
+		metadata.OST_METADATA_ON_CREATE(pathNameExtension) 
 		defer os.close(createFile)
 		break
 	case 1:

@@ -780,7 +780,7 @@ OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 }
 //reads over a specific collection file and looks for records with the passed in name
 OST_SCAN_COLLECTION_FOR_RECORD :: proc(collectionName, recordName: string) -> (colName: string, cluName: string, success: bool) {
-	collectionPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, collectionName, const.OST_FILE_EXTENSION)
+	collectionPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collectionName)
 	
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
