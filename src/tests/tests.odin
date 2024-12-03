@@ -8,6 +8,7 @@ import "../utils"
 import "core:fmt"
 import "core:strings"
 import "core:testing"
+import "core:time"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
@@ -63,8 +64,8 @@ OST_INIT_TESTS :: proc() {
 
 test_collection_creation :: proc(t: ^testing.T) {
 	test_counter += 1
-	fmt.printf("Test %d: %stest_collection_creation%s...", test_counter, utils.BOLD, utils.RESET)
-
+	start_time := time.now()
+	
 	utils.log_runtime_event("Test Started", "Running test_collection_creation")
 	
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
@@ -80,6 +81,8 @@ test_collection_creation :: proc(t: ^testing.T) {
 		fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
 		utils.log_runtime_event("Test Failed", "test_collection_creation failed")
 	}
+
+	print_test_result("test_collection_creation", result, start_time)
 }
 
 test_collection_deletion :: proc(t: ^testing.T) {
@@ -435,3 +438,20 @@ test_command_history :: proc(t: ^testing.T) {
 //         utils.log_runtime_event("Test Failed", "test_auth_process failed")
 //     }
 // }
+
+print_test_result :: proc(name: string, passed: bool, start_time: time.Time) {
+    duration := time.since(start_time)
+    status: string
+    if passed {
+        status = fmt.tprintf("%s%sPASSED%s", utils.BOLD, utils.GREEN, utils.RESET)
+    } else {
+        status = fmt.tprintf("%s%sFAILED%s", utils.BOLD, utils.RED, utils.RESET)
+    }
+    
+    fmt.printf("Test: %s%s%s - Status: %s - Duration: %.2fms\n", 
+        utils.BOLD, 
+        name, 
+        utils.RESET,
+        status,
+        time.duration_milliseconds(duration))
+}
