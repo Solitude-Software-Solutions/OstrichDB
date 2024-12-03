@@ -422,6 +422,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		)
 		return 1, true
 	}
+
 	//checks if the file format verion file and the projects version file match
 	versionMatch := OST_VALIDATE_FILE_FORMAT_VERSION()
 	if !versionMatch {
@@ -429,9 +430,13 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		return 1, true
 	}
 
-
-	//get the FFV of the passed in collection file
-	collectionVersionValue := strings.split(lines[1], ": ")[1]
+	// Safely get the FFV line and split it
+	ffv_parts := strings.split(lines[1], ": ")
+	if len(ffv_parts) < 2 {
+		utils.log_err("Invalid file format version line format", #procedure)
+		return 1, true
+	}
+	collectionVersionValue := ffv_parts[1]
 
 	//compares the collections to the version in the FFV tmp file. Due to alreay checking if the FFV and the project file
 	//match, now have to ensure the collection file matches as well.
