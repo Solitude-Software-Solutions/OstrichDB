@@ -59,4 +59,44 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
 }
 
 //handles WHERE {target name}
-OST_WHERE_ANY ::proc(){}
+OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
+    collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+    defer os.close(collectionsDir)
+    foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
+    collectionNames := make([dynamic]string)
+    defer delete(collectionNames)
+
+    // Collect all valid collection files
+    for file in foundFiles {
+        if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+            append(&collectionNames, file.name)
+        }
+    }
+
+    found := false  // Track if we found any matches
+
+    // Search through collections
+    for collection in collectionNames {
+        collectionPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collection)
+        
+        // Check if it's a cluster name
+        if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
+            fmt.printfln("Cluster: %s%s%s -> Collection: %s%s%s", 
+                utils.BOLD_UNDERLINE, targetName, utils.RESET,
+                utils.BOLD_UNDERLINE, collection, utils.RESET)
+            found = true
+        }
+
+        // Check if it's a record name
+        colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
+        if success {
+            fmt.printfln("Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
+                utils.BOLD_UNDERLINE, targetName, utils.RESET,
+                utils.BOLD_UNDERLINE, cluName, utils.RESET,
+                utils.BOLD_UNDERLINE, colName, utils.RESET)
+            found = true
+        }
+    }
+
+    return 0, found
+}

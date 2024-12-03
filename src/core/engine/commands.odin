@@ -219,7 +219,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	case const.WHERE:
 		utils.log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
-		data.OST_WHERE_OBJECT(cmd.t_token, cmd.o_token[0])
+		switch (cmd.t_token) {
+		case const.CLUSTER, const.RECORD:
+			data.OST_WHERE_OBJECT(cmd.t_token, cmd.o_token[0])
+		case:
+			break
+		}
+		if len(cmd.o_token) == 0 {
+			data.OST_WHERE_ANY(cmd.t_token)
+		} else {
+			fmt.println("Incomplete command. Correct Usage: WHERE <target> <target_name> or WHERE <target_name>")
+			utils.log_runtime_event(
+				"Incomplete WHERE command",
+				"User did not provide a target name to search for.",
+			)
+		}
+		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
 	case const.BACKUP:
