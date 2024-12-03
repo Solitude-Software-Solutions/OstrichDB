@@ -2,10 +2,11 @@ package tests
 import "../core/config"
 import "../core/const"
 import "../core/engine/data"
-import "../core/types"
 import "../core/engine/security"
+import "../core/types"
 import "../utils"
 import "core:fmt"
+import "core:strings"
 import "core:testing"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
@@ -56,6 +57,7 @@ OST_INIT_TESTS :: proc() {
 	test_record_renaming(&t)
 	//User tests
 	test_user_creation(&t)
+	test_command_history(&t)
 }
 
 
@@ -334,3 +336,102 @@ test_user_creation :: proc(t: ^testing.T) {
         utils.log_runtime_event("Test Failed", "test_user_creation failed")
     }
 }
+
+test_command_history :: proc(t: ^testing.T) {
+    test_counter += 1
+    fmt.printf("Test %d: %stest_command_history%s...", test_counter, utils.BOLD, utils.RESET)
+    
+    utils.log_runtime_event("Test Started", "Running test_command_history")
+    
+    // Set up test user first
+    types.user.role.Value = "admin"
+    types.user.username.Value = "test_user_head"
+    
+    // Create test user
+    types.new_user.role.Value = const.TEST_ROLE
+    types.new_user.username.Value = const.TEST_USERNAME
+    security.OST_CREATE_NEW_USER(const.TEST_USERNAME, const.TEST_PASSWORD, const.TEST_ROLE)
+    defer security.OST_DELETE_USER(types.new_user.username.Value)
+    
+
+    types.current_user.username.Value = const.TEST_USERNAME
+    
+
+    test_command := "NEW COLLECTION test_collection"
+    
+    // Get current history count
+    initial_count := data.OST_COUNT_RECORDS_IN_CLUSTER("history", const.TEST_USERNAME, false)
+    
+    // Append command to history
+    data.OST_APPEND_RECORD_TO_CLUSTER(
+        "./history.ost",
+        const.TEST_USERNAME,
+        fmt.tprintf("HISTORY_%d", initial_count + 1),
+        strings.to_upper(test_command),
+        "COMMAND",
+    )
+    
+    // Verify command was added
+    new_count := data.OST_COUNT_RECORDS_IN_CLUSTER("history", const.TEST_USERNAME, false)
+    testing.expect(t, new_count == initial_count + 1, "history count should increase by 1")
+    
+    // Verify command content
+    record_value := data.OST_READ_RECORD_VALUE(
+        "./history.ost",
+        const.TEST_USERNAME,
+        "COMMAND",
+        fmt.tprintf("HISTORY_%d", new_count),
+    )
+    
+    result := strings.contains(record_value, strings.to_upper(test_command))
+    testing.expect(t, result, "history should contain the test command")
+    
+    if result {
+        fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+        utils.log_runtime_event("Test Passed", "test_command_history completed successfully")
+    } else {
+        fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+        utils.log_runtime_event("Test Failed", "test_command_history failed")
+    }
+
+	//todo: need to delete the test users history cluster from the collection. when done testing.
+}
+
+//todo: nmeed to find a way to run this test. it requires the security poackage but cant import it because the tests package is import into security...
+// test_auth_process :: proc(t: ^testing.T) {
+//     test_counter += 1
+//     fmt.printf("Test %d: %stest_auth_process%s...", test_counter, utils.BOLD, utils.RESET)
+    
+//     utils.log_runtime_event("Test Started", "Running test_auth_process")
+    
+//     test_password := const.TEST_PASSWORD
+    
+//     // Hash the password
+//     hashed_password := security.OST_HASH_PASSWORD(test_password, 0, false, true)
+    
+//     // Get the salt that was generated
+//     salt := string(types.user.salt)
+    
+//     // Encode the hashed password
+//     encoded_hash := security.OST_ENCODE_HASHED_PASSWORD(hashed_password)
+    
+//     // Create pre-mesh
+//     pre_mesh := security.OST_MESH_SALT_AND_HASH(salt, encoded_hash)
+    
+//     // Simulate login attempt with same password
+//     new_hash := security.OST_HASH_PASSWORD(test_password, 0, true, false)
+//     new_encoded := security.OST_ENCODE_HASHED_PASSWORD(new_hash)
+//     post_mesh := security.OST_MESH_SALT_AND_HASH(salt, new_encoded)
+    
+//     // Verify meshes match
+//     result := security.OST_CROSS_CHECK_MESH(pre_mesh, post_mesh)
+//     testing.expect(t, result, "authentication process should succeed with correct password")
+    
+//     if result {
+//         fmt.printf("\t%s%sPASSED%s\n", utils.BOLD, utils.GREEN, utils.RESET)
+//         utils.log_runtime_event("Test Passed", "test_auth_process completed successfully")
+//     } else {
+//         fmt.printf("\t%s%sFAILED%s\n", utils.BOLD, utils.RED, utils.RESET)
+//         utils.log_runtime_event("Test Failed", "test_auth_process failed")
+//     }
+// }
