@@ -32,6 +32,7 @@ configSix :: "OST_ERROR_SUPPRESSION" //whether errors are printed to the console
 //ATOM TOKEN CONSTANTS
 VERSION :: "VERSION"
 HELP :: "HELP" //help can also be a multi token command.
+WHERE :: "WHERE"
 EXIT :: "EXIT"
 RESTART :: "RESTART"
 REBUILD :: "REBUILD"
