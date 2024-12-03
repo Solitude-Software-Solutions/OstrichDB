@@ -122,45 +122,45 @@ OST_GET_FS :: proc(file: string) -> os.File_Info {
 //this will get the size of the file and then subtract the size of the metadata header
 //then return the difference
 OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
-    fileInfo, err := os.stat(file)
-    if err != 0 {
-        utils.log_err("Error getting file info", #procedure)
-        return -1, -1
-    }
+	fileInfo, err := os.stat(file)
+	if err != 0 {
+		utils.log_err("Error getting file info", #procedure)
+		return -1, -1
+	}
 
-    totalSize := int(fileInfo.size)
+	totalSize := int(fileInfo.size)
 
-    data, readSuccess := os.read_entire_file(file)
-    if !readSuccess {
-        utils.log_err("Error reading file", #procedure)
-        return -1, -1
-    }
-    defer delete(data)
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
+		utils.log_err("Error reading file", #procedure)
+		return -1, -1
+	}
+	defer delete(data)
 
-    content := string(data)
-    lines := strings.split(content, "\n")
-    defer delete(lines)
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
 
-    metadataEndIndex := -1
-    for i in 0..<len(lines) {
-        line := lines[i]
-        if strings.has_prefix(line, "# [Ostrich File Header End]") {
-            metadataEndIndex = i
-            break
-        }
-    }
+	metadataEndIndex := -1
+	for i in 0 ..< len(lines) {
+		line := lines[i]
+		if strings.has_prefix(line, "# [Ostrich File Header End]") {
+			metadataEndIndex = i
+			break
+		}
+	}
 
-    if metadataEndIndex == -1 {
-        utils.log_err("Metadata end marker not found", #procedure)
-        return -1, -1
-    }
+	if metadataEndIndex == -1 {
+		utils.log_err("Metadata end marker not found", #procedure)
+		return -1, -1
+	}
 
-    metadataSize := 0
-    for i := 0; i <= metadataEndIndex; i += 1 {
-        metadataSize += len(lines[i]) + 1 // +1 for newline character
-    }
+	metadataSize := 0
+	for i := 0; i <= metadataEndIndex; i += 1 {
+		metadataSize += len(lines[i]) + 1 // +1 for newline character
+	}
 
-    return totalSize - metadataSize, metadataSize
+	return totalSize - metadataSize, metadataSize
 }
 
 
@@ -214,7 +214,7 @@ OST_GENERATE_CHECKSUM :: proc() -> string {
 //this appends the metadata header to the file as well as sets the time of creation
 OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	rawData, readSuccess := os.read_entire_file(fn)
-
+fmt.println(readSuccess)
 	if !readSuccess {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
@@ -240,6 +240,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	blockAsBytes := transmute([]u8)strings.concatenate(METADATA_HEADER)
 
 	writter, ok := os.write(file, blockAsBytes)
+	fmt.println("Metadata on append complete")
 	return true
 }
 
@@ -324,6 +325,7 @@ OST_METADATA_ON_CREATE :: proc(fn: string) {
 	OST_UPDATE_METADATA_VALUE(fn, 3)
 	OST_UPDATE_METADATA_VALUE(fn, 4)
 	OST_UPDATE_METADATA_VALUE(fn, 5)
+	fmt.println("Metadata on create complete")
 }
 
 //Creates the file format version file in the temp dir
@@ -398,15 +400,8 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		"# File Size: ",
 		"# Checksum: ",
 	}
-	data, readSuccess := os.read_entire_file(file)
+	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading collection file", #procedure)
 		return 1, true
 	}
 
@@ -430,6 +425,8 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		return 1, true
 	}
 
+	// todo: this might be fucked
+	// collectionVersionValue := strings.split(lines[1], ": ")[1]
 	// Safely get the FFV line and split it
 	ffv_parts := strings.split(lines[1], ": ")
 	if len(ffv_parts) < 2 {
@@ -437,6 +434,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		return 1, true
 	}
 	collectionVersionValue := ffv_parts[1]
+
 
 	//compares the collections to the version in the FFV tmp file. Due to alreay checking if the FFV and the project file
 	//match, now have to ensure the collection file matches as well.
@@ -476,7 +474,3 @@ OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
 	}
 	return true
 }
-
-
-
-

@@ -71,6 +71,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 			return false
 		}
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
+		fmt.println("Metadata on create complete")
 		defer os.close(createFile)
 		break
 	case 1:

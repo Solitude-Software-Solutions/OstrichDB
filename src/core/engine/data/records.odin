@@ -778,8 +778,46 @@ OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 		return false, false
 	}
 }
+//reads over a specific collection file and looks for records with the passed in name
+OST_SCAN_COLLECTION_FOR_RECORD :: proc(collectionName, recordName: string) -> (colName: string, cluName: string, success: bool) {
+	collectionPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, collectionName, const.OST_FILE_EXTENSION)
+	
+	data, readSuccess := utils.read_file(collectionPath, #procedure)
+	if !readSuccess {
+		return "", "", false
+	}
+	defer delete(data)
 
-//reads over each file in the collections dir and looks for the record with the passed in name then returns the name of the collection and cluster that contains that record.
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster in clusters {
+		if !strings.contains(cluster, "cluster_name :identifier:") {
+			continue // Skip non-cluster content
+		}
+
+		// Extract cluster name
+		name_start := strings.index(cluster, "cluster_name :identifier:")
+		if name_start == -1 do continue
+		name_start += len("cluster_name :identifier:")
+		name_end := strings.index(cluster[name_start:], "\n")
+		if name_end == -1 do continue
+		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
+
+		// Look for record in this cluster
+		lines := strings.split(cluster, "\n")
+		for line in lines {
+			line := strings.trim_space(line)
+			if strings.has_prefix(line, fmt.tprintf("%s :", recordName)) {
+				return collectionName, currentClusterName, true
+			}
+		}
+	}
+
+	return "", "", false
+}
+
+//same as above but for ALL collection files
 OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 	rName: string,
 ) -> (
@@ -789,9 +827,11 @@ OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 	collections := make([dynamic]string)
 	clusters := make([dynamic]string)
 
+	defer delete(collections)
+	defer delete(clusters)
+
 	colDir, openDirSuccess := os.open(const.OST_COLLECTION_PATH)
 
-	// err: os.Errno
 	files, err := os.read_dir(colDir, 1)
 	if err != 0 {
 		error := utils.new_err(
