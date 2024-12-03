@@ -21,18 +21,11 @@ record: types.Record
 //can be used to check if a single record exists within a cluster
 OST_CHECK_IF_RECORD_EXISTS :: proc(fn: string, cn: string, rn: string) -> bool {
 	using const
-	data, readSuccess := os.read_entire_file(fn)
+	data, readSuccess := utils.read_file(fn, #procedure)
+	defer delete(data)
 	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read collection file", #procedure)
 		return false
 	}
-	defer delete(data)
 
 	content := string(data)
 	clusters := strings.split(content, "},")
@@ -71,18 +64,11 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	rType: string,
 	ID: ..i64,
 ) -> int {
-	data, readSuccess := os.read_entire_file(fn)
+	data, readSuccess := utils.read_file(fn, #procedure)
+	defer delete(data)
 	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read collection file", #procedure)
 		return -1
 	}
-	defer delete(data)
 
 	content := string(data)
 	lines := strings.split(content, "\n")
@@ -144,15 +130,8 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 	}
 
 	new_content := strings.join(new_lines[:], "\n")
-	writeSuccess := os.write_entire_file(fn, transmute([]byte)new_content)
-	if writeSuccess != true {
-		error3 := utils.new_err(
-			.CANNOT_WRITE_TO_FILE,
-			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#procedure,
-		)
-		utils.throw_err(error3)
-		utils.log_err("Could not write to collection file", #procedure)
+	writeSuccess := utils.write_to_file(fn, transmute([]byte)new_content, #procedure)
+	if !writeSuccess {
 		return -1
 	}
 
@@ -162,18 +141,11 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(
 
 // // get the value from the right side of a key value
 OST_READ_RECORD_VALUE :: proc(fn: string, cn: string, rType: string, rn: string) -> string {
-	data, readSuccess := os.read_entire_file(fn)
+	data, readSuccess := utils.read_file(fn, #procedure)
+	defer delete(data)
 	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read collection file", #procedure)
 		return ""
 	}
-	defer delete(data)
 
 	content := string(data)
 	lines := strings.split(content, "\n")
@@ -982,13 +954,12 @@ OST_SET_RECORD_VALUE :: proc(rn: string, rValue: string) -> (fn: string, success
 
 
 	// Read the collection file
-	data, readSuccess := os.read_entire_file(collectionFile)
+	data, readSuccess := utils.read_file(collectionFile, #procedure)
+	defer delete(data)
 	if !readSuccess {
-		fmt.println("Failed to read collection file:", collectionFile)
 		success = false
 		return
 	}
-	defer delete(data)
 
 	// Find clusters in the selected collection
 	clustersInCollection := OST_FIND_RECORD_MATCHES_IN_CLUSTERS(string(data), rn)
@@ -1339,15 +1310,11 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 		}
 	}
 
-	data, readSuccess := os.read_entire_file(collection_path)
+	data, readSuccess := utils.read_file(collection_path, #procedure)
+	defer delete(data)
 	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-		)
-		utils.log_err("Error reading collection file", #procedure)
 		return false
 	}
-	defer delete(data)
 
 	content := string(data)
 	lines := strings.split(content, "\n")
@@ -1421,16 +1388,8 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 
 	// Write updated content
 	newContent := strings.join(newLines[:], "\n")
-	writeSuccess := os.write_entire_file(collection_path, transmute([]byte)newContent)
-	if !writeSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_WRITE_TO_FILE, utils.get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure),
-		)
-		utils.log_err("Error writing to collection file", #procedure)
-		return false
-	}
-
-	return true
+	writeSuccess := utils.write_to_file(collection_path, transmute([]byte)newContent, #procedure)
+	return writeSuccess
 }
 
 
@@ -1441,11 +1400,9 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 	records: [dynamic]string
 	histBuf: [1024]byte
 
-	data, readSuccess := os.read_entire_file("./history.ost")
+	data, readSuccess := utils.read_file("./history.ost", #procedure)
+	defer delete(data)
 	if !readSuccess {
-		error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
-		utils.throw_err(error)
-		utils.log_err("Error reading collection file", #procedure)
 		return records
 	}
 
@@ -1487,11 +1444,8 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 		collectionPath = fmt.tprintf("%s%s%s", const.OST_BIN_PATH, fn, const.OST_FILE_EXTENSION)
 	}
 
-	data, readSuccess := os.read_entire_file(collectionPath)
+	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
-		error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
-		utils.throw_err(error)
-		utils.log_err("Error reading collection file", #procedure)
 		return -1
 	}
 	defer delete(data)
@@ -1537,11 +1491,8 @@ OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
 		fn,
 		const.OST_FILE_EXTENSION,
 	)
-	data, readSuccess := os.read_entire_file(collectionPath)
+	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
-		error := utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure)
-		utils.throw_err(error)
-		utils.log_err("Error reading collection file", #procedure)
 		return -1
 	}
 	defer delete(data)
@@ -1580,12 +1531,8 @@ OST_PURGE_RECORD :: proc(fn, cn, rn: string) -> bool {
 	)
 
 	// Read the entire file
-	data, readSuccess := os.read_entire_file(collection_path)
+	data, readSuccess := utils.read_file(collection_path, #procedure)
 	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-		)
-		utils.log_err("Error reading collection file", #procedure)
 		return false
 	}
 	defer delete(data)
@@ -1651,20 +1598,8 @@ OST_PURGE_RECORD :: proc(fn, cn, rn: string) -> bool {
 	}
 
 	newContent := strings.join(newLines[:], "\n")
-	writeSuccess := os.write_entire_file(collection_path, transmute([]byte)newContent)
-	if !writeSuccess {
-		utils.throw_err(
-			utils.new_err(
-				.CANNOT_WRITE_TO_FILE,
-				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#procedure,
-			),
-		)
-		utils.log_err("Error writing updated content to file", #procedure)
-		return false
-	}
-
-	return true
+	writeSuccess := utils.write_to_file(collection_path, transmute([]byte)newContent, #procedure)
+	return writeSuccess
 }
 
 OST_GET_RECORD_SIZE :: proc(
@@ -1681,7 +1616,7 @@ OST_GET_RECORD_SIZE :: proc(
 		collection_name,
 		const.OST_FILE_EXTENSION,
 	)
-	data, read_success := os.read_entire_file(collection_path)
+	data, read_success := utils.read_file(collection_path, #procedure)
 	if !read_success {
 		return 0, false
 	}
