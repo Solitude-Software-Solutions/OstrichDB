@@ -38,6 +38,7 @@ main :: proc() {
 		utils.log_err("Error reading error suppression config", #procedure)
 	}
 	OST_INIT_TESTS()
+	types.TESTING = false
 }
 
 
