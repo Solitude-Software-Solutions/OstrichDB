@@ -110,7 +110,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 	configToggled := config.OST_TOGGLE_CONFIG(const.configOne)
 
-	switch (configToggled) 
+	switch (configToggled)
 	{
 	case true:
 		types.USER_SIGNIN_STATUS = true
@@ -269,7 +269,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword 
+	switch strongPassword
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
@@ -437,7 +437,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p)) 
+	switch (len(p))
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -474,7 +474,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true) 
+	switch (true)
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -746,7 +746,6 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	// Remove  users histrory
 	data.OST_ERASE_CLUSTER("history", username)
 
-	fmt.printfln("Successfully deleted user: %s%s%s", utils.BOLD_UNDERLINE, username, utils.RESET)
 	utils.log_runtime_event(
 		"User deleted",
 		fmt.tprintf("Administrator %s deleted user %s", types.user.username.Value, username),

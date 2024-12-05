@@ -45,7 +45,7 @@ Params: fileName - the desired file(cluster) name
 OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType) 
+	switch (collectionType)
 	{
 	case 0:
 		//standard cluster file
@@ -130,7 +130,6 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	buf: [64]byte
 	fileWithExt := strings.concatenate([]string{fileName, const.OST_FILE_EXTENSION})
-	fmt.printfln("Deleting collection: %s%s%s", utils.BOLD, fileWithExt, utils.RESET)
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fileName, 0) {
 		fmt.printfln(
 			"Collection with name:%s%s%s does not exist",
@@ -199,7 +198,6 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 		return false
 	}
 
-	fmt.printfln("Collection: %s%s%s has been deleted", utils.BOLD, fileName, utils.RESET)
 	utils.log_runtime_event(
 		"Collection deleted",
 		"User confirmed deletion of collection and it was successfully deleted .",
