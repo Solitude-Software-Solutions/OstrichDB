@@ -967,13 +967,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch cmd.t_token 
 		{
 		case const.RECORD:
-			if len(cmd.o_token) == 1 && const.TO in cmd.m_token && cmd.isUsingDotNotation {
+			if len(cmd.o_token) == 3 && const.TO in cmd.m_token && cmd.isUsingDotNotation {
 				collectionName := cmd.o_token[0]
 				clusterName := cmd.o_token[1]
 				recordName := cmd.o_token[2]
 				value: string
 				for key, val in cmd.m_token {
 					value = val
+					fmt.println("value: ", value)
 				}
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
@@ -984,7 +985,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					value,
 					utils.RESET,
 				)
-				ok := data.OST_SET_RECORD_VALUE(collectionName, clusterName, recordName, value)
+				ok := data.OST_SET_RECORD_VALUE(
+					collectionName,
+					clusterName,
+					recordName,
+					strings.clone(value),
+				)
 				fn := OST_CONCAT_OBJECT_EXT(collectionName)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)

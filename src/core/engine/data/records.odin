@@ -709,40 +709,79 @@ OST_FIND_RECORD_IN_CLUSTER :: proc(
 
 //reads over a collection file looking for the passed in record and returns the record type
 // todo: this needs to be fixed. need to also look for the cluster that the record is in... can belive I missed that
-OST_GET_RECORD_TYPE :: proc(fn, cn, rn: string) -> (recordType: string, success: bool) {
+// OST_GET_RECORD_TYPE :: proc(fn, cn, rn: string) -> (recordType: string, success: bool) {
 
-	success = false
-	recordType = ""
+// 	success = false
+// 	recordType = ""
 
-	collection_file := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		strings.to_upper(cn),
-		const.OST_FILE_EXTENSION,
-	)
+// 	collection_file := fmt.tprintf(
+// 		"%s%s%s",
+// 		const.OST_COLLECTION_PATH,
+// 		strings.to_upper(cn),
+// 		const.OST_FILE_EXTENSION,
+// 	)
 
-	data, read_success := utils.read_file(collection_file, #procedure)
-	if !read_success {
-		fmt.println("Failed to read collection file:", collection_file)
-		return strings.clone(recordType), success
+// 	data, read_success := utils.read_file(collection_file, #procedure)
+// 	if !read_success {
+// 		fmt.println("Failed to read collection file:", collection_file)
+// 		return strings.clone(recordType), success
+// 	}
+
+// 	lines := strings.split(string(data), "\n")
+
+// 	for line in lines {
+// 		line := strings.trim_space(line)
+// 		if strings.has_prefix(line, rn) {
+// 			parts := strings.split(line, ":")
+// 			if len(parts) >= 2 {
+// 				recordType = strings.trim_space(parts[1])
+// 				success = true
+// 				return strings.clone(recordType), success
+// 			}
+// 		}
+// 	}
+
+// 	fmt.printfln("Record: %s not found in cluster: %s within collection: %s", rn, cn, fn)
+// 	return strings.clone(recordType), success
+// }
+//
+OST_GET_RECORD_TYPE :: proc(
+	fn: string,
+	cn: string,
+	rn: string,
+) -> (
+	recordType: string,
+	success: bool,
+) {
+	data, readSuccess := utils.read_file(fn, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return "", false
 	}
 
-	lines := strings.split(string(data), "\n")
+	content := string(data)
+	clusters := strings.split(content, "},")
 
-	for line in lines {
-		line := strings.trim_space(line)
-		if strings.has_prefix(line, rn) {
-			parts := strings.split(line, ":")
-			if len(parts) >= 2 {
-				recordType = strings.trim_space(parts[1])
-				success = true
-				return strings.clone(recordType), success
+	for cluster in clusters {
+		// Check if we're in the correct cluster
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			lines := strings.split(cluster, "\n")
+			for line in lines {
+				line := strings.trim_space(line)
+				// Check if this line contains our record
+				if strings.has_prefix(line, fmt.tprintf("%s :", rn)) {
+					// Split the line into parts using ":"
+					parts := strings.split(line, ":")
+					if len(parts) >= 2 {
+						// Return the type (middle part between the colons)
+						return strings.clone(strings.trim_space(parts[1])), true
+					}
+				}
 			}
 		}
 	}
 
-	fmt.printfln("Record: %s not found in cluster: %s within collection: %s", rn, cn, fn)
-	return strings.clone(recordType), success
+	return "", false
 }
 
 //The following conversion funcs are used to convert the passed in record value to the correct data type
@@ -940,7 +979,7 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 	recordType, getTypeSuccess := OST_GET_RECORD_TYPE(colPath, cn, rn)
 	valueAny: any = 0
 	ok: bool
-
+	fmt.println("recordType: ", recordType)
 	switch (recordType) {
 	case const.INTEGER:
 		valueAny, ok = OST_CONVERT_RECORD_TO_INT(rValue)
