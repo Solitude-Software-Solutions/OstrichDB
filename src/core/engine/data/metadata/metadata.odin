@@ -424,9 +424,6 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		return 1, true
 	}
 
-	// todo: this might be fucked
-	// collectionVersionValue := strings.split(lines[1], ": ")[1]
-	// Safely get the FFV line and split it
 	ffv_parts := strings.split(lines[1], ": ")
 	if len(ffv_parts) < 2 {
 		utils.log_err("Invalid file format version line format", #procedure)

@@ -106,7 +106,6 @@ CommandHistory :: struct {
 }
 
 
-
 help_mode: Help_Mode
 Help_Mode :: struct {
 	verbose: bool, //if its false then its simple
@@ -244,11 +243,9 @@ BatchOperation :: struct {
 	record:         Record, //this will allow for the name,type and value of the record
 }
 
-//todo: move me :)
 errSupression: ErrorSuppression
 ErrorSuppression :: struct {
 	enabled: bool, //uses the OST_READ_CONFIG_VALUE to get the value of the error suppression config then set true or false
 }
 
-
-TESTING: bool   // Global flag to indicate if running in test mode
+TESTING: bool // Global flag to indicate if running in test mode

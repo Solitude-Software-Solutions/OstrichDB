@@ -381,8 +381,6 @@ OST_HANDLE_POST_REQ :: proc(
 
 	segments := OST_PATH_SPLITTER(p)
 
-
-	//todo: move me into the batch switch case below :)
 	if len(segments) < 3 {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Invalid path format\n"

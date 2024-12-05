@@ -268,11 +268,9 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 
 
 OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
-	//todo: clean these 2 lines only need 1 tprintf
-	oldPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, old)
-	oldPathAndExt := fmt.tprintf("%s%s", oldPath, const.OST_FILE_EXTENSION)
+	colPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, old, const.OST_FILE_EXTENSION)
 
-	file, readSuccess := os.read_entire_file_from_filename(oldPathAndExt)
+	file, readSuccess := os.read_entire_file_from_filename(colPath)
 	if !readSuccess {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
@@ -286,7 +284,7 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 
 	newName := fmt.tprintf("%s%s", new, const.OST_FILE_EXTENSION)
 	newNameExt := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, newName)
-	renamed := os.rename(oldPathAndExt, newNameExt)
+	renamed := os.rename(colPath, newNameExt)
 	when ODIN_OS == .Linux {
 		if renamed != os.ERROR_NONE {
 			utils.log_err("Error renaming .ost file", #procedure)
@@ -365,7 +363,6 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 			len(collectionNames),
 		)}
 
-	// TODO: consider the clusters and records in the size as well, rather than just collections
 	if len(collectionNames) > const.MAX_COLLECTION_TO_DISPLAY {
 		fmt.printf("There is %d collections to display, display all? (y/N) ", len(collectionNames))
 		buf: [1024]byte
