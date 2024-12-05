@@ -131,12 +131,6 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	buf: [64]byte
 	fileWithExt := strings.concatenate([]string{fileName, const.OST_FILE_EXTENSION})
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fileName, 0) {
-		fmt.printfln(
-			"Collection with name:%s%s%s does not exist",
-			utils.BOLD_UNDERLINE,
-			fileWithExt,
-			utils.RESET,
-		)
 		return false
 	}
 

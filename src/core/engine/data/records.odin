@@ -341,24 +341,26 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 							)
 							append(&allRecords, recordInfo)
 
-							fmt.printfln(
-								"Collection: %s%s%s | Cluster Name: %s%s%s",
-								utils.BOLD_UNDERLINE,
-								colNameNoExt,
-								utils.RESET,
-								utils.BOLD_UNDERLINE,
-								clusterName,
-								utils.RESET,
-							)
-							fmt.printfln(
-								"Record Type: %s%s%s | Record Data: %s%s%s",
-								utils.BOLD_UNDERLINE,
-								recordType,
-								utils.RESET,
-								utils.BOLD_UNDERLINE,
-								recordData,
-								utils.RESET,
-							)
+							if !types.TESTING {
+								fmt.printfln(
+									"Collection: %s%s%s | Cluster Name: %s%s%s",
+									utils.BOLD_UNDERLINE,
+									colNameNoExt,
+									utils.RESET,
+									utils.BOLD_UNDERLINE,
+									clusterName,
+									utils.RESET,
+								)
+								fmt.printfln(
+									"Record Type: %s%s%s | Record Data: %s%s%s",
+									utils.BOLD_UNDERLINE,
+									recordType,
+									utils.RESET,
+									utils.BOLD_UNDERLINE,
+									recordData,
+									utils.RESET,
+								)
+							}
 						}
 						break
 					}
@@ -475,12 +477,17 @@ OST_RENAME_RECORD :: proc(
 		return -1
 	}
 
+	fmt.println("OST_RENAME_RECORD IS GETTING this for fn: ", fn)
 
-	rExists := OST_CHECK_IF_RECORD_EXISTS(
+
+	file := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
 		strings.to_upper(fn),
-		strings.to_upper(cn),
-		strings.to_upper(new),
+		const.OST_FILE_EXTENSION,
 	)
+
+	rExists := OST_CHECK_IF_RECORD_EXISTS(file, cn, new)
 
 	switch rExists 
 	{
@@ -779,9 +786,15 @@ OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 	}
 }
 //reads over a specific collection file and looks for records with the passed in name
-OST_SCAN_COLLECTION_FOR_RECORD :: proc(collectionName, recordName: string) -> (colName: string, cluName: string, success: bool) {
+OST_SCAN_COLLECTION_FOR_RECORD :: proc(
+	collectionName, recordName: string,
+) -> (
+	colName: string,
+	cluName: string,
+	success: bool,
+) {
 	collectionPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collectionName)
-	
+
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
 		return "", "", false
@@ -1331,13 +1344,13 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 
 		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
 		cap := strings.to_upper(confirmation)
-		
+
 		switch cap {
 		case const.NO:
 			utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
 			return false
 		case const.YES:
-			// Continue with deletion
+		// Continue with deletion
 		case:
 			utils.log_runtime_event(
 				"User entered invalid input",
@@ -1377,7 +1390,7 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 				inTargetCluster = false
 				continue
 			}
-			if len(trimmedLine) > 0 && 
+			if len(trimmedLine) > 0 &&
 			   !strings.has_prefix(trimmedLine, "cluster_name") &&
 			   !strings.has_prefix(trimmedLine, "cluster_id") {
 				recordCount += 1
@@ -1389,7 +1402,7 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 	inTargetCluster = false
 	for line in lines {
 		trimmedLine := strings.trim_space(line)
-		
+
 		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			inTargetCluster = true
 			append(&newLines, line)
@@ -1404,7 +1417,7 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 				}
 				continue
 			}
-			
+
 			if trimmedLine == "}," {
 				if !isLastRecord {
 					append(&newLines, line)
@@ -1415,7 +1428,7 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 				continue
 			}
 		}
-		
+
 		if !inTargetCluster || !strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
 			append(&newLines, line)
 		}
