@@ -316,7 +316,7 @@ test_record_renaming :: proc(t: ^testing.T) {
 		const.OST_FILE_EXTENSION,
 	)
 
-	data.OST_APPEND_RECORD_TO_CLUSTER(
+	foo := data.OST_APPEND_RECORD_TO_CLUSTER(
 		col,
 		const.TEST_CLUSTER,
 		const.TEST_RECORD,
@@ -352,18 +352,14 @@ test_user_creation :: proc(t: ^testing.T) {
 
 	// Set up admin role for test since only admins can create users
 	types.user.role.Value = "admin"
-	types.user.username.Value = "test_user_head"
 
-	// Create test user
-	types.new_user.role.Value = const.TEST_ROLE
-	types.new_user.username.Value = const.TEST_USERNAME
 
 	result := security.OST_CREATE_NEW_USER(
 		const.TEST_USERNAME,
 		const.TEST_PASSWORD,
 		const.TEST_ROLE,
 	)
-	defer security.OST_DELETE_USER(types.new_user.username.Value)
+	defer security.OST_DELETE_USER(const.TEST_USERNAME)
 
 	// Check if secure collection was created for the user
 	exists, _ := data.OST_FIND_SEC_COLLECTION(const.TEST_USERNAME)
@@ -395,7 +391,7 @@ test_command_history :: proc(t: ^testing.T) {
 	types.new_user.username.Value = const.TEST_USERNAME
 	security.OST_CREATE_NEW_USER(const.TEST_USERNAME, const.TEST_PASSWORD, const.TEST_ROLE)
 	defer security.OST_DELETE_USER(types.new_user.username.Value)
-	defer data.OST_ERASE_HISTORY_CLUSTER(const.TEST_USERNAME)
+	// defer data.OST_ERASE_HISTORY_CLUSTER(const.TEST_USERNAME)
 
 	types.current_user.username.Value = const.TEST_USERNAME
 
@@ -403,7 +399,8 @@ test_command_history :: proc(t: ^testing.T) {
 	test_command := "NEW COLLECTION test_collection"
 
 	// Get current history count
-	initial_count := data.OST_COUNT_RECORDS_IN_CLUSTER("history", const.TEST_USERNAME, false)
+	// todo: this should not be getting pased history. this proc only looks for normal collection
+	initial_count := data.OST_COUNT_RECORDS_IN_HISTORY_CLUSTER(const.TEST_USERNAME)
 
 	// Append command to history
 	data.OST_APPEND_RECORD_TO_CLUSTER(

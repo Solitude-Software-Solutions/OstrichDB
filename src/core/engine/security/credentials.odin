@@ -654,6 +654,7 @@ OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
 	return false
 }
 
+//todo: need to remove the clusterID that is generated for a user from the clusterID cache file!!!
 OST_DELETE_USER :: proc(username: string) -> bool {
 	// Only admins can delete users
 	if types.user.role.Value != "admin" {

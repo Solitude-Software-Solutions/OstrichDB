@@ -477,8 +477,6 @@ OST_RENAME_RECORD :: proc(
 		return -1
 	}
 
-	fmt.println("OST_RENAME_RECORD IS GETTING this for fn: ", fn)
-
 
 	file := fmt.tprintf(
 		"%s%s%s",
@@ -1522,16 +1520,17 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 			return recordCount
 		}
 	}
-
-	fmt.printfln(
-		"Cluster %s%s%s not found in collection %s%s%s",
-		utils.BOLD_UNDERLINE,
-		cn,
-		utils.RESET,
-		utils.BOLD_UNDERLINE,
-		fn,
-		utils.RESET,
-	)
+	if !types.TESTING {
+		fmt.printfln(
+			"Cluster %s%s%s not found in collection %s%s%s",
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			fn,
+			utils.RESET,
+		)
+	}
 	return -1
 }
 
@@ -1693,4 +1692,36 @@ OST_GET_RECORD_SIZE :: proc(
 	}
 
 	return 0, false
+}
+
+
+OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
+
+	data, readSuccess := utils.read_file("./history.ost", #procedure)
+	if !readSuccess {
+		return -1
+	}
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", username)) {
+			lines := strings.split(cluster, "\n")
+			recordCount := 0
+
+			for line in lines {
+				trimmedLine := strings.trim_space(line)
+				if len(trimmedLine) > 0 &&
+				   !strings.has_prefix(trimmedLine, "cluster_name") &&
+				   !strings.has_prefix(trimmedLine, "cluster_id") &&
+				   strings.contains(trimmedLine, ":") {
+					recordCount += 1
+				}
+			}
+			return recordCount
+		}
+	}
+	return -1
 }
