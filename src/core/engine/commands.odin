@@ -774,7 +774,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
-					data.OST_REMOVE_ID_FROM_CACHE(clusterID)
+					utils.remove_id_from_cache(clusterID)
 				} else {
 					fmt.printfln(
 						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
@@ -830,7 +830,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
-					data.OST_REMOVE_ID_FROM_CACHE(clusterID)
+					utils.remove_id_from_cache(clusterID)
 				} else {
 					fmt.printfln(
 						"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",

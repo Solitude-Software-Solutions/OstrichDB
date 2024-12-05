@@ -45,19 +45,14 @@ Params: fileName - the desired file(cluster) name
 OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType)
+	switch (collectionType) 
 	{
 	case 0:
 		//standard cluster file
 		if OST_PERFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
 			return false
 		}
-		pathNameExtension := fmt.tprintf(
-			"%s%s%s",
-			const.OST_COLLECTION_PATH,
-			fileName,
-			const.OST_FILE_EXTENSION,
-		)
+		pathNameExtension := utils.concat_collection_name(fileName)
 		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o666)
 		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
 		if createSuccess != 0 {

@@ -731,6 +731,9 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 		const.OST_FILE_EXTENSION,
 	)
 
+	id := data.OST_GET_CLUSTER_ID("", username)
+	utils.remove_id_from_cache(id)
+
 	deleteSuccess := os.remove(secureFilePath)
 	if deleteSuccess != 0 {
 		error1 := utils.new_err(
@@ -745,7 +748,6 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 
 	// Remove  users histrory cluster
 	data.OST_ERASE_HISTORY_CLUSTER(username)
-
 	utils.log_runtime_event(
 		"User deleted",
 		fmt.tprintf("Administrator %s deleted user %s", types.user.username.Value, username),

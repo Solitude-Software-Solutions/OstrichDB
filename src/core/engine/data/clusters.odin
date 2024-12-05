@@ -99,95 +99,98 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 
 
 //used to return the value of a single cluster id of the passed in cluster
+//reads over a file, looks for the assed in cluster and returns its id
+//if fn is an empty string("") then its looking for a cluster in a secure file
 OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
-	fullPath := utils.concat_collection_name(fn)
-	data, readSuccess := os.read_entire_file(fullPath)
-	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading collection file", #procedure)
-		return 0
-	}
+	if fn != "" {
+		fullPath := utils.concat_collection_name(fn)
+		data, readSuccess := os.read_entire_file(fullPath)
+		if !readSuccess {
+			error1 := utils.new_err(
+				.CANNOT_READ_FILE,
+				utils.get_err_msg(.CANNOT_READ_FILE),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error reading collection file", #procedure)
+			return 0
+		}
 
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
+		content := string(data)
+		lines := strings.split(content, "\n")
+		defer delete(lines)
 
-	clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", cn)
-	clusterIdLine := "cluster_id :identifier:"
+		clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", cn)
+		clusterIdLine := "cluster_id :identifier:"
 
-	for i := 0; i < len(lines); i += 1 {
-		if strings.contains(lines[i], clusterNameLine) {
-			for j := i + 1; j < len(lines) && j < i + 5; j += 1 {
-				if strings.contains(lines[j], clusterIdLine) {
-					idStr := strings.trim_space(strings.split(lines[j], ":")[2])
-					ID, ok := strconv.parse_i64(idStr)
-					if ok {
-						return ID
-					} else {
-						utils.log_err("Error parsing cluster ID", #procedure)
-						return 0
+		for i := 0; i < len(lines); i += 1 {
+			if strings.contains(lines[i], clusterNameLine) {
+				for j := i + 1; j < len(lines) && j < i + 5; j += 1 {
+					if strings.contains(lines[j], clusterIdLine) {
+						idStr := strings.trim_space(strings.split(lines[j], ":")[2])
+						ID, ok := strconv.parse_i64(idStr)
+						if ok {
+							return ID
+						} else {
+							utils.log_err("Error parsing cluster ID", #procedure)
+							return 0
+						}
 					}
 				}
 			}
 		}
-	}
 
-	utils.log_err("Cluster not found", #procedure)
-	return 0
-}
+		utils.log_err("Cluster not found", #procedure)
+		return 0
+	} else {
+		//secure file
 
-
-OST_REMOVE_ID_FROM_CACHE :: proc(id: i64) -> bool {
-	deleted := false
-	buf: [32]byte
-	idStr := strconv.append_int(buf[:], id, 10)
-
-
-	data, readSuccess := os.read_entire_file(const.OST_CLUSTER_CACHE_PATH)
-	if !readSuccess {
-		error2 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
+		secFile := fmt.tprintf(
+			"%ssecure_%s%s",
+			const.OST_SECURE_COLLECTION_PATH,
+			cn,
+			const.OST_FILE_EXTENSION,
 		)
-		utils.throw_err(error2)
-		utils.log_err("Error reading cluster id cache file", #procedure)
-		return false
-	}
-
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
-
-	newLines := make([dynamic]string, 0, len(lines))
-	defer delete(newLines)
-
-	for line in lines {
-		if !strings.contains(line, idStr) {
-			append(&newLines, line)
-		} else {
-			deleted = true
+		data, readSuccess := os.read_entire_file(secFile)
+		if !readSuccess {
+			error1 := utils.new_err(
+				.CANNOT_READ_FILE,
+				utils.get_err_msg(.CANNOT_READ_FILE),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error reading secure file", #procedure)
+			return 0
 		}
-	}
 
-	if deleted {
-		new_content := strings.join(newLines[:], "\n")
-		writeSuccess := os.write_entire_file(
-			const.OST_CLUSTER_CACHE_PATH,
-			transmute([]byte)new_content,
-		)
-		if !writeSuccess {
-			utils.log_err("Error writing updated cluster id cache file", #procedure)
-			return false
+		content := string(data)
+		lines := strings.split(content, "\n")
+		defer delete(lines)
+
+		clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", cn)
+		clusterIdLine := "cluster_id :identifier:"
+
+		for i := 0; i < len(lines); i += 1 {
+			if strings.contains(lines[i], clusterNameLine) {
+				for j := i + 1; j < len(lines) && j < i + 5; j += 1 {
+					if strings.contains(lines[j], clusterIdLine) {
+						idStr := strings.trim_space(strings.split(lines[j], ":")[2])
+						ID, ok := strconv.parse_i64(idStr)
+						if ok {
+							fmt.println("ID found: ", ID)
+							return ID
+						} else {
+							utils.log_err("Error parsing cluster ID", #procedure)
+							return 0
+						}
+					}
+				}
+			}
 		}
-	}
 
-	return deleted
+		utils.log_err("Cluster not found", #procedure)
+		return 0
+	}
 }
 
 

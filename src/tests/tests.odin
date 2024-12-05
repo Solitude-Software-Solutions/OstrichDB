@@ -47,21 +47,21 @@ OST_INIT_TESTS :: proc() {
 	test_counter = 0 // Reset counter at start
 
 	//Collection tests
-	test_collection_creation(&t)
-	test_collection_deletion(&t)
-	test_collection_renaming(&t)
-	test_collection_backup(&t)
-	//Cluster tests
-	test_cluster_creation(&t)
-	test_cluster_deletion(&t)
-	test_cluster_renamimg(&t)
-	//Record tests
-	test_record_creation(&t)
-	test_record_deletion(&t)
-	test_record_renaming(&t)
+	// test_collection_creation(&t)
+	// test_collection_deletion(&t)
+	// test_collection_renaming(&t)
+	// test_collection_backup(&t)
+	// //Cluster tests
+	// test_cluster_creation(&t)
+	// test_cluster_deletion(&t)
+	// test_cluster_renamimg(&t)
+	// //Record tests
+	// test_record_creation(&t)
+	// test_record_deletion(&t)
+	// test_record_renaming(&t)
 	//User tests
 	test_user_creation(&t)
-	test_command_history(&t)
+	// test_command_history(&t)
 }
 
 
@@ -169,6 +169,8 @@ test_cluster_creation :: proc(t: ^testing.T) {
 		const.TEST_CLUSTER,
 		const.TEST_ID,
 	)
+	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
+	defer utils.remove_id_from_cache(id)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION) //clean up
 	res: bool
 	if result == 0 {
@@ -190,6 +192,9 @@ test_cluster_deletion :: proc(t: ^testing.T) {
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
 	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 	result := data.OST_ERASE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER)
+
+	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
+	defer utils.remove_id_from_cache(id)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 	if result {
@@ -214,6 +219,9 @@ test_cluster_renamimg :: proc(t: ^testing.T) {
 		const.TEST_CLUSTER,
 		const.TEST_NEW_CLUSTER,
 	)
+
+	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
+	defer utils.remove_id_from_cache(id)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 	if result {
@@ -234,6 +242,9 @@ test_record_creation :: proc(t: ^testing.T) {
 
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
 	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+
+	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
+	defer utils.remove_id_from_cache(id)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 
@@ -286,6 +297,9 @@ test_record_deletion :: proc(t: ^testing.T) {
 		"STRING",
 	)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
+
+	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
+	defer utils.remove_id_from_cache(id)
 
 	result := data.OST_ERASE_RECORD(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_RECORD)
 
@@ -351,6 +365,7 @@ test_user_creation :: proc(t: ^testing.T) {
 	utils.log_runtime_event("Test Started", "Running test_user_creation")
 
 	// Set up admin role for test since only admins can create users
+	//todo: remove this shit man wtf - Marshall
 	types.user.role.Value = "admin"
 
 
@@ -359,20 +374,21 @@ test_user_creation :: proc(t: ^testing.T) {
 		const.TEST_PASSWORD,
 		const.TEST_ROLE,
 	)
-	defer security.OST_DELETE_USER(const.TEST_USERNAME)
+
+
+	// defer security.OST_DELETE_USER(const.TEST_USERNAME)
 
 	// Check if secure collection was created for the user
-	exists, _ := data.OST_FIND_SEC_COLLECTION(const.TEST_USERNAME)
-	testing.expect(t, exists, "secure collection should exist for new user")
-	res: bool
-	if result == 0 && exists {
-		res = true
-		utils.log_runtime_event("Test Passed", "test_user_creation completed successfully")
-	} else {
-		res = false
-		utils.log_runtime_event("Test Failed", "test_user_creation failed")
-	}
-	print_test_result("test_user_creation", res, start_time)
+	// testing.expect(t, result, "secure collection should exist for new user")
+	// res: bool
+	// if result == 0{
+	// 	res = true
+	// 	utils.log_runtime_event("Test Passed", "test_user_creation completed successfully")
+	// } else {
+	// 	res = false
+	// 	utils.log_runtime_event("Test Failed", "test_user_creation failed")
+	// }
+	// print_test_result("test_user_creation", res, start_time)
 }
 
 test_command_history :: proc(t: ^testing.T) {

@@ -18,6 +18,8 @@ main :: proc() {
 	if (OST_CHECK_IF_CONFIG_FILE_EXISTS() == false) {
 		OST_CREATE_CONFIG_FILE()
 	}
+
+	// todo: i dont remember why I commented this out... - SchoolyB
 	//check if the error supression config is enabled or not
 
 	// if OST_READ_CONFIG_VALUE(const.configSix) == "true" {
