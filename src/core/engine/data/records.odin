@@ -707,44 +707,7 @@ OST_FIND_RECORD_IN_CLUSTER :: proc(
 	return types.Record{}, "", false
 }
 
-//reads over a collection file looking for the passed in record and returns the record type
-// todo: this needs to be fixed. need to also look for the cluster that the record is in... can belive I missed that
-// OST_GET_RECORD_TYPE :: proc(fn, cn, rn: string) -> (recordType: string, success: bool) {
-
-// 	success = false
-// 	recordType = ""
-
-// 	collection_file := fmt.tprintf(
-// 		"%s%s%s",
-// 		const.OST_COLLECTION_PATH,
-// 		strings.to_upper(cn),
-// 		const.OST_FILE_EXTENSION,
-// 	)
-
-// 	data, read_success := utils.read_file(collection_file, #procedure)
-// 	if !read_success {
-// 		fmt.println("Failed to read collection file:", collection_file)
-// 		return strings.clone(recordType), success
-// 	}
-
-// 	lines := strings.split(string(data), "\n")
-
-// 	for line in lines {
-// 		line := strings.trim_space(line)
-// 		if strings.has_prefix(line, rn) {
-// 			parts := strings.split(line, ":")
-// 			if len(parts) >= 2 {
-// 				recordType = strings.trim_space(parts[1])
-// 				success = true
-// 				return strings.clone(recordType), success
-// 			}
-// 		}
-// 	}
-
-// 	fmt.printfln("Record: %s not found in cluster: %s within collection: %s", rn, cn, fn)
-// 	return strings.clone(recordType), success
-// }
-//
+//reads over a collection file and the passed in cluster to get the passed in records data type and return it
 OST_GET_RECORD_TYPE :: proc(
 	fn: string,
 	cn: string,
@@ -763,7 +726,7 @@ OST_GET_RECORD_TYPE :: proc(
 	clusters := strings.split(content, "},")
 
 	for cluster in clusters {
-		// Check if we're in the correct cluster
+		//check for cluster
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			lines := strings.split(cluster, "\n")
 			for line in lines {
@@ -773,7 +736,7 @@ OST_GET_RECORD_TYPE :: proc(
 					// Split the line into parts using ":"
 					parts := strings.split(line, ":")
 					if len(parts) >= 2 {
-						// Return the type (middle part between the colons)
+						// Return the type of the record
 						return strings.clone(strings.trim_space(parts[1])), true
 					}
 				}

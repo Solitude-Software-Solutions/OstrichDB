@@ -21,12 +21,6 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-//used to concatenate an object name with an extension this will be used for updating collection file metadata from the command line
-//todo: why in the hell am I doing this? - SchoolyB
-OST_CONCAT_OBJECT_EXT :: proc(obj: string) -> string {
-	path := strings.concatenate([]string{const.OST_COLLECTION_PATH, obj})
-	return strings.concatenate([]string{path, const.OST_FILE_EXTENSION})
-}
 
 OST_GET_RECORD_SIZE :: proc(
 	collection_name: string,
@@ -36,12 +30,7 @@ OST_GET_RECORD_SIZE :: proc(
 	size: int,
 	success: bool,
 ) {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collection_name,
-		const.OST_FILE_EXTENSION,
-	)
+	collection_path := utils.concat_collection_name(collection_name)
 	data, read_success := os.read_entire_file(collection_path)
 	if !read_success {
 		return 0, false
@@ -407,7 +396,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					utils.log_err("Failed to create new cluster.", #procedure)
 					break
 				}
-				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				fn := utils.concat_collection_name(collection_name)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
@@ -493,7 +482,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							rType,
 							utils.RESET,
 						)
-						fn := OST_CONCAT_OBJECT_EXT(collection_name)
+						fn := utils.concat_collection_name(collection_name)
 						metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 						metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
@@ -648,7 +637,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
-					fn := OST_CONCAT_OBJECT_EXT(collection_name)
+					fn := utils.concat_collection_name(collection_name)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 				} else {
@@ -797,7 +786,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						utils.RESET,
 					)
 				}
-				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				fn := utils.concat_collection_name(collection_name)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
@@ -991,7 +980,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					recordName,
 					strings.clone(value),
 				)
-				fn := OST_CONCAT_OBJECT_EXT(collectionName)
+				fn := utils.concat_collection_name(collectionName)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
