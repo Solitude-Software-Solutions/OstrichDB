@@ -482,5 +482,5 @@ print_test_result :: proc(name: string, passed: bool, start_time: time.Time) {
 		utils.RESET,
 		status,
 		time.duration_milliseconds(duration),
-	);fmt.println("------------------------------")
+	)
 }
