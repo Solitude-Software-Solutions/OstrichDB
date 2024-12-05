@@ -1,5 +1,6 @@
 package engine
 
+import "../../tests"
 import "../../utils"
 import "../config"
 import "../const"
@@ -13,7 +14,6 @@ import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-import "../../tests"
 //=========================================================//
 // Author: Marshall A Burns aka @SchoolyB
 //
@@ -22,6 +22,7 @@ import "../../tests"
 //=========================================================//
 
 //used to concatenate an object name with an extension this will be used for updating collection file metadata from the command line
+//todo: why in the hell am I doing this? - SchoolyB
 OST_CONCAT_OBJECT_EXT :: proc(obj: string) -> string {
 	path := strings.concatenate([]string{const.OST_COLLECTION_PATH, obj})
 	return strings.concatenate([]string{path, const.OST_FILE_EXTENSION})
@@ -224,7 +225,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 	//WHERE: Used to search for a specific object within the DBMS
 	case const.WHERE:
-		utils.log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
+		utils.log_runtime_event(
+			"Used WHERE command",
+			"User requested to search for a specific object.",
+		)
 		switch (cmd.t_token) {
 		case const.CLUSTER, const.RECORD:
 			data.OST_WHERE_OBJECT(cmd.t_token, cmd.o_token[0])
@@ -234,7 +238,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		if len(cmd.o_token) == 0 {
 			data.OST_WHERE_ANY(cmd.t_token)
 		} else {
-			fmt.println("Incomplete command. Correct Usage: WHERE <target> <target_name> or WHERE <target_name>")
+			fmt.println(
+				"Incomplete command. Correct Usage: WHERE <target> <target_name> or WHERE <target_name>",
+			)
 			utils.log_runtime_event(
 				"Incomplete WHERE command",
 				"User did not provide a target name to search for.",
@@ -961,8 +967,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch cmd.t_token 
 		{
 		case const.RECORD:
-			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
-				record := cmd.o_token[0]
+			if len(cmd.o_token) == 1 && const.TO in cmd.m_token && cmd.isUsingDotNotation {
+				collectionName := cmd.o_token[0]
+				clusterName := cmd.o_token[1]
+				recordName := cmd.o_token[2]
 				value: string
 				for key, val in cmd.m_token {
 					value = val
@@ -970,14 +978,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
 					utils.BOLD_UNDERLINE,
-					record,
+					recordName,
 					utils.RESET,
 					utils.BOLD_UNDERLINE,
 					value,
 					utils.RESET,
 				)
-				col, ok := data.OST_SET_RECORD_VALUE(record, value)
-				fn := OST_CONCAT_OBJECT_EXT(col)
+				ok := data.OST_SET_RECORD_VALUE(collectionName, clusterName, recordName, value)
+				fn := OST_CONCAT_OBJECT_EXT(collectionName)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
