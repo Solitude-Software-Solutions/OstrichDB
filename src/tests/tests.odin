@@ -382,18 +382,10 @@ test_command_history :: proc(t: ^testing.T) {
 
 	utils.log_runtime_event("Test Started", "Running test_command_history")
 
-	// Set up test user first
-	types.user.role.Value = "admin"
-	types.user.username.Value = "test_user_head"
 
-	// Create test user
-	types.new_user.role.Value = const.TEST_ROLE
-	types.new_user.username.Value = const.TEST_USERNAME
 	security.OST_CREATE_NEW_USER(const.TEST_USERNAME, const.TEST_PASSWORD, const.TEST_ROLE)
-	defer security.OST_DELETE_USER(types.new_user.username.Value)
+	defer security.OST_DELETE_USER(const.TEST_USERNAME)
 	// defer data.OST_ERASE_HISTORY_CLUSTER(const.TEST_USERNAME)
-
-	types.current_user.username.Value = const.TEST_USERNAME
 
 
 	test_command := "NEW COLLECTION test_collection"
