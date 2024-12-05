@@ -598,6 +598,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 
 OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	buf: [64]byte
+	file: string
 	collection_path := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,

@@ -47,7 +47,6 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 
 //This will handle initial setup of the admin account on first run of the program
 OST_INIT_ADMIN_SETUP :: proc() -> int {
-	fmt.println("INIT_ADMIN_CALLED")
 	buf: [256]byte
 	OST_GEN_SECURE_DIR()
 	OST_GEN_USER_ID()
@@ -110,7 +109,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 	configToggled := config.OST_TOGGLE_CONFIG(const.configOne)
 
-	switch (configToggled)
+	switch (configToggled) 
 	{
 	case true:
 		types.USER_SIGNIN_STATUS = true
@@ -269,7 +268,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword
+	switch strongPassword 
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
@@ -437,7 +436,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p))
+	switch (len(p)) 
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -474,7 +473,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true)
+	switch (true) 
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -743,8 +742,8 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 		return false
 	}
 
-	// Remove  users histrory
-	data.OST_ERASE_CLUSTER("history", username)
+	// Remove  users histrory cluster
+	data.OST_ERASE_HISTORY_CLUSTER(username)
 
 	utils.log_runtime_event(
 		"User deleted",
