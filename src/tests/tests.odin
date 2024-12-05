@@ -103,7 +103,7 @@ test_collection_deletion :: proc(t: ^testing.T) {
 
 		utils.log_runtime_event("Test Failed", "test_collection_deletion failed")
 	}
-	print_test_result("test_collection_creation", result, start_time)
+	print_test_result("test_dcollection_deletion", result, start_time)
 }
 
 test_collection_renaming :: proc(t: ^testing.T) {
@@ -131,7 +131,7 @@ test_collection_renaming :: proc(t: ^testing.T) {
 		result = false
 		utils.log_runtime_event("Test Failed", "test_collection_renaming failed")
 	}
-	print_test_result("test_collection_creation", result, start_time)
+	print_test_result("test_collection_renaming", result, start_time)
 }
 
 test_collection_backup :: proc(t: ^testing.T) {
@@ -152,7 +152,7 @@ test_collection_backup :: proc(t: ^testing.T) {
 	} else {
 		utils.log_runtime_event("Test Failed", "test_collection_backup failed")
 	}
-	print_test_result("test_collection_creation", result, start_time)
+	print_test_result("test_collection_backup", result, start_time)
 }
 
 test_cluster_creation :: proc(t: ^testing.T) {
@@ -177,7 +177,7 @@ test_cluster_creation :: proc(t: ^testing.T) {
 		res = false
 		utils.log_runtime_event("Test Failed", "test_cluster_creation failed")
 	}
-	print_test_result("test_collection_creation", res, start_time)
+	print_test_result("test_cluster_creation", res, start_time)
 }
 
 
@@ -197,7 +197,7 @@ test_cluster_deletion :: proc(t: ^testing.T) {
 	} else {
 		utils.log_runtime_event("Test Failed", "test_cluster_deletion failed")
 	}
-	print_test_result("test_collection_creation", result, start_time)
+	print_test_result("test_cluster_deletion", result, start_time)
 }
 
 
@@ -221,7 +221,7 @@ test_cluster_renamimg :: proc(t: ^testing.T) {
 	} else {
 		utils.log_runtime_event("Test Failed", "test_cluster_renamimg failed")
 	}
-	print_test_result("test_collection_creation", result, start_time)
+	print_test_result("test_cluster_renaming", result, start_time)
 }
 
 
@@ -260,7 +260,7 @@ test_record_creation :: proc(t: ^testing.T) {
 		utils.log_runtime_event("Test Failed", "test_record_creation failed")
 	}
 
-	print_test_result("test_collection_creation", res, start_time)
+	print_test_result("test_record_creation", res, start_time)
 }
 
 test_record_deletion :: proc(t: ^testing.T) {
@@ -295,7 +295,7 @@ test_record_deletion :: proc(t: ^testing.T) {
 		utils.log_runtime_event("Test Failed", "test_record_deletion failed")
 
 	}
-	print_test_result("test_collection_creation", result, start_time)
+	print_test_result("test_record_deletion", result, start_time)
 }
 
 test_record_renaming :: proc(t: ^testing.T) {
@@ -339,7 +339,7 @@ test_record_renaming :: proc(t: ^testing.T) {
 		res = false
 		utils.log_runtime_event("Test Failed", "test_record_renaming failed")
 	}
-	print_test_result("test_collection_creation", res, start_time)
+	print_test_result("test_record_renaming", res, start_time)
 }
 
 test_user_creation :: proc(t: ^testing.T) {
@@ -375,7 +375,7 @@ test_user_creation :: proc(t: ^testing.T) {
 		res = false
 		utils.log_runtime_event("Test Failed", "test_user_creation failed")
 	}
-	print_test_result("test_collection_creation", res, start_time)
+	print_test_result("test_user_creation", res, start_time)
 }
 
 test_command_history :: proc(t: ^testing.T) {
@@ -433,7 +433,7 @@ test_command_history :: proc(t: ^testing.T) {
 	} else {
 		utils.log_runtime_event("Test Failed", "test_command_history failed")
 	}
-	print_test_result("test_collection_creation", result, start_time)
+	print_test_result("test_command_history", result, start_time)
 	//todo: need to delete the test users history cluster from the collection. when done testing.
 }
 
