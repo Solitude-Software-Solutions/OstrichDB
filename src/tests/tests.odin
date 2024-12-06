@@ -47,21 +47,21 @@ OST_INIT_TESTS :: proc() {
 	test_counter = 0 // Reset counter at start
 
 	//Collection tests
-	// test_collection_creation(&t)
-	// test_collection_deletion(&t)
-	// test_collection_renaming(&t)
-	// test_collection_backup(&t)
-	// //Cluster tests
-	// test_cluster_creation(&t)
-	// test_cluster_deletion(&t)
-	// test_cluster_renamimg(&t)
-	// //Record tests
-	// test_record_creation(&t)
-	// test_record_deletion(&t)
-	// test_record_renaming(&t)
+	test_collection_creation(&t)
+	test_collection_deletion(&t)
+	test_collection_renaming(&t)
+	test_collection_backup(&t)
+	//Cluster tests
+	test_cluster_creation(&t)
+	test_cluster_deletion(&t)
+	test_cluster_renamimg(&t)
+	//Record tests
+	test_record_creation(&t)
+	test_record_deletion(&t)
+	test_record_renaming(&t)
 	//User tests
 	test_user_creation(&t)
-	// test_command_history(&t)
+	test_command_history(&t)
 }
 
 

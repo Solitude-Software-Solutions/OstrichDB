@@ -942,7 +942,6 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 	recordType, getTypeSuccess := OST_GET_RECORD_TYPE(colPath, cn, rn)
 	valueAny: any = 0
 	ok: bool
-	fmt.println("recordType: ", recordType)
 	switch (recordType) {
 	case const.INTEGER:
 		valueAny, ok = OST_CONVERT_RECORD_TO_INT(rValue)
@@ -1048,7 +1047,7 @@ OST_UPDATE_RECORD_IN_FILE :: proc(
 			parts := strings.split(trimmedLine, ":")
 			if len(parts) >= 2 {
 				lines[i] = fmt.tprintf(
-					"%s%s:%s:%v",
+					"%s%s:%s: %v",
 					leadingWhitespace,
 					parts[0],
 					parts[1],

@@ -963,7 +963,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				value: string
 				for key, val in cmd.m_token {
 					value = val
-					fmt.println("value: ", value)
 				}
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
