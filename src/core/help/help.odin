@@ -31,6 +31,11 @@ validCommands := []string {
 	"RENAME",
 	"FETCH",
 	"TO",
+	"COUNT",
+	"SET",
+	"PURGE",
+	"SIZE_OF",
+	"DESTROY",
 }
 //called when user only enters the "HELP" command without any arguments
 // will take in the value from the config file. if verbose is true then show data from verbose help file, and vice versa
