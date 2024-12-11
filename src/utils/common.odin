@@ -54,3 +54,17 @@ concat_collection_name :: proc(colFileName: string) -> string {
 		fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, colFileName, const.OST_FILE_EXTENSION),
 	)
 }
+
+get_input :: proc() -> string {
+	buf: [1024]byte
+
+	n, err := os.read(os.stdin, buf[:])
+	// fmt.printf("Debug: Read %d bytes, err = %v\n", n, err)
+	if err != 0 {
+		fmt.println("Debug: Error occurred")
+		return ""
+	}
+	result := strings.trim_right(string(buf[:n]), "\r\n")
+	// fmt.printf("Debug: Returning result: '%s'\n", result)
+	return strings.clone(result)
+}

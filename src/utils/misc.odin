@@ -51,19 +51,6 @@ show_current_step :: proc(n: string, c: string, t: string) {
 }
 
 
-get_input :: proc() -> string {
-	buf: [1024]byte
-	n, err := os.read(os.stdin, buf[:])
-	// fmt.printf("Debug: Read %d bytes, err = %v\n", n, err)
-	if err != 0 {
-		fmt.println("Debug: Error occurred")
-		return ""
-	}
-	result := strings.trim_right(string(buf[:n]), "\r\n")
-	// fmt.printf("Debug: Returning result: '%s'\n", result)
-	return strings.clone(result)
-}
-
 show_check_warning :: proc() -> string {
 	return fmt.tprintf(
 		"%s%s[WARNING] [WARNING] [WARNING] [WARNING]%s",
