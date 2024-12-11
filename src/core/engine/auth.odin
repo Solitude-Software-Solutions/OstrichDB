@@ -74,6 +74,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		return false
 	}
 
+	types.user.username.Value = strings.clone(userName)
+
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
 	salt := data.OST_READ_RECORD_VALUE(secColPath, userName, "identifier", "salt")
@@ -186,4 +188,60 @@ OST_USER_LOGOUT :: proc(param: int) {
 		fmt.printfln("You have NOT been logged out.")
 		break
 	}
+}
+
+//shorter version of sign in but exclusively for checking passwords for certain db actions
+OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
+	succesfulValidation := false
+
+
+	secColPath := fmt.tprintf(
+		"%ssecure_%s%s",
+		const.OST_SECURE_COLLECTION_PATH,
+		types.user.username.Value,
+		const.OST_FILE_EXTENSION,
+	)
+
+	//PRE-MESHING START
+	salt := data.OST_READ_RECORD_VALUE(secColPath, types.user.username.Value, "identifier", "salt")
+	//get the value of the hash that is currently stored in the cluster that contains the entered username
+	providedHash := data.OST_READ_RECORD_VALUE(
+		secColPath,
+		types.user.username.Value,
+		"identifier",
+		"hash",
+	)
+	pHashAsBytes := transmute([]u8)providedHash
+	premesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
+	//PRE-MESHING END
+
+
+	algoMethod := data.OST_READ_RECORD_VALUE(
+		secColPath,
+		types.user.username.Value,
+		"identifier",
+		"store_method",
+	)
+
+	//POST-MESHING START
+	//convert the return algo method string to an int
+	algoAsInt := strconv.atoi(algoMethod)
+
+	//using the hasing algo from the cluster that contains the entered username, hash the entered password
+	newHash := security.OST_HASH_PASSWORD(string(input), algoAsInt, true, false)
+	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
+	postmesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
+	//POST-MESHING END
+
+	authPassed := OST_CROSS_CHECK_MESH(premesh, postmesh)
+	switch authPassed {
+	case true:
+		succesfulValidation = true
+
+	case false:
+		succesfulValidation = false
+		break
+	}
+	return succesfulValidation
+
 }
