@@ -1,6 +1,7 @@
 package utils
 
 import "../core/const"
+import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -55,9 +56,13 @@ concat_collection_name :: proc(colFileName: string) -> string {
 	)
 }
 
-get_input :: proc() -> string {
+get_input :: proc(isPassword: bool) -> string {
 	buf: [1024]byte
-
+	if isPassword {
+		libc.system("stty -echo") //hide input
+	} else {
+		libc.system("stty echo")
+	}
 	n, err := os.read(os.stdin, buf[:])
 	// fmt.printf("Debug: Read %d bytes, err = %v\n", n, err)
 	if err != 0 {
@@ -66,5 +71,6 @@ get_input :: proc() -> string {
 	}
 	result := strings.trim_right(string(buf[:n]), "\r\n")
 	// fmt.printf("Debug: Returning result: '%s'\n", result)
+	libc.system("stty echo") //show input
 	return strings.clone(result)
 }
