@@ -138,6 +138,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case const.REBUILD:
 		utils.log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
 		OST_REBUILD()
+	case const.DESTROY:
+		utils.log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
+		OST_DESTROY()
 	case const.TEST:
 		utils.log_runtime_event("Used TEST command", "User requested to run tests.")
 		tests.main()
@@ -190,7 +193,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		OST_EXECUTE_COMMAND(&cmd)
 		break
 	//HISTORY CLUSTER FUCK END :)
-
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
 	case const.HELP:
 		utils.log_runtime_event("Used HELP command", "User requested help information.")
