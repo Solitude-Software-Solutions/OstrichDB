@@ -363,12 +363,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collection_name,
 					utils.RESET,
 				)
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name) todo this is pretty bugged - SchoolyB
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
 
 				id := data.OST_GENERATE_CLUSTER_ID()
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
@@ -1429,6 +1429,40 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 		} else {
 			fmt.println("Incomplete SIZE_OF command. Please specify what to get the size of.")
+		}
+		break
+	case const.ISOLATE:
+		utils.log_runtime_event("Used ISOLATE command", "")
+		switch cmd.t_token {
+		case const.COLLECTION:
+			if len(cmd.o_token) == 1 {
+				collection_name := cmd.o_token[0]
+				result := data.OST_PERFORM_ISOLATION(collection_name)
+				switch result {
+				case 0:
+					fmt.printfln(
+						"Successfully isolated collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case:
+					fmt.println("Result ", result)
+					fmt.printfln(
+						"Failed to isolate collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: ISOLATE COLLECTION <collection_name>",
+				)
+			}
+			break
 		}
 		break
 	//END OF ACTION TOKEN EVALUATION

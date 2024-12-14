@@ -121,6 +121,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 
 //handles the results of the data integrity checks...duh
 OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
+	fmt.println("INTEGRTIY CHECK IS LOOKING FOR COLLECTION: ", fn)
 	integrityResults := OST_VALIDATE_DATA_INTEGRITY(fn)
 	for result in integrityResults {
 		if result == false {
@@ -145,7 +146,7 @@ OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 				utils.RESET,
 			)
 			fmt.println("For more information, please see the error log file.")
-			OST_QUARANTINE_COLLECTION(fn)
+			OST_PERFORM_ISOLATION(fn)
 			return -1
 		}
 	}
