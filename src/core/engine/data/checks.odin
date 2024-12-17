@@ -45,8 +45,6 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 		utils.log_err("File size is too large", #procedure)
 		types.data_integrity_checks.File_Size.Compliant = false
 	}
-
-
 	return types.data_integrity_checks.Cluster_IDs.Compliant
 }
 
@@ -64,7 +62,10 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 		utils.log_err("Header format is not compliant", #procedure)
 		types.data_integrity_checks.File_Format.Compliant = false
 	}
-
+	fmt.println(
+		"Collection format check getting: ",
+		types.data_integrity_checks.File_Format.Compliant,
+	)
 	return types.data_integrity_checks.File_Format.Compliant
 }
 
@@ -72,7 +73,7 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 //performs all data integrity checks on the passed collection and returns the results
 OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	checks := [dynamic]bool{}
-	defer delete(checks)
+	// defer delete(checks)
 	checkOneResult := OST_VALIDATE_IDS(fn)
 	checkTwoResult := OST_VALIDATE_FILE_SIZE(fn)
 	checkThreeResult := OST_VALIDATE_COLLECTION_FORMAT(fn)
@@ -88,6 +89,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 		)
 		utils.throw_err(error1)
 		utils.log_err("Cluster IDs in collection are not compliant", #procedure)
+	case:
 	}
 	//integrity check two - file size
 	switch checkTwoResult {
@@ -115,13 +117,13 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 		utils.throw_err(error3)
 		utils.log_err("Collection format is not compliant", #procedure)
 	}
+
 	//do more checks here
-
-
 	append(&checks, checkOneResult)
 	append(&checks, checkTwoResult)
 	append(&checks, checkThreeResult)
 
+	//todo: do I need this slice?
 	names := []string{"Cluster ID Compliancy", "File Size", "Collection Format"}
 
 	return checks
@@ -130,6 +132,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 //handles the results of the data integrity checks...duh
 OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 	integrityResults := OST_VALIDATE_DATA_INTEGRITY(fn)
+	defer delete(integrityResults)
 	for result in integrityResults {
 		if result == false {
 			if types.Severity_Code == 0 {
