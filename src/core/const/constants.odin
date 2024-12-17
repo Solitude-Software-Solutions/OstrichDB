@@ -128,6 +128,6 @@ TEST_NEW_CLUSTER: string : "test_new_cluster"
 TEST_NEW_RECORD: string : "test_new_record"
 TEST_BACKUP_COLLECTION: string : "test_collection_backup"
 
-TEST_USERNAME: string : "foobar"
+TEST_USERNAME: string : "testing_foobar"
 TEST_PASSWORD: string : "@Foobar1"
 TEST_ROLE: string : "user"

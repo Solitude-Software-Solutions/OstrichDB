@@ -45,7 +45,9 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 		utils.log_err("File size is too large", #procedure)
 		types.data_integrity_checks.File_Size.Compliant = false
 	}
-	return types.data_integrity_checks.File_Size.Compliant
+
+
+	return types.data_integrity_checks.Cluster_IDs.Compliant
 }
 
 //perform collection format check on the passed collection
@@ -68,15 +70,17 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 
 
 //performs all data integrity checks on the passed collection and returns the results
-OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
+OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	checks := [dynamic]bool{}
+	defer delete(checks)
 	checkOneResult := OST_VALIDATE_IDS(fn)
 	checkTwoResult := OST_VALIDATE_FILE_SIZE(fn)
 	checkThreeResult := OST_VALIDATE_COLLECTION_FORMAT(fn)
 	//integrity check one - cluster ids
 	switch checkOneResult {
 	case false:
-		types.Severity_Code = 2
+		types.data_integrity_checks.Cluster_IDs.Severity = .MEDIUM
+		types.Severity_Code = 1
 		error1 := utils.new_err(
 			.CLUSTER_IDS_NOT_VALID,
 			utils.get_err_msg(.CLUSTER_IDS_NOT_VALID),
@@ -88,6 +92,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 	//integrity check two - file size
 	switch checkTwoResult {
 	case false:
+		types.data_integrity_checks.File_Size.Severity = .LOW
 		types.Severity_Code = 0
 		error2 := utils.new_err(
 			.FILE_SIZE_TOO_LARGE,
@@ -100,6 +105,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 	//integrity check three - collection formatting
 	switch checkThreeResult {
 	case false:
+		types.data_integrity_checks.File_Format.Severity = .HIGH
 		types.Severity_Code = 2
 		error3 := utils.new_err(
 			.FILE_FORMAT_NOT_VALID,
@@ -116,12 +122,13 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> [dynamic]bool {
 	append(&checks, checkTwoResult)
 	append(&checks, checkThreeResult)
 
+	names := []string{"Cluster ID Compliancy", "File Size", "Collection Format"}
+
 	return checks
 }
 
 //handles the results of the data integrity checks...duh
 OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
-	fmt.println("INTEGRTIY CHECK IS LOOKING FOR COLLECTION: ", fn)
 	integrityResults := OST_VALIDATE_DATA_INTEGRITY(fn)
 	for result in integrityResults {
 		if result == false {
@@ -144,6 +151,15 @@ OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 				utils.BOLD_UNDERLINE,
 				fn,
 				utils.RESET,
+			)
+			fmt.printfln(
+				"Status of the all checks:\n%s: %v\n%s: %v\n%s: %v",
+				"Cluster ID Compliancy Passed",
+				types.data_integrity_checks.Cluster_IDs.Compliant,
+				"File Size Passed",
+				types.data_integrity_checks.File_Size.Compliant,
+				"Collection Format Passed",
+				types.data_integrity_checks.File_Format.Compliant,
 			)
 			fmt.println("For more information, please see the error log file.")
 			OST_PERFORM_ISOLATION(fn)

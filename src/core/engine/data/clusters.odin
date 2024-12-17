@@ -177,7 +177,7 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 						idStr := strings.trim_space(strings.split(lines[j], ":")[2])
 						ID, ok := strconv.parse_i64(idStr)
 						if ok {
-							fmt.println("ID found: ", ID)
+							// fmt.println("ID found: ", ID) //debugging
 							return ID
 						} else {
 							utils.log_err("Error parsing cluster ID", #procedure)
