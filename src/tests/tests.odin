@@ -51,6 +51,7 @@ OST_INIT_TESTS :: proc() {
 	test_collection_deletion(&t)
 	test_collection_renaming(&t)
 	test_collection_backup(&t)
+	test_collection_isolation(&t)
 	//Cluster tests
 	test_cluster_creation(&t)
 	test_cluster_deletion(&t)
@@ -62,6 +63,7 @@ OST_INIT_TESTS :: proc() {
 	//User tests
 	test_user_creation(&t)
 	test_command_history(&t)
+
 }
 
 
@@ -481,6 +483,31 @@ test_command_history :: proc(t: ^testing.T) {
 //     }
 //     print_test_result("test_collection_creation", result, start_time)
 // }
+
+test_collection_isolation :: proc(t: ^testing.T) {
+	test_counter += 1
+	start_time := time.now()
+
+	utils.log_runtime_event("Test Started", "Running test_collection_isolation")
+
+
+	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
+	//no need to erase since isolation will do that
+	result := data.OST_PERFORM_ISOLATION(const.TEST_COLLECTION)
+
+	res: bool
+	if result == 0 {
+		res = true
+		utils.log_runtime_event("Test Passed", "test_collection_isolation completed successfully")
+	} else {
+		res = false
+		utils.log_runtime_event("Test Failed", "test_collection_isolation failed")
+	}
+
+	print_test_result("test_collection_isolation", res, start_time)
+
+}
+
 
 print_test_result :: proc(name: string, passed: bool, start_time: time.Time) {
 	duration := time.since(start_time)
