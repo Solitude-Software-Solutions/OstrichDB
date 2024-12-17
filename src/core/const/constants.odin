@@ -82,6 +82,16 @@ FLT :: "FLT"
 //------------
 BOOLEAN :: "BOOLEAN"
 BOOL :: "BOOL"
+//------------
+//COMPLEX TYPES
+STRING_ARRAY :: "[]STRING"
+STR_ARRAY :: "[]STR"
+INTEGER_ARRAY :: "[]INTEGER"
+INT_ARRAY :: "[]INT"
+FLOAT_ARRAY :: "[]FLOAT"
+FLT_ARRAY :: "[]FLT"
+BOOLEAN_ARRAY :: "[]BOOLEAN"
+BOOL_ARRAY :: "[]BOOL"
 //SPECIAL HELP TOKENS
 ATOMS :: "ATOMS"
 ATOM :: "ATOM"
@@ -95,7 +105,24 @@ DOT :: "."
 
 //MISC CONSTANTS
 ost_carrot :: "OST>>>"
-VALID_RECORD_TYPES: []string : {STRING, INTEGER, FLOAT, BOOLEAN, STR, INT, FLT, BOOL}
+VALID_RECORD_TYPES: []string : {
+	STRING,
+	INTEGER,
+	FLOAT,
+	BOOLEAN,
+	STR,
+	INT,
+	FLT,
+	BOOL,
+	STRING_ARRAY,
+	STR_ARRAY,
+	INTEGER_ARRAY,
+	INT_ARRAY,
+	FLOAT_ARRAY,
+	FLT_ARRAY,
+	BOOLEAN_ARRAY,
+	BOOL_ARRAY,
+}
 MAX_SESSION_TIME: time.Duration : 259200000000000000 //3 days in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print
 // MAX_SESSION_TIME: time.Duration : 60000000000 //1 minute in nano seconds only used for testing

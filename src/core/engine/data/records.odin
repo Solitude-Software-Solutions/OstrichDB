@@ -618,7 +618,20 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 			case const.BOOL:
 				record.type = const.BOOLEAN
 				break
+			case const.STR_ARRAY:
+				record.type = const.STRING_ARRAY
+				break
+			case const.INT_ARRAY:
+				record.type = const.INTEGER_ARRAY
+				break
+			case const.FLT_ARRAY:
+				record.type = const.FLOAT_ARRAY
+				break
+			case const.BOOL_ARRAY:
+				record.type = const.BOOLEAN_ARRAY
+				break
 			case:
+				//if the user enters the full type name
 				record.type = rType
 				break
 			}
@@ -780,6 +793,32 @@ OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 		return false, false
 	}
 }
+
+
+OST_CONVERT_RECORD_TO_INT_ARRAY :: proc(rValue: string) -> ([dynamic]int, bool) {
+	newArray := make([dynamic]int)
+	defer delete(newArray)
+
+	strValue := OST_PARSE_ARRAY(rValue)
+
+	for i in strValue {
+		fmt.printfln("i value while parsing: %s", i)
+		val, ok := strconv.parse_int(i)
+		fmt.printfln(" value while parsing: %s", val)
+		append(&newArray, val)
+		if ok {
+			fmt.println("Array value while parsing: ", val)
+			fmt.println("Hey it worked")
+			return newArray, true
+		} else {
+			fmt.println("Array value while parsing: ", val)
+			fmt.println("Hey it didnt work")
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
+
 //reads over a specific collection file and looks for records with the passed in name
 OST_SCAN_COLLECTION_FOR_RECORD :: proc(
 	collectionName, recordName: string,
@@ -956,6 +995,26 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 		valueAny = rValue
 		ok = true
 		break
+	case const.INTEGER_ARRAY:
+		valueAny, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
+		ok = true
+		break
+	// case const.FLOAT_ARRAY:
+	// 	valueAny, ok = OST_CONVERT_RECORD_TO_FLOAT_ARRAY(rValue)
+	// 	ok = true
+	// 	break
+	// case const.FLOAT_ARRAY:
+	// 	valueAny, ok = OST_CONVERT_RECORD_TO_FLOAT_ARRAY(rValue)
+	// 	ok = true
+	// 	break
+	// case const.BOOLEAN_ARRAY:
+	// 	valueAny, ok = OST_CONVERT_RECORD_TO_BOOL_ARRAY(rValue)
+	// 	ok = true
+	// 	break
+	// case const.STRING_ARRAY:
+	// 	valueAny, ok = OST_CONVERT_RECORD_TO_STRING_ARRAY(rValue)
+	// 	ok = true
+	// 	break
 	}
 
 	if ok != true {
@@ -1005,6 +1064,7 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 	return success
 
 }
+
 
 //handles the actual updating of the record value
 OST_UPDATE_RECORD_IN_FILE :: proc(
