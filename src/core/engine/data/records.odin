@@ -795,16 +795,54 @@ OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 }
 
 
-//Takes in the string value that the user enters from the command line
-// parses it by ","s then appends it.
-// TODO: Memory isnt being freed in this proc becuase the value needs to be returned...
+//The following converstion procs take in the string from the command line, splits it by commas
+//appends each split value to an array. Easy Day
+//Note: Memory is freed in the procecudure that calls these conversion procs
+//TODO: All of these can be combined into one proc with a switch statement but more work than Im willing to do rn - Marshall Burns aka @SchoolyB
 OST_CONVERT_RECORD_TO_INT_ARRAY :: proc(rValue: string) -> ([dynamic]int, bool) {
 	newArray := make([dynamic]int)
 	strValue := OST_PARSE_ARRAY(rValue)
 	for i in strValue {
-		fmt.printfln("i value while parsing: %s", i)
 		val, ok := strconv.parse_int(i)
 		append(&newArray, val)
+	}
+	return newArray, true
+}
+
+
+OST_CONVERT_RECORD_TO_FLT_ARRAY :: proc(rValue: string) -> ([dynamic]f64, bool) {
+	newArray := make([dynamic]f64)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		val, ok := strconv.parse_f64(i)
+		append(&newArray, val)
+	}
+	return newArray, true
+}
+
+OST_CONVERT_RECORD_TO_BOOL_ARRAY :: proc(rValue: string) -> ([dynamic]bool, bool) {
+	newArray := make([dynamic]bool)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		lower_str := strings.to_lower(strings.trim_space(i))
+		if lower_str == "true" {
+			append(&newArray, true)
+		} else if lower_str == "false" {
+			append(&newArray, false)
+		} else {
+			fmt.printfln("Failed to parse bool array")
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
+
+
+OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		append(&newArray, i)
 	}
 	return newArray, true
 }
@@ -969,7 +1007,12 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 
 	//todo: update this call to include the cluster name as well
 	recordType, getTypeSuccess := OST_GET_RECORD_TYPE(colPath, cn, rn)
+	//Array allocations
 	intArrayValue: [dynamic]int
+	fltArrayValue: [dynamic]f64
+	boolArrayValue: [dynamic]bool
+	stringArrayValue: [dynamic]string
+	//Standard value allocation
 	valueAny: any = 0
 	ok: bool
 	switch (recordType) {
@@ -987,27 +1030,25 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 		ok = true
 		break
 	case const.INTEGER_ARRAY:
-		// valueAny, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
 		intArrayValue, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
 		valueAny = intArrayValue
 		ok = true
 		break
-	// case const.FLOAT_ARRAY:
-	// 	valueAny, ok = OST_CONVERT_RECORD_TO_FLOAT_ARRAY(rValue)
-	// 	ok = true
-	// 	break
-	// case const.FLOAT_ARRAY:
-	// 	valueAny, ok = OST_CONVERT_RECORD_TO_FLOAT_ARRAY(rValue)
-	// 	ok = true
-	// 	break
-	// case const.BOOLEAN_ARRAY:
-	// 	valueAny, ok = OST_CONVERT_RECORD_TO_BOOL_ARRAY(rValue)
-	// 	ok = true
-	// 	break
-	// case const.STRING_ARRAY:
-	// 	valueAny, ok = OST_CONVERT_RECORD_TO_STRING_ARRAY(rValue)
-	// 	ok = true
-	// 	break
+	case const.FLOAT_ARRAY:
+		fltArrayValue, ok = OST_CONVERT_RECORD_TO_FLT_ARRAY(rValue)
+		valueAny = fltArrayValue
+		ok = true
+		break
+	case const.BOOLEAN_ARRAY:
+		boolArrayValue, ok = OST_CONVERT_RECORD_TO_BOOL_ARRAY(rValue)
+		valueAny = boolArrayValue
+		ok = true
+		break
+	case const.STRING_ARRAY:
+		stringArrayValue, ok = OST_CONVERT_RECORD_TO_STRING_ARRAY(rValue)
+		valueAny = stringArrayValue
+		ok = true
+		break
 	}
 
 	if ok != true {
@@ -1054,7 +1095,12 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 			utils.RESET,
 		)
 	}
+
+	//Don't forget to free memory :) - Marshall Burns aka @SchoolyB
 	delete(intArrayValue)
+	delete(fltArrayValue)
+	delete(boolArrayValue)
+	delete(stringArrayValue)
 	return success
 
 }
