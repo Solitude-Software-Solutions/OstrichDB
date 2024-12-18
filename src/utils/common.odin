@@ -157,3 +157,13 @@ get_date_and_time :: proc() -> (gmtDate: string, hour: string, minute: string, s
 	return strings.clone(Date), strings.clone(Hour), strings.clone(Minute), strings.clone(Second)
 
 }
+
+
+//helper used to append qoutation marks to the beginning and end of a string record values
+//if the value already has qoutation marks then it will not append them
+append_qoutations :: proc(value: string) -> string {
+	if strings.contains(value, "\"") {
+		return strings.clone(value)
+	}
+	return strings.clone(fmt.tprintf("\"%s\"", value))
+}

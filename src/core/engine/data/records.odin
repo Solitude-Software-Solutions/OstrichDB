@@ -1026,7 +1026,7 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 		valueAny, ok = OST_CONVERT_RECORD_TO_BOOL(rValue)
 		break
 	case const.STRING:
-		valueAny = rValue
+		valueAny = utils.append_qoutations(rValue)
 		ok = true
 		break
 	case const.INTEGER_ARRAY:
