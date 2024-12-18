@@ -26,9 +26,7 @@ OST_ARRAY :: struct {
 //essentially will look over the passed in string and as long as its encased in [] it will split the string into an array based on the commas
 OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 	result := strings.split(strArr, ",")
-	fmt.println("Array: ", result)
 	for i in result {
-		fmt.println(i)
 	}
 	return result
 }
