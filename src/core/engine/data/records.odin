@@ -795,26 +795,16 @@ OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 }
 
 
+//Takes in the string value that the user enters from the command line
+// parses it by ","s then appends it.
+// TODO: Memory isnt being freed in this proc becuase the value needs to be returned...
 OST_CONVERT_RECORD_TO_INT_ARRAY :: proc(rValue: string) -> ([dynamic]int, bool) {
 	newArray := make([dynamic]int)
-	defer delete(newArray)
-
 	strValue := OST_PARSE_ARRAY(rValue)
-
 	for i in strValue {
 		fmt.printfln("i value while parsing: %s", i)
 		val, ok := strconv.parse_int(i)
-		fmt.printfln(" value while parsing: %s", val)
 		append(&newArray, val)
-		if ok {
-			fmt.println("Array value while parsing: ", val)
-			fmt.println("Hey it worked")
-			return newArray, true
-		} else {
-			fmt.println("Array value while parsing: ", val)
-			fmt.println("Hey it didnt work")
-			return newArray, false
-		}
 	}
 	return newArray, true
 }
@@ -979,6 +969,7 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 
 	//todo: update this call to include the cluster name as well
 	recordType, getTypeSuccess := OST_GET_RECORD_TYPE(colPath, cn, rn)
+	intArrayValue: [dynamic]int
 	valueAny: any = 0
 	ok: bool
 	switch (recordType) {
@@ -996,7 +987,9 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 		ok = true
 		break
 	case const.INTEGER_ARRAY:
-		valueAny, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
+		// valueAny, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
+		intArrayValue, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
+		valueAny = intArrayValue
 		ok = true
 		break
 	// case const.FLOAT_ARRAY:
@@ -1042,6 +1035,7 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 
 	// Update the record in the file
 	success := OST_UPDATE_RECORD_IN_FILE(colPath, cn, rn, valueAny)
+
 	if success {
 		fmt.printfln(
 			"Successfully set %s%s%s to %s%v%s",
@@ -1060,7 +1054,7 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 			utils.RESET,
 		)
 	}
-
+	delete(intArrayValue)
 	return success
 
 }
