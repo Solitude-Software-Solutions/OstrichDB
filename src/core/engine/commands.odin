@@ -1431,6 +1431,52 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.println("Incomplete SIZE_OF command. Please specify what to get the size of.")
 		}
 		break
+	case const.TYPE_OF:
+		//only works on records
+		if len(cmd.o_token) == 3 && cmd.isUsingDotNotation == true {
+			collection_name := cmd.o_token[0]
+			cluster_name := cmd.o_token[1]
+			record_name := cmd.o_token[2]
+			colPath := fmt.tprintf(
+				"%s%s%s",
+				const.OST_COLLECTION_PATH,
+				collection_name,
+				const.OST_FILE_EXTENSION,
+			)
+			rType, success := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
+			if !success {
+				fmt.printfln(
+					"Failed to get record %s.%s.%s's type",
+					collection_name,
+					cluster_name,
+					record_name,
+				)
+				return 1
+			} else {
+				fmt.printfln(
+					"Record: %s%s%s->%s%s%s->%s%s%s Type: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					cluster_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					record_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					rType,
+					utils.RESET,
+				)
+			}
+		} else {
+			fmt.printfln(
+				"Incomplete command. Correct Usage: TYPE_OF RECORD <collection_name>.<cluster_name>.<record_name>",
+			)
+
+		}
+		utils.log_runtime_event("Used TYPE_OF command", "")
+
 	case const.ISOLATE:
 		utils.log_runtime_event("Used ISOLATE command", "")
 		switch cmd.t_token {

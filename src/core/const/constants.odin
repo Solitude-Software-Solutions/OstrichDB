@@ -51,6 +51,7 @@ COUNT :: "COUNT"
 SET :: "SET"
 PURGE :: "PURGE"
 SIZE_OF :: "SIZE_OF"
+TYPE_OF :: "TYPE_OF" //not the same as OF_TYPE. This is used as an action token to get the type of a record
 DESTROY :: "DESTROY"
 ISOLATE :: "ISOLATE"
 //Target Tokens

@@ -35,8 +35,9 @@ validCommands := []string {
 	"SET",
 	"PURGE",
 	"SIZE_OF",
+	"TYPE_OF",
 	"DESTROY",
-	"QUARANTINE",
+	"ISOLATE", //formerly known as "QUARANTINE"
 }
 //called when user only enters the "HELP" command without any arguments
 // will take in the value from the config file. if verbose is true then show data from verbose help file, and vice versa
