@@ -39,24 +39,52 @@ OST_PARSE_DATE :: proc(date: string) -> (string, int) {
 		return dateStr, -1
 	}
 
-	if len(dateArr[0]) != 4 {
-		return dateStr, -1
-	}
-	if len(dateArr[1]) != 2 {
-		return dateStr, -1
-	}
-	if len(dateArr[2]) != 2 {
+	//check length reqs
+	if len(dateArr[0]) != 4 || len(dateArr[1]) != 2 || len(dateArr[2]) != 2 {
+		fmt.println("Invalid date format. Use: YYYY-MM-DD (example: 2024-03-14)")
 		return dateStr, -1
 	}
 
-	year := dateArr[0]
-	month := dateArr[1]
-	day := dateArr[2]
+	year, yearOk := strconv.parse_int(dateArr[0])
+	month, monthOk := strconv.parse_int(dateArr[1])
+	day, dayOk := strconv.parse_int(dateArr[2])
 
-	dateStr = fmt.tprintf("%s-%s-%s", year, month, day)
+	if !yearOk || !monthOk || !dayOk {
+		fmt.println("Invalid date: contains non-numeric characters")
+		return dateStr, -1
+	}
+
+	//validate month range
+	if month < 1 || month > 12 {
+		fmt.println("Invalid month: must be between 01-12")
+		return dateStr, -1
+	}
+
+	//Calculate days in month
+	daysInMonth := 31
+	switch month {
+	case 4, 6, 9, 11:
+		daysInMonth = 30
+	case 2:
+		// Leap year calculation
+		isLeapYear := (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+		daysInMonth = isLeapYear ? 29 : 28
+	}
+
+	// Validate day range
+	if day < 1 || day > daysInMonth {
+		fmt.println("Invalid day for the specified month")
+		return dateStr, -1
+	}
+
+	// Format with leading zeros
+	monthStr := fmt.tprintf("%02d", month)
+	dayStr := fmt.tprintf("%02d", day)
+	yearStr := fmt.tprintf("%04d", year)
+
+	dateStr = fmt.tprintf("%s-%s-%s", yearStr, monthStr, dayStr)
 	return dateStr, 0
 }
-
 
 OST_PARSE_TIME :: proc(time: string) -> (string, int) {
 	timeStr := ""
@@ -70,24 +98,39 @@ OST_PARSE_TIME :: proc(time: string) -> (string, int) {
 		return timeStr, -1
 	}
 
-	if len(timeArr[0]) != 2 {
-		return timeStr, -1
-	}
-	if len(timeArr[1]) != 2 {
-		return timeStr, -1
-	}
-	if len(timeArr[2]) != 2 {
+	if len(timeArr[0]) != 2 || len(timeArr[1]) != 2 || len(timeArr[2]) != 2 {
+		fmt.println("Invalid time format. Use: HH:MM:SS (example: 13:45:30)")
 		return timeStr, -1
 	}
 
-	hour := timeArr[0]
-	minute := timeArr[1]
-	second := timeArr[2]
+	// Convert strings to integers for validation
+	hour, hourOk := strconv.parse_int(timeArr[0])
+	minute, minuteOk := strconv.parse_int(timeArr[1])
+	second, secondOk := strconv.parse_int(timeArr[2])
 
-	timeStr = fmt.tprintf("%s:%s:%s", hour, minute, second)
+	if !hourOk || !minuteOk || !secondOk {
+		fmt.println("Invalid time: contains non-numeric characters")
+		return timeStr, -1
+	}
+
+	// Validate ranges
+	if hour < 0 || hour > 23 {
+		fmt.println("Invalid hour: must be between 00-23")
+		return timeStr, -1
+	}
+	if minute < 0 || minute > 59 {
+		fmt.println("Invalid minute: must be between 00-59")
+		return timeStr, -1
+	}
+	if second < 0 || second > 59 {
+		fmt.println("Invalid second: must be between 00-59")
+		return timeStr, -1
+	}
+
+	// Format with leading zeros
+	timeStr = fmt.tprintf("%02d:%02d:%02d", hour, minute, second)
 	return timeStr, 0
 }
-
 //parses the passed in string ensuring proper format and length
 //Example datetime: 2024-03-14T09:30:00
 OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, int) {
