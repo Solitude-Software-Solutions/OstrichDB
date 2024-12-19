@@ -615,6 +615,9 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 			case const.BOOL:
 				record.type = const.BOOLEAN
 				break
+			case const.CHAR:
+				record.type = const.CHAR
+				break
 			case const.STR_ARRAY:
 				record.type = const.STRING_ARRAY
 				break
@@ -1062,6 +1065,22 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 	case const.STRING:
 		valueAny = utils.append_qoutations(rValue)
 		ok = true
+		break
+	case const.CHAR:
+		if len(rValue) != 1 {
+			ok = false
+			fmt.println("Failed to set record value")
+			fmt.printfln(
+				"Value of type %s%s%s must be a single character",
+				utils.BOLD_UNDERLINE,
+				recordType,
+				utils.RESET,
+			)
+			return ok
+		} else {
+			valueAny = utils.append_single_qoutations(rValue)
+			ok = true
+		}
 		break
 	case const.INTEGER_ARRAY:
 		intArrayValue, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)

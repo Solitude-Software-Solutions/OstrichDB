@@ -84,6 +84,8 @@ FLT :: "FLT"
 BOOLEAN :: "BOOLEAN"
 BOOL :: "BOOL"
 //------------
+CHAR :: "CHAR"
+//------------
 //COMPLEX TYPES
 STRING_ARRAY :: "[]STRING"
 STR_ARRAY :: "[]STR"
@@ -119,6 +121,7 @@ VALID_RECORD_TYPES: []string : {
 	INT,
 	FLT,
 	BOOL,
+	CHAR,
 	STRING_ARRAY,
 	STR_ARRAY,
 	INTEGER_ARRAY,
