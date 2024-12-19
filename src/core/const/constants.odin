@@ -92,6 +92,10 @@ FLOAT_ARRAY :: "[]FLOAT"
 FLT_ARRAY :: "[]FLT"
 BOOLEAN_ARRAY :: "[]BOOLEAN"
 BOOL_ARRAY :: "[]BOOL"
+//These follow ISO 8601 format
+DATE :: "DATE" //YYYY-MM-DD
+TIME :: "TIME" //HH:MM:SS
+DATETIME :: "DATETIME" //YYYY-MM-DDTHH:MM:SS
 //SPECIAL HELP TOKENS
 ATOMS :: "ATOMS"
 ATOM :: "ATOM"
@@ -122,6 +126,9 @@ VALID_RECORD_TYPES: []string : {
 	FLT_ARRAY,
 	BOOLEAN_ARRAY,
 	BOOL_ARRAY,
+	DATE,
+	TIME,
+	DATETIME,
 }
 MAX_SESSION_TIME: time.Duration : 259200000000000000 //3 days in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print

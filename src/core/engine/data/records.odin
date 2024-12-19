@@ -395,13 +395,10 @@ OST_RENAME_RECORD :: proc(
 		// fmt.printfln("paramone %s: ", paramOne) //debugging
 		// fmt.printfln("paramtwo %s: ", paramTwo) //debugging
 
-
 		fn = paramOne //collection name from command line
 		cn = paramTwo //cluster name from command line
 
 		//since thse value are coming from command line itself no need to uppercase :)
-
-
 	} else {
 		fmt.printfln(
 			"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
@@ -424,7 +421,6 @@ OST_RENAME_RECORD :: proc(
 		fn = strings.to_upper(fn)
 	}
 
-
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
 		fmt.printfln("Collection with name:%s%s%s does not exist", utils.BOLD, fn, utils.RESET)
 		fmt.println("Please try again with a different name")
@@ -445,7 +441,6 @@ OST_RENAME_RECORD :: proc(
 	case -1:
 		return -1
 	}
-
 
 	if dotNotation == false {
 		//do this if NOT using dot notation
@@ -593,6 +588,8 @@ OST_RENAME_RECORD :: proc(
 	return result
 }
 
+//TODO: need to update and posisbly move this somewhere else
+//even when there are no collections in the db, 64b bytes are shown as the size of all collections
 OST_GET_DATABASE_TREE :: proc() {
 	OST_GET_ALL_COLLECTION_NAMES(true)
 	// output data size
@@ -629,6 +626,15 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 				break
 			case const.BOOL_ARRAY:
 				record.type = const.BOOLEAN_ARRAY
+				break
+			case const.DATE:
+				record.type = const.DATE
+				break
+			case const.TIME:
+				record.type = const.TIME
+				break
+			case const.DATETIME:
+				record.type = const.DATETIME
 				break
 			case:
 				//if the user enters the full type name
@@ -837,7 +843,6 @@ OST_CONVERT_RECORD_TO_BOOL_ARRAY :: proc(rValue: string) -> ([dynamic]bool, bool
 	return newArray, true
 }
 
-
 OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
 	newArray := make([dynamic]string)
 	strValue := OST_PARSE_ARRAY(rValue)
@@ -846,6 +851,35 @@ OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, 
 	}
 	return newArray, true
 }
+
+//Dont really need the following 3 procs, could just call the parse procs where needed but fuck it - Marshall Burns
+OST_CONVERT_RECORD_TO_DATE :: proc(rValue: string) -> (string, bool) {
+	date, err := OST_PARSE_DATE(rValue)
+	if err == 0 {
+		return date, true
+	} else {
+		return "", false
+	}
+}
+
+OST_CONVERT_RECORD_TO_TIME :: proc(rValue: string) -> (string, bool) {
+	time, err := OST_PARSE_TIME(rValue)
+	if err == 0 {
+		return time, true
+	} else {
+		return "", false
+	}
+}
+
+OST_CONVERT_RECORD_TO_DATETIME :: proc(rValue: string) -> (string, bool) {
+	dateTime, err := OST_PARSE_DATETIME(rValue)
+	if err == 0 {
+		return dateTime, true
+	} else {
+		return "", false
+	}
+}
+
 
 //reads over a specific collection file and looks for records with the passed in name
 OST_SCAN_COLLECTION_FOR_RECORD :: proc(
@@ -1048,6 +1082,27 @@ OST_SET_RECORD_VALUE :: proc(fn, cn, rn, rValue: string) -> bool {
 		stringArrayValue, ok = OST_CONVERT_RECORD_TO_STRING_ARRAY(rValue)
 		valueAny = stringArrayValue
 		ok = true
+		break
+	case const.DATE:
+		date, err := OST_CONVERT_RECORD_TO_DATE(rValue)
+		if err {
+			valueAny = date
+			ok = true
+		}
+		break
+	case const.TIME:
+		time, err := OST_CONVERT_RECORD_TO_TIME(rValue)
+		if err {
+			valueAny = time
+			ok = true
+		}
+		break
+	case const.DATETIME:
+		dateTime, err := OST_CONVERT_RECORD_TO_DATETIME(rValue)
+		if err {
+			valueAny = dateTime
+			ok = true
+		}
 		break
 	}
 
