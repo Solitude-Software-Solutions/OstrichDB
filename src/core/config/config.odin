@@ -2,6 +2,8 @@ package config
 
 import "../../utils"
 import "../const"
+import "../engine/data"
+import "../engine/data/metadata"
 import "../types"
 import "core:fmt"
 import "core:os"
@@ -12,25 +14,19 @@ import "core:strings"
 // Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
-
-
 main :: proc() {
-	if (OST_CHECK_IF_CONFIG_FILE_EXISTS() == false) {
-		OST_CREATE_CONFIG_FILE()
+	data.OST_CREATE_COLLECTION("ostrich.config", 3)
+	id := data.OST_GENERATE_CLUSTER_ID()
+	data.OST_CREATE_CLUSTER_BLOCK("ostrich.config.ost", id, const.CONFIG_CLUSTER)
+
+	appendSuccess := OST_APPEND_ALL_CONFIG_RECORDS()
+	if !appendSuccess {
+		utils.log_err("Failed to append all config records", #procedure)
+		fmt.println("ERROR: Failed to append all config records")
+		fmt.println("Please rebuild OstrichDB")
 	}
-
-	// todo: i dont remember why I commented this out... - SchoolyB
-	//check if the error supression config is enabled or not
-
-	// if OST_READ_CONFIG_VALUE(const.configSix) == "true" {
-	// 	types.errSupression.enabled = true
-	// } else if OST_READ_CONFIG_VALUE(const.configSix) == "false" {
-	// 	types.errSupression.enabled = false
-	// } else {
-	// 	utils.log_err("Error reading error suppression config", #procedure)
-	// }
 }
-
+//self explanatory :D - Marshall
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	configExists: bool
 	binDir, e := os.open(".")
@@ -47,220 +43,169 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 		utils.log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
-		if file.name == "ostrich.config" {
+		if file.name == const.OST_CONFIG_FILE {
 			configExists = true
 		}
 	}
 	return configExists
 }
 
-//the config file will contain info like: has the initial user setup been done, engine settings, etc
-OST_CREATE_CONFIG_FILE :: proc() -> bool {
-	configPath := const.OST_CONFIG_PATH
-	file, createSuccess := os.open(configPath, os.O_CREATE, 0o666)
-	defer os.close(file)
-	os.close(file)
-	if createSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_CREATE_FILE,
-			utils.get_err_msg(.CANNOT_CREATE_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error creating ostrich.config file", #procedure)
-		return false
-	}
-	msg := transmute([]u8)const.ConfigHeader
-	nFile, openSuccess := os.open(configPath, os.O_APPEND | os.O_WRONLY, 0o666)
-	defer os.close(nFile)
-	writter, writeSuccess := os.write(nFile, msg)
-	if writeSuccess != 0 {
-		error2 := utils.new_err(
-			.CANNOT_WRITE_TO_FILE,
-			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Error writing to ostrich.config file", #procedure)
-		return false
-	}
+//used to first append config records to the config cluster when the config file is created
+//essentially the same as data.APPEND_RECORD_TO_CLUSTER but explicitly for the config collection file and no print statements.
+OST_APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
+	fn := const.OST_CONFIG_PATH
+	cn := const.CONFIG_CLUSTER
 
-	configsFound := OST_FIND_ALL_CONFIGS(
-		const.configOne,
-		const.configTwo,
-		const.configThree,
-		const.configFour,
-		const.configFive,
-	)
-	if !configsFound {
-		OST_APPEND_AND_SET_CONFIG(const.configOne, "false")
-		OST_APPEND_AND_SET_CONFIG(const.configTwo, "simple")
-		OST_APPEND_AND_SET_CONFIG(const.configThree, "false")
-		OST_APPEND_AND_SET_CONFIG(const.configFour, "verbose")
-		OST_APPEND_AND_SET_CONFIG(const.configFive, "false")
-		OST_APPEND_AND_SET_CONFIG(const.configSix, "false")
-	}
-	return true
-}
-
-// Searches the config file for a specific config name that is passed in as a string
-// Returns true if found, false if not found
-OST_FIND_CONFIG :: proc(c: string) -> bool {
-	data, readSuccess := os.read_entire_file(const.OST_CONFIG_PATH)
-	if readSuccess == true {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.log_err("Error ostrich.config file", #procedure)
-		return false
-	}
+	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
+	if !readSuccess {
+		return -1
+	}
 
 	content := string(data)
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	for line in lines {
-		if strings.contains(line, c) {
-			return true
+	cluster_start := -1
+	closing_brace := -1
+
+	for i := 0; i < len(lines); i += 1 {
+		if strings.contains(lines[i], cn) {
+			cluster_start = i
+		}
+		if cluster_start != -1 && strings.contains(lines[i], "}") {
+			closing_brace = i
+			break
 		}
 	}
-	return false
-}
 
-// Ensures that all config names are found in the config file
-OST_FIND_ALL_CONFIGS :: proc(configs: ..string) -> bool {
-	for config in configs {
-		if !OST_FIND_CONFIG(config) {
-			return false
-		}
-	}
-	return true
-}
-
-OST_APPEND_AND_SET_CONFIG :: proc(c: string, value: string) -> int {
-	file, openSuccess := os.open(const.OST_CONFIG_PATH, os.O_APPEND | os.O_WRONLY, 0o666)
-	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening ostrich.config file", #procedure)
-		return 1
-	}
-	defer os.close(file)
-	concat := strings.concatenate([]string{c, " : ", value, "\n"})
-	str := transmute([]u8)concat
-	writter, writeSuccess := os.write(file, str)
-
-	if writeSuccess != 0 {
+	//if the cluster is not found or the structure is invalid, return
+	if cluster_start == -1 || closing_brace == -1 {
 		error2 := utils.new_err(
-			.CANNOT_WRITE_TO_FILE,
-			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			.CANNOT_FIND_CLUSTER,
+			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
 			#procedure,
 		)
 		utils.throw_err(error2)
-		utils.log_err("Error writing to ostrich.config file", #procedure)
-		return 1
+		utils.log_err("Unable to find cluster/valid structure", #procedure)
+		return -1
 	}
 
+	// Create the new line
+	new_line := fmt.tprintf("\t%s :%s: %s", rn, rType, rd)
+
+	// Insert the new line and adjust the closing brace
+	new_lines := make([dynamic]string, len(lines) + 1)
+	copy(new_lines[:closing_brace], lines[:closing_brace])
+	new_lines[closing_brace] = new_line
+	new_lines[closing_brace + 1] = "},"
+	if closing_brace + 1 < len(lines) {
+		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
+	}
+
+	new_content := strings.join(new_lines[:], "\n")
+	writeSuccess := utils.write_to_file(fn, transmute([]byte)new_content, #procedure)
+	if !writeSuccess {
+		return -1
+	}
 	return 0
 }
 
 
-OST_READ_CONFIG_VALUE :: proc(config: string) -> string {
-	value := ""
-	data, readSuccess := os.read_entire_file(const.OST_CONFIG_PATH)
-	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.log_err("Error reading ostrich.config file", #procedure)
-		return value
+OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
+	successCount := 0
+	// Append all the records to the config cluster
+	if OST_APPEND_CONFIG_RECORD(const.configOne, "false", const.BOOLEAN) == 0 {
+		successCount += 1
 	}
-	defer delete(data)
-
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
-
-	for line in lines {
-		if strings.contains(line, config) {
-			parts := strings.split(line, " : ")
-			if len(parts) >= 2 {
-				value = strings.trim_space(parts[1])
-				return strings.clone(value)
-			}
-			break // Found the config, but it's malformed
-		}
+	if OST_APPEND_CONFIG_RECORD(const.configTwo, "false", const.BOOLEAN) == 0 {
+		successCount += 1
+	}
+	if OST_APPEND_CONFIG_RECORD(const.configThree, "false", const.BOOLEAN) == 0 {
+		successCount += 1
+	}
+	if OST_APPEND_CONFIG_RECORD(const.configFour, "SIMPLE", const.STRING) == 0 {
+		successCount += 1
+	}
+	if OST_APPEND_CONFIG_RECORD(const.configFive, "false", const.BOOLEAN) == 0 {
+		successCount += 1
+	}
+	if OST_APPEND_CONFIG_RECORD(const.configSix, "false", const.BOOLEAN) == 0 {
+		successCount += 1
 	}
 
-	return value // Config not found
+	metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+	metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+
+	if successCount != 6 {
+		return false
+	}
+	return true
 }
 
 
-OST_TOGGLE_CONFIG :: proc(config: string) -> bool {
-	updated := false
-	replaced: bool
-	data, readSuccess := os.read_entire_file(const.OST_CONFIG_PATH)
-	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading ostrich.config file", #procedure)
+//used to update a config value when a user uses the SET command
+//essentially the same as the data.OST_SET_RECORD_VALUE proc but explicitly for the config collection file.
+OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
+	file := const.OST_CONFIG_PATH
+	cn := const.CONFIG_CLUSTER
+
+	result := data.OST_CHECK_IF_RECORD_EXISTS(file, const.CONFIG_CLUSTER, rn)
+	if !result {
+		fmt.printfln("Config: %s%s% does not exist", utils.BOLD_UNDERLINE, rn, utils.RESET)
 		return false
 	}
 
-	defer delete(data)
+	// Read the collection file
+	res, readSuccess := utils.read_file(file, #procedure)
+	defer delete(res)
+	if !readSuccess {
+		fmt.printfln("Failed to read config file")
+		return false
+	}
 
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
-
-	new_lines := make([dynamic]string, 0, len(lines))
-	defer delete(new_lines)
-
-
-	for line in lines {
-		new_line := line
-		if config == const.configFour {
-			if strings.contains(line, config) {
-				if strings.contains(line, "verbose") {
-					new_line, replaced = strings.replace(line, "verbose", "simple", 1)
-					updated = true
-				} else if strings.contains(line, "simple") {
-					new_line, replaced = strings.replace(line, "simple", "verbose", 1)
-					updated = true
-				}
-			}
-		} else {
-			if strings.contains(line, config) {
-				if strings.contains(line, "true") {
-					new_line, replaced = strings.replace(line, "true", "false", 1)
-					updated = true
-				} else if strings.contains(line, "false") {
-					new_line, replaced = strings.replace(line, "false", "true", 1)
-					updated = true
-				}
-			}
-		}
-		append(&new_lines, new_line)
+	//todo: update this call to include the cluster name as well
+	recordType, getTypeSuccess := data.OST_GET_RECORD_TYPE(file, cn, rn)
+	//Standard value allocation
+	valueAny: any = 0
+	ok: bool
+	switch (recordType) {
+	case const.BOOLEAN:
+		valueAny, ok = data.OST_CONVERT_RECORD_TO_BOOL(rValue)
+		break
+	case const.STRING:
+		valueAny = rValue
+		ok = true
+		break
 
 	}
 
-	if updated {
-		new_content := strings.join(new_lines[:], "\n")
-		os.write_entire_file(const.OST_CONFIG_PATH, transmute([]byte)new_content)
+	if ok != true {
+		valueTypeError := utils.new_err(
+			.INVALID_VALUE_FOR_EXPECTED_TYPE,
+			utils.get_err_msg(.INVALID_VALUE_FOR_EXPECTED_TYPE),
+			#procedure,
+		)
+		utils.throw_custom_err(
+			valueTypeError,
+			fmt.tprintf(
+				"%sInvalid value given. Expected a value of type: %s%s%s",
+				utils.BOLD_UNDERLINE,
+				const.CONFIG,
+				utils.RESET,
+			),
+		)
+		utils.log_err(
+			"User entered a value of a different type than what was expected.",
+			#procedure,
+		)
+
+		return false
 	}
 
-	return updated
+	// Update the record in the file
+	success := data.OST_UPDATE_RECORD_IN_FILE(file, cn, rn, valueAny)
+
+
+	return success
 }

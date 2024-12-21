@@ -129,9 +129,15 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		fmt.printfln("Welcome, %s!\n", userNameFound)
 		types.USER_SIGNIN_STATUS = true
 		types.current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
-		userLoggedInValue := config.OST_READ_CONFIG_VALUE(const.configThree)
+		userLoggedInValue := data.OST_READ_RECORD_VALUE(
+			const.OST_CONFIG_FILE,
+			const.CONFIG_CLUSTER,
+			const.CONFIG,
+			const.configThree,
+		)
 		if userLoggedInValue == "false" {
-			config.OST_TOGGLE_CONFIG(const.configThree)
+			// config.OST_TOGGLE_CONFIG(const.configThree)
+			config.OST_UPDATE_CONFIG_VALUE(const.configThree, "true")
 		}
 		break
 	case false:
@@ -163,7 +169,8 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 }
 
 OST_USER_LOGOUT :: proc(param: int) {
-	loggedOut := config.OST_TOGGLE_CONFIG(const.configThree)
+
+	loggedOut := config.OST_UPDATE_CONFIG_VALUE(const.configThree, "false")
 
 	switch loggedOut {
 	case true:

@@ -21,7 +21,7 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-
+//todo: move this to records.odin
 OST_GET_RECORD_SIZE :: proc(
 	collection_name: string,
 	cluster_name: string,
@@ -58,6 +58,8 @@ OST_GET_RECORD_SIZE :: proc(
 	return 0, false
 }
 
+
+//todo: move this to clusters.odin
 OST_GET_CLUSTER_SIZE :: proc(
 	collection_name: string,
 	cluster_name: string,
@@ -883,13 +885,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && cmd.isUsingDotNotation == true {
 				collection := cmd.o_token[0]
 				cluster := cmd.o_token[1]
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
-
 				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
 				fmt.printfln(clusterContent)
 			} else {
@@ -975,8 +970,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					value,
 					utils.RESET,
 				)
-				ok := data.OST_SET_RECORD_VALUE(
+				file := fmt.tprintf(
+					"%s%s%s",
+					const.OST_COLLECTION_PATH,
 					collectionName,
+					const.OST_FILE_EXTENSION,
+				)
+				ok := data.OST_SET_RECORD_VALUE(
+					file,
 					clusterName,
 					recordName,
 					strings.clone(value),
@@ -995,6 +996,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				for key, val in cmd.m_token {
 					value = val
 				}
+				if value != "VERBOSE" || value != "SIMPLE" {
+					fmt.println("Invalid value. Valid values are: 'VERBOSE' or 'SIMPLE'")
+					return 1
+				}
 				fmt.printfln(
 					"Setting config: %s%s%s to %s%s%s",
 					utils.BOLD_UNDERLINE,
@@ -1007,21 +1012,31 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				switch (configName) 
 				{
 				case "HELP":
-					success := config.OST_TOGGLE_CONFIG(const.configFour)
+					success := config.OST_UPDATE_CONFIG_VALUE(const.configFour, value)
 					if success == false {
-						fmt.printfln("Failed to toggle HELP config")
+						fmt.printfln("Failed to set HELP config to %s", value)
 					} else {
-						fmt.printfln("Successfully toggled HELP config")
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+						fmt.printfln("Successfully set HELP config to %s", value)
 					}
 					help.OST_SET_HELP_MODE()
 				case "SERVER":
-					success := config.OST_TOGGLE_CONFIG(const.configFive)
+					success := config.OST_UPDATE_CONFIG_VALUE(const.configFive, value)
 					if success == false {
-						fmt.printfln("Failed to toggle SERVER config")
+						fmt.printfln("Failed to set SERVER config to %s", value)
 					} else {
-						fmt.printfln("Successfully toggled SERVER config")
-						if config.OST_READ_CONFIG_VALUE(const.configFive) == "true" {
-							fmt.printfln("Server is now ON")
+						fmt.printfln("Successfully set SERVER config to %s", value)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+						if data.OST_READ_RECORD_VALUE(
+							   const.OST_CONFIG_FILE,
+							   const.CONFIG_CLUSTER,
+							   const.CONFIG,
+							   const.configFive,
+						   ) ==
+						   "true" {
+							fmt.printfln("Server Mode is now ON")
 							server.OST_START_SERVER(ServerConfig)
 						} else {
 							fmt.printfln("Server is now OFF")
@@ -1064,7 +1079,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTERS:
-			fmt.println("cmd,o_tokens: ", cmd.o_token)
 			if len(cmd.o_token) == 1 {
 				collection_name := cmd.o_token[0]
 				result := data.OST_COUNT_CLUSTERS(collection_name)
@@ -1494,7 +1508,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					break
 				case:
-					fmt.println("Result ", result)
 					fmt.printfln(
 						"Failed to isolate collection: %s%s%s",
 						utils.BOLD_UNDERLINE,

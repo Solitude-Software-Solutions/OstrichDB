@@ -28,11 +28,16 @@ test_counter := 0
 
 main :: proc() {
 	types.TESTING = true
-	res := config.OST_READ_CONFIG_VALUE(const.configSix) //error supression
+	res := data.OST_READ_RECORD_VALUE(
+		const.OST_CONFIG_PATH,
+		const.CONFIG_CLUSTER,
+		const.CONFIG,
+		const.configSix,
+	) //error supression
 	if res == "true" {
 		types.errSupression.enabled = true
 	} else if res == "false" {
-		config.OST_TOGGLE_CONFIG(const.configSix)
+		config.OST_UPDATE_CONFIG_VALUE(const.configSix, "false")
 		types.errSupression.enabled = false
 	} else {
 		utils.log_err("Error reading error suppression config", #procedure)

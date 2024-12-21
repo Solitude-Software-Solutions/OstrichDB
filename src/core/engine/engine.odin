@@ -20,28 +20,6 @@ import "core:time"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-run :: proc() {
-	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch (configFound) 
-	{
-	case false:
-		fmt.println("Config file not found.\n Generating config file")
-		config.OST_CREATE_CONFIG_FILE()
-		run()
-	case:
-		fmt.println("Starting OstrichDB DBMS")
-		result := OST_START_ENGINE()
-		switch (result) 
-		{
-		case 1:
-			fmt.println("OstrichDB DBMS Engine started successfully")
-			break
-		case 0:
-
-		}
-	}
-}
-
 
 //initialize the data integrity system
 OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
@@ -66,12 +44,11 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-
 	switch (types.engine.Initialized) 
 	{
 	case false:
-		config.main()
-	security.OST_INIT_ADMIN_SETUP()
+		// config.main()
+		security.OST_INIT_ADMIN_SETUP()
 		break
 
 	case true:

@@ -40,7 +40,13 @@ OST_CHOOSE_COLLECTION_NAME :: proc() {
 Creates a new collection file with metadata within the DB
 collections are "collectiions" of clusters stored in a .ost file
 Params: fileName - the desired file(cluster) name
-	    type - the type of file to create, 0 is standard, 1 is secure or 2 if it is the history file
+	    type - the type of file to create,
+				0 is standard
+				1 is secure
+				2 if it is the history file
+				3 config file
+				4 id cache file
+
 */
 OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
@@ -94,8 +100,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
 		defer os.close(createFile)
 		return true
-	case 2:
-		//history file
+	case 2, 3, 4:
 		pathNameExtension := fmt.tprintf(
 			"%s%s%s",
 			const.OST_BIN_PATH,

@@ -107,9 +107,9 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		"store_method",
 		algoMethodAsString,
 	)
-	configToggled := config.OST_TOGGLE_CONFIG(const.configOne)
+	engineInit := config.OST_UPDATE_CONFIG_VALUE(const.configOne, "true")
 
-	switch (configToggled) 
+	switch (engineInit) 
 	{
 	case true:
 		types.USER_SIGNIN_STATUS = true
@@ -344,7 +344,7 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 		fn,
 		const.OST_FILE_EXTENSION,
 	)
-	cn := cn
+
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
 	if openSuccess != 0 {
@@ -360,7 +360,8 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 
 
 	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, types.user.user_id, cn)
-	data.OST_APPEND_RECORD_TO_CLUSTER(secureFilePath, cn, dn, d, "identifier", types.user.user_id)
+
+	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, dn, d, "identifier", types.user.user_id)
 
 	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 2)
 	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 3)
