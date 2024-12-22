@@ -1,4 +1,5 @@
 package data
+import "../../const"
 import "core:fmt"
 import "core:strconv"
 import "core:strings"
@@ -19,6 +20,42 @@ OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 	// }
 	return result
 }
+
+//checks that array values the user wants to store in a record is the correct type
+OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
+	verified := false
+	//retrieve the record type
+	arrayValues := OST_PARSE_ARRAY(strArray)
+
+	switch (rType) {
+	case const.INTEGER_ARRAY:
+		for i in arrayValues {
+			_, err := strconv.parse_int(i)
+			if err != true {
+				verified = err
+			}
+		}
+		break
+	case const.FLOAT_ARRAY:
+		for i in arrayValues {
+			_, err := strconv.parse_f64(i)
+			if err != true {
+				verified = err
+			}
+		}
+		break
+	case const.BOOLEAN_ARRAY:
+		for i in arrayValues {
+			_, err := strconv.parse_bool(i)
+			if err != true {
+				verified = err
+			}
+		}
+		break
+	}
+	return verified
+}
+
 
 // OST_PARSE_OBJECT :: proc(strObj: string) -> map[string]string {
 // 	obj: map[string]string

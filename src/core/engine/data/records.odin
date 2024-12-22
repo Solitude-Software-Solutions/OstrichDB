@@ -837,6 +837,8 @@ OST_CONVERT_RECORD_TO_FLOAT :: proc(rValue: string) -> (f64, bool) {
 	}
 }
 
+//todo: as of 12/22/2024 I dicovered there is a parse_bool proc in the strconv package
+//need to update this proc to use it - Marshall Burns
 OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 	lower_str := strings.to_lower(strings.trim_space(rValue))
 	if lower_str == "true" {
@@ -1127,16 +1129,43 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		}
 		break
 	case const.INTEGER_ARRAY:
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.INTEGER_ARRAY, rValue)
+		if !verifiedValue {
+			fmt.printfln(
+				"Invalid value given. Must be an array of Type: %sINTEGER%s",
+				utils.BOLD_UNDERLINE,
+				utils.RESET,
+			)
+			return false
+		}
 		intArrayValue, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
 		valueAny = intArrayValue
 		ok = true
 		break
 	case const.FLOAT_ARRAY:
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.FLOAT, rValue)
+		if !verifiedValue {
+			fmt.printfln(
+				"Invalid value given. Must be an array of Type: %sFLOAT%s",
+				utils.BOLD_UNDERLINE,
+				utils.RESET,
+			)
+			return false
+		}
 		fltArrayValue, ok = OST_CONVERT_RECORD_TO_FLT_ARRAY(rValue)
 		valueAny = fltArrayValue
 		ok = true
 		break
 	case const.BOOLEAN_ARRAY:
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.BOOLEAN_ARRAY, rValue)
+		if !verifiedValue {
+			fmt.printfln(
+				"Invalid value given. Must be an array of Type: %BOOLEAN%s",
+				utils.BOLD_UNDERLINE,
+				utils.RESET,
+			)
+			return false
+		}
 		boolArrayValue, ok = OST_CONVERT_RECORD_TO_BOOL_ARRAY(rValue)
 		valueAny = boolArrayValue
 		ok = true

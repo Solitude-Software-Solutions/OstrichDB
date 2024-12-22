@@ -35,10 +35,7 @@ main :: proc() {
 		config.main()
 	}
 	utils.log_runtime_event("OstrichDB Started", "")
-	//
 
-	// tests.main() //remove this when done creating new tests. The TEST command then can be used to run the tests.
-	//
 	//Print the Ostrich logo and version
 	version := string(utils.get_ost_version())
 	fmt.printfln(fmt.tprintf(utils.ostrich_art, utils.GREEN, version, utils.RESET))
