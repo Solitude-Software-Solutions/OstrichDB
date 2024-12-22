@@ -124,7 +124,12 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	if OST_APPEND_CONFIG_RECORD(const.configThree, "false", const.BOOLEAN) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(const.configFour, "SIMPLE", const.STRING) == 0 {
+	if OST_APPEND_CONFIG_RECORD(
+		   const.configFour,
+		   utils.append_qoutations("SIMPLE"),
+		   const.STRING,
+	   ) ==
+	   0 {
 		successCount += 1
 	}
 	if OST_APPEND_CONFIG_RECORD(const.configFive, "false", const.BOOLEAN) == 0 {

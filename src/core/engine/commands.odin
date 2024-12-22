@@ -996,23 +996,29 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				for key, val in cmd.m_token {
 					value = val
 				}
-				if value != "VERBOSE" || value != "SIMPLE" {
-					fmt.println("Invalid value. Valid values are: 'VERBOSE' or 'SIMPLE'")
-					return 1
-				}
-				fmt.printfln(
-					"Setting config: %s%s%s to %s%s%s",
-					utils.BOLD_UNDERLINE,
-					configName,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					value,
-					utils.RESET,
-				)
 				switch (configName) 
 				{
 				case "HELP":
-					success := config.OST_UPDATE_CONFIG_VALUE(const.configFour, value)
+					if value != "VERBOSE" || value != "SIMPLE" {
+						fmt.println(
+							"Invalid value. Valid values for config help are: 'verbose' or 'simple'",
+						)
+						return 1
+					}
+
+					fmt.printfln(
+						"Setting config: %s%s%s to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						configName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						value,
+						utils.RESET,
+					)
+					success := config.OST_UPDATE_CONFIG_VALUE(
+						const.configFour,
+						utils.append_qoutations(value),
+					)
 					if success == false {
 						fmt.printfln("Failed to set HELP config to %s", value)
 					} else {
@@ -1022,6 +1028,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					}
 					help.OST_SET_HELP_MODE()
 				case "SERVER":
+					if value != "TRUE" || value != "FALSE" {
+						fmt.println(
+							"Invalid value. Valid values for config server are: 'true' or 'false'",
+						)
+						return 1
+					}
+
+					fmt.printfln(
+						"Setting config: %s%s%s to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						configName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						value,
+						utils.RESET,
+					)
+
+
 					success := config.OST_UPDATE_CONFIG_VALUE(const.configFive, value)
 					if success == false {
 						fmt.printfln("Failed to set SERVER config to %s", value)
@@ -1032,7 +1056,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						if data.OST_READ_RECORD_VALUE(
 							   const.OST_CONFIG_FILE,
 							   const.CONFIG_CLUSTER,
-							   const.CONFIG,
+							   const.BOOLEAN,
 							   const.configFive,
 						   ) ==
 						   "true" {
