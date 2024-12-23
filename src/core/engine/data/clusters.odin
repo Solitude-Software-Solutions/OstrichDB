@@ -24,39 +24,6 @@ main :: proc() {
 	metadata.OST_CREATE_FFVF()
 }
 
-//creates a cache used to store all generated cluster ids
-OST_CREATE_CACHE_FILE :: proc() {
-	cacheFile, createSuccess := os.open("./cluster_id_cache", os.O_CREATE, 0o666)
-	if createSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_CREATE_FILE,
-			utils.get_err_msg(.CANNOT_CREATE_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error creating cluster id cache file", #procedure)
-	}
-	os.close(cacheFile)
-}
-
-
-/*
-Generates the unique cluster id for a new cluster
-then returns it to the caller, relies on OST_ADD_ID_TO_CACHE_FILE() to store the retuned id in a file
-*/
-OST_GENERATE_CLUSTER_ID :: proc() -> i64 {
-	//ensure the generated id length is 16 digits
-	ID := rand.int63_max(1e16 + 1)
-	idExistsAlready := OST_CHECK_CACHE_FOR_ID(ID)
-
-	if idExistsAlready == true {
-		//dont need to throw error for ID existing already
-		utils.log_err("Generated ID already exists in cache file", #procedure)
-		OST_GENERATE_CLUSTER_ID()
-	}
-	OST_ADD_ID_TO_CACHE_FILE(ID)
-	return ID
-}
 
 //used to return the value of a ALL cluster ids of all clusters within the passed in file
 OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {

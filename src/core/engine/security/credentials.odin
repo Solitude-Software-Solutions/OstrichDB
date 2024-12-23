@@ -133,49 +133,6 @@ OST_GEN_USER_ID :: proc() -> i64 {
 
 }
 
-OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
-	buf: [32]byte
-	result: bool
-	openCacheFile, openSuccess := os.open("./cluster_id_cache", os.O_RDONLY, 0o666)
-
-	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", #procedure)
-	}
-	//step#1 convert the passed in i64 id number to a string
-	idStr := strconv.append_int(buf[:], id, 10)
-
-
-	//step#2 read the cache file and compare the id to the cache file
-	readCacheFile, readSuccess := os.read_entire_file(openCacheFile)
-	if readSuccess == false {
-		errors2 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(errors2)
-		utils.log_err("Error reading cluster id cache file", #procedure)
-	}
-
-	// step#3 convert all file contents to a string because...OdinLang go brrrr??
-	contentToStr := transmute(string)readCacheFile
-
-	//step#4 check if the string version of the id is contained in the cache file
-	if strings.contains(contentToStr, idStr) {
-		result = true
-	} else {
-		result = false
-	}
-	os.close(openCacheFile)
-	return result
-}
-
 
 //the isInitializing param will be false when if creating an account post engine initialization,
 OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
