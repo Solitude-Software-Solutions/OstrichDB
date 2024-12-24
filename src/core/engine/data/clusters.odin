@@ -227,11 +227,6 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
-	// if strings.contains(fileName, "secure_") {
-	// 	OST_APPEND_ID_TO_COLLECTION(fmt.tprint("%d", clusterID), 1)
-	// } else {
-	// 	OST_APPEND_ID_TO_COLLECTION(fmt.tprint("%d", clusterID), 0)
-	// }
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0

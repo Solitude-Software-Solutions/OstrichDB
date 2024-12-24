@@ -3,6 +3,7 @@ import "../../../utils"
 import "../../const"
 import "../../types"
 import "../data/metadata"
+import "core:c/libc"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
@@ -61,6 +62,11 @@ OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 	OST_CREATE_COLLECTION("ids", 4)
 	cluOneid := OST_GENERATE_ID(true)
 
+	// doing this prevents the creation of cluster_id records each time the program starts up. Only allows it once
+	if OST_CHECK_IF_CLUSTER_EXISTS(const.OST_ID_PATH, const.CLUSTER_ID_CLUSTER) == true &&
+	   OST_CHECK_IF_CLUSTER_EXISTS(const.OST_ID_PATH, const.USER_ID_CLUSTER) == true {
+		return
+	}
 	//create a cluster for cluster ids
 	OST_CREATE_CLUSTER_BLOCK("ids.ost", cluOneid, const.CLUSTER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
@@ -89,7 +95,6 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 		)
 
 		idCountStr := strconv.itoa(idBuf[:], types.id.clusterIdCount)
-		fmt.println("count: ", idCountStr) //debugging
 		recordName := fmt.tprintf("%s%s", "clusterID_", idCountStr)
 
 		appendSuccess := OST_APPEND_RECORD_TO_CLUSTER(

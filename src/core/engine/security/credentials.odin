@@ -68,9 +68,10 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	data.OST_CREATE_COLLECTION("history", 2)
 
 
-	//store the id to the id collection
+	//store the id to both clusters in the id collection
 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", types.user.user_id), 0)
 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", types.user.user_id), 1)
+
 
 	data.OST_CREATE_CLUSTER_BLOCK("./history.ost", types.user.user_id, types.user.username.Value)
 	inituserName = fmt.tprintf("secure_%s", inituserName)

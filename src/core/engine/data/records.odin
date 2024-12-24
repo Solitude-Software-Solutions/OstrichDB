@@ -1636,9 +1636,7 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 				   !strings.has_prefix(trimmedLine, "cluster_name") &&
 				   !strings.has_prefix(trimmedLine, "cluster_id") &&
 				   strings.contains(trimmedLine, ":") {
-					fmt.printfln("recordCount before increment: %s", recordCount)
 					recordCount += 1
-					fmt.printfln("recordCount after increment: %s", recordCount)
 				}
 			}
 			return recordCount
