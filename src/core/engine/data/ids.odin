@@ -120,5 +120,105 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 		)
 		break
 	}
+}
 
+//removes the passed in id from either cluster in the ids.ost file.
+//if isUserId is true then the id is removed from the USER_ID_CLUSTER
+//if isUserId is false then the id is removed from the CLUSTER_ID_CLUSTER
+//in the event that an admin user is deleting another user the id needs to be
+//removed from both clusters so the call is made twice with isUserId set to true and false
+OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
+	file, cn, rn: string
+
+	if isUserId {
+		file = const.OST_ID_PATH
+		cn = const.USER_ID_CLUSTER
+		rn = id
+	} else {
+		file = const.OST_ID_PATH
+		cn = const.CLUSTER_ID_CLUSTER
+		rn = id
+	}
+
+
+	data, readSuccess := utils.read_file(file, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return false
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	newLines := make([dynamic]string)
+	defer delete(newLines)
+
+	inTargetCluster := false
+	recordFound := false
+	isLastRecord := false
+	recordCount := 0
+
+	// First pass - count records in target cluster
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+			continue
+		}
+		if inTargetCluster {
+			if trimmedLine == "}," {
+				inTargetCluster = false
+				continue
+			}
+			if len(trimmedLine) > 0 &&
+			   !strings.has_prefix(trimmedLine, "cluster_name") &&
+			   !strings.has_prefix(trimmedLine, "cluster_id") {
+				recordCount += 1
+			}
+		}
+	}
+
+	// Second pass - rebuild content
+	inTargetCluster = false
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+			append(&newLines, line)
+			continue
+		}
+
+		if inTargetCluster {
+			if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+				recordFound = true
+				if recordCount == 1 {
+					isLastRecord = true
+				}
+				continue
+			}
+
+			if trimmedLine == "}," {
+				if !isLastRecord {
+					append(&newLines, line)
+				} else {
+					append(&newLines, "}")
+				}
+				inTargetCluster = false
+				continue
+			}
+		}
+
+		if !inTargetCluster || !strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+			append(&newLines, line)
+		}
+	}
+
+	if !recordFound {
+		return false
+	}
+
+	// Write updated content
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := utils.write_to_file(file, transmute([]byte)newContent, #procedure)
+	return writeSuccess
 }

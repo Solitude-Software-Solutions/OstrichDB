@@ -834,6 +834,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
+					//todo: come back to this
 					// utils.remove_id_from_cache(clusterID)
 				} else {
 					fmt.printfln(
@@ -849,6 +850,59 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						utils.RESET,
 					)
 				}
+			}
+			break
+		case const.USER:
+			secColPath := fmt.tprintf(
+				"%s%s%s",
+				const.OST_SECURE_COLLECTION_PATH,
+				types.current_user.username.Value,
+				const.OST_FILE_EXTENSION,
+			)
+			result: bool
+			if len(cmd.o_token) == 1 {
+				fmt.println("current user role: ", types.current_user.role.Value)
+				//evaluate current logged in users role
+				if data.OST_READ_RECORD_VALUE(
+					   secColPath,
+					   types.current_user.username.Value,
+					   "identifier",
+					   "role",
+				   ) ==
+				   "admin" {
+
+					result := security.OST_DELETE_USER(cmd.o_token[0])
+					if result {
+						fmt.printfln(
+							"User: %s%s%s successfully deleted.",
+							utils.BOLD_UNDERLINE,
+							cmd.o_token[0],
+							utils.RESET,
+						)
+					} else {
+						fmt.printfln(
+							"Failed to delete user: %s%s%s",
+							utils.BOLD_UNDERLINE,
+							cmd.o_token[0],
+							utils.RESET,
+						)
+					}
+				} else {
+					fmt.printfln(
+						"User: %s%s%s does not have permission to delete users.",
+						utils.BOLD_UNDERLINE,
+						types.current_user.username.Value,
+						utils.RESET,
+					)
+					result = false
+				}
+				if result == true {
+					return 0
+				} else {
+					return -1
+				}
+			} else {
+				fmt.printfln("Incomplete command. Correct Usage: ERASE USER <username>")
 			}
 			break
 		case:

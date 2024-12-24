@@ -66,7 +66,7 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 
 
 //used to return the value of a single cluster id of the passed in cluster
-//reads over a file, looks for the assed in cluster and returns its id
+//reads over a file, looks for the passed in cluster and returns its id
 //if fn is an empty string("") then its looking for a cluster in a secure file
 OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 	if fn != "" {

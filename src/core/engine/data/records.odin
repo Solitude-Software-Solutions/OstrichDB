@@ -1440,6 +1440,7 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 		const.OST_FILE_EXTENSION,
 	)
 
+
 	// Skip confirmation if in testing mode
 	if !types.TESTING {
 		fmt.printfln(

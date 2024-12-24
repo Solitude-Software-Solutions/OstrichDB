@@ -625,16 +625,30 @@ OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
 
 //todo: need to remove the clusterID that is generated for a user from the clusterID cache file!!!
 OST_DELETE_USER :: proc(username: string) -> bool {
-	// Only admins can delete users
-	if types.user.role.Value != "admin" {
+	file := fmt.tprintf(
+		"%s%s%s",
+		const.OST_SECURE_COLLECTION_PATH,
+		username,
+		const.OST_FILE_EXTENSION,
+	)
+
+
+	// NOTE: This check is reliant on the value stored in memory. if this becomes is a problem remove it and uncomment the line below
+	if types.current_user.role.Value != "admin" {
 		fmt.printfln(
 			"You do not have permission to delete users. Only administrators can perform this action.",
 		)
 		return false
 	}
 
+	// Check if user is an admin based on the role stored in the secure collection
+	// if data.OST_READ_RECORD_VALUE(file, username, "identifier", "role") == "admin" {
+	// 	fmt.printfln("You cannot delete an admin account.")
+	// 	return false
+	// }
+
 	// Cannot delete your own account
-	if username == types.user.username.Value {
+	if username == types.current_user.username.Value {
 		fmt.printfln("You cannot delete your own account.")
 		return false
 	}
@@ -643,67 +657,69 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	secureColName := fmt.tprintf("secure_%s", username)
 	exists, _ := data.OST_FIND_SEC_COLLECTION(secureColName)
 	if !exists {
-		fmt.printfln("User %s%s%s does not exist.", utils.BOLD_UNDERLINE, username, utils.RESET)
-		return false
-	}
-
-	// Get confirmation
-	if !types.TESTING {
-		buf: [64]byte
 		fmt.printfln(
-			"Are you sure you want to delete user: %s%s%s?\nThis action cannot be undone.",
+			"User %s%s%s does not exist. Terminating operation",
 			utils.BOLD_UNDERLINE,
 			username,
 			utils.RESET,
 		)
-		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			return false
-		}
-
-		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-		cap := strings.to_upper(confirmation)
-
-		switch cap {
-		case const.NO:
-			utils.log_runtime_event(
-				"User canceled deletion",
-				"User canceled deletion of user account",
-			)
-			return false
-		case const.YES:
-		//continue
-		case:
-			utils.log_runtime_event(
-				"User entered invalid input",
-				"User entered invalid input when trying to delete user",
-			)
-			error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
-			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-			return false
-		}
+		return false
 	}
 
-	// Delete users secure collection
-	secureFilePath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_SECURE_COLLECTION_PATH,
-		secureColName,
-		const.OST_FILE_EXTENSION,
+	// Get confirmation
+	buf: [64]byte
+	fmt.printfln(
+		"Are you sure you want to delete user: %s%s%s?\nThis action cannot be undone.",
+		utils.BOLD_UNDERLINE,
+		username,
+		utils.RESET,
 	)
+	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
 
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
+		)
+		utils.throw_err(error1)
+		return false
+	}
+
+	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+	cap := strings.to_upper(confirmation)
+
+	switch cap {
+	case const.NO:
+		utils.log_runtime_event("User canceled deletion", "User canceled deletion of user account")
+		return false
+	case const.YES:
+		break
+	case:
+		utils.log_runtime_event(
+			"User entered invalid input",
+			"User entered invalid input when trying to delete user",
+		)
+		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		return false
+	}
+
+	//remove the users ID from both clusters in the ids.ost collection file.
 	id := data.OST_GET_CLUSTER_ID("", username)
-	// utils.remove_id_from_cache(id)
+	idStr := fmt.tprintf("%d", id)
 
-	deleteSuccess := os.remove(secureFilePath)
+
+	//called twice to remove the id from both clusters
+	if !data.OST_REMOVE_ID_FROM_CLUSTER(idStr, true) &&
+	   !data.OST_REMOVE_ID_FROM_CLUSTER(idStr, false) {
+		utils.log_err("Error removing user ID from clusters", #procedure)
+		return false
+	}
+
+	// Delete the user's secure collection file
+	deleteSuccess := os.remove(file)
 	if deleteSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_DELETE_FILE,
@@ -715,7 +731,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 		return false
 	}
 
-	// Remove  users histrory cluster
+	// Remove the users histrory cluster
 	data.OST_ERASE_HISTORY_CLUSTER(username)
 	utils.log_runtime_event(
 		"User deleted",
