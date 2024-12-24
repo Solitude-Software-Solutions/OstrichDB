@@ -643,12 +643,17 @@ OST_RENAME_RECORD :: proc(old, new: string, dotNotation: bool, params: ..string)
 	return result
 }
 
-//TODO: need to update and posisbly move this somewhere else
-//even when there are no collections in the db, 64b bytes are shown as the size of all collections
+//Displays all collections as a tree. also shows size in bytes. DOES NOT subrtact metadata header sizes
 OST_GET_DATABASE_TREE :: proc() {
 	OST_GET_ALL_COLLECTION_NAMES(true)
+	// on MacOS, the below call always shows 64b as the size of all collections so need to always subract 64b from the total size even if there are no collections
+	//need to test on Linux
+	totalSize := metadata.OST_GET_FS(const.OST_COLLECTION_PATH).size
+	sizeMinus64 := totalSize - 64
+
 	// output data size
-	fmt.printfln("Size of data: %dB", metadata.OST_GET_FS(const.OST_COLLECTION_PATH).size)
+	fmt.printfln("Size of data: %dBytes", sizeMinus64)
+
 }
 
 //here is where the type that the user enters in their command is passed
@@ -1848,6 +1853,7 @@ OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
 	}
 	return -1
 }
+
 
 //todo: finish this for normal collection records after done with user records
 // OST_SCAN_FOR_RECORD_VALUE :: proc(rv: string) -> (string, bool) {}

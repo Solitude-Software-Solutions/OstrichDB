@@ -21,75 +21,6 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-//todo: move this to records.odin
-OST_GET_RECORD_SIZE :: proc(
-	collection_name: string,
-	cluster_name: string,
-	record_name: string,
-) -> (
-	size: int,
-	success: bool,
-) {
-	collection_path := utils.concat_collection_name(collection_name)
-	data, read_success := os.read_entire_file(collection_path)
-	if !read_success {
-		return 0, false
-	}
-	defer delete(data)
-
-	content := string(data)
-	clusters := strings.split(content, "},")
-
-	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
-			lines := strings.split(cluster, "\n")
-			for line in lines {
-				if strings.has_prefix(line, record_name) {
-					parts := strings.split(line, ":")
-					if len(parts) >= 3 {
-						record_value := strings.trim_space(strings.join(parts[2:], ":"))
-						return len(record_value), true
-					}
-				}
-			}
-		}
-	}
-
-	return 0, false
-}
-
-
-//todo: move this to clusters.odin
-OST_GET_CLUSTER_SIZE :: proc(
-	collection_name: string,
-	cluster_name: string,
-) -> (
-	size: int,
-	success: bool,
-) {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collection_name,
-		const.OST_FILE_EXTENSION,
-	)
-	data, read_success := os.read_entire_file(collection_path)
-	if !read_success {
-		return 0, false
-	}
-	defer delete(data)
-
-	content := string(data)
-	clusters := strings.split(content, "},")
-
-	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
-			return len(cluster), true
-		}
-	}
-
-	return 0, false
-}
 
 OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	incompleteCommandErr := utils.new_err(
@@ -834,8 +765,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
-					//todo: come back to this
-					// utils.remove_id_from_cache(clusterID)
 				} else {
 					fmt.printfln(
 						"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
@@ -869,7 +798,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					   "role",
 				   ) ==
 				   "admin" {
-					//todo: so the issue is that the parser automatically converts all tokens to uppercase but usernames are stored in the case they are typed...
 					result := security.OST_DELETE_USER(cmd.o_token[0])
 					if result {
 						fmt.printfln(
@@ -1462,7 +1390,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if cmd.isUsingDotNotation {
 					collection_name := cmd.o_token[0]
 					cluster_name := cmd.o_token[1]
-					size, success := OST_GET_CLUSTER_SIZE(collection_name, cluster_name)
+					size, success := data.OST_GET_CLUSTER_SIZE(collection_name, cluster_name)
 					if success {
 						fmt.printf(
 							"Size of cluster %s.%s: %d bytes\n",
@@ -1487,7 +1415,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collection_name := cmd.o_token[0]
 					cluster_name := cmd.o_token[1]
 					record_name := cmd.o_token[2]
-					size, success := OST_GET_RECORD_SIZE(
+					size, success := data.OST_GET_RECORD_SIZE(
 						collection_name,
 						cluster_name,
 						record_name,

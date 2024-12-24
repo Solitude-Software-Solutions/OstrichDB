@@ -122,10 +122,6 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 	append(&checks, checkOneResult)
 	append(&checks, checkTwoResult)
 	append(&checks, checkThreeResult)
-
-	//todo: do I need this slice?
-	names := []string{"Cluster ID Compliancy", "File Size", "Collection Format"}
-
 	return checks
 }
 

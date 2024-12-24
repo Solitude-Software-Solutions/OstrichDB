@@ -169,7 +169,6 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 		return false
 	}
 
-	//todo: update this call to include the cluster name as well
 	recordType, getTypeSuccess := data.OST_GET_RECORD_TYPE(file, cn, rn)
 	//Standard value allocation
 	valueAny: any = 0
