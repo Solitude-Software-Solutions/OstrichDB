@@ -854,14 +854,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case const.USER:
 			secColPath := fmt.tprintf(
-				"%s%s%s",
+				"%ssecure_%s%s",
 				const.OST_SECURE_COLLECTION_PATH,
 				types.current_user.username.Value,
 				const.OST_FILE_EXTENSION,
 			)
 			result: bool
 			if len(cmd.o_token) == 1 {
-				fmt.println("current user role: ", types.current_user.role.Value)
 				//evaluate current logged in users role
 				if data.OST_READ_RECORD_VALUE(
 					   secColPath,
@@ -870,7 +869,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					   "role",
 				   ) ==
 				   "admin" {
-
+					//todo: so the issue is that the parser automatically converts all tokens to uppercase but usernames are stored in the case they are typed...
 					result := security.OST_DELETE_USER(cmd.o_token[0])
 					if result {
 						fmt.printfln(

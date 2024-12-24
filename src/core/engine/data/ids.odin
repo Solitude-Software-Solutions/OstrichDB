@@ -128,22 +128,22 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 //in the event that an admin user is deleting another user the id needs to be
 //removed from both clusters so the call is made twice with isUserId set to true and false
 OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
-	file, cn, rn: string
+	file, cn, rv: string
 
 	if isUserId {
 		file = const.OST_ID_PATH
 		cn = const.USER_ID_CLUSTER
-		rn = id
+		rv = id
 	} else {
 		file = const.OST_ID_PATH
 		cn = const.CLUSTER_ID_CLUSTER
-		rn = id
+		rv = id
 	}
-
 
 	data, readSuccess := utils.read_file(file, #procedure)
 	defer delete(data)
 	if !readSuccess {
+		fmt.println("Failed to read file")
 		return false
 	}
 
@@ -188,8 +188,8 @@ OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
 			continue
 		}
 
-		if inTargetCluster {
-			if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+		if inTargetCluster { 	//reason its not working is because we are SUPPOSED to be looking for the record value
+			if strings.has_suffix(trimmedLine, fmt.tprintf(": %s", rv)) {
 				recordFound = true
 				if recordCount == 1 {
 					isLastRecord = true
@@ -208,12 +208,13 @@ OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
 			}
 		}
 
-		if !inTargetCluster || !strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+		if !inTargetCluster || !strings.has_prefix(trimmedLine, fmt.tprintf(": %s", rv)) {
 			append(&newLines, line)
 		}
 	}
 
 	if !recordFound {
+		fmt.println("Record not found")
 		return false
 	}
 
@@ -222,3 +223,45 @@ OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
 	writeSuccess := utils.write_to_file(file, transmute([]byte)newContent, #procedure)
 	return writeSuccess
 }
+
+//I'm not gonna lie...IDK why I was writting this. Commenting for now but might be useful later - Marshall Burns Dec 2024
+// OST_SCAN_FOR_ID_RECORD_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
+// 	value: string
+// 	success: bool
+// 	idCollection := const.OST_ID_PATH
+
+// 	data, readSuccess := utils.read_file(idCollection, #procedure)
+// 	if !readSuccess {
+// 		return "", false
+// 	}
+
+// 	defer delete(data)
+
+// 	content := string(data)
+// 	clusters := strings.split(content, "},")
+
+// 	for cluster in clusters {
+// 		if !strings.contains(cluster, "cluster_name :identifier:") {
+// 			continue // Skip non-cluster content
+// 		}
+
+// 		// Extract cluster name
+// 		name_start := strings.index(cluster, "cluster_name :identifier:")
+// 		if name_start == -1 do continue
+// 		name_start += len("cluster_name :identifier:")
+// 		name_end := strings.index(cluster[name_start:], "\n")
+// 		if name_end == -1 do continue
+// 		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
+// 		// Look for record in this cluster
+// 		lines := strings.split(cluster, "\n")
+// 		for line in lines {
+// 			line := strings.trim_space(line)
+// 			value = strings.trim_space(strings.split(line, ":")[2])
+// 			if strings.has_suffix(line, fmt.tprintf(": %s", rv)) {
+// 				return strings.clone(value), true
+// 			}
+// 		}
+// 	}
+
+// 	return "", false
+// }

@@ -67,6 +67,8 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	types.user.user_id = data.OST_GENERATE_ID(true) //for secure clustser, the cluster id is the user id
 	data.OST_CREATE_COLLECTION("history", 2)
 
+	types.user.username.Value = inituserName
+
 
 	//store the id to both clusters in the id collection
 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", types.user.user_id), 0)
@@ -194,9 +196,10 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 
 	}
 	if isInitializing == false {
-		return strings.clone(types.new_user.username.Value)
+		return strings.clone(strings.to_upper(types.new_user.username.Value))
 	}
-	return strings.clone(types.user.username.Value)
+
+	return strings.clone(strings.to_upper(types.user.username.Value))
 }
 
 
@@ -626,7 +629,7 @@ OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
 //todo: need to remove the clusterID that is generated for a user from the clusterID cache file!!!
 OST_DELETE_USER :: proc(username: string) -> bool {
 	file := fmt.tprintf(
-		"%s%s%s",
+		"%ssecure_%s%s",
 		const.OST_SECURE_COLLECTION_PATH,
 		username,
 		const.OST_FILE_EXTENSION,
@@ -712,11 +715,13 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 
 
 	//called twice to remove the id from both clusters
-	if !data.OST_REMOVE_ID_FROM_CLUSTER(idStr, true) &&
-	   !data.OST_REMOVE_ID_FROM_CLUSTER(idStr, false) {
+	removedFromUserIDCluster := data.OST_REMOVE_ID_FROM_CLUSTER(idStr, true)
+	removedFromClusterIDCluster := data.OST_REMOVE_ID_FROM_CLUSTER(idStr, false)
+	if !removedFromUserIDCluster && !removedFromClusterIDCluster {
 		utils.log_err("Error removing user ID from clusters", #procedure)
 		return false
 	}
+
 
 	// Delete the user's secure collection file
 	deleteSuccess := os.remove(file)
@@ -738,4 +743,20 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 		fmt.tprintf("Administrator %s deleted user %s", types.user.username.Value, username),
 	)
 	return true
+}
+
+
+OST_ADD_USERS_TO_LIST :: proc() -> [dynamic]string {
+	//remember to free mem when calling
+	userArr := make([dynamic]string)
+	secPath, openSuccess := os.open(const.OST_SECURE_COLLECTION_PATH)
+	users, readSuccess := os.read_dir(secPath, -1)
+
+	for user in users {
+		//trim fat
+		nameWithoutSuffix := strings.trim_suffix(user.name, const.OST_FILE_EXTENSION)
+		nameWithoutPrefix := strings.trim_prefix(nameWithoutSuffix, "secure_")
+		append(&userArr, nameWithoutPrefix)
+	}
+	return userArr
 }

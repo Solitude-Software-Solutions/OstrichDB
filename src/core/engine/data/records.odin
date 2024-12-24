@@ -1848,3 +1848,6 @@ OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
 	}
 	return -1
 }
+
+//todo: finish this for normal collection records after done with user records
+// OST_SCAN_FOR_RECORD_VALUE :: proc(rv: string) -> (string, bool) {}
