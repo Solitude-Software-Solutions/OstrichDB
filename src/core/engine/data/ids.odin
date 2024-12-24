@@ -108,7 +108,7 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 	case 1:
 		types.id.userIdCount = OST_COUNT_RECORDS_IN_CLUSTER("ids", const.USER_ID_CLUSTER, false)
 
-		idCountStr := strconv.itoa(idBuf[:], types.id.clusterIdCount)
+		idCountStr := strconv.itoa(idBuf[:], types.id.userIdCount)
 		recordName := fmt.tprintf("%s%s", "userID_", idCountStr)
 
 		appendSuccess := OST_APPEND_RECORD_TO_CLUSTER(
