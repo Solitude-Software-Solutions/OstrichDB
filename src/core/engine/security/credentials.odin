@@ -323,9 +323,9 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 	defer os.close(file)
 
 
-	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, types.user.user_id, cn)
+	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
 
-	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, dn, d, "identifier", types.user.user_id)
+	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, dn, d, "identifier", id)
 
 	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 2)
 	metadata.OST_UPDATE_METADATA_VALUE(secureFilePath, 3)
@@ -466,7 +466,6 @@ OST_CREATE_NEW_USER :: proc(
 ) -> int {
 	buf: [1024]byte
 
-	types.new_user.user_id = OST_GEN_USER_ID()
 
 	if types.TESTING {
 		// In testing mode, use provided test values
@@ -560,7 +559,12 @@ OST_CREATE_NEW_USER :: proc(
 	saltAsString := string(types.new_user.salt)
 	hashAsString := string(types.new_user.hashedPassword)
 	algoMethodAsString := strconv.itoa(buf[:], types.new_user.store_method)
+
 	types.new_user.user_id = data.OST_GENERATE_ID(true)
+
+	//store the id to both clusters in the id collection
+	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", types.new_user.user_id), 0)
+	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", types.new_user.user_id), 1)
 
 	// Store user credentials
 	OST_STORE_USER_CREDS(
