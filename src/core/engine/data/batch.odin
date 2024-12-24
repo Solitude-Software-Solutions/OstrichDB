@@ -99,7 +99,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 	case .NEW:
 		for i in colNames {
 			for j in cluNames {
-				id := OST_GENERATE_CLUSTER_ID()
+				id := OST_GENERATE_ID(true) //todo: this might be fucked. Passing true skips a check to see if the id is already in use...
 				if OST_CREATE_CLUSTER_FROM_CL(strings.to_upper(i), j, id) != 0 {
 					return 1, ""
 				}

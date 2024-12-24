@@ -105,6 +105,11 @@ CommandHistory :: struct {
 	cHistoryPrevious:   string,
 }
 
+id: Ids
+Ids :: struct {
+	clusterIdCount: int,
+	userIdCount:    int,
+}
 
 help_mode: Help_Mode
 Help_Mode :: struct {

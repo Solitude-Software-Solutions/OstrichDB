@@ -22,7 +22,7 @@ OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 	defer delete(idsAsStringArray)
 
 	for id in idsFoundInCollection {
-		idFoundInCache := OST_CHECK_CACHE_FOR_ID(id)
+		idFoundInCache := OST_CHECK_IF_CLUSTER_ID_EXISTS(id)
 		if !idFoundInCache {
 			utils.log_err(fmt.tprintf("Cluster ID %v not found in cache", id), #procedure)
 			types.data_integrity_checks.Cluster_IDs.Compliant = false

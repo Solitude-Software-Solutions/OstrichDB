@@ -177,7 +177,7 @@ test_cluster_creation :: proc(t: ^testing.T) {
 		const.TEST_ID,
 	)
 	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
-	defer utils.remove_id_from_cache(id)
+	// defer utils.remove_id_from_cache(id)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION) //clean up
 	res: bool
 	if result == 0 {
@@ -201,7 +201,7 @@ test_cluster_deletion :: proc(t: ^testing.T) {
 	result := data.OST_ERASE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER)
 
 	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
-	defer utils.remove_id_from_cache(id)
+	// defer utils.remove_id_from_cache(id)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 	if result {
@@ -228,7 +228,7 @@ test_cluster_renamimg :: proc(t: ^testing.T) {
 	)
 
 	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
-	defer utils.remove_id_from_cache(id)
+	// defer utils.remove_id_from_cache(id)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 	if result {
@@ -251,7 +251,7 @@ test_record_creation :: proc(t: ^testing.T) {
 	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 
 	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
-	defer utils.remove_id_from_cache(id)
+	// defer utils.remove_id_from_cache(id)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 
@@ -306,7 +306,7 @@ test_record_deletion :: proc(t: ^testing.T) {
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION)
 
 	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
-	defer utils.remove_id_from_cache(id)
+	// defer utils.remove_id_from_cache(id)
 
 	result := data.OST_ERASE_RECORD(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_RECORD)
 

@@ -50,7 +50,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	buf: [256]byte
 	OST_GEN_SECURE_DIR()
 	OST_GEN_USER_ID()
-	fmt.printfln("Welcome to the Ostrich Database Engine")
+	fmt.printfln("Welcome to the OstrichDB Database Management System")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
 
@@ -64,8 +64,14 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	saltAsString := string(types.user.salt)
 	hashAsString := string(types.user.hashedPassword)
 	algoMethodAsString := strconv.itoa(buf[:], types.user.store_method)
-	types.user.user_id = data.OST_GENERATE_CLUSTER_ID() //for secure clustser, the cluster id is the user id
+	types.user.user_id = data.OST_GENERATE_ID(true) //for secure clustser, the cluster id is the user id
 	data.OST_CREATE_COLLECTION("history", 2)
+
+
+	//store the id to the id collection
+	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", types.user.user_id), 0)
+	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", types.user.user_id), 1)
+
 	data.OST_CREATE_CLUSTER_BLOCK("./history.ost", types.user.user_id, types.user.username.Value)
 	inituserName = fmt.tprintf("secure_%s", inituserName)
 	data.OST_CREATE_COLLECTION(inituserName, 1)
@@ -83,8 +89,6 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		"role",
 		"admin",
 	)
-
-
 	OST_STORE_USER_CREDS(
 		inituserName,
 		types.user.username.Value,
@@ -92,7 +96,9 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		"salt",
 		saltAsString,
 	)
+
 	hashAsStr := transmute(string)types.user.hashedPassword
+
 	OST_STORE_USER_CREDS(
 		inituserName,
 		types.user.username.Value,
@@ -124,7 +130,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 OST_GEN_USER_ID :: proc() -> i64 {
 	userID := rand.int63_max(1e16 + 1)
-	if OST_CHECK_IF_USER_ID_EXISTS(userID) == true {
+	if data.OST_CHECK_IF_USER_ID_EXISTS(userID) == true {
 		utils.log_err("Generated ID already exists in user file", #procedure)
 		OST_GEN_USER_ID()
 	}
@@ -553,7 +559,7 @@ OST_CREATE_NEW_USER :: proc(
 	saltAsString := string(types.new_user.salt)
 	hashAsString := string(types.new_user.hashedPassword)
 	algoMethodAsString := strconv.itoa(buf[:], types.new_user.store_method)
-	types.new_user.user_id = data.OST_GENERATE_CLUSTER_ID()
+	types.new_user.user_id = data.OST_GENERATE_ID(true)
 
 	// Store user credentials
 	OST_STORE_USER_CREDS(
@@ -690,7 +696,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	)
 
 	id := data.OST_GET_CLUSTER_ID("", username)
-	utils.remove_id_from_cache(id)
+	// utils.remove_id_from_cache(id)
 
 	deleteSuccess := os.remove(secureFilePath)
 	if deleteSuccess != 0 {

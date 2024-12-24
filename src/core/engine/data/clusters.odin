@@ -17,11 +17,11 @@ import "core:strings"
 
 
 main :: proc() {
-	OST_CREATE_CACHE_FILE()
+	metadata.OST_CREATE_FFVF()
+	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
 	OST_CREATE_BACKUP_DIR()
 	os.make_directory(const.OST_QUARANTINE_PATH)
 	os.make_directory(const.OST_COLLECTION_PATH)
-	metadata.OST_CREATE_FFVF()
 }
 
 
@@ -160,87 +160,6 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 	}
 }
 
-
-/*
-checks the cluster id cache file to see if the id already exists
-*/
-OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
-	buf: [32]byte
-	result: bool
-	openCacheFile, openSuccess := os.open("./cluster_id_cache", os.O_RDONLY, 0o666)
-	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", #procedure)
-	}
-	//step#1 convert the passed in i64 id number to a string
-	idStr := strconv.append_int(buf[:], id, 10)
-
-
-	//step#2 read the cache file and compare the id to the cache file
-	readCacheFile, readSuccess := os.read_entire_file(openCacheFile)
-	if readSuccess == false {
-		error2 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Error reading cluster id cache file", #procedure)
-	}
-
-	// step#3 convert all file contents to a string because...OdinLang go brrrr??
-	contentToStr := transmute(string)readCacheFile
-
-	//step#4 check if the string version of the id is contained in the cache file
-	if strings.contains(contentToStr, idStr) {
-		result = true
-	} else {
-		result = false
-	}
-	os.close(openCacheFile)
-	return result
-}
-
-
-/*upon cluster generation this proc will take the cluster id and store it in a file so that it can not be duplicated in the future
-*/
-OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
-	buf: [32]byte
-	cacheFile, openSuccess := os.open("./cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
-	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", #procedure)
-	}
-
-	idStr := strconv.append_int(buf[:], id, 10) //base 10 conversion
-
-	//converting stirng to byte array then writing to file
-	transStr := transmute([]u8)idStr
-	writter, writeSuccess := os.write(cacheFile, transStr)
-	if writeSuccess != 0 {
-		error2 := utils.new_err(
-			.CANNOT_WRITE_TO_FILE,
-			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Error writing to cluster id cache file", #procedure)
-	}
-	OST_NEWLINE_CHAR()
-	os.close(cacheFile)
-	return 0
-}
-
 /*
 Creates and appends a new cluster to the specified .ost file
 */
@@ -251,6 +170,8 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 		utils.log_err("Cluster already exists in file", #procedure)
 		return 1
 	}
+
+
 	FIRST_HALF: []string = {"{\n\tcluster_name :identifier: %n"}
 	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
@@ -306,40 +227,14 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
+	// if strings.contains(fileName, "secure_") {
+	// 	OST_APPEND_ID_TO_COLLECTION(fmt.tprint("%d", clusterID), 1)
+	// } else {
+	// 	OST_APPEND_ID_TO_COLLECTION(fmt.tprint("%d", clusterID), 0)
+	// }
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0
-}
-
-
-/*
-Used to add a newline character to the end of each id entry in the cluster cache file.
-See usage in OST_ADD_ID_TO_CACHE_FILE()
-*/
-OST_NEWLINE_CHAR :: proc() {
-	cacheFile, openSuccess := os.open("./cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
-	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", #procedure)
-	}
-	newLineChar: string = "\n"
-	transStr := transmute([]u8)newLineChar
-	writter, writeSuccess := os.write(cacheFile, transStr)
-	if writeSuccess != 0 {
-		error2 := utils.new_err(
-			.CANNOT_WRITE_TO_FILE,
-			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Error writing newline character to cluster id cache file", #procedure)
-	}
-	os.close(cacheFile)
 }
 
 

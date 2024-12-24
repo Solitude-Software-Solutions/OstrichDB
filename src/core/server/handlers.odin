@@ -212,7 +212,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			}
 			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName)
 			if !cluExists {
-				id := data.OST_GENERATE_CLUSTER_ID()
+				id := data.OST_GENERATE_ID(true)
 				data.OST_CREATE_CLUSTER_FROM_CL(collectionName, clusterName, id)
 				return types.HttpStatus {
 					code = .OK,

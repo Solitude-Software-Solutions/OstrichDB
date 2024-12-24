@@ -61,39 +61,6 @@ show_check_warning :: proc() -> string {
 }
 
 
-//helper that looks for the passed in id in the cache file and
-// removes it. and closes the gap between the lines where the id was
-// used when deleting a user or a cluster
-remove_id_from_cache :: proc(id: i64) -> bool {
-	buf: [32]byte
-	idStr := strconv.append_int(buf[:], id, 10)
-
-
-	data, readSuccess := read_file(const.OST_CLUSTER_CACHE_PATH, #procedure)
-	defer delete(data)
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
-	newLines := make([dynamic]string, 0, len(lines))
-	defer delete(newLines)
-	for line in lines {
-		if !strings.contains(line, idStr) {
-			append(&newLines, line)
-		} else {
-			continue
-		}
-	}
-
-	new_content := strings.join(newLines[:], "\n")
-	writeSuccess := write_to_file(
-		const.OST_CLUSTER_CACHE_PATH,
-		transmute([]byte)new_content,
-		#procedure,
-	)
-
-	return writeSuccess
-}
-
 //used to help with error handling.
 get_line_number :: proc(line: int) -> string {
 	if line < 1 {

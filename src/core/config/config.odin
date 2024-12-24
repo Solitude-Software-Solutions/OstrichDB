@@ -16,7 +16,7 @@ import "core:strings"
 //=========================================================//
 main :: proc() {
 	data.OST_CREATE_COLLECTION("ostrich.config", 3)
-	id := data.OST_GENERATE_CLUSTER_ID()
+	id := data.OST_GENERATE_ID(true)
 	data.OST_CREATE_CLUSTER_BLOCK("ostrich.config.ost", id, const.CONFIG_CLUSTER)
 
 	appendSuccess := OST_APPEND_ALL_CONFIG_RECORDS()
