@@ -64,9 +64,9 @@ These actions perform simple tasks without needing additional arguments.
 
 - **`VERSION`**: Displays the current version of OstrichDB.
 - **`LOGOUT`**: Logs out the current user.
-- **`EXIT`**: Ends the session and closes the database.
+- **`EXIT`**: Ends the session and closes the DBMS.
 - **`RESTART`**: Restarts the program.
-- **`REBUILD`**: Rebuilds the database and restarts the program.
+- **`REBUILD`**: Rebuilds the DBMS and restarts the program.
 - **`HELP`**: Displays general help information or detailed help when chained with specific tokens.
 - **`TREE`**: Displays the entire data structure in a tree format.
 - **`CLEAR`**: Clears the console screen.
