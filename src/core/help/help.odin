@@ -37,6 +37,7 @@ validCommands := []string {
 	"PURGE",
 	"SIZE_OF",
 	"TYPE_OF",
+	"CHANGE_TYPE",
 	"DESTROY",
 	"ISOLATE", //formerly known as "QUARANTINE"
 }

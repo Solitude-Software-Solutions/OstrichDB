@@ -1495,7 +1495,63 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 		}
 		utils.log_runtime_event("Used TYPE_OF command", "")
-
+		break
+	case const.CHANGE_TYPE:
+		//only works on records
+		switch cmd.t_token {
+		case const.RECORD:
+			if len(cmd.o_token) == 3 && const.TO in cmd.m_token && cmd.isUsingDotNotation == true {
+				collection_name := cmd.o_token[0]
+				cluster_name := cmd.o_token[1]
+				record_name := cmd.o_token[2]
+				new_type := cmd.m_token[const.TO]
+				colPath := fmt.tprintf(
+					"%s%s%s",
+					const.OST_COLLECTION_PATH,
+					collection_name,
+					const.OST_FILE_EXTENSION,
+				)
+				old_type, _ := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
+				rd := data.OST_READ_RECORD_VALUE(colPath, cluster_name, old_type, record_name)
+				success := data.OST_CHANGE_RECORD_TYPE(
+					colPath,
+					cluster_name,
+					record_name,
+					rd,
+					new_type,
+				)
+				if success {
+					fmt.printfln(
+						"Successfully changed record %s.%s.%s's type to %s",
+						collection_name,
+						cluster_name,
+						record_name,
+						new_type,
+					)
+				} else {
+					fmt.printfln(
+						"Failed to change record %s.%s.%s's type to %s",
+						collection_name,
+						cluster_name,
+						record_name,
+						new_type,
+					)
+				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
+				)
+			}
+		case:
+			fmt.printfln(
+				"Invalid command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
+			)
+			utils.log_runtime_event(
+				"Invalid CHANGE_TYPE command",
+				"User did not provide a valid record name to change type.",
+			)
+			break
+		}
 	case const.ISOLATE:
 		utils.log_runtime_event("Used ISOLATE command", "")
 		switch cmd.t_token {

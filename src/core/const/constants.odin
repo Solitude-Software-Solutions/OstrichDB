@@ -56,6 +56,7 @@ SET :: "SET"
 PURGE :: "PURGE"
 SIZE_OF :: "SIZE_OF"
 TYPE_OF :: "TYPE_OF" //not the same as OF_TYPE. This is used as an action token to get the type of a record
+CHANGE_TYPE :: "CHANGE_TYPE"
 DESTROY :: "DESTROY"
 ISOLATE :: "ISOLATE"
 //Target Tokens
