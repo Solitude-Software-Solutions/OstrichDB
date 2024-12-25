@@ -12,9 +12,13 @@ OST_FFVF :: "ost_file_format_version.tmp"
 OST_TMP_PATH :: "./tmp/"
 OST_COLLECTION_PATH :: "./collections/"
 OST_SECURE_COLLECTION_PATH :: "./secure/"
-OST_CLUSTER_CACHE_PATH :: "./cluster_id_cache"
 OST_BACKUP_PATH :: "./backups/"
-OST_CONFIG_PATH :: "./ostrich.config"
+OST_CONFIG_FILE :: "ostrich.config.ost"
+OST_CONFIG_PATH :: "./ostrich.config.ost"
+CONFIG_CLUSTER :: "OSTRICH_CONFIGS"
+OST_ID_PATH :: "./ids.ost"
+CLUSTER_ID_CLUSTER :: "CLUSTER__IDS"
+USER_ID_CLUSTER :: "USER__IDS"
 OST_BIN_PATH :: "./"
 OST_FILE_EXTENSION :: ".ost"
 VERBOSE_HELP_FILE :: "../src/core/help/docs/verbose/verbose.md"
@@ -27,14 +31,17 @@ configOne :: "OST_ENGINE_INIT"
 configTwo :: "OST_ENGINE_LOGGING"
 configThree :: "OST_USER_LOGGED_IN"
 configFour :: "OST_HELP"
-
+configFive :: "OST_SERVER_MODE_ON"
+configSix :: "OST_ERROR_SUPPRESSION" //whether errors are printed to the console or not
 //ATOM TOKEN CONSTANTS
 VERSION :: "VERSION"
 HELP :: "HELP" //help can also be a multi token command.
+WHERE :: "WHERE"
 EXIT :: "EXIT"
 RESTART :: "RESTART"
 REBUILD :: "REBUILD"
 LOGOUT :: "LOGOUT"
+TEST :: "TEST"
 CLEAR :: "CLEAR"
 TREE :: "TREE"
 HISTORY :: "HISTORY"
@@ -46,10 +53,12 @@ RENAME :: "RENAME"
 FETCH :: "FETCH"
 COUNT :: "COUNT"
 SET :: "SET"
-FOCUS :: "FOCUS"
-UNFOCUS :: "UNFOCUS"
 PURGE :: "PURGE"
 SIZE_OF :: "SIZE_OF"
+TYPE_OF :: "TYPE_OF" //not the same as OF_TYPE. This is used as an action token to get the type of a record
+CHANGE_TYPE :: "CHANGE_TYPE"
+DESTROY :: "DESTROY"
+ISOLATE :: "ISOLATE"
 //Target Tokens
 COLLECTION :: "COLLECTION"
 CLUSTER :: "CLUSTER"
@@ -79,19 +88,79 @@ FLT :: "FLT"
 //------------
 BOOLEAN :: "BOOLEAN"
 BOOL :: "BOOL"
+//------------
+CHAR :: "CHAR"
+//------------
+//COMPLEX TYPES
+STRING_ARRAY :: "[]STRING"
+STR_ARRAY :: "[]STR"
+INTEGER_ARRAY :: "[]INTEGER"
+INT_ARRAY :: "[]INT"
+FLOAT_ARRAY :: "[]FLOAT"
+FLT_ARRAY :: "[]FLT"
+BOOLEAN_ARRAY :: "[]BOOLEAN"
+BOOL_ARRAY :: "[]BOOL"
+//These follow ISO 8601 format
+DATE :: "DATE" //YYYY-MM-DD
+TIME :: "TIME" //HH:MM:SS
+DATETIME :: "DATETIME" //YYYY-MM-DDTHH:MM:SS
 //SPECIAL HELP TOKENS
 ATOMS :: "ATOMS"
 ATOM :: "ATOM"
 //INPUT CONFIRMATION CONSTANTS
 YES :: "YES"
 NO :: "NO"
-
+CONFIRM :: "CONFIRM"
+CANCEL :: "CANCEL"
 //FOR DOT NOTATION
 DOT :: "."
 
+VALID_TYPES: []string : {
+	STRING,
+	INTEGER,
+	FLOAT,
+	BOOLEAN,
+	STR,
+	INT,
+	FLT,
+	BOOL,
+	CHAR,
+	STRING_ARRAY,
+	STR_ARRAY,
+	INTEGER_ARRAY,
+	INT_ARRAY,
+	FLOAT_ARRAY,
+	FLT_ARRAY,
+	BOOLEAN_ARRAY,
+	BOOL_ARRAY,
+	DATE,
+	TIME,
+	DATETIME,
+}
 //MISC CONSTANTS
 ost_carrot :: "OST>>>"
-VALID_RECORD_TYPES: []string : {STRING, INTEGER, FLOAT, BOOLEAN, STR, INT, FLT, BOOL}
+VALID_RECORD_TYPES: []string : {
+	STRING,
+	INTEGER,
+	FLOAT,
+	BOOLEAN,
+	STR,
+	INT,
+	FLT,
+	BOOL,
+	CHAR,
+	STRING_ARRAY,
+	STR_ARRAY,
+	INTEGER_ARRAY,
+	INT_ARRAY,
+	FLOAT_ARRAY,
+	FLT_ARRAY,
+	BOOLEAN_ARRAY,
+	BOOL_ARRAY,
+	DATE,
+	TIME,
+	DATETIME,
+}
 MAX_SESSION_TIME: time.Duration : 259200000000000000 //3 days in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print
 // MAX_SESSION_TIME: time.Duration : 60000000000 //1 minute in nano seconds only used for testing
@@ -113,3 +182,17 @@ BannedUserNames := []string {
 	"administrator",
 	"superuser",
 }
+
+//TEST CONSTANTS
+TEST_ID: i64 : 000000000000
+TEST_COLLECTION: string : "test_collection"
+TEST_CLUSTER: string : "test_cluster"
+TEST_RECORD: string : "test_record"
+TEST_NEW_COLLECTION :: "test_new_collection"
+TEST_NEW_CLUSTER: string : "test_new_cluster"
+TEST_NEW_RECORD: string : "test_new_record"
+TEST_BACKUP_COLLECTION: string : "test_collection_backup"
+
+TEST_USERNAME: string : "testing_foobar"
+TEST_PASSWORD: string : "@Foobar1"
+TEST_ROLE: string : "user"

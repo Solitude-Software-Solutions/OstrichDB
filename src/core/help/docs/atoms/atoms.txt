@@ -9,6 +9,8 @@
 |CLEAR      |Action         |Single           |Clears the screen of clutter                                        |
 |RESTART    |Action         |Single           |Restarts OstrichDB                                                  |
 |REBUILD    |Action         |Single           |Rebuilds and restarts OstrichDB                                     |
+|TEST       |Action         |Single           |Runs the test suite for OstrichDB                                 |
+|WHERE      |Action         |Multi            |Searches for a specific object within the DBMS                  |
 |NEW        |Action         |Multi            |Creates a new collection, cluster, record or user                   |
 |ERASE      |Action         |Multi            |Deletes a collection, cluster, or record                            |
 |RENAME     |Action         |Multi            |Renames a collection, cluster, or record                            |
@@ -18,9 +20,9 @@
 |COUNT      |Action         |Multi            |Counts the number of records in a collection or cluster            |
 |PURGE      |Action         |Multi            |Removed data from an object while mainting it's structure          |
 |SIZE_OF    |Action         |Multi            |Displays the size of a collection, cluster, or record in bytes     |
-|COLLECTION |Target         |                 |Specifies target is a collection. Plural if paired with COUNT       |
-|CLUSTER    |Target         |                 |Specifies target is a cluster. Plural if paired with COUNT          |
-|RECORD     |Target         |                 |Specifies target is a record. Plural if paired with COUNT           |
-|TO         |Modifier        |                 |Used with the RENAME action to specify the new name of the target  |
-|OF_TYPE    |Modifier        |                 |Used to specify the type of a record or the new name of and object  |
+|COLLECTION |Target         |                 |Specifies a database instance within the DBMS                       |
+|CLUSTER    |Target         |                 |Specifies a data organization unit within a DBMS collection         |
+|RECORD     |Target         |                 |Specifies a data storage unit within the DBMS                      |
+|TO         |Modifier       |                 |Used with RENAME to specify new name for DBMS objects              |
+|OF_TYPE    |Modifier       |                 |Specifies data type for DBMS records                              |
 |<Any Token> |Help Target   |                 |Paired with the HELP action to show information about the token     |

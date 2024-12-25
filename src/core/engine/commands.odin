@@ -1,9 +1,11 @@
 package engine
 
+import "../../tests"
 import "../../utils"
 import "../config"
 import "../const"
 import "../help"
+import "../server"
 import "../types"
 import "./data"
 import "./data/metadata"
@@ -19,83 +21,6 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-//used to concatenate an object name with an extension this will be used for updating collection file metadata from the command line
-OST_CONCAT_OBJECT_EXT :: proc(obj: string) -> string {
-	path := strings.concatenate([]string{const.OST_COLLECTION_PATH, obj})
-	return strings.concatenate([]string{path, const.OST_FILE_EXTENSION})
-}
-
-OST_GET_RECORD_SIZE :: proc(
-	collection_name: string,
-	cluster_name: string,
-	record_name: string,
-) -> (
-	size: int,
-	success: bool,
-) {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collection_name,
-		const.OST_FILE_EXTENSION,
-	)
-	data, read_success := os.read_entire_file(collection_path)
-	if !read_success {
-		return 0, false
-	}
-	defer delete(data)
-
-	content := string(data)
-	clusters := strings.split(content, "},")
-
-	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
-			lines := strings.split(cluster, "\n")
-			for line in lines {
-				if strings.has_prefix(line, record_name) {
-					parts := strings.split(line, ":")
-					if len(parts) >= 3 {
-						record_value := strings.trim_space(strings.join(parts[2:], ":"))
-						return len(record_value), true
-					}
-				}
-			}
-		}
-	}
-
-	return 0, false
-}
-
-OST_GET_CLUSTER_SIZE :: proc(
-	collection_name: string,
-	cluster_name: string,
-) -> (
-	size: int,
-	success: bool,
-) {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collection_name,
-		const.OST_FILE_EXTENSION,
-	)
-	data, read_success := os.read_entire_file(collection_path)
-	if !read_success {
-		return 0, false
-	}
-	defer delete(data)
-
-	content := string(data)
-	clusters := strings.split(content, "},")
-
-	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
-			return len(cluster), true
-		}
-	}
-
-	return 0, false
-}
 
 OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	incompleteCommandErr := utils.new_err(
@@ -109,6 +34,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		utils.get_err_msg(.INVALID_COMMAND),
 		#procedure,
 	)
+
+	//Semi global Server shit
+	ServerConfig := types.Server_Config {
+		port = 8082,
+	}
 	defer delete(cmd.o_token)
 
 
@@ -136,19 +66,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		OST_USER_LOGOUT(0)
 		return 0
 	case const.RESTART:
+		utils.log_runtime_event("Used RESTART command", "User requested to restart OstrichDB.")
 		OST_RESTART()
 	case const.REBUILD:
+		utils.log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
 		OST_REBUILD()
-	case const.UNFOCUS:
-		if types.focus.flag == false {
-			utils.log_runtime_event(
-				"Improperly used UNFOCUS command",
-				"User requested to unfocus while not in FOCUS mode.",
-			)
-			fmt.printfln("Cannot Unfocus becuase you are currently not in focus mode.")
-		}
-
-		break
+	case const.DESTROY:
+		utils.log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
+		OST_DESTROY()
+	case const.TEST:
+		utils.log_runtime_event("Used TEST command", "User requested to run tests.")
+		tests.main()
 	case const.CLEAR:
 		utils.log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")
@@ -198,7 +126,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		OST_EXECUTE_COMMAND(&cmd)
 		break
 	//HISTORY CLUSTER FUCK END :)
-
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
 	case const.HELP:
 		utils.log_runtime_event("Used HELP command", "User requested help information.")
@@ -220,6 +147,30 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
+	//WHERE: Used to search for a specific object within the DBMS
+	case const.WHERE:
+		utils.log_runtime_event(
+			"Used WHERE command",
+			"User requested to search for a specific object.",
+		)
+		switch (cmd.t_token) {
+		case const.CLUSTER, const.RECORD:
+			data.OST_WHERE_OBJECT(cmd.t_token, cmd.o_token[0])
+		case:
+			break
+		}
+		if len(cmd.o_token) == 0 {
+			data.OST_WHERE_ANY(cmd.t_token)
+		} else {
+			fmt.println(
+				"Incomplete command. Correct Usage: WHERE <target> <target_name> or WHERE <target_name>",
+			)
+			utils.log_runtime_event(
+				"Incomplete WHERE command",
+				"User did not provide a target name to search for.",
+			)
+		}
+		break
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
 	case const.BACKUP:
 		utils.log_runtime_event("Used BACKUP command", "User requested to backup data.")
@@ -345,14 +296,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collection_name,
 					utils.RESET,
 				)
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name) todo this is pretty bugged - SchoolyB
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
 
-				id := data.OST_GENERATE_CLUSTER_ID()
+				id := data.OST_GENERATE_ID(true)
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
 				switch (result) 
 				{
@@ -380,7 +331,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					utils.log_err("Failed to create new cluster.", #procedure)
 					break
 				}
-				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				fn := utils.concat_collection_name(collection_name)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
@@ -466,7 +417,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							rType,
 							utils.RESET,
 						)
-						fn := OST_CONCAT_OBJECT_EXT(collection_name)
+						fn := utils.concat_collection_name(collection_name)
 						metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 						metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
@@ -621,7 +572,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
-					fn := OST_CONCAT_OBJECT_EXT(collection_name)
+					fn := utils.concat_collection_name(collection_name)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 				} else {
@@ -758,7 +709,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
-					data.OST_REMOVE_ID_FROM_CACHE(clusterID)
+					// utils.remove_id_from_cache(clusterID)
 				} else {
 					fmt.printfln(
 						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
@@ -770,7 +721,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						utils.RESET,
 					)
 				}
-				fn := OST_CONCAT_OBJECT_EXT(collection_name)
+				fn := utils.concat_collection_name(collection_name)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
@@ -814,7 +765,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
-					data.OST_REMOVE_ID_FROM_CACHE(clusterID)
 				} else {
 					fmt.printfln(
 						"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
@@ -829,6 +779,57 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						utils.RESET,
 					)
 				}
+			}
+			break
+		case const.USER:
+			secColPath := fmt.tprintf(
+				"%ssecure_%s%s",
+				const.OST_SECURE_COLLECTION_PATH,
+				types.current_user.username.Value,
+				const.OST_FILE_EXTENSION,
+			)
+			result: bool
+			if len(cmd.o_token) == 1 {
+				//evaluate current logged in users role
+				if data.OST_READ_RECORD_VALUE(
+					   secColPath,
+					   types.current_user.username.Value,
+					   "identifier",
+					   "role",
+				   ) ==
+				   "admin" {
+					result := security.OST_DELETE_USER(cmd.o_token[0])
+					if result {
+						fmt.printfln(
+							"User: %s%s%s successfully deleted.",
+							utils.BOLD_UNDERLINE,
+							cmd.o_token[0],
+							utils.RESET,
+						)
+					} else {
+						fmt.printfln(
+							"Failed to delete user: %s%s%s",
+							utils.BOLD_UNDERLINE,
+							cmd.o_token[0],
+							utils.RESET,
+						)
+					}
+				} else {
+					fmt.printfln(
+						"User: %s%s%s does not have permission to delete users.",
+						utils.BOLD_UNDERLINE,
+						types.current_user.username.Value,
+						utils.RESET,
+					)
+					result = false
+				}
+				if result == true {
+					return 0
+				} else {
+					return -1
+				}
+			} else {
+				fmt.printfln("Incomplete command. Correct Usage: ERASE USER <username>")
 			}
 			break
 		case:
@@ -865,13 +866,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.o_token) >= 2 && cmd.isUsingDotNotation == true {
 				collection := cmd.o_token[0]
 				cluster := cmd.o_token[1]
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
-
 				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
 				fmt.printfln(clusterContent)
 			} else {
@@ -940,8 +934,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch cmd.t_token 
 		{
 		case const.RECORD:
-			if len(cmd.o_token) == 1 && const.TO in cmd.m_token {
-				record := cmd.o_token[0]
+			if len(cmd.o_token) == 3 && const.TO in cmd.m_token && cmd.isUsingDotNotation {
+				collectionName := cmd.o_token[0]
+				clusterName := cmd.o_token[1]
+				recordName := cmd.o_token[2]
 				value: string
 				for key, val in cmd.m_token {
 					value = val
@@ -949,14 +945,25 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
 					utils.BOLD_UNDERLINE,
-					record,
+					recordName,
 					utils.RESET,
 					utils.BOLD_UNDERLINE,
 					value,
 					utils.RESET,
 				)
-				col, ok := data.OST_SET_RECORD_VALUE(record, value)
-				fn := OST_CONCAT_OBJECT_EXT(col)
+				file := fmt.tprintf(
+					"%s%s%s",
+					const.OST_COLLECTION_PATH,
+					collectionName,
+					const.OST_FILE_EXTENSION,
+				)
+				ok := data.OST_SET_RECORD_VALUE(
+					file,
+					clusterName,
+					recordName,
+					strings.clone(value),
+				)
+				fn := utils.concat_collection_name(collectionName)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
@@ -970,28 +977,83 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				for key, val in cmd.m_token {
 					value = val
 				}
-				fmt.printfln(
-					"Setting config: %s%s%s to %s%s%s",
-					utils.BOLD_UNDERLINE,
-					configName,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					value,
-					utils.RESET,
-				)
 				switch (configName) 
 				{
 				case "HELP":
-					success := config.OST_TOGGLE_CONFIG(const.configFour)
+					if value != "VERBOSE" || value != "SIMPLE" {
+						fmt.println(
+							"Invalid value. Valid values for config help are: 'verbose' or 'simple'",
+						)
+						return 1
+					}
+
+					fmt.printfln(
+						"Setting config: %s%s%s to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						configName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						value,
+						utils.RESET,
+					)
+					success := config.OST_UPDATE_CONFIG_VALUE(
+						const.configFour,
+						utils.append_qoutations(value),
+					)
 					if success == false {
-						fmt.printfln("Failed to toggle HELP config")
+						fmt.printfln("Failed to set HELP config to %s", value)
 					} else {
-						fmt.printfln("Successfully toggled HELP config")
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+						fmt.printfln("Successfully set HELP config to %s", value)
 					}
 					help.OST_SET_HELP_MODE()
+				case "SERVER":
+					if value != "TRUE" || value != "FALSE" {
+						fmt.println(
+							"Invalid value. Valid values for config server are: 'true' or 'false'",
+						)
+						return 1
+					}
+
+					fmt.printfln(
+						"Setting config: %s%s%s to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						configName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						value,
+						utils.RESET,
+					)
+
+
+					success := config.OST_UPDATE_CONFIG_VALUE(const.configFive, value)
+					if success == false {
+						fmt.printfln("Failed to set SERVER config to %s", value)
+					} else {
+						fmt.printfln("Successfully set SERVER config to %s", value)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+						if data.OST_READ_RECORD_VALUE(
+							   const.OST_CONFIG_FILE,
+							   const.CONFIG_CLUSTER,
+							   const.BOOLEAN,
+							   const.configFive,
+						   ) ==
+						   "true" {
+							fmt.printfln("Server Mode is now ON")
+							server.OST_START_SERVER(ServerConfig)
+						} else {
+							fmt.printfln("Server is now OFF")
+						}
+					}
 				case:
 					fmt.printfln("Invalid config name. Valid config names are: 'HELP'")
 				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
+				)
 			}
 			break
 		case:
@@ -1022,7 +1084,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case const.CLUSTERS:
-			fmt.println("cmd,o_tokens: ", cmd.o_token)
 			if len(cmd.o_token) == 1 {
 				collection_name := cmd.o_token[0]
 				result := data.OST_COUNT_CLUSTERS(collection_name)
@@ -1329,7 +1390,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if cmd.isUsingDotNotation {
 					collection_name := cmd.o_token[0]
 					cluster_name := cmd.o_token[1]
-					size, success := OST_GET_CLUSTER_SIZE(collection_name, cluster_name)
+					size, success := data.OST_GET_CLUSTER_SIZE(collection_name, cluster_name)
 					if success {
 						fmt.printf(
 							"Size of cluster %s.%s: %d bytes\n",
@@ -1354,7 +1415,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collection_name := cmd.o_token[0]
 					cluster_name := cmd.o_token[1]
 					record_name := cmd.o_token[2]
-					size, success := OST_GET_RECORD_SIZE(
+					size, success := data.OST_GET_RECORD_SIZE(
 						collection_name,
 						cluster_name,
 						record_name,
@@ -1389,149 +1450,165 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.println("Incomplete SIZE_OF command. Please specify what to get the size of.")
 		}
 		break
-	// FOCUS: Enter at own peril.
-	case const.FOCUS:
-		fmt.printfln(
-			"%s%sThe FOCUS command is disabled in this version of OstrichDB.%s",
-			utils.BOLD_UNDERLINE,
-			utils.RED,
-			utils.RESET,
-		)
-		utils.log_runtime_event("Used FOCUS command", "")
+	case const.TYPE_OF:
+		//only works on records
+		if len(cmd.o_token) == 3 && cmd.isUsingDotNotation == true {
+			collection_name := cmd.o_token[0]
+			cluster_name := cmd.o_token[1]
+			record_name := cmd.o_token[2]
+			colPath := fmt.tprintf(
+				"%s%s%s",
+				const.OST_COLLECTION_PATH,
+				collection_name,
+				const.OST_FILE_EXTENSION,
+			)
+			rType, success := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
+			if !success {
+				fmt.printfln(
+					"Failed to get record %s.%s.%s's type",
+					collection_name,
+					cluster_name,
+					record_name,
+				)
+				return 1
+			} else {
+				fmt.printfln(
+					"Record: %s%s%s->%s%s%s->%s%s%s Type: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					cluster_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					record_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					rType,
+					utils.RESET,
+				)
+			}
+		} else {
+			fmt.printfln(
+				"Incomplete command. Correct Usage: TYPE_OF RECORD <collection_name>.<cluster_name>.<record_name>",
+			)
+
+		}
+		utils.log_runtime_event("Used TYPE_OF command", "")
 		break
-	// switch (cmd.t_token) {
-	// case const.COLLECTION:
-	// 	if len(cmd.o_token) > 0 {
-	// 		collection := cmd.o_token[0]
-	// 		exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collection, 0)
-	// 		if exists {
-	// 			types.focus.flag = true
-	// 			//collection have no parent nor gparent
-	// 			OST_FOCUS(const.COLLECTION, collection)
-	// 			fmt.printfln(
-	// 				"Focused on collection: %s%s%s",
-	// 				utils.BOLD_UNDERLINE,
-	// 				collection,
-	// 				utils.RESET,
-	// 			)
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Collection: %s%s%s not found in OstrichDB.",
-	// 				utils.BOLD_UNDERLINE,
-	// 				collection,
-	// 				utils.RESET,
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Invalid FOCUS command",
-	// 				"User tried to focus on a collection that does not exist.",
-	// 			)
-	// 		}
-	// 	} else {
-	// 		fmt.println(
-	// 			"Incomplete command. Correct Usage: FOCUS COLLECTION <collection_name>",
-	// 		)
-	// 		utils.log_runtime_event(
-	// 			"Incomplete FOCUS command",
-	// 			"User did not provide a valid collection name to focus.",
-	// 		)
-	// 	}
-	// 	break
+	case const.CHANGE_TYPE:
+		//only works on records
+		switch cmd.t_token {
+		case const.RECORD:
+			if len(cmd.o_token) == 3 && const.TO in cmd.m_token && cmd.isUsingDotNotation == true {
+				collection_name := cmd.o_token[0]
+				cluster_name := cmd.o_token[1]
+				record_name := cmd.o_token[2]
+				new_type := cmd.m_token[const.TO]
+				colPath := fmt.tprintf(
+					"%s%s%s",
+					const.OST_COLLECTION_PATH,
+					collection_name,
+					const.OST_FILE_EXTENSION,
+				)
 
-	// case const.CLUSTER:
-	// 	if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true {
-	// 		collection := cmd.o_token[0]
-	// 		cluster := cmd.o_token[1]
-	// 		fullCollectionPath := fmt.tprintf(
-	// 			"%s%s%s",
-	// 			const.OST_COLLECTION_PATH,
-	// 			collection,
-	// 			const.OST_FILE_EXTENSION,
-	// 		)
+				type_is_valid := false
+				for type in const.VALID_TYPES {
+					if strings.to_upper(new_type) == type {
+						type_is_valid = true
+						break
+					}
+				}
 
-	// 		checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
-	// 		if checks == -1 {
-	// 			return -1
-	// 		}
+				if !type_is_valid {
+					fmt.printfln("Invalid type")
+					return 1
+				}
+				//super fucking bad code but tbh its christmas eve and im tired - Marshall
+				if new_type == const.INT {
+					new_type = const.INTEGER
+				} else if new_type == const.STR {
+					new_type = const.STRING
+				} else if new_type == const.BOOL {
+					new_type = const.BOOLEAN
+				} else if new_type == const.FLT {
+					new_type = const.FLOAT
+				}
 
-	// 		exists := data.OST_CHECK_IF_CLUSTER_EXISTS(fullCollectionPath, cluster)
-	// 		if exists {
-	// 			types.focus.flag = true
-	// 			//clusters have no gparent
-	// 			OST_FOCUS(const.CLUSTER, cluster, collection)
-	// 			fmt.printfln(
-	// 				"Focused on cluster: %s%s%s in collection: %s%s%s",
-	// 				utils.BOLD_UNDERLINE,
-	// 				cluster,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				collection,
-	// 				utils.RESET,
-	// 			)
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Cluster: %s%s%s does not exist within collection: %s%s%s.",
-	// 				utils.BOLD,
-	// 				cluster,
-	// 				utils.RESET,
-	// 				utils.BOLD,
-	// 				collection,
-	// 				utils.RESET,
-	// 			)
-	// 		}
-	// 	} else {
-	// 		fmt.println(
-	// 			"Incomplete command. Correct Usage: FOCUS CLUSTER <collection_name>.<cluster_name>",
-	// 		)
-	// 		utils.log_runtime_event(
-	// 			"Incomplete FOCUS command",
-	// 			"User did not provide a valid cluster name to focus.",
-	// 		)
-	// 	}
-	// 	break
-
-	// case const.RECORD:
-	// 	if len(cmd.o_token) == 3 && cmd.isUsingDotNotation {
-	// 		collection := cmd.o_token[0]
-	// 		cluster := cmd.o_token[1]
-	// 		record := cmd.o_token[2]
-
-	// 		checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection)
-	// 		if checks == -1 {
-	// 			return -1
-	// 		}
-	// 		OST_FOCUS(const.RECORD, record, cluster, collection)
-	// 		types.focus.flag = true
-	// 		fmt.printfln(
-	// 			"Focused on record: %s%s%s in cluster: %s%s%s within collection: %s%s%s",
-	// 			utils.BOLD_UNDERLINE,
-	// 			record,
-	// 			utils.RESET,
-	// 			utils.BOLD_UNDERLINE,
-	// 			cluster,
-	// 			utils.RESET,
-	// 			utils.BOLD_UNDERLINE,
-	// 			collection,
-	// 			utils.RESET,
-	// 		)
-	// 	} else {
-	// 		fmt.println(
-	// 			"Incomplete command. Correct Usage: FOCUS RECORD <collection_name>.<cluster_name>.<record_name>",
-	// 		)
-	// 		utils.log_runtime_event(
-	// 			"Incomplete FOCUS command",
-	// 			"User did not provide a valid record name to focus.",
-	// 		)
-	// 	}
-	// 	break
-
-	// case:
-	// 	fmt.println("Invalid command structure. Correct Usage: FOCUS <target> <target_name>")
-	// 	utils.log_runtime_event(
-	// 		"Invalid FOCUS command",
-	// 		"User did not provide a valid target.",
-	// 	)
-	// 	break
-	// }
+				old_type, _ := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
+				rd := data.OST_READ_RECORD_VALUE(colPath, cluster_name, old_type, record_name)
+				success := data.OST_CHANGE_RECORD_TYPE(
+					colPath,
+					cluster_name,
+					record_name,
+					rd,
+					new_type,
+				)
+				if success {
+					fmt.printfln(
+						"Successfully changed record %s.%s.%s's type to %s",
+						collection_name,
+						cluster_name,
+						record_name,
+						new_type,
+					)
+				} else {
+					fmt.printfln(
+						"Failed to change record %s.%s.%s's type to %s",
+						collection_name,
+						cluster_name,
+						record_name,
+						new_type,
+					)
+				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
+				)
+			}
+		case:
+			fmt.printfln(
+				"Invalid command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
+			)
+			utils.log_runtime_event(
+				"Invalid CHANGE_TYPE command",
+				"User did not provide a valid record name to change type.",
+			)
+			break
+		}
+	case const.ISOLATE:
+		utils.log_runtime_event("Used ISOLATE command", "")
+		switch cmd.t_token {
+		case const.COLLECTION:
+			if len(cmd.o_token) == 1 {
+				collection_name := cmd.o_token[0]
+				result := data.OST_PERFORM_ISOLATION(collection_name)
+				switch result {
+				case 0:
+					fmt.printfln(
+						"Successfully isolated collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case:
+					fmt.printfln(
+						"Failed to isolate collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: ISOLATE COLLECTION <collection_name>",
+				)
+			}
+			break
+		}
+		break
 	//END OF ACTION TOKEN EVALUATION
 	case:
 		fmt.printfln(
@@ -1544,306 +1621,4 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 	}
 	return 1
-}
-// =======================<FOCUS MODE COMMAND LINE>=======================//
-// =======================<FOCUS MODE COMMAND LINE>=======================//
-// =======================<FOCUS MODE COMMAND LINE>=======================//
-// =======================<FOCUS MODE COMMAND LINE>=======================//
-EXECUTE_COMMANDS_WHILE_FOCUSED :: proc(
-	cmd: ^types.Command,
-	focusTarget, focusObject: string,
-	focusParentObject: ..string,
-) -> int {
-	utils.log_runtime_event("Entered FOCUS mode", "User has successfully entered FOCUS mode")
-	defer delete(cmd.o_token)
-
-	switch (cmd.a_token) 
-	{
-	//=======================<SINGLE-TOKEN COMMANDS>=======================//
-	case const.EXIT:
-		os.exit(0)
-	case const.LOGOUT:
-		fmt.printf("Cannot %s while in FOCUS mode. Use UNFOCUS first.\n", cmd.a_token)
-		break
-	case const.UNFOCUS:
-		types.focus.flag = false
-		utils.log_runtime_event("Used UNFOCUS command", "User has successfully exited FOCUS mode")
-		return 0
-	case const.CLEAR:
-		utils.log_runtime_event("Used CLEAR command while in FOCUS mode", "")
-		libc.system("clear")
-		break
-	case const.TREE:
-		utils.log_runtime_event("Used TREE command while in FOCUS mode", "")
-		data.OST_GET_DATABASE_TREE()
-		break
-	case const.REBUILD:
-		utils.log_runtime_event("Used REBUILD command while in FOCUS mode", "")
-		OST_REBUILD()
-		break
-
-	// mulit token commands in focus mods command line works a bit differently
-	// instead of first evaluating the target token we evaluate the current focus target. trust me this
-	// will spare me and you from looking at even more shitty nesting
-	//=======================<MULTI-TOKEN COMMANDS>=======================//
-	case const.NEW:
-		switch (focusTarget) {
-		case const.COLLECTION:
-			switch (cmd.t_token) { 	//evauluating if the user wants to create a new collection, cluster or record while focused on a collection
-			case const.COLLECTION:
-				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
-				break
-			case const.CLUSTER:
-				if len(cmd.o_token) == 1 {
-					cluster_name := cmd.o_token[0]
-					collection_name := focusObject
-					id := data.OST_GENERATE_CLUSTER_ID()
-					result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
-					switch (result) 
-					{
-					case 0:
-						fmt.printfln(
-							"Successfully created new cluster: %s%s%s within collection %s%s%s",
-							utils.BOLD_UNDERLINE,
-							cluster_name,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
-							collection_name,
-							utils.RESET,
-						)
-						break
-					case -1:
-						fmt.printfln(
-							"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
-							utils.BOLD_UNDERLINE,
-							cluster_name,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
-							collection_name,
-							utils.RESET,
-						)
-						break
-					case 1, 2, 3:
-						error1 := utils.new_err(
-							.CANNOT_CREATE_CLUSTER,
-							utils.get_err_msg(.CANNOT_CREATE_CLUSTER),
-							#procedure,
-						)
-						utils.throw_custom_err(
-							error1,
-							"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
-						)
-						utils.log_err("Failed to create new cluster.", #procedure)
-						break
-					}
-					fn := OST_CONCAT_OBJECT_EXT(collection_name)
-					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-
-				} else {
-					fmt.println("Incomplete command. Correct Usage: NEW CLUSTER <cluster_name>")
-				}
-				break
-			case const.RECORD:
-				if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true {
-					collection_name := focusObject
-					cluster_name := cmd.o_token[0]
-					record_type := cmd.m_token[const.OF_TYPE]
-
-					rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.o_token[1])
-					rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.m_token[const.OF_TYPE])
-
-					if nameSuccess == 0 && typeSuccess == 0 {
-						fmt.printfln(
-							"Creating record: %s%s%s of type: %s%s%s",
-							utils.BOLD_UNDERLINE,
-							rName,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
-							rType,
-							utils.RESET,
-						)
-						//All hail the re-engineered parser - Marshall Burns aka @SchoolyB
-						filePath := fmt.tprintf(
-							"%s%s%s",
-							const.OST_COLLECTION_PATH,
-							collection_name,
-							const.OST_FILE_EXTENSION,
-						)
-						appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
-							filePath,
-							cluster_name,
-							rName,
-							"",
-							rType,
-						)
-						if appendSuccess == 0 {
-							break
-						}
-					}
-				}
-				break
-			} //END OF NEW WHILE FOCUSED ON COLLECTION
-			break
-		case const.CLUSTER:
-			// START OF NEW WHILE FOCUSED ON CLUSTER
-			switch (cmd.t_token) {
-			case const.COLLECTION:
-				fmt.println("Cannot create a collection while in FOCUS mode. Use UNFOCUS first.")
-				break
-			case const.CLUSTER:
-				fmt.println("Cannot create a cluster while in FOCUS mode. Use UNFOCUS first.")
-				break
-			case const.RECORD:
-				collection_name, cluster_name, record_name, record_type: string
-				//manipulating the record "layer" while in focused on a cluster allows for the use of dot notation or not.
-				if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true { 	//if using dot notation
-					collection_name = focusParentObject[0]
-					cluster_name = cmd.o_token[0] //could also just use `focusObject` but fuck it we ball
-					record_name = cmd.o_token[1]
-					record_type = cmd.m_token[const.OF_TYPE]
-
-					rName, nameSuccess := data.OST_SET_RECORD_NAME(record_name)
-					rType, typeSuccess := data.OST_SET_RECORD_TYPE(record_type)
-					if nameSuccess == 0 && typeSuccess == 0 {
-						fmt.printfln(
-							"Creating record: %s%s%s of type: %s%s%s",
-							utils.BOLD_UNDERLINE,
-							rName,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
-							rType,
-							utils.RESET,
-						)
-					} else {
-						fmt.println("ERROR CREATING NEW RECORD")
-					}
-				} else {
-					//non dot notation
-					collection_name = focusParentObject[0]
-					cluster_name = focusObject
-					record_name = cmd.o_token[0]
-					record_type = cmd.m_token[const.OF_TYPE]
-
-					rName, nameSuccess := data.OST_SET_RECORD_NAME(record_name)
-					rType, typeSuccess := data.OST_SET_RECORD_TYPE(record_type)
-					if nameSuccess == 0 && typeSuccess == 0 {
-						fmt.printfln(
-							"Creating record: %s%s%s of type: %s%s%s",
-							utils.BOLD_UNDERLINE,
-							rName,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
-							rType,
-							utils.RESET,
-						)
-					}
-				}
-			}
-			break
-		case const.RECORD:
-			// START OF NEW WHILE FOCUSED ON RECORD
-			switch (cmd.t_token) {
-			case const.COLLECTION, const.CLUSTER, const.RECORD:
-				fmt.println(
-					"Cannot create a new data object while in FOCUS mode. Use UNFOCUS first.",
-				)
-				break
-			}
-			break
-		}
-		break //END OF NEW COMMAND
-	case const.RENAME:
-		//START OF RENAME COMMAND
-		switch (focusTarget) 
-		{
-		// RENAME IF FOCUSED ON A COLLECTION
-		case const.COLLECTION:
-			old_name, collection_name: string
-			//if the user is focused on a collection
-			switch (cmd.t_token) 
-			{
-			case const.COLLECTION:
-				//if focused on a collection and tries to rename a collection cant do it ;)
-				fmt.println("Cannot rename a collection while in FOCUS mode. Use UNFOCUS first.")
-				break
-			case const.CLUSTER:
-				if len(cmd.o_token) == 2 && cmd.isUsingDotNotation == true ||
-				   len(cmd.o_token) == 1 { 	//this handles both dot notation and non dot notation
-					switch (len(cmd.o_token)) 
-					{
-					case 1:
-						collection_name = focusObject
-						old_name = cmd.o_token[0]
-						break
-					case 2:
-						collection_name = cmd.o_token[0]
-						old_name = cmd.o_token[1]
-					}
-
-					new_name := cmd.m_token[const.TO]
-					result := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
-					if (result == true) {
-						fmt.printfln(
-							"Renamed cluster %s%s%s to %s%s%s",
-							utils.BOLD_UNDERLINE,
-							old_name,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
-							new_name,
-							utils.RESET,
-						)
-					} else {
-						fmt.println("ERROR RENAMING CLUSTER")
-					}
-				}
-				break
-			case const.RECORD:
-				//if focused on a collection and tries to rename a record
-				if len(cmd.o_token) == 3 && cmd.isUsingDotNotation == true { 	//if using dot notation
-					collection_name := cmd.o_token[0]
-					cluster_name := cmd.o_token[1]
-					old_name := cmd.o_token[2]
-					new_name := cmd.m_token[const.TO]
-
-					result := data.OST_RENAME_RECORD(
-						old_name,
-						new_name,
-						true,
-						collection_name,
-						cluster_name,
-					)
-
-					switch (result) 
-					{
-					case 0:
-						fmt.printfln(
-							"Renamed record %s%s%s to %s%s%s",
-							utils.BOLD_UNDERLINE,
-							old_name,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
-							new_name,
-							utils.RESET,
-						)
-						break
-					case:
-						fmt.println("ERROR RENAMING RECORD")
-						break
-					}
-
-				} else {
-					fmt.println(
-						"While focused on a collection you mus use dot notation to rename a record.",
-					)
-				}
-				break
-			}
-		}
-		break
-	//END OF RENAME COMMAND
-	//END OF ALL ACTION EVALUATION
-	}
-	return 1
-	//END OF PROCEDURE
 }

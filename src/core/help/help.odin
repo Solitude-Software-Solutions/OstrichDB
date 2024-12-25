@@ -3,6 +3,7 @@ package help
 import "../../utils"
 import "../config"
 import "../const"
+import "../engine/data"
 import "../types"
 import "core:fmt"
 import "core:os"
@@ -23,8 +24,6 @@ validCommands := []string {
 	"VERSION",
 	"CLEAR",
 	"BACKUP",
-	"FOCUS",
-	"UNFOCUS",
 	"COLLECTION",
 	"CLUSTER",
 	"RECORD",
@@ -33,18 +32,31 @@ validCommands := []string {
 	"RENAME",
 	"FETCH",
 	"TO",
+	"COUNT",
+	"SET",
+	"PURGE",
+	"SIZE_OF",
+	"TYPE_OF",
+	"CHANGE_TYPE",
+	"DESTROY",
+	"ISOLATE", //formerly known as "QUARANTINE"
 }
 //called when user only enters the "HELP" command without any arguments
 // will take in the value from the config file. if verbose is true then show data from verbose help file, and vice versa
 OST_SET_HELP_MODE :: proc() -> bool {
-	value := config.OST_READ_CONFIG_VALUE(const.configFour)
-	//do stuff
+	value := data.OST_READ_RECORD_VALUE(
+		const.OST_CONFIG_PATH,
+		const.CONFIG_CLUSTER,
+		const.STRING,
+		const.configFour,
+	)
+
 	switch (value) 
 	{
-	case "verbose":
+	case "VERBOSE":
 		types.help_mode.verbose = true
 		break
-	case "simple":
+	case "SIMPLE":
 		types.help_mode.verbose = false
 		break
 	case:

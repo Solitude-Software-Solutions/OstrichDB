@@ -42,16 +42,22 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		fmt.printfln("Username cannot be empty. Please try again.")
 		return false
 	}
+	usernameCapitalized := strings.to_upper(userName)
 
-	found, userSecCollection := data.OST_FIND_SEC_COLLECTION(userName)
+	found, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
 		const.OST_SECURE_COLLECTION_PATH,
 		userName,
 		const.OST_FILE_EXTENSION,
 	)
-	userNameFound := data.OST_READ_RECORD_VALUE(secColPath, userName, "identifier", "user_name")
-	userRole := data.OST_READ_RECORD_VALUE(secColPath, userName, "identifier", "role")
+	userNameFound := data.OST_READ_RECORD_VALUE(
+		secColPath,
+		usernameCapitalized,
+		"identifier",
+		"user_name",
+	)
+	userRole := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "role")
 	if userRole == "admin" {
 		types.user.role.Value = "admin"
 	} else if userRole == "user" {
@@ -60,7 +66,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.user.role.Value = "guest"
 	}
 
-	if (userNameFound != userName) {
+	if (userNameFound != usernameCapitalized) {
 		error2 := utils.new_err(
 			.ENTERED_USERNAME_NOT_FOUND,
 			utils.get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
@@ -74,18 +80,30 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		return false
 	}
 
+	types.user.username.Value = strings.clone(usernameCapitalized)
+
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
-	salt := data.OST_READ_RECORD_VALUE(secColPath, userName, "identifier", "salt")
+	salt := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "salt")
 
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.OST_READ_RECORD_VALUE(secColPath, userName, "identifier", "hash")
+	providedHash := data.OST_READ_RECORD_VALUE(
+		secColPath,
+		usernameCapitalized,
+		"identifier",
+		"hash",
+	)
 	pHashAsBytes := transmute([]u8)providedHash
 
 
 	preMesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
 	//PRE-MESHING END=========================================================================================================
-	algoMethod := data.OST_READ_RECORD_VALUE(secColPath, userName, "identifier", "store_method")
+	algoMethod := data.OST_READ_RECORD_VALUE(
+		secColPath,
+		usernameCapitalized,
+		"identifier",
+		"store_method",
+	)
 	//POST-MESHING START=======================================================================================================
 
 	//get the password input from the user
@@ -127,9 +145,16 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		fmt.printfln("Welcome, %s!\n", userNameFound)
 		types.USER_SIGNIN_STATUS = true
 		types.current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
-		userLoggedInValue := config.OST_READ_CONFIG_VALUE(const.configThree)
+		types.current_user.role.Value = strings.clone(userRole)
+		userLoggedInValue := data.OST_READ_RECORD_VALUE(
+			const.OST_CONFIG_FILE,
+			const.CONFIG_CLUSTER,
+			const.CONFIG,
+			const.configThree,
+		)
 		if userLoggedInValue == "false" {
-			config.OST_TOGGLE_CONFIG(const.configThree)
+			// config.OST_TOGGLE_CONFIG(const.configThree)
+			config.OST_UPDATE_CONFIG_VALUE(const.configThree, "true")
 		}
 		break
 	case false:
@@ -161,7 +186,8 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 }
 
 OST_USER_LOGOUT :: proc(param: int) {
-	loggedOut := config.OST_TOGGLE_CONFIG(const.configThree)
+
+	loggedOut := config.OST_UPDATE_CONFIG_VALUE(const.configThree, "false")
 
 	switch loggedOut {
 	case true:
@@ -186,4 +212,60 @@ OST_USER_LOGOUT :: proc(param: int) {
 		fmt.printfln("You have NOT been logged out.")
 		break
 	}
+}
+
+//shorter version of sign in but exclusively for checking passwords for certain db actions
+OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
+	succesfulValidation := false
+
+
+	secColPath := fmt.tprintf(
+		"%ssecure_%s%s",
+		const.OST_SECURE_COLLECTION_PATH,
+		types.user.username.Value,
+		const.OST_FILE_EXTENSION,
+	)
+
+	//PRE-MESHING START
+	salt := data.OST_READ_RECORD_VALUE(secColPath, types.user.username.Value, "identifier", "salt")
+	//get the value of the hash that is currently stored in the cluster that contains the entered username
+	providedHash := data.OST_READ_RECORD_VALUE(
+		secColPath,
+		types.user.username.Value,
+		"identifier",
+		"hash",
+	)
+	pHashAsBytes := transmute([]u8)providedHash
+	premesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
+	//PRE-MESHING END
+
+
+	algoMethod := data.OST_READ_RECORD_VALUE(
+		secColPath,
+		types.user.username.Value,
+		"identifier",
+		"store_method",
+	)
+
+	//POST-MESHING START
+	//convert the return algo method string to an int
+	algoAsInt := strconv.atoi(algoMethod)
+
+	//using the hasing algo from the cluster that contains the entered username, hash the entered password
+	newHash := security.OST_HASH_PASSWORD(string(input), algoAsInt, true, false)
+	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
+	postmesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
+	//POST-MESHING END
+
+	authPassed := OST_CROSS_CHECK_MESH(premesh, postmesh)
+	switch authPassed {
+	case true:
+		succesfulValidation = true
+
+	case false:
+		succesfulValidation = false
+		break
+	}
+	return succesfulValidation
+
 }

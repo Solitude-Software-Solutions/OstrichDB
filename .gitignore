@@ -7,3 +7,9 @@ ols.json
 .out
 .vscode
 .DS_Store
+
+# Uncomment these two when actually implementing zig
+#.zig-cache/
+#zig-out/
+# Remove this one when actually implementing zig
+/zig
