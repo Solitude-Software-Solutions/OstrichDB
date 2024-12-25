@@ -1511,6 +1511,30 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collection_name,
 					const.OST_FILE_EXTENSION,
 				)
+
+				type_is_valid := false
+				for type in const.VALID_TYPES {
+					if strings.to_upper(new_type) == type {
+						type_is_valid = true
+						break
+					}
+				}
+
+				if !type_is_valid {
+					fmt.printfln("Invalid type")
+					return 1
+				}
+				//super fucking bad code but tbh its christmas eve and im tired - Marshall
+				if new_type == const.INT {
+					new_type = const.INTEGER
+				} else if new_type == const.STR {
+					new_type = const.STRING
+				} else if new_type == const.BOOL {
+					new_type = const.BOOLEAN
+				} else if new_type == const.FLT {
+					new_type = const.FLOAT
+				}
+
 				old_type, _ := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
 				rd := data.OST_READ_RECORD_VALUE(colPath, cluster_name, old_type, record_name)
 				success := data.OST_CHANGE_RECORD_TYPE(

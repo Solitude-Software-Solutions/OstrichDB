@@ -713,63 +713,68 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 
 //finds a the passed in record, and updates its type. keeps its value which will eventually need to be changed
 OST_CHANGE_RECORD_TYPE :: proc(fn, cn, rn, rd, newType: string) -> bool {
-	data, readSuccess := utils.read_file(fn, #procedure)
-	defer delete(data)
-	if !readSuccess {
-		return false
-	}
+    data, readSuccess := utils.read_file(fn, #procedure)
+    defer delete(data)
+    if !readSuccess {
+        return false
+    }
 
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
+    content := string(data)
+    lines := strings.split(content, "\n")
+    defer delete(lines)
 
-	cluster_start := -1
-	closing_brace := -1
+    newLines := make([dynamic]string)
+    defer delete(newLines)
 
-	// Find the cluster and its closing brace
-	for i := 0; i < len(lines); i += 1 {
-		if strings.contains(lines[i], cn) {
-			cluster_start = i
-		}
-		if cluster_start != -1 && strings.contains(lines[i], "}") {
-			closing_brace = i
-			break
-		}
-	}
+    inTargetCluster := false
+    recordUpdated := false
 
-	// If the cluster is not found or the structure is invalid, return false
-	if cluster_start == -1 || closing_brace == -1 {
-		error2 := utils.new_err(
-			.CANNOT_FIND_CLUSTER,
-			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Unable to find cluster/valid structure", #procedure)
-		return false
-	}
+    // Find the cluster and update the record
+    for line in lines {
+        trimmedLine := strings.trim_space(line)
 
-	// Create the new line
-	new_line := fmt.tprintf("\t%s :%s: %s", rn, newType, rd)
+        if trimmedLine == "{" {
+            inTargetCluster = false
+        }
 
-	// Insert the new line and adjust the closing brace
-	new_lines := make([dynamic]string, len(lines) + 1)
-	copy(new_lines[:closing_brace], lines[:closing_brace])
-	new_lines[closing_brace] = new_line
-	new_lines[closing_brace + 1] = "},"
-	if closing_brace + 1 < len(lines) {
-		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
-	}
+        if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+            inTargetCluster = true
+        }
 
-	new_content := strings.join(new_lines[:], "\n")
-	writeSuccess := utils.write_to_file(fn, transmute([]byte)new_content, #procedure)
-	if !writeSuccess {
-		return false
-	}
-	return true
+        if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
+            // Keep the original indentation
+            leadingWhitespace := strings.split(line, rn)[0]
+            // Create new line with updated type
+            newLine := fmt.tprintf("%s%s :%s: %s", leadingWhitespace, rn, newType, rd)
+            append(&newLines, newLine)
+            recordUpdated = true
+        } else {
+            append(&newLines, line)
+        }
 
+        if inTargetCluster && trimmedLine == "}," {
+            inTargetCluster = false
+        }
+    }
+
+    if !recordUpdated {
+        fmt.printfln(
+            "Record %s%s%s not found in cluster %s%s%s",
+            utils.BOLD_UNDERLINE,
+            rn,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            cn,
+            utils.RESET,
+        )
+        return false
+    }
+
+    // Write the updated content back to file
+    newContent := strings.join(newLines[:], "\n")
+    writeSuccess := utils.write_to_file(fn, transmute([]byte)newContent, #procedure)
+    return writeSuccess
 }
-
 
 //finds the location of the passed in record in the passed in cluster
 OST_FIND_RECORD_IN_CLUSTER :: proc(
