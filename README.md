@@ -2,6 +2,7 @@
 
 OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin programming language. It can be run serverless from the command line or deployed in server mode, offering flexibility for different use cases. With a focus on simplicity and straightforward setup, OstrichDB provides an intuitive command structure for managing data using both single and multi-token commands.
 
+
 ---
 
 ## **Features**
@@ -25,8 +26,6 @@ OstrichDB organizes data into three levels:
 - **Records**: The smallest unit of data (e.g., user name, age, or product details).
 - **Clusters**: Groups of related records (e.g., related information about a person or product).
 - **Collections**: Files that hold multiple clusters (e.g., a database holding multiple product categories).
-
-This structure makes it easy to store and retrieve logically grouped data.
 
 ---
 
@@ -149,15 +148,14 @@ Other supported data types include:
    chmod +x scripts/build.sh scripts/restart.sh
    ```
 
-3. **Run The Build Script**:
+4. **Run The Build Script**:
    ```bash
    ./scripts/build.sh
    ```
-
 ---
 
-## **Usage Examples**
 
+## **Usage Examples**
    ```bash
    # Create a new collection:
    NEW COLLECTION staff
@@ -184,7 +182,6 @@ Other supported data types include:
    # Create a new user
    NEW USER
    ```
-
 ---
 
 ## **Future Plans**
@@ -209,7 +206,9 @@ Other supported data types include:
 - Windows support
 - Integration with the planned Feather query language!
 
+
 ---
+
 
 ## **Contributing**
 
@@ -220,5 +219,3 @@ Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines o
 ## **License**
 
 OstrichDB is released under the **Apache License 2.0**. For the full license text, see [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
-
----
