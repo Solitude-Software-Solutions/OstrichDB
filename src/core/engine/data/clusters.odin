@@ -17,46 +17,13 @@ import "core:strings"
 
 
 main :: proc() {
-	OST_CREATE_CACHE_FILE()
+	metadata.OST_CREATE_FFVF()
+	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
 	OST_CREATE_BACKUP_DIR()
 	os.make_directory(const.OST_QUARANTINE_PATH)
 	os.make_directory(const.OST_COLLECTION_PATH)
-	metadata.OST_CREATE_FFVF()
 }
 
-//creates a cache used to store all generated cluster ids
-OST_CREATE_CACHE_FILE :: proc() {
-	cacheFile, createSuccess := os.open("./cluster_id_cache", os.O_CREATE, 0o666)
-	if createSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_CREATE_FILE,
-			utils.get_err_msg(.CANNOT_CREATE_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error creating cluster id cache file", #procedure)
-	}
-	os.close(cacheFile)
-}
-
-
-/*
-Generates the unique cluster id for a new cluster
-then returns it to the caller, relies on OST_ADD_ID_TO_CACHE_FILE() to store the retuned id in a file
-*/
-OST_GENERATE_CLUSTER_ID :: proc() -> i64 {
-	//ensure the generated id length is 16 digits
-	ID := rand.int63_max(1e16 + 1)
-	idExistsAlready := OST_CHECK_CACHE_FOR_ID(ID)
-
-	if idExistsAlready == true {
-		//dont need to throw error for ID existing already
-		utils.log_err("Generated ID already exists in cache file", #procedure)
-		OST_GENERATE_CLUSTER_ID()
-	}
-	OST_ADD_ID_TO_CACHE_FILE(ID)
-	return ID
-}
 
 //used to return the value of a ALL cluster ids of all clusters within the passed in file
 OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
@@ -64,7 +31,7 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 	IDs := make([dynamic]i64)
 	idsStringArray := make([dynamic]string)
 
-	fullPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+	fullPath := utils.concat_collection_name(fn)
 	data, readSuccess := os.read_entire_file(fullPath)
 	if !readSuccess {
 		error1 := utils.new_err(
@@ -99,176 +66,98 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 
 
 //used to return the value of a single cluster id of the passed in cluster
+//reads over a file, looks for the passed in cluster and returns its id
+//if fn is an empty string("") then its looking for a cluster in a secure file
 OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
-	fullPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
-	data, readSuccess := os.read_entire_file(fullPath)
-	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading collection file", #procedure)
-		return 0
-	}
+	if fn != "" {
+		fullPath := utils.concat_collection_name(fn)
+		data, readSuccess := os.read_entire_file(fullPath)
+		if !readSuccess {
+			error1 := utils.new_err(
+				.CANNOT_READ_FILE,
+				utils.get_err_msg(.CANNOT_READ_FILE),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error reading collection file", #procedure)
+			return 0
+		}
 
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
+		content := string(data)
+		lines := strings.split(content, "\n")
+		defer delete(lines)
 
-	clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", cn)
-	clusterIdLine := "cluster_id :identifier:"
+		clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", cn)
+		clusterIdLine := "cluster_id :identifier:"
 
-	for i := 0; i < len(lines); i += 1 {
-		if strings.contains(lines[i], clusterNameLine) {
-			for j := i + 1; j < len(lines) && j < i + 5; j += 1 {
-				if strings.contains(lines[j], clusterIdLine) {
-					idStr := strings.trim_space(strings.split(lines[j], ":")[2])
-					ID, ok := strconv.parse_i64(idStr)
-					if ok {
-						return ID
-					} else {
-						utils.log_err("Error parsing cluster ID", #procedure)
-						return 0
+		for i := 0; i < len(lines); i += 1 {
+			if strings.contains(lines[i], clusterNameLine) {
+				for j := i + 1; j < len(lines) && j < i + 5; j += 1 {
+					if strings.contains(lines[j], clusterIdLine) {
+						idStr := strings.trim_space(strings.split(lines[j], ":")[2])
+						ID, ok := strconv.parse_i64(idStr)
+						if ok {
+							return ID
+						} else {
+							utils.log_err("Error parsing cluster ID", #procedure)
+							return 0
+						}
 					}
 				}
 			}
 		}
-	}
 
-	utils.log_err("Cluster not found", #procedure)
-	return 0
-}
-
-
-OST_REMOVE_ID_FROM_CACHE :: proc(id: i64) -> bool {
-	deleted := false
-	buf: [32]byte
-	idStr := strconv.append_int(buf[:], id, 10)
-
-
-	data, readSuccess := os.read_entire_file(const.OST_CLUSTER_CACHE_PATH)
-	if !readSuccess {
-		error2 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Error reading cluster id cache file", #procedure)
-		return false
-	}
-
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
-
-	newLines := make([dynamic]string, 0, len(lines))
-	defer delete(newLines)
-
-	for line in lines {
-		if !strings.contains(line, idStr) {
-			append(&newLines, line)
-		} else {
-			deleted = true
-		}
-	}
-
-	if deleted {
-		new_content := strings.join(newLines[:], "\n")
-		writeSuccess := os.write_entire_file(
-			const.OST_CLUSTER_CACHE_PATH,
-			transmute([]byte)new_content,
-		)
-		if !writeSuccess {
-			utils.log_err("Error writing updated cluster id cache file", #procedure)
-			return false
-		}
-	}
-
-	return deleted
-}
-
-
-/*
-checks the cluster id cache file to see if the id already exists
-*/
-OST_CHECK_CACHE_FOR_ID :: proc(id: i64) -> bool {
-	buf: [32]byte
-	result: bool
-	openCacheFile, openSuccess := os.open("./cluster_id_cache", os.O_RDONLY, 0o666)
-	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", #procedure)
-	}
-	//step#1 convert the passed in i64 id number to a string
-	idStr := strconv.append_int(buf[:], id, 10)
-
-
-	//step#2 read the cache file and compare the id to the cache file
-	readCacheFile, readSuccess := os.read_entire_file(openCacheFile)
-	if readSuccess == false {
-		error2 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Error reading cluster id cache file", #procedure)
-	}
-
-	// step#3 convert all file contents to a string because...OdinLang go brrrr??
-	contentToStr := transmute(string)readCacheFile
-
-	//step#4 check if the string version of the id is contained in the cache file
-	if strings.contains(contentToStr, idStr) {
-		result = true
+		utils.log_err("Cluster not found", #procedure)
+		return 0
 	} else {
-		result = false
-	}
-	os.close(openCacheFile)
-	return result
-}
+		//secure file
 
-
-/*upon cluster generation this proc will take the cluster id and store it in a file so that it can not be duplicated in the future
-*/
-OST_ADD_ID_TO_CACHE_FILE :: proc(id: i64) -> int {
-	buf: [32]byte
-	cacheFile, openSuccess := os.open("./cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
-	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
+		secFile := fmt.tprintf(
+			"%ssecure_%s%s",
+			const.OST_SECURE_COLLECTION_PATH,
+			cn,
+			const.OST_FILE_EXTENSION,
 		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", #procedure)
-	}
+		data, readSuccess := os.read_entire_file(secFile)
+		if !readSuccess {
+			error1 := utils.new_err(
+				.CANNOT_READ_FILE,
+				utils.get_err_msg(.CANNOT_READ_FILE),
+				#procedure,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error reading secure file", #procedure)
+			return 0
+		}
 
-	idStr := strconv.append_int(buf[:], id, 10) //base 10 conversion
+		content := string(data)
+		lines := strings.split(content, "\n")
+		defer delete(lines)
 
-	//converting stirng to byte array then writing to file
-	transStr := transmute([]u8)idStr
-	writter, writeSuccess := os.write(cacheFile, transStr)
-	if writeSuccess != 0 {
-		error2 := utils.new_err(
-			.CANNOT_WRITE_TO_FILE,
-			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Error writing to cluster id cache file", #procedure)
+		clusterNameLine := fmt.tprintf("cluster_name :identifier: %s", cn)
+		clusterIdLine := "cluster_id :identifier:"
+
+		for i := 0; i < len(lines); i += 1 {
+			if strings.contains(lines[i], clusterNameLine) {
+				for j := i + 1; j < len(lines) && j < i + 5; j += 1 {
+					if strings.contains(lines[j], clusterIdLine) {
+						idStr := strings.trim_space(strings.split(lines[j], ":")[2])
+						ID, ok := strconv.parse_i64(idStr)
+						if ok {
+							// fmt.println("ID found: ", ID) //debugging
+							return ID
+						} else {
+							utils.log_err("Error parsing cluster ID", #procedure)
+							return 0
+						}
+					}
+				}
+			}
+		}
+
+		utils.log_err("Cluster not found", #procedure)
+		return 0
 	}
-	OST_NEWLINE_CHAR()
-	os.close(cacheFile)
-	return 0
 }
 
 /*
@@ -281,6 +170,8 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 		utils.log_err("Cluster already exists in file", #procedure)
 		return 1
 	}
+
+
 	FIRST_HALF: []string = {"{\n\tcluster_name :identifier: %n"}
 	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
@@ -336,41 +227,9 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 			}
 		}
 	}
-	fmt.println("Please re-launch OstrichDB...")
 	//step#FINAL: close the file
 	os.close(clusterFile)
 	return 0
-}
-
-
-/*
-Used to add a newline character to the end of each id entry in the cluster cache file.
-See usage in OST_ADD_ID_TO_CACHE_FILE()
-*/
-OST_NEWLINE_CHAR :: proc() {
-	cacheFile, openSuccess := os.open("./cluster_id_cache", os.O_APPEND | os.O_WRONLY, 0o666)
-	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening cluster id cache file", #procedure)
-	}
-	newLineChar: string = "\n"
-	transStr := transmute([]u8)newLineChar
-	writter, writeSuccess := os.write(cacheFile, transStr)
-	if writeSuccess != 0 {
-		error2 := utils.new_err(
-			.CANNOT_WRITE_TO_FILE,
-			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Error writing newline character to cluster id cache file", #procedure)
-	}
-	os.close(cacheFile)
 }
 
 
@@ -379,17 +238,9 @@ OST_NEWLINE_CHAR :: proc() {
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
 OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
-	data, read_success := os.read_entire_file(fn)
-	if !read_success {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		fmt.println("Error reading collection file")
-		return false
-	}
+	// fmt.println("Reading collection file: ", fn) //debugging
+	// fmt.println("Checking if cluster exists: ", cn) //debugging
+	data, read_success := utils.read_file(fn, #procedure)
 	defer delete(data)
 
 	content := string(data)
@@ -421,13 +272,7 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 }
 
 OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) -> bool {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collection_name,
-		const.OST_FILE_EXTENSION,
-	)
-
+	collection_path := utils.concat_collection_name(collection_name)
 	// check if the desired new cluster name already exists
 	if OST_CHECK_IF_CLUSTER_EXISTS(collection_path, new) {
 		fmt.printfln(
@@ -443,14 +288,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 		return false
 	}
 
-	data, readSuccess := os.read_entire_file(collection_path)
-	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-		)
-		utils.log_err("Error reading collection file", #procedure)
-		return false
-	}
+	data, readSuccess := utils.read_file(collection_path, #procedure)
 	defer delete(data)
 
 	content := string(data)
@@ -501,32 +339,16 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 	}
 
 	// write new content to file
-	writeSuccess := os.write_entire_file(collection_path, newContent[:])
-	if !writeSuccess {
-		utils.throw_err(
-			utils.new_err(
-				.CANNOT_WRITE_TO_FILE,
-				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#procedure,
-			),
-		)
-		utils.log_err("Error writing to cluster file while renaming", #procedure)
-		return false
-	}
+	writeSuccess := utils.write_to_file(collection_path, newContent[:], #procedure)
 
-	return true
+	return writeSuccess
 }
 
 
 //only used to create a cluster from the COMMAND LINE
 OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, id: i64) -> int {
 
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collectionName,
-		const.OST_FILE_EXTENSION,
-	)
+	collection_path := utils.concat_collection_name(collectionName)
 
 	clusterExist := OST_CHECK_IF_CLUSTER_EXISTS(collection_path, clusterName)
 	if clusterExist {
@@ -597,116 +419,99 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 
 OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	buf: [64]byte
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
-	fmt.printfln(
-		"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
-		utils.BOLD,
-		cn,
-		utils.RESET,
-		utils.BOLD,
-		fn,
-		utils.RESET,
-	)
-	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-	}
+	file: string
+	collection_path := utils.concat_collection_name(fn)
 
-	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-	cap := strings.to_upper(confirmation)
-	switch cap 
-	{
-	case const.YES:
-		data, readSuccess := os.read_entire_file(collection_path)
-		if !readSuccess {
-			utils.throw_err(
-				utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+	// Skip confirmation if in testing mode
+	if !types.TESTING {
+		fmt.printfln(
+			"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
+			utils.BOLD,
+			cn,
+			utils.RESET,
+			utils.BOLD,
+			fn,
+			utils.RESET,
+		)
+		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#procedure,
 			)
-			utils.log_err("Error reading collection file", #procedure)
+			utils.throw_err(error1)
 			return false
 		}
-		defer delete(data)
 
-		content := string(data)
-		clusterClosingBrace := strings.split(content, "}")
-		newContent := make([dynamic]u8)
-		defer delete(newContent)
-		clusterFound := false
+		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+		cap := strings.to_upper(confirmation)
+
+		switch cap {
+		case const.NO:
+			utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
+			return false
+		case const.YES:
+		// Continue with deletion
+		case:
+			utils.log_runtime_event(
+				"User entered invalid input",
+				"User entered invalid input when trying to delete cluster",
+			)
+			error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			return false
+		}
+	}
+
+	data, readSuccess := utils.read_file(collection_path, #procedure)
+	defer delete(data)
+
+	content := string(data)
+	clusterClosingBrace := strings.split(content, "}")
+	newContent := make([dynamic]u8)
+	defer delete(newContent)
+	clusterFound := false
 
 
-		for i := 0; i < len(clusterClosingBrace); i += 1 {
-			cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
-			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-				clusterFound = true
-			} else if len(strings.trim_space(cluster)) > 0 {
-				append(&newContent, ..transmute([]u8)cluster) // Add closing brace
-				if i < len(clusterClosingBrace) - 1 {
-					append(&newContent, "}")
-				}
+	for i := 0; i < len(clusterClosingBrace); i += 1 {
+		cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			clusterFound = true
+		} else if len(strings.trim_space(cluster)) > 0 {
+			append(&newContent, ..transmute([]u8)cluster) // Add closing brace
+			if i < len(clusterClosingBrace) - 1 {
+				append(&newContent, "}")
 			}
 		}
+	}
 
-		if !clusterFound {
-			utils.throw_err(
-				utils.new_err(
-					.CANNOT_FIND_CLUSTER,
-					fmt.tprintf(
-						"Cluster: %s%s%s not found in collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						cn,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						fn,
-						utils.RESET,
-					),
-					#procedure,
+	if !clusterFound {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_FIND_CLUSTER,
+				fmt.tprintf(
+					"Cluster: %s%s%s not found in collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					cn,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					fn,
+					utils.RESET,
 				),
-			)
-			utils.log_err("Error finding cluster in collection", #procedure)
-			return false
-		}
-		writeSuccess := os.write_entire_file(collection_path, newContent[:])
-		if !writeSuccess {
-			utils.throw_err(
-				utils.new_err(
-					.CANNOT_WRITE_TO_FILE,
-					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-					#procedure,
-				),
-			)
-			utils.log_err("Error writing to collection file", #procedure)
-			return false
-		}
-		utils.log_runtime_event(
-			"Database Cluster",
-			"User confirmed deletion of cluster and it was successfully deleted.",
+				#procedure,
+			),
 		)
-		break
-
-	case const.NO:
-		utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
-		return false
-	case:
-		utils.log_runtime_event(
-			"User entered invalid input",
-			"User entered invalid input when trying to delete cluster",
-		)
-		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
-		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		utils.log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
-	return true
+	writeSuccess := utils.write_to_file(collection_path, newContent[:], #procedure)
+	utils.log_runtime_event(
+		"Database Cluster",
+		"User confirmed deletion of cluster and it was successfully deleted.",
+	)
+	return writeSuccess
 }
 
 
@@ -925,119 +730,216 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 //Dude...THIS IS A FUCKING MESS AND ITS ALL AI GENERATED AND WORKS LMAO
 // Added some comments to help explain as best as I can - SchoolyB
 OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
-    collection_path := fmt.tprintf(
-        "%s%s%s",
-        const.OST_COLLECTION_PATH,
-        fn,
-        const.OST_FILE_EXTENSION,
-    )
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		fn,
+		const.OST_FILE_EXTENSION,
+	)
 
-    // Read the entire file
-    data, readSuccess := os.read_entire_file(collection_path)
-    if !readSuccess {
-        utils.throw_err(
-            utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-        )
-        utils.log_err("Error reading collection file", #procedure)
-        return false
-    }
-    defer delete(data)
+	// Read the entire file
+	data, readSuccess := os.read_entire_file(collection_path)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		utils.log_err("Error reading collection file", #procedure)
+		return false
+	}
+	defer delete(data)
 
-//Have to make these 4 vars because transmute wont allow a non-typed string...dumb I know
-	openBrace:= "{"
+	//Have to make these 4 vars because transmute wont allow a non-typed string...dumb I know
+	openBrace := "{"
 	openBraceWithNewline := "{\n"
 	closeBrace := "}"
 	closeBraceWithComma := "},"
 
 	//split the content into clusters
-    content := string(data)
-    clusters := strings.split(content, "{")
-    new_content := make([dynamic]u8)
-    defer delete(new_content)
+	content := string(data)
+	clusters := strings.split(content, "{")
+	new_content := make([dynamic]u8)
+	defer delete(new_content)
 
 	//check if the cluster exists
-    clusterFound := false
-    for i := 0; i < len(clusters); i += 1 {
-        if i == 0 {
-            // Preserve the metadata header and its following whitespace
-            append(&new_content, ..transmute([]u8)clusters[i])
-            continue
-        }
-        //concatenate the open brace with the cluster
-        cluster := strings.concatenate([]string{openBrace,clusters[i]})
+	clusterFound := false
+	for i := 0; i < len(clusters); i += 1 {
+		if i == 0 {
+			// Preserve the metadata header and its following whitespace
+			append(&new_content, ..transmute([]u8)clusters[i])
+			continue
+		}
+		//concatenate the open brace with the cluster
+		cluster := strings.concatenate([]string{openBrace, clusters[i]})
 		//if the cluster name matches the one we want to purge, we need to preserve the cluster's data
-        if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-            clusterFound = true
-            lines := strings.split(cluster, "\n")
-            append(&new_content, ..transmute([]u8)openBraceWithNewline)
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			clusterFound = true
+			lines := strings.split(cluster, "\n")
+			append(&new_content, ..transmute([]u8)openBraceWithNewline)
 			emptyLineAdded := false
-            for line ,line_index in lines {
+			for line, line_index in lines {
 				trimmed_line := strings.trim_space(line)
-                if strings.contains(trimmed_line, "cluster_name :identifier:") ||
-                   strings.contains(trimmed_line, "cluster_id :identifier:") {
-					
-					//preserves the indentation 
-					indent:= strings.index(line, trimmed_line)
-					if indent > 0{
+				if strings.contains(trimmed_line, "cluster_name :identifier:") ||
+				   strings.contains(trimmed_line, "cluster_id :identifier:") {
+
+					//preserves the indentation
+					indent := strings.index(line, trimmed_line)
+					if indent > 0 {
 						append(&new_content, ..transmute([]u8)line[:indent])
 					}
 					//adds the line line and a newline character to the new_content array
-                    append(&new_content, ..transmute([]u8)strings.trim_space(line))
-                    append(&new_content, '\n')
+					append(&new_content, ..transmute([]u8)strings.trim_space(line))
+					append(&new_content, '\n')
 
 					//this ensures that the cluster_id line is followed by an empty line for formatting purposes
-					if strings.contains(trimmed_line, "cluster_id :identifier:") && !emptyLineAdded{
-						if line_index +1 < len(lines) && len(strings.trim_space(lines[line_index + 1])) == 0{
+					if strings.contains(trimmed_line, "cluster_id :identifier:") &&
+					   !emptyLineAdded {
+						if line_index + 1 < len(lines) &&
+						   len(strings.trim_space(lines[line_index + 1])) == 0 {
 							append(&new_content, '\n')
 							emptyLineAdded = true
 						}
-					} 
-                }
-            }
-            append(&new_content, ..transmute([]u8)closeBrace)
-            
-			//this ensures that the closing brace is followed by any trailing whitespace
-            if last_brace := strings.last_index(cluster, "}"); last_brace != -1 {
-                append(&new_content, ..transmute([]u8)cluster[last_brace+1:])
-            }
-        } else {
-            append(&new_content, ..transmute([]u8)cluster)
-        }
-    }
+					}
+				}
+			}
+			append(&new_content, ..transmute([]u8)closeBrace)
 
-    if !clusterFound {
-        utils.throw_err(utils.new_err(.CANNOT_FIND_CLUSTER, utils.get_err_msg(.CANNOT_FIND_CLUSTER), #procedure))
-        utils.log_err("Error finding cluster in collection", #procedure)
-        return false
-    }
-//write the new content to the collection file
-    writeSuccess := os.write_entire_file(collection_path, new_content[:])
-    if !writeSuccess {
-        utils.throw_err(utils.new_err(.CANNOT_WRITE_TO_FILE, utils.get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
-        utils.log_err("Error writing to collection file", #procedure)
-        return false
-    }
-    
-    return true
-	
+			//this ensures that the closing brace is followed by any trailing whitespace
+			if last_brace := strings.last_index(cluster, "}"); last_brace != -1 {
+				append(&new_content, ..transmute([]u8)cluster[last_brace + 1:])
+			}
+		} else {
+			append(&new_content, ..transmute([]u8)cluster)
+		}
+	}
+
+	if !clusterFound {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_FIND_CLUSTER,
+				utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+				#procedure,
+			),
+		)
+		utils.log_err("Error finding cluster in collection", #procedure)
+		return false
+	}
+	//write the new content to the collection file
+	writeSuccess := os.write_entire_file(collection_path, new_content[:])
+	if !writeSuccess {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		utils.log_err("Error writing to collection file", #procedure)
+		return false
+	}
+
+	return true
+
 }
 
-OST_GET_CLUSTER_SIZE :: proc(collection_name: string, cluster_name: string) -> (size: int, success: bool) {
-    collection_path := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, collection_name, const.OST_FILE_EXTENSION)
-    data, read_success := os.read_entire_file(collection_path)
-    if !read_success {
-        return 0, false
-    }
-    defer delete(data)
+OST_GET_CLUSTER_SIZE :: proc(
+	collection_name: string,
+	cluster_name: string,
+) -> (
+	size: int,
+	success: bool,
+) {
+	collection_path := fmt.tprintf(
+		"%s%s%s",
+		const.OST_COLLECTION_PATH,
+		collection_name,
+		const.OST_FILE_EXTENSION,
+	)
+	data, read_success := os.read_entire_file(collection_path)
+	if !read_success {
+		return 0, false
+	}
+	defer delete(data)
 
-    content := string(data)
-    clusters := strings.split(content, "},")
+	content := string(data)
+	clusters := strings.split(content, "},")
 
-    for cluster in clusters {
-        if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
-            return len(cluster), true
-        }
-    }
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
+			return len(cluster), true
+		}
+	}
 
-    return 0, false
+	return 0, false
+}
+
+
+//removes a users history from the history collecion. Used when DELETING a user and tests
+OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
+
+	historyPath := "./history.ost"
+	data, readSuccess := os.read_entire_file(historyPath)
+	defer delete(data)
+	if !readSuccess {
+		utils.throw_err(
+			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+		)
+		utils.log_err("Error reading collection file", #procedure)
+		return false
+	}
+	content := string(data)
+	clusterClosingBrace := strings.split(content, "}")
+	newContent := make([dynamic]u8)
+	defer delete(newContent)
+	clusterFound := false
+
+
+	for i := 0; i < len(clusterClosingBrace); i += 1 {
+		cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", userName)) {
+			clusterFound = true
+		} else if len(strings.trim_space(cluster)) > 0 {
+			append(&newContent, ..transmute([]u8)cluster) // Add closing brace
+			if i < len(clusterClosingBrace) - 1 {
+				append(&newContent, "}")
+			}
+		}
+	}
+
+	if !clusterFound {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_FIND_CLUSTER,
+				fmt.tprintf(
+					"Cluster: %s%s%s not found in collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					userName,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					userName,
+					utils.RESET,
+				),
+				#procedure,
+			),
+		)
+		utils.log_err("Error finding cluster in collection", #procedure)
+		return false
+	}
+	writeSuccess := os.write_entire_file(historyPath, newContent[:])
+	if !writeSuccess {
+		utils.throw_err(
+			utils.new_err(
+				.CANNOT_WRITE_TO_FILE,
+				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#procedure,
+			),
+		)
+		utils.log_err("Error writing to collection file", #procedure)
+		return false
+	}
+	utils.log_runtime_event(
+		"Database Cluster",
+		"User confirmed deletion of cluster and it was successfully deleted.",
+	)
+	return true
+
 }

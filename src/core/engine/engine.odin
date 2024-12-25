@@ -20,28 +20,6 @@ import "core:time"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-run :: proc() {
-	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch (configFound) 
-	{
-	case false:
-		fmt.println("Config file not found.\n Generating config file")
-		config.OST_CREATE_CONFIG_FILE()
-		run()
-	case:
-		fmt.println("Starting OstrichDB")
-		result := OST_START_ENGINE()
-		switch (result) 
-		{
-		case 1:
-			fmt.println("OstrichDB Engine started successfully")
-			break
-		case 0:
-
-		}
-	}
-}
-
 
 //initialize the data integrity system
 OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
@@ -66,11 +44,10 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-
 	switch (types.engine.Initialized) 
 	{
 	case false:
-		config.main()
+		// config.main()
 		security.OST_INIT_ADMIN_SETUP()
 		break
 
@@ -99,12 +76,12 @@ OST_START_ENGINE :: proc() -> int {
 
 
 OST_ENGINE_COMMAND_LINE :: proc() -> int {
-	fmt.println("Welcome to the OstrichDB Command Line")
-	utils.log_runtime_event("Entered command line", "")
+	fmt.println("Welcome to the OstrichDB DBMS Command Line")
+	utils.log_runtime_event("Entered DBMS command line", "")
 	for {
 		//Command line start
 		buf: [1024]byte
-		histBuf: [1024]byte
+
 		fmt.print(const.ost_carrot, "\t")
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
@@ -117,48 +94,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			utils.log_err("Could not read user input from command line", #procedure)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
-
-
-		//COMMAND HISTORY STUFF START
-		//append the last command to the history buffer
-		types.current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
-			"history",
-			types.current_user.username.Value,
-			false,
-		)
-		// types.current_user.commandHistory.cHistoryNamePrefix = "history_" dont need this shit tbh - SchoolyB
-		histCountStr := strconv.itoa(histBuf[:], types.current_user.commandHistory.cHistoryCount)
-		recordName := fmt.tprintf("%s%s", "history_", histCountStr)
-
-		//append the last command to the history file
-		data.OST_APPEND_RECORD_TO_CLUSTER(
-			"./history.ost",
-			types.current_user.username.Value,
-			strings.to_upper(recordName),
-			strings.to_upper(strings.clone(input)),
-			"COMMAND",
-		)
-
-		//get value of the command that was just stored as a record
-		historyRecordValue := data.OST_READ_RECORD_VALUE(
-			"./history.ost",
-			types.current_user.username.Value,
-			"COMMAND",
-			strings.to_upper(recordName),
-		)
-
-		//append the command from the file to the command history buffer
-		append(
-			&types.current_user.commandHistory.cHistoryValues,
-			strings.clone(historyRecordValue),
-		)
-
-		//update the history file size value in the metadata
-		metadata.OST_UPDATE_METADATA_VALUE("./history.ost", 3)
-
-		//COMMAND HISTORY STUFF
-
-
+		OST_APPEND_COMMAND_TO_HISTORY(input)
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
 		result := OST_EXECUTE_COMMAND(&cmd)
@@ -178,80 +114,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		case true:
 			OST_HANDLE_MAX_SESSION_DURATION_MET()
 		}
-
-		switch (types.focus.flag) 
-		{
-		case true:
-			fmt.printfln("Focus mode is on")
-			OST_FOCUSED_COMMAND_LINE()
-			break
-		}
-
 		//Command line end
-	}
-
-}
-
-OST_FOCUSED_COMMAND_LINE :: proc() {
-	fmt.println("NOW USING FOCUS MODE")
-	for types.focus.flag == true {
-		//Command line start
-		buf: [1024]byte
-		switch (types.focus.t_) 
-		{
-		case const.COLLECTION:
-			fmt.printf("%sFOCUSING: %v%s>>> ", utils.BOLD, types.focus.o_, utils.RESET)
-			break
-		case const.CLUSTER:
-			fmt.printf(
-				"%sFOCUSING: %v%s | %s%v%s>>> ",
-				utils.BOLD,
-				types.focus.p_o,
-				utils.RESET,
-				utils.BOLD,
-				types.focus.o_,
-				utils.RESET,
-			)
-			break
-		case const.RECORD:
-			fmt.printf(
-				"%sFOCUSING: %v%s | %s%v%s | %s%v%s>>> ",
-				utils.BOLD,
-				types.focus.gp_o,
-				utils.RESET,
-				utils.BOLD,
-				types.focus.p_o,
-				utils.RESET,
-				utils.BOLD,
-				types.focus.o_,
-				utils.RESET,
-			)
-			break
-		}
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error)
-			utils.log_err("Could not read user input from foucs mode command line", #procedure)
-		}
-		input := strings.trim_right(string(buf[:n]), "\r\n")
-		cmd := OST_PARSE_COMMAND(input)
-		fmt.printfln("Command: %v", cmd) //debugging
-
-		EXECUTE_COMMANDS_WHILE_FOCUSED(
-			&cmd,
-			types.focus.t_,
-			types.focus.o_,
-			types.focus.p_o,
-			types.focus.gp_o,
-		)
-		//Command line end
-
-
 	}
 
 }

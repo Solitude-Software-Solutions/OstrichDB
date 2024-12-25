@@ -1,5 +1,5 @@
 package utils
-
+import "../core/const"
 import "../core/types"
 import "core:fmt"
 import "core:os"
@@ -22,7 +22,9 @@ ostrich_art := `
  $$ |  $$ | \____$$\   $$ |$$\ $$ |      $$ |$$ |      $$ |  $$ |$$ |  $$ |$$ |  $$ |
   $$$$$$  |$$$$$$$  |  \$$$$  |$$ |      $$ |\$$$$$$$\ $$ |  $$ |$$$$$$$  |$$$$$$$  |
   \______/ \_______/    \____/ \__|      \__| \_______|\__|  \__|\_______/ \_______/
- ===================================================================================`
+ ==================================================================================
+ A Document-based NoSQL Database Management System: %s%s%s
+ ==================================================================================`
 
 //Constants for text colors and styles
 RED :: "\033[31m"
@@ -49,19 +51,6 @@ show_current_step :: proc(n: string, c: string, t: string) {
 }
 
 
-get_input :: proc() -> string {
-	buf: [1024]byte
-	n, err := os.read(os.stdin, buf[:])
-	// fmt.printf("Debug: Read %d bytes, err = %v\n", n, err)
-	if err != 0 {
-		fmt.println("Debug: Error occurred")
-		return ""
-	}
-	result := strings.trim_right(string(buf[:n]), "\r\n")
-	// fmt.printf("Debug: Returning result: '%s'\n", result)
-	return strings.clone(result)
-}
-
 show_check_warning :: proc() -> string {
 	return fmt.tprintf(
 		"%s%s[WARNING] [WARNING] [WARNING] [WARNING]%s",
@@ -69,4 +58,18 @@ show_check_warning :: proc() -> string {
 		types.Message_Color,
 		RESET,
 	)
+}
+
+
+//used to help with error handling.
+get_line_number :: proc(line: int) -> string {
+	if line < 1 {
+		return "unknown"
+	}
+	return fmt.tprintf("%d", line)
+}
+
+//used to help with error handling.
+show_source_file :: proc(file: string) -> string {
+	return fmt.tprintln("Source File: %s%s%s", BOLD, file, RESET)
 }

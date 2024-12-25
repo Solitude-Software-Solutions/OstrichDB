@@ -28,84 +28,6 @@ METADATA_HEADER: []string = {
 	"# [Ostrich File Header End]},\n\n\n\n",
 }
 
-// sets the files date of creation(FDOC) or file date last modified(FDLM)
-OST_SET_DATE :: proc() -> string {
-	mBuf: [8]byte
-	dBuf: [8]byte
-	yBuf: [8]byte
-
-	hBuf: [8]byte
-	minBuf: [8]byte
-	sBuf: [8]byte
-
-	h, min, s := time.clock(time.now())
-	y, m, d := time.date(time.now())
-
-	mAsInt := int(m) //month comes back as a type "Month" so need to convert
-	// Conversions!!! because everything in Odin needs to be converted... :)
-
-	Y := transmute(i64)y
-	M := transmute(i64)m
-	D := transmute(i64)d
-
-	H := transmute(i64)h
-	MIN := transmute(i64)min
-	S := transmute(i64)s
-
-
-	Month := strconv.append_int(mBuf[:], M, 10)
-	Year := strconv.append_int(yBuf[:], Y, 10)
-	Day := strconv.append_int(dBuf[:], D, 10)
-
-	Hour := strconv.append_int(hBuf[:], H, 10)
-	Minute := strconv.append_int(minBuf[:], MIN, 10)
-	Second := strconv.append_int(sBuf[:], S, 10)
-
-
-	switch (mAsInt) 
-	{
-	case 1:
-		Month = "January"
-		break
-	case 2:
-		Month = "February"
-		break
-	case 3:
-		Month = "March"
-		break
-	case 4:
-		Month = "April"
-		break
-	case 5:
-		Month = "May"
-		break
-	case 6:
-		Month = "June"
-		break
-	case 7:
-		Month = "July"
-		break
-	case 8:
-		Month = "August"
-		break
-	case 9:
-		Month = "September"
-		break
-	case 10:
-		Month = "October"
-		break
-	case 11:
-		Month = "November"
-		break
-	case 12:
-		Month = "December"
-		break
-	}
-
-	Date := strings.concatenate([]string{Month, " ", Day, " ", Year, " "})
-	return strings.clone(Date)
-}
-
 
 //Sets the files format version(FFV)
 OST_SET_FFV :: proc() -> string {
@@ -122,45 +44,45 @@ OST_GET_FS :: proc(file: string) -> os.File_Info {
 //this will get the size of the file and then subtract the size of the metadata header
 //then return the difference
 OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
-    fileInfo, err := os.stat(file)
-    if err != 0 {
-        utils.log_err("Error getting file info", #procedure)
-        return -1, -1
-    }
+	fileInfo, err := os.stat(file)
+	if err != 0 {
+		utils.log_err("Error getting file info", #procedure)
+		return -1, -1
+	}
 
-    totalSize := int(fileInfo.size)
+	totalSize := int(fileInfo.size)
 
-    data, readSuccess := os.read_entire_file(file)
-    if !readSuccess {
-        utils.log_err("Error reading file", #procedure)
-        return -1, -1
-    }
-    defer delete(data)
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
+		utils.log_err("Error reading file", #procedure)
+		return -1, -1
+	}
+	defer delete(data)
 
-    content := string(data)
-    lines := strings.split(content, "\n")
-    defer delete(lines)
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
 
-    metadataEndIndex := -1
-    for i in 0..<len(lines) {
-        line := lines[i]
-        if strings.has_prefix(line, "# [Ostrich File Header End]") {
-            metadataEndIndex = i
-            break
-        }
-    }
+	metadataEndIndex := -1
+	for i in 0 ..< len(lines) {
+		line := lines[i]
+		if strings.has_prefix(line, "# [Ostrich File Header End]") {
+			metadataEndIndex = i
+			break
+		}
+	}
 
-    if metadataEndIndex == -1 {
-        utils.log_err("Metadata end marker not found", #procedure)
-        return -1, -1
-    }
+	if metadataEndIndex == -1 {
+		utils.log_err("Metadata end marker not found", #procedure)
+		return -1, -1
+	}
 
-    metadataSize := 0
-    for i := 0; i <= metadataEndIndex; i += 1 {
-        metadataSize += len(lines[i]) + 1 // +1 for newline character
-    }
+	metadataSize := 0
+	for i := 0; i <= metadataEndIndex; i += 1 {
+		metadataSize += len(lines[i]) + 1 // +1 for newline character
+	}
 
-    return totalSize - metadataSize, metadataSize
+	return totalSize - metadataSize, metadataSize
 }
 
 
@@ -214,7 +136,8 @@ OST_GENERATE_CHECKSUM :: proc() -> string {
 //this appends the metadata header to the file as well as sets the time of creation
 OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	rawData, readSuccess := os.read_entire_file(fn)
-
+	defer delete(rawData)
+	fmt.println(readSuccess)
 	if !readSuccess {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
@@ -262,7 +185,8 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	current_date := OST_SET_DATE()
+	//not doing anything with h,m,s yet but its there if needed
+	current_date, h, m, s := utils.get_date_and_time() // sets the files date of creation(FDOC) or file date last modified(FDLM)
 	file_info := OST_GET_FS(fn)
 	file_size := file_info.size
 
@@ -375,6 +299,8 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {
+		utils.log_err("Could not read file format version file", #procedure)
+		return nil
 	}
 	os.close(ffvf)
 	return data
@@ -396,15 +322,8 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		"# File Size: ",
 		"# Checksum: ",
 	}
-	data, readSuccess := os.read_entire_file(file)
+	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading collection file", #procedure)
 		return 1, true
 	}
 
@@ -420,6 +339,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		)
 		return 1, true
 	}
+
 	//checks if the file format verion file and the projects version file match
 	versionMatch := OST_VALIDATE_FILE_FORMAT_VERSION()
 	if !versionMatch {
@@ -427,9 +347,13 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		return 1, true
 	}
 
+	ffv_parts := strings.split(lines[1], ": ")
+	if len(ffv_parts) < 2 {
+		utils.log_err("Invalid file format version line format", #procedure)
+		return 1, true
+	}
+	collectionVersionValue := ffv_parts[1]
 
-	//get the FFV of the passed in collection file
-	collectionVersionValue := strings.split(lines[1], ": ")[1]
 
 	//compares the collections to the version in the FFV tmp file. Due to alreay checking if the FFV and the project file
 	//match, now have to ensure the collection file matches as well.
@@ -469,7 +393,3 @@ OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
 	}
 	return true
 }
-
-
-
-

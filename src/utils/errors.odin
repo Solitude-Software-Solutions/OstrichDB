@@ -1,4 +1,5 @@
 package utils
+import "../core/types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -107,8 +108,8 @@ ERROR_MESSAGE := [ErrorType]string {
 	.CANNOT_READ_INPUT                 = "Cannot Read Input",
 	.USERNAME_ALREADY_EXISTS           = "Entered Username Already Exists",
 	.INVALID_USERNAME                  = "Invalid Username",
-	.PASSWORD_TOO_SHORT                 = "Entered Password Too Short",
-	.PASSWORD_TOO_LONG                  = "Entered Password Too Long",
+	.PASSWORD_TOO_SHORT                = "Entered Password Too Short",
+	.PASSWORD_TOO_LONG                 = "Entered Password Too Long",
 	.WEAK_PASSWORD                     = "Weak Password Detected",
 	.PASSWORDS_DO_NOT_MATCH            = "Entered Passwords Do Not Match",
 	.INCORRECT_USERNAME_ENTERED        = "Incorrect Username Entered",
@@ -135,45 +136,52 @@ get_err_msg :: proc(type: ErrorType) -> string {
 }
 
 throw_err :: proc(err: Error) -> int {
-	fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
-	fmt.printfln(
-		"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
-		RESET,
-		BOLD,
-		err.procedure,
-		RESET,
-		BOLD,
-		err.type,
-		RESET,
-		BOLD,
-		err.message,
-		RESET,
-	)
-	return 1
+	if types.errSupression.enabled { 	//if error supression is off return
+		return 0
+	} else {
+		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
+		fmt.printfln(
+			"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+			RESET,
+			BOLD,
+			err.procedure,
+			RESET,
+			BOLD,
+			err.type,
+			RESET,
+			BOLD,
+			err.message,
+			RESET,
+		)
+		return 1
+	}
 }
 
 //allows for more customization of error messages.
 //the custom err message that is passed is the same as the err message in the print statement
 throw_custom_err :: proc(err: Error, custom_message: string) -> int {
-	fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
-	fmt.printfln(
-		"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
-		RESET,
-		BOLD,
-		err.procedure,
-		RESET,
-		BOLD,
-		err.type,
-		RESET,
-		BOLD,
-		custom_message,
-		RESET,
-	)
-	return 1
+	if types.errSupression.enabled {
+		return 0
+	} else {
+		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
+		fmt.printfln(
+			"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+			RESET,
+			BOLD,
+			err.procedure,
+			RESET,
+			BOLD,
+			err.type,
+			RESET,
+			BOLD,
+			custom_message,
+			RESET,
+		)
+		return 1
+	}
 }
 
 /*
-
 Example Error Usage:
 
     error2:= new_err(.ENTERED_USERNAME_NOT_FOUND, get_err_msg(.ENTERED_USERNAME_NOT_FOUND), #procedure)

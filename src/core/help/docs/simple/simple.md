@@ -28,6 +28,10 @@ Rebuilds the database and restarts OstrichDB.
 Clears the screen of clutter.
 ### LOGOUT END
 
+### TEST START
+Runs the test suite for OstrichDB.
+### TEST END
+
 ### TREE START
 Used to display all collections and the cluster within them. Use: `TREE`.
 ### TREE END
@@ -68,20 +72,24 @@ Returns the number of objects within a scope. Use: `COUNT <object_type>`.
 Returns the size in bytes of an object. Use: `SIZE_OF <object_type>`.
 ### SIZE_OF END
 
+### WHERE START
+Either searches all or a specific collection for the location of a cluster or record. Use: `WHERE <object_name>`.
+### WHERE END
+
 ### BACKUP START
-Creates a backup of data. Use: `BACKUP COLLECTION <name>`.
+Creates a backup of DBMS data and configurations. Use: `BACKUP COLLECTION <name>`.
 ### BACKUP END
 
 ### COLLECTION START
-A database containing clusters. Stored as `.ost` files.
+A database instance within the DBMS containing related clusters and records.
 ### COLLECTION END
 
 ### CLUSTER START
-Groups of related records within a collection.
+Organizational units within a DBMS collection used to group related records.
 ### CLUSTER END
 
 ### RECORD START
-Individual pieces of data stored in clusters.
+The fundamental data storage unit within the DBMS, stored in clusters.
 ### RECORD END
 
 ### TO START

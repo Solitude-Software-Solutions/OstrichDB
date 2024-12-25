@@ -51,79 +51,8 @@ create_log_files :: proc() -> int {
 
 //###############################|RUNTIME LOGGING|############################################
 log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
-	mBuf: [8]byte
-	dBuf: [8]byte
-	yBuf: [8]byte
 
-	hBuf: [8]byte
-	minBuf: [8]byte
-	sBuf: [8]byte
-
-	h, min, s := time.clock(time.now())
-	y, m, d := time.date(time.now())
-
-	mAsInt := int(m) //month comes base as a type "Month" so need to convert
-	// Conversions!!! because everything in Odin needs to be converted... :)
-
-	Y := transmute(i64)y
-	M := transmute(i64)m
-	D := transmute(i64)d
-
-	H := transmute(i64)h
-	MIN := transmute(i64)min
-	S := transmute(i64)s
-
-
-	Month := strconv.append_int(mBuf[:], M, 10)
-	Year := strconv.append_int(yBuf[:], Y, 10)
-	Day := strconv.append_int(dBuf[:], D, 10)
-
-	Hour := strconv.append_int(hBuf[:], H, 10)
-	Minute := strconv.append_int(minBuf[:], MIN, 10)
-	Second := strconv.append_int(sBuf[:], S, 10)
-
-
-	switch (mAsInt) 
-	{
-	case 1:
-		Month = "January"
-		break
-	case 2:
-		Month = "February"
-		break
-	case 3:
-		Month = "March"
-		break
-	case 4:
-		Month = "April"
-		break
-	case 5:
-		Month = "May"
-		break
-	case 6:
-		Month = "June"
-		break
-	case 7:
-		Month = "July"
-		break
-	case 8:
-		Month = "August"
-		break
-	case 9:
-		Month = "September"
-		break
-	case 10:
-		Month = "October"
-		break
-	case 11:
-		Month = "November"
-		break
-	case 12:
-		Month = "December"
-		break
-	}
-
-	Date := strings.concatenate([]string{Month, " ", Day, " ", Year, " "})
+	date, h, m, s := get_date_and_time()
 	paramsAsMessage := strings.concatenate(
 		[]string{"Event: ", eventName, "\n", "Desc: ", eventDesc, "\n"},
 	)
@@ -131,13 +60,13 @@ log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
 		[]string {
 			paramsAsMessage,
 			"Event Logged: ",
-			Date,
+			date,
 			"@ ",
-			Hour,
+			h,
 			":",
-			Minute,
+			m,
 			":",
-			Second,
+			s,
 			" GMT\n",
 			"---------------------------------------------\n",
 		},
@@ -167,78 +96,7 @@ log_runtime_event :: proc(eventName: string, eventDesc: string) -> int {
 
 //###############################|ERROR LOGGING|############################################
 log_err :: proc(message: string, location: string) -> int {
-	mBuf: [8]byte
-	dBuf: [8]byte
-	yBuf: [8]byte
-
-	hBuf: [8]byte
-	minBuf: [8]byte
-	sBuf: [8]byte
-
-	h, min, s := time.clock(time.now())
-	y, m, d := time.date(time.now())
-
-	mAsInt := int(m)
-
-	Y := transmute(i64)y
-	M := transmute(i64)m
-	D := transmute(i64)d
-
-	H := transmute(i64)h
-	MIN := transmute(i64)min
-	S := transmute(i64)s
-
-
-	Month := strconv.append_int(mBuf[:], M, 10)
-	Year := strconv.append_int(yBuf[:], Y, 10)
-	Day := strconv.append_int(dBuf[:], D, 10)
-
-	Hour := strconv.append_int(hBuf[:], H, 10)
-	Minute := strconv.append_int(minBuf[:], MIN, 10)
-	Second := strconv.append_int(sBuf[:], S, 10)
-
-	switch (mAsInt) 
-	{
-	case 1:
-		Month = "January"
-		break
-	case 2:
-		Month = "February"
-		break
-	case 3:
-		Month = "March"
-		break
-	case 4:
-		Month = "April"
-		break
-	case 5:
-		Month = "May"
-		break
-	case 6:
-		Month = "June"
-		break
-	case 7:
-		Month = "July"
-		break
-	case 8:
-		Month = "August"
-		break
-	case 9:
-		Month = "September"
-		break
-	case 10:
-		Month = "October"
-		break
-	case 11:
-		Month = "November"
-		break
-	case 12:
-		Month = "December"
-		break
-	}
-
-
-	Date := strings.concatenate([]string{Month, " ", Day, " ", Year, " "})
+	date, h, m, s := get_date_and_time()
 	paramsAsMessage := strings.concatenate(
 		[]string{"Error: ", message, "\n", "Location: ", location, "\n"},
 	)
@@ -246,13 +104,13 @@ log_err :: proc(message: string, location: string) -> int {
 		[]string {
 			paramsAsMessage,
 			"Error Occured: ",
-			Date,
+			date,
 			"@ ",
-			Hour,
+			h,
 			":",
-			Minute,
+			m,
 			":",
-			Second,
+			s,
 			" GMT\n",
 			"---------------------------------------------\n",
 		},

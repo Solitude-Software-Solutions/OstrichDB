@@ -36,15 +36,7 @@ Record :: struct {
 	value: string,
 }
 
-
 //=================================================/src/core/engine/=================================================//
-/*
-Type: Engine_Error
-Desc: Used to define the structure of an ENGINE SPECIFIC utils. Not to
-        be confused with the standard errors located in utils.odin
-Usage Locations: NOT YET IMPLEMENTED but wil be used in several places
-*/
-
 /*
 Type: Engine
 Desc: Used to define the overall structure of the Ostrich Engine
@@ -70,13 +62,7 @@ Engine :: struct {
 
 //=================================================/src/core/security/=================================================//
 /*
-Type: User_Role
-Desc: Used to define the roles that a user can have within the Ostrich Database
-      Roles are used to define the permissions that a user has within the database
-*/
 
-
-/*
 Type: User_Credential
 Desc: Used to define the structure of a user credential within the Ostrich Database
       User credentials are used to authenticate a user within the database
@@ -119,21 +105,10 @@ CommandHistory :: struct {
 	cHistoryPrevious:   string,
 }
 
-
-//=================================================/src/core/focus/=================================================//
-/*
-Type: Focus
-Desc: Used to determin which layer of data the user is focusing on to shorten the
-      amount of ATOM tokns that the user needs to enter when executing a command
-Usage Locations: focus.odin
-*/
-focus: Focus
-Focus :: struct {
-	t_:   string, // The primary target (e.g., "CLUSTER" or "COLLECTION")
-	o_:   string, // The primary object (e.g., "myCluster" or "myCollection")
-	p_o:  string, // The parent object of the primary object (e.g., "myCluster" or "myCollection")
-	gp_o: string, // The grandparent object of the primary object (e.g.,"myCollection" in relation to a record in "myCluster")
-	flag: bool, // If the focus is active
+id: Ids
+Ids :: struct {
+	clusterIdCount: int,
+	userIdCount:    int,
 }
 
 help_mode: Help_Mode
@@ -152,7 +127,7 @@ data_integrity_checks: Data_Integrity_Checks
 
 
 Data_Integrity_Checks :: struct {
-	File_Size:           Data_Integrity_Info, //ensure file size isnt larger thant const.MAX_FILE_SIZE. LOW SEVERITY
+	File_Size:           Data_Integrity_Info, //ensure file size isnt larger than const.MAX_FILE_SIZE. LOW SEVERITY
 	File_Format:         Data_Integrity_Info, //ensure proper format of the file ie closing brackets, commas, etc... HIGH SEVERITY
 	File_Format_Version: Data_Integrity_Info, //ensure that the file format version is compliant with the current version. MEDIUM SEVERITY
 	Cluster_IDs:         Data_Integrity_Info, //ensure that the value of all cluster ids within a collection are in the cache. HIGH SEVERITY
@@ -183,3 +158,99 @@ schema: Collection_File_Schema
 Collection_File_Schema :: struct {
 	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
 }
+
+
+//Server Stuff Below
+//Server Stuff Below
+//Server Stuff Below
+
+Server_Config :: struct {
+	port: int,
+}
+
+HttpStatusCode :: enum {
+	OK           = 200,
+	BAD_REQUEST  = 400,
+	NOT_FOUND    = 404,
+	SERVER_ERROR = 500,
+}
+
+HttpStatus :: struct {
+	code: HttpStatusCode,
+	text: string,
+}
+
+HttpMethod :: enum {
+	HEAD,
+	GET,
+	POST,
+	PUT,
+	DELETE,
+}
+
+// m -  method p - path h - headers
+RouteHandler :: proc(
+	m: string,
+	p: string,
+	h: map[string]string,
+	params: ..string,
+) -> (
+	HttpStatus,
+	string,
+)
+
+
+Route :: struct {
+	m: HttpMethod, //method
+	p: string, //path
+	h: RouteHandler, //handler
+}
+Router :: struct {
+	routes: [dynamic]Route,
+}
+
+//IDk what the fuck #sparse does but the language server stopped yelling at me when I added it so fuck it - Marshall aka SchoolyB
+HttpStatusText :: #sparse[HttpStatusCode]string {
+	.OK           = "OK",
+	.BAD_REQUEST  = "Bad Request",
+	.NOT_FOUND    = "Not Found",
+	.SERVER_ERROR = "Internal Server Error",
+}
+
+
+//BATCH OPERATION STUFF
+//BATCH OPERATION STUFF
+//BATCH OPERATION STUFF
+
+
+// OST_BATCH_OPERATION :: proc(batch: BatchRequest, params: [dynamic]string) -> int
+OST_BATCH_COLLECTION_PROC :: proc(names: []string, operation: BatchOperation) -> int //Used for batch operations on collections using the NEW/ERASE/FETCH tokens
+//used when multiple operations are to be performed
+
+BatchOperations :: enum {
+	//Rename is not uncluded because that token will require 2 inputs...ie the old name and new name. these only need 1
+	NEW   = 1,
+	ERASE = 2,
+	FETCH = 3,
+}
+
+BatchRequest :: struct {
+	operations: []BatchOperation,
+	atomic:     bool,
+}
+
+
+BatchOperation :: struct {
+	operation:      string,
+	collectionName: string,
+	clusterName:    string,
+	recordName:     string,
+	record:         Record, //this will allow for the name,type and value of the record
+}
+
+errSupression: ErrorSuppression
+ErrorSuppression :: struct {
+	enabled: bool, //uses the OST_READ_CONFIG_VALUE to get the value of the error suppression config then set true or false
+}
+
+TESTING: bool // Global flag to indicate if running in test mode

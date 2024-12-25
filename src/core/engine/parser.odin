@@ -23,11 +23,10 @@ OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	return false
 }
 
-//the params arg is only used when in FOCUS mode to pass the focus targets and objects
 OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
-	//dot notation will allow for accessing context like this: <action> <target> child.parent.grandparent or <action> <target> child.parent
+	//dot notation allows for accessing context like this: <action> <target> child.parent.grandparent or <action> <target> child.parent
 	cmd := types.Command {
 		o_token            = make([dynamic]string),
 		m_token            = make(map[string]string),

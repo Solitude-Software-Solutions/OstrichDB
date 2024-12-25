@@ -1,8 +1,8 @@
 # OstrichDB Combined Documentation
 
-OstrichDB is a serverless, multi-user database management system that uses a JSON-like hierarchical data structure. It is designed for macOS and Linux systems and operates through a command-line interface. This document combines the general, simple, and advanced help documentation for OstrichDB.
+OstrichDB is a versatile, multi-user Database Management System that uses a JSON-like hierarchical data structure. It can be run serverless from the command line or in server mode, making it adaptable for various use cases. Designed for macOS and Linux systems, OstrichDB operates through a command-line interface. This document combines the general, simple, and advanced help documentation for OstrichDB.
 
-OstrichDB allows for the use of dot notation to quickly perform actions on data objetcs. The database is organized into collections, clusters, and records, with records being the smallest unit of data. The command structure is based on four types of tokens: Actions, Targets, Objects, and Modifiers.
+OstrichDB allows for the use of dot notation to quickly perform actions on data objects. The DBMS is organized into collections, clusters, and records, with records being the smallest unit of data. The command structure is based on four types of tokens: Actions, Targets, Objects, and Modifiers.
 
 ## General Commands
 
@@ -26,6 +26,9 @@ Rebuilds the database and restarts OstrichDB. Useful if you are making changes t
 
 ### CLEAR
 Clears the screen, helping to keep the command line organized.
+
+### TEST
+Runs the test suite for OstrichDB.
 
 ### TREE
 Displays a tree view all collections and thier clusters within OstrichDB
@@ -78,13 +81,21 @@ Example: `COUNT CLUSTERS <collection_name>`
 Returns the size in bytes of an object.
 Example: `SIZE_OF COLLECTION <collection_name>`
 
+### WHERE
+Either searches all or a specific collection for the location of a cluster or record.
+Example: `WHERE CLUSTER <cluster_name>`
+or
+`WHERE <object_name>`
 
 ## Data Structure Concepts
 
+### DBMS Overview
+OstrichDB is a Document-based NoSQL Database Management System that organizes data in a hierarchical structure:
+
 ### COLLECTION
-- Individual databases containing clusters
+- Individual databases within the DBMS
 - Stored as `.ost` files in `/bin/collections`
-- Equivalent to a database in traditional systems
+- Equivalent to a database instance in traditional DBMS systems
 
 ### CLUSTER
 - Groups of related records within a collection
@@ -108,3 +119,28 @@ Example: `RENAME COLLECTION <old_name> TO <new_name>`
 Used with NEW to specify the data type of a record.
 Example: `NEW RECORD <collection_name>.<cluster_name>.<record_name> OF_TYPE <data_type>`
 Supported data types: `INT`, `STR`, `BOOL`, `FLOAT`
+
+## DBMS Architecture
+
+### Overview
+OstrichDB is designed as a local-first Document-based NoSQL DBMS that prioritizes:
+- Data integrity and consistency
+- Simple yet powerful command interface
+- JSON-like data structures
+- Built-in security features
+- Comprehensive backup and recovery
+
+### Components
+1. **Command Processor**: Handles user interactions and command parsing
+2. **Storage Engine**: Manages data persistence and retrieval
+3. **Security Layer**: Handles authentication and access control
+4. **Backup System**: Manages data backup and recovery
+5. **Integrity Checker**: Ensures data consistency and validation
+
+### Data Flow
+1. Commands are processed through the CLI
+2. The DBMS validates and parses the command
+3. Security checks are performed
+4. Data operations are executed
+5. Changes are persisted to storage
+6. Results are returned to the user
