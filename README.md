@@ -31,7 +31,7 @@ OstrichDB organizes data into three levels:
 
 ## **Command Structure (ATOMs)**
 
-In ObstrichDB, commands are typically broken into **four types of tokens**, called **ATOMs**, to improve readability and ensure clear instructions.
+In OstrichDB, commands are typically broken into **four types of tokens**, called **ATOMs**, to improve readability and ensure clear instructions.
 
 **Note:** Not all commands require all four tokens.
 
