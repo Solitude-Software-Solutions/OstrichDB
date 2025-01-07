@@ -42,7 +42,7 @@ In OstrichDB, commands are typically broken into **three types of tokens**, call
 
 ---
 
-### **Command Examples**
+### **Command Walkthrough**
 
 ```bash
 NEW foo.bar.baz OF_TYPE []STRING
@@ -52,7 +52,7 @@ Explanation:
 - **`foo`**: The fisrt object always points to a collection. (Location token). Note: If there is only 1 object given, its a collection.
 - **`bar`**: The second object always to a cluster within the collection. (Location token).
 - **`baz`**: The third object is always a record within the cluster. (Location token).
-- **`OF_TYPE`**: Specifies the data type of the record (Parameter token).
+- **`OF_TYPE`**: Specifies the data type of the record (Parameter token). Note: Only records are given data types.
 - **`[]STRING`**: The record will be an array of strings (Parameter token).
 
 ---
