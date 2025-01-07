@@ -16,12 +16,11 @@ Helpful Hint: Commands are built of ATOMs (A)ction, (T)arget, (O)bject, (M)odifi
 Usage Locations: commands.odin & parser.odin
 */
 Command :: struct {
-	a_token:            string, //action token
-	t_token:            string, //object token
-	o_token:            [dynamic]string, //target token
-	m_token:            map[string]string, //modifier token
-	s_token:            map[string]string, //scope token
+	c_token:            string, //command token
+	l_token:            [dynamic]string, //location token
+	p_token:            map[string]string, //parameter token
 	isUsingDotNotation: bool, //if the command is using dot notation
+	t_token:            string, //target token only needed for very specific commands like WHERE,HELP, and NEW USER
 }
 //=================================================/src/core/data/=================================================//
 /*
@@ -46,18 +45,11 @@ Usage Locations: NOT YET FULLY IMPLEMENTED but will be used engine.odin
 */
 engine: Engine
 Engine :: struct {
-	EngineRuntime:   time.Duration, // The amount of time the engine has been running
-	Status:          int, // 0, 1, 2
-	StatusName:      string, // Idle, Running, Stopped mostly for logging purposes
-	Initialized:     bool, // if the engine has been initialized , important for first run and user setup
-	UserLoggedIn:    bool, // if a user is logged in...NO ACTION CAN BE PERFORMED WITHOUT A USER LOGGED IN
-	RecordsCreated:  int,
-	RecordsDeleted:  int,
-	RecordsUpdated:  int,
-	ClustersCreated: int,
-	ClustersDeleted: int,
-	ClustersUpdated: int,
-	//Tasking stuff
+	EngineRuntime: time.Duration, // The amount of time the engine has been running
+	Status:        int, // 0, 1, 2
+	StatusName:    string, // Idle, Running, Stopped mostly for logging purposes
+	Initialized:   bool, // if the engine has been initialized , important for first run and user setup
+	UserLoggedIn:  bool, // if a user is logged in...NO ACTION CAN BE PERFORMED WITHOUT A USER LOGGED IN
 }
 
 //=================================================/src/core/security/=================================================//
