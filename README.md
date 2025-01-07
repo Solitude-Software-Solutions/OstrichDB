@@ -29,37 +29,38 @@ OstrichDB organizes data into three levels:
 
 ---
 
-## **Command Structure (ATOMs)**
+## **Command Structure (CLPs)**
 
-In OstrichDB, commands are typically broken into **four types of tokens**, called **ATOMs**, to improve readability and ensure clear instructions.
+In OstrichDB, commands are typically broken into **three types of tokens**, called **CLPs**, to improve readability and ensure clear instructions.
 
-**Note:** Not all commands require all four tokens.
+**Note:** Not all commands require all 3 tokens.
 
-1. **(A)ction Token**: Specifies the operation to perform (e.g., `NEW`, `ERASE`, `RENAME`).
-2. **(T)arget Token**: The type of object that the action is being performed on (e.g., `CLUSTER`, `RECORD`).
-3. **(O)bject Token**: The name of the target object (e.g., `foo`, `bar`).
-4. **(M)odifier Token**: Additional parameters that change the behavior of the command (e.g.,`TO`, `OF_TYPE`).
+
+1. **(C)ommand Token**: Specifies the operation to perform (e.g., `NEW`, `ERASE`, `RENAME`).
+2. **(L)ocation Token**: The dot notation path that the command will be performed on (e.g., `foo.bar.baz`).
+3. **(P)arameter Token(s)**: Additional parameters that change the behavior of the command (e.g., `TO`, `OF_TYPE`).
 
 ---
 
-### **Command Example**
+### **Command Examples**
 
 ```bash
-NEW CLUSTER foo.bar
+NEW foo.bar.baz OF_TYPE []STRING
 ```
-
 Explanation:
-- **`NEW`**: Create a new object (Action token).
-- **`CLUSTER`**: The type of object to be created (Target token).
-- **`foo`**: The parent object that the new cluster will be created in (Object token).
-- **`bar`**: The name of the new cluster (Object token).
+- **`NEW`**: Create a new object (Command token).
+- **`foo`**: The fisrt object always points to a collection. (Location token). Note: If there is only 1 object given, its a collection.
+- **`bar`**: The second object always to a cluster within the collection. (Location token).
+- **`baz`**: The third object is always a record within the cluster. (Location token).
+- **`OF_TYPE`**: Specifies the data type of the record (Parameter token).
+- **`[]STRING`**: The record will be an array of strings (Parameter token).
 
 ---
 
 ## **Supported Commands**
 
-### **Single-Token Actions**
-These actions perform simple tasks without needing additional arguments.
+### **Single-Token Operations**
+These operations perform simple tasks without needing additional arguments.
 
 - **`VERSION`**: Displays the current version of OstrichDB.
 - **`LOGOUT`**: Logs out the current user.
@@ -75,8 +76,8 @@ These actions perform simple tasks without needing additional arguments.
 
 ---
 
-### **Multi-Token Actions**
-These actions allow you to perform more complex operations.
+### **Multi-Token Operations**
+These operations allow you to perform more complex operations.
 
 - **`NEW`**: Create a new collection, cluster, record, or user.
 - **`ERASE`**: Delete a collection, cluster, or record.
@@ -88,16 +89,16 @@ These actions allow you to perform more complex operations.
 - **`COUNT`**: Returns the number of objects within a scope. Paired with the plural form of the object type (e.g., `RECORDS`, `CLUSTERS`).
 - **`SIZE_OF`**: Returns the size in bytes of an object.
 - **`TYPE_OF`**: Returns the type of a record.
-- **`HELP`**: Displays help information for a specific ATOM.
+- **`HELP`**: Displays help information for a specific token.
 - **`ISOLATE`**: Quarentines a collection file. Preventing any further changes to the file
 - **`WHERE`**: Searches for a record or cluster by name. DOES NOT WORK WITH COLLECTIONS.
 ---
 
-### **Modifiers in Commands**
+### **Parameters**
 
 Modifiers adjust the behavior of commands. The current supported modifiers are:
 - **`TO`**: Used to assign a new value or name (e.g., renaming an object or setting a record's value).
-- **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR).
+- **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR, []BOOL).
 
 
 ## **Supported Record Data Type Tokens**
@@ -158,25 +159,25 @@ Other supported data types include:
 ## **Usage Examples**
    ```bash
    # Create a new collection:
-   NEW COLLECTION staff
+   NEW staff
    # Create a new cluster:
-   NEW CLUSTER staff.engineering
+   NEW staff.engineering
    # Create a new record:
-   NEW RECORD staff.engineering.team_one OF_TYPE []STRING
+   NEW staff.engineering.team_one OF_TYPE []STRING
    # Set a record value:
-   SET RECORD staff.engineers.team_one TO Alice,Bob,Charlie
+   SET staff.engineers.team_one TO Alice,Bob,Charlie
    # Fetch the record value:
-   FETCH RECORD staff.engineers.team_one
+   FETCH staff.engineers.team_one
    # Rename a cluster:
-   RENAME CLUSTER staff.engineering TO HR
+   RENAME staff.engineering TO HR
    # Get the size of a cluster:
-   SIZE_OF CLUSTER staff.HR
+   SIZE_OF staff.HR
    # Erase a record:
-   ERASE RECORD staff.HR.team_one
+   ERASE staff.HR.team_one
    # Get a count of all collections in the database:
    COUNT COLLECTIONS
-   # Get help on a specific ATOM
-   HELP RECORD
+   #Get help information for a specific token:
+   HELP {TOKEN_NAME}
    # Get general help information
    HELP
    # Create a new user
