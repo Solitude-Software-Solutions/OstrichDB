@@ -96,7 +96,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		input := strings.trim_right(string(buf[:n]), "\r\n")
 		OST_APPEND_COMMAND_TO_HISTORY(input)
 		cmd := OST_PARSE_COMMAND(input)
-		fmt.printfln("Command: %v", cmd) //debugging
+		// fmt.printfln("Command: %v", cmd) //debugging
 		result := OST_EXECUTE_COMMAND(&cmd)
 
 		switch (result) 

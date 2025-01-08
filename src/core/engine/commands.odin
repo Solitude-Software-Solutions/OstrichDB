@@ -829,92 +829,92 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// // FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
-	// case const.FETCH:
-	// 	utils.log_runtime_event("Used FETCH command", "")
-	// 	switch (cmd.t_token)
-	// 	{
-	// 	case const.COLLECTION:
-	// 		if len(cmd.l_token) > 0 {
-	// 			collection := cmd.l_token[0]
-	// 			str := data.OST_FETCH_COLLECTION(collection)
-	// 			fmt.println(str)
-	// 		} else {
-	// 			fmt.println(
-	// 				"Incomplete command. Correct Usage: FETCH COLLECTION <collection_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Incomplete FETCH command",
-	// 				"User did not provide a valid collection name to fetch.",
-	// 			)
-	// 		}
-	// 		break
-	// 	case const.CLUSTER:
-	// 		if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
-	// 			collection := cmd.l_token[0]
-	// 			cluster := cmd.l_token[1]
-	// 			clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
-	// 			fmt.printfln(clusterContent)
-	// 		} else {
-	// 			fmt.println(
-	// 				"Incomplete command. Correct Usage: FETCH CLUSTER <collection_name>.<cluster_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Incomplete FETCH command",
-	// 				"User did not provide a valid cluster name to fetch.",
-	// 			)
-	// 		}
-	// 		break
-	// 	case const.RECORD:
-	// 		colllection_name: string
-	// 		cluster_name: string
-	// 		record_name: string
-	// 		if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
-	// 			collection_name := cmd.l_token[0]
-	// 			cluster_name := cmd.l_token[1]
-	// 			record_name := cmd.l_token[2]
+	case const.FETCH:
+		utils.log_runtime_event("Used FETCH command", "")
+		switch (len(cmd.l_token)) 
+		{
+		case 1:
+			if len(cmd.l_token) > 0 {
+				collection := cmd.l_token[0]
+				str := data.OST_FETCH_COLLECTION(collection)
+				fmt.println(str)
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: FETCH COLLECTION <collection_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FETCH command",
+					"User did not provide a valid collection name to fetch.",
+				)
+			}
+			break
+		case 2:
+			if cmd.isUsingDotNotation == true {
+				collection := cmd.l_token[0]
+				cluster := cmd.l_token[1]
+				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
+				fmt.printfln(clusterContent)
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: FETCH CLUSTER <collection_name>.<cluster_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FETCH command",
+					"User did not provide a valid cluster name to fetch.",
+				)
+			}
+			break
+		case 3:
+			colllection_name: string
+			cluster_name: string
+			record_name: string
+			if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
+				collection_name := cmd.l_token[0]
+				cluster_name := cmd.l_token[1]
+				record_name := cmd.l_token[2]
 
-	// 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-	// 			switch (checks)
-	// 			{
-	// 			case -1:
-	// 				return -1
-	// 			}
-	// 			record, found := data.OST_FETCH_RECORD(collection_name, cluster_name, record_name)
-	// 			fmt.printfln(
-	// 				"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
-	// 				utils.BOLD_UNDERLINE,
-	// 				record_name,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				cluster_name,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				collection_name,
-	// 				utils.RESET,
-	// 			)
-	// 			if found {
-	// 				fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
-	// 				fmt.println("\t^^^\t^^^\t^^^")
-	// 				fmt.println("\tName\tType\tValue\n\n")
-	// 			}
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Incomplete command. Correct Usage: FETCH RECORD <collection_name>.<cluster_name>.<record_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Incomplete FETCH command",
-	// 				"User did not provide a valid record name to fetch.",
-	// 			)
-	// 		}
-	// 		break
-	// 	case:
-	// 		fmt.printfln("Invalid command structure. Correct Usage: FETCH <Target> <Targets_name>")
-	// 		utils.log_runtime_event(
-	// 			"Invalid FETCH command",
-	// 			"User did not provide a valid target.",
-	// 		)
-	// 	}
-	// 	break
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
+				record, found := data.OST_FETCH_RECORD(collection_name, cluster_name, record_name)
+				fmt.printfln(
+					"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
+					utils.BOLD_UNDERLINE,
+					record_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					cluster_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+				)
+				if found {
+					fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
+					fmt.println("\t^^^\t^^^\t^^^")
+					fmt.println("\tName\tType\tValue\n\n")
+				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: FETCH RECORD <collection_name>.<cluster_name>.<record_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete FETCH command",
+					"User did not provide a valid record name to fetch.",
+				)
+			}
+			break
+		case:
+			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Target> <Targets_name>")
+			utils.log_runtime_event(
+				"Invalid FETCH command",
+				"User did not provide a valid target.",
+			)
+		}
+		break
 	// case const.SET:
 	// 	//set can only be usedon RECORDS and CONFIGS
 	// 	switch cmd.t_token
