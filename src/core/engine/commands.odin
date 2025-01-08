@@ -649,185 +649,185 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 
 	// // ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
-	// case const.ERASE:
-	// 	utils.log_runtime_event("Used ERASE command", "")
-	// 	switch (cmd.t_token)
-	// 	{
-	// 	case const.COLLECTION:
-	// 		if data.OST_ERASE_COLLECTION(cmd.l_token[0]) == true {
-	// 			fmt.printfln(
-	// 				"Collection: %s%s%s erased successfully",
-	// 				utils.BOLD_UNDERLINE,
-	// 				cmd.l_token[0],
-	// 				utils.RESET,
-	// 			)
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Failed to erase collection: %s%s%s",
-	// 				utils.BOLD_UNDERLINE,
-	// 				cmd.l_token[0],
-	// 				utils.RESET,
-	// 			)
-	// 		}
-	// 		break
-	// 	case const.CLUSTER:
-	// 		collection_name: string
-	// 		cluster_name: string
+	case const.ERASE:
+		utils.log_runtime_event("Used ERASE command", "")
+		switch (len(cmd.l_token)) 
+		{
+		case 1:
+			if data.OST_ERASE_COLLECTION(cmd.l_token[0]) == true {
+				fmt.printfln(
+					"Collection: %s%s%s erased successfully",
+					utils.BOLD_UNDERLINE,
+					cmd.l_token[0],
+					utils.RESET,
+				)
+			} else {
+				fmt.printfln(
+					"Failed to erase collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					cmd.l_token[0],
+					utils.RESET,
+				)
+			}
+			break
+		case 2:
+			collection_name: string
+			cluster_name: string
 
-	// 		if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
-	// 			collection_name := cmd.l_token[0]
-	// 			cluster := cmd.l_token[1]
-	// 			clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
-	// 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-	// 			switch (checks)
-	// 			{
-	// 			case -1:
-	// 				return -1
-	// 			}
+			if cmd.isUsingDotNotation == true {
+				collection_name := cmd.l_token[0]
+				cluster := cmd.l_token[1]
+				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
 
-	// 			if data.OST_ERASE_CLUSTER(collection_name, cluster) == true {
-	// 				fmt.printfln(
-	// 					"Cluster: %s%s%s successfully erased from collection: %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					cluster,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				// utils.remove_id_from_cache(clusterID)
-	// 			} else {
-	// 				fmt.printfln(
-	// 					"Failed to erase cluster: %s%s%s from collection: %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					cluster,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 			}
-	// 			fn := utils.concat_collection_name(collection_name)
-	// 			metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-	// 			metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-	// 		} else {
-	// 			fmt.println(
-	// 				"Incomplete command. Correct Usage: ERASE CLUSTER <collection_name>.<cluster_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Incomplete ERASE command",
-	// 				"User did not provide a valid cluster name to erase.",
-	// 			)
-	// 		}
-	// 		break
-	// 	case const.RECORD:
-	// 		collection_name: string
-	// 		cluster_name: string
-	// 		record_name: string
+				if data.OST_ERASE_CLUSTER(collection_name, cluster) == true {
+					fmt.printfln(
+						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cluster,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					// utils.remove_id_from_cache(clusterID)
+				} else {
+					fmt.printfln(
+						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cluster,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+				}
+				fn := utils.concat_collection_name(collection_name)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: ERASE CLUSTER <collection_name>.<cluster_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete ERASE command",
+					"User did not provide a valid cluster name to erase.",
+				)
+			}
+			break
+		case 3:
+			collection_name: string
+			cluster_name: string
+			record_name: string
 
-	// 		if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
-	// 			collection_name := cmd.l_token[0]
-	// 			cluster_name := cmd.l_token[1]
-	// 			record_name := cmd.l_token[2]
+			if cmd.isUsingDotNotation == true {
+				collection_name := cmd.l_token[0]
+				cluster_name := cmd.l_token[1]
+				record_name := cmd.l_token[2]
 
-	// 			clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster_name)
-	// 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-	// 			switch (checks)
-	// 			{
-	// 			case -1:
-	// 				return -1
-	// 			}
+				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster_name)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					return -1
+				}
 
-	// 			if data.OST_ERASE_RECORD(collection_name, cluster_name, record_name) == true {
-	// 				fmt.printfln(
-	// 					"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					record_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					cluster_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 			} else {
-	// 				fmt.printfln(
-	// 					"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					record_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					cluster_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 			}
-	// 		}
-	// 		break
-	// 	case const.USER:
-	// 		secColPath := fmt.tprintf(
-	// 			"%ssecure_%s%s",
-	// 			const.OST_SECURE_COLLECTION_PATH,
-	// 			types.current_user.username.Value,
-	// 			const.OST_FILE_EXTENSION,
-	// 		)
-	// 		result: bool
-	// 		if len(cmd.l_token) == 1 {
-	// 			//evaluate current logged in users role
-	// 			if data.OST_READ_RECORD_VALUE(
-	// 				   secColPath,
-	// 				   types.current_user.username.Value,
-	// 				   "identifier",
-	// 				   "role",
-	// 			   ) ==
-	// 			   "admin" {
-	// 				result := security.OST_DELETE_USER(cmd.l_token[0])
-	// 				if result {
-	// 					fmt.printfln(
-	// 						"User: %s%s%s successfully deleted.",
-	// 						utils.BOLD_UNDERLINE,
-	// 						cmd.l_token[0],
-	// 						utils.RESET,
-	// 					)
-	// 				} else {
-	// 					fmt.printfln(
-	// 						"Failed to delete user: %s%s%s",
-	// 						utils.BOLD_UNDERLINE,
-	// 						cmd.l_token[0],
-	// 						utils.RESET,
-	// 					)
-	// 				}
-	// 			} else {
-	// 				fmt.printfln(
-	// 					"User: %s%s%s does not have permission to delete users.",
-	// 					utils.BOLD_UNDERLINE,
-	// 					types.current_user.username.Value,
-	// 					utils.RESET,
-	// 				)
-	// 				result = false
-	// 			}
-	// 			if result == true {
-	// 				return 0
-	// 			} else {
-	// 				return -1
-	// 			}
-	// 		} else {
-	// 			fmt.printfln("Incomplete command. Correct Usage: ERASE USER <username>")
-	// 		}
-	// 		break
-	// 	case:
-	// 		fmt.printfln(
-	// 			"Invalid command structure. Correct Usage: ERASE <collection_name>.<cluster_name>.<record_name>",
-	// 		)
-	// 		utils.log_runtime_event(
-	// 			"Invalid ERASE command",
-	// 			"User did not provide a valid target.",
-	// 		)
-	// 	}
-	// 	break
+				if data.OST_ERASE_RECORD(collection_name, cluster_name, record_name) == true {
+					fmt.printfln(
+						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						record_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+				} else {
+					fmt.printfln(
+						"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
+						utils.BOLD_UNDERLINE,
+						record_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+				}
+			}
+			break
+		// case const.USER:
+		// 	secColPath := fmt.tprintf(
+		// 		"%ssecure_%s%s",
+		// 		const.OST_SECURE_COLLECTION_PATH,
+		// 		types.current_user.username.Value,
+		// 		const.OST_FILE_EXTENSION,
+		// 	)
+		// 	result: bool
+		// 	if len(cmd.l_token) == 1 {
+		// 		//evaluate current logged in users role
+		// 		if data.OST_READ_RECORD_VALUE(
+		// 			   secColPath,
+		// 			   types.current_user.username.Value,
+		// 			   "identifier",
+		// 			   "role",
+		// 		   ) ==
+		// 		   "admin" {
+		// 			result := security.OST_DELETE_USER(cmd.l_token[0])
+		// 			if result {
+		// 				fmt.printfln(
+		// 					"User: %s%s%s successfully deleted.",
+		// 					utils.BOLD_UNDERLINE,
+		// 					cmd.l_token[0],
+		// 					utils.RESET,
+		// 				)
+		// 			} else {
+		// 				fmt.printfln(
+		// 					"Failed to delete user: %s%s%s",
+		// 					utils.BOLD_UNDERLINE,
+		// 					cmd.l_token[0],
+		// 					utils.RESET,
+		// 				)
+		// 			}
+		// 		} else {
+		// 			fmt.printfln(
+		// 				"User: %s%s%s does not have permission to delete users.",
+		// 				utils.BOLD_UNDERLINE,
+		// 				types.current_user.username.Value,
+		// 				utils.RESET,
+		// 			)
+		// 			result = false
+		// 		}
+		// 		if result == true {
+		// 			return 0
+		// 		} else {
+		// 			return -1
+		// 		}
+		// 	} else {
+		// 		fmt.printfln("Incomplete command. Correct Usage: ERASE USER <username>")
+		// 	}
+		// 	break
+		case:
+			fmt.printfln(
+				"Invalid command structure. Correct Usage: ERASE <collection_name>.<cluster_name>.<record_name>",
+			)
+			utils.log_runtime_event(
+				"Invalid ERASE command",
+				"User did not provide a valid target.",
+			)
+		}
+		break
 	// // FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	// case const.FETCH:
 	// 	utils.log_runtime_event("Used FETCH command", "")
