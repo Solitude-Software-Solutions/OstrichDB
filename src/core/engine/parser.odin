@@ -60,11 +60,18 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 				break
 			case:
 				cmd.t_token = cmd.t_token
-				append(&cmd.l_token, token)
-				break
-			}
+				if strings.contains(token, ".") {
+					cmd.isUsingDotNotation = true
+					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
+					for obj in objTokensSepByDot {
+						append(&cmd.l_token, obj)
+					}
+				} else {
+					append(&cmd.l_token, token)
+				}
 
-			state = 1
+				state = 1
+			}
 		case 1:
 			// Expecting object or modifier
 			if OST_IS_VALID_MODIFIER(token) {
@@ -85,7 +92,9 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			// Expecting object after modifier
 			cmd.p_token[currentModifier] = token // Preserve original case for modifier values
 			state = 1
+
 		}
+
 	}
 
 	return cmd

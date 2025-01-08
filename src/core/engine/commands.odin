@@ -194,21 +194,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			} else {
 				fmt.println("Backup failed. Please try again.")
-
-
+				utils.log_err("Failed to backup collection.", #procedure)
+				return -1
 			}
-			// else {
-			// 	fmt.println(
-			// 		"Incomplete command. Correct Usage: BACKUP COLLECTION <collection_name>",
-			// 	)
-			// 	utils.log_runtime_event(
-			// 		"Incomplete BACKUP command",
-			// 		"User did not provide a collection name to backup.",
-			// 	)
-			// }
+
 			break
 		case:
-			fmt.println("Invalid command. Correct Usage: BACKUP COLLECTION <collection_name>")
+			fmt.println("Invalid command. Correct Usage: BACKUP <collection_name>")
 			fmt.println(
 				"Backing up a cluster or record is not currently support in OstrichDB. Try backing up a collection instead.",
 			)
@@ -220,11 +212,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//NEW: Allows for the creation of new records, clusters, or collections
 	case const.NEW:
-		fmt.println("length of l_token: ", len(cmd.l_token))
 		utils.log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
-			fmt.println("HIYA")
 			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
 			switch (exists) {
 			case false:
@@ -269,22 +259,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				break
 			}
-			//  else {
-			// 	fmt.println("Incomplete command. Correct Usage: NEW <collection_name>")
-			// 	utils.log_runtime_event(
-			// 		"Incomplete NEW command",
-			// 		"User did not provide a collection name to create.",
-			// 	)
-			// }
 			break
 		case 2:
 			cluster_name: string
 			collection_name: string
-			if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
-				if cmd.isUsingDotNotation == true {
-					collection_name = cmd.l_token[0]
-					cluster_name = cmd.l_token[1]
-				}
+			if cmd.isUsingDotNotation == true {
+				collection_name = cmd.l_token[0]
+				cluster_name = cmd.l_token[1]
 				fmt.printf(
 					"Creating cluster: %s%s%s within collection: %s%s%s\n",
 					utils.BOLD_UNDERLINE,
@@ -459,6 +440,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 			break
+		case:
+			fmt.printfln("Invalid command structure. Correct Usage: NEW <Location> <Parameters>")
+			utils.log_runtime_event(
+				"Invalid NEW command",
+				"User did not provide a valid target to create.",
+			)
+			break
+		}
+
 		// case const.USER:
 		// 	utils.log_runtime_event(
 		// 		"Used NEW USER command",
@@ -474,191 +464,189 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		// 		"Invalid NEW command",
 		// 		"User did not provide a valid target to create.",
 		// 	)
-		}
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
-	// case const.RENAME:
-	// 	utils.log_runtime_event("Used RENAME command", "")
-	// 	switch (cmd.t_token)
-	// 	{
-	// 	case const.COLLECTION:
-	// 		if len(cmd.l_token) > 0 && const.TO in cmd.p_token {
-	// 			old_name := cmd.l_token[0]
-	// 			new_name := cmd.p_token[const.TO]
+	case const.RENAME:
+		utils.log_runtime_event("Used RENAME command", "")
+		switch (len(cmd.l_token)) 
+		{
+		case 1:
+			if const.TO in cmd.p_token {
+				old_name := cmd.l_token[0]
+				new_name := cmd.p_token[const.TO]
 
-	// 			fmt.printf(
-	// 				"Renaming collection: %s%s%s to %s%s%s\n",
-	// 				utils.BOLD_UNDERLINE,
-	// 				old_name,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				new_name,
-	// 				utils.RESET,
-	// 			)
-	// 			success := data.OST_RENAME_COLLECTION(old_name, new_name)
-	// 			switch (success)
-	// 			{
-	// 			case true:
-	// 				fmt.printf(
-	// 					"Successfully renamed collection: %s%s%s to %s%s%s\n",
-	// 					utils.BOLD_UNDERLINE,
-	// 					old_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					new_name,
-	// 					utils.RESET,
-	// 				)
-	// 				utils.log_runtime_event(
-	// 					"Successfully renamed collection",
-	// 					"User successfully renamed a collection.",
-	// 				)
-	// 				break
-	// 			case:
-	// 				fmt.printfln(
-	// 					"Failed to rename collection: %s%s%s to %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					old_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					new_name,
-	// 					utils.RESET,
-	// 				)
-	// 				utils.log_runtime_event(
-	// 					"Failed to rename collection",
-	// 					"User requested to rename a collection but failed.",
-	// 				)
-	// 				utils.log_err("Failed to rename collection.", #procedure)
-	// 				break
-	// 			}
+				fmt.printf(
+					"Renaming collection: %s%s%s to %s%s%s\n",
+					utils.BOLD_UNDERLINE,
+					old_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					new_name,
+					utils.RESET,
+				)
+				success := data.OST_RENAME_COLLECTION(old_name, new_name)
+				switch (success) 
+				{
+				case true:
+					fmt.printf(
+						"Successfully renamed collection: %s%s%s to %s%s%s\n",
+						utils.BOLD_UNDERLINE,
+						old_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						new_name,
+						utils.RESET,
+					)
+					utils.log_runtime_event(
+						"Successfully renamed collection",
+						"User successfully renamed a collection.",
+					)
+					break
+				case:
+					fmt.printfln(
+						"Failed to rename collection: %s%s%s to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						old_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						new_name,
+						utils.RESET,
+					)
+					utils.log_runtime_event(
+						"Failed to rename collection",
+						"User requested to rename a collection but failed.",
+					)
+					utils.log_err("Failed to rename collection.", #procedure)
+					break
+				}
 
-	// 		} else {
-	// 			fmt.println(
-	// 				"Incomplete command. Correct Usage: RENAME COLLECTION <old_name> TO <new_name>",
-	// 			)
-	// 		}
-	// 		break
-	// 	case const.CLUSTER:
-	// 		cluster_name: string
-	// 		collection_name: string
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: RENAME COLLECTION <old_name> TO <new_name>",
+				)
+			}
+			break
+		case 2:
+			cluster_name: string
+			collection_name: string
 
-	// 		if len(cmd.l_token) >= 2 && const.TO in cmd.p_token && cmd.isUsingDotNotation == true {
-	// 			old_name := cmd.l_token[1]
-	// 			collection_name := cmd.l_token[0]
-	// 			new_name := cmd.p_token[const.TO]
+			if const.TO in cmd.p_token && cmd.isUsingDotNotation == true {
+				old_name := cmd.l_token[1]
+				collection_name := cmd.l_token[0]
+				new_name := cmd.p_token[const.TO]
 
-	// 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-	// 			switch (checks)
-	// 			{
-	// 			case -1:
-	// 				fmt.printfln(
-	// 					"Failed to rename cluster %s%s%s to %s%s%s in collection %s%s%s\n",
-	// 				)
-	// 				return -1
-	// 			}
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				switch (checks) 
+				{
+				case -1:
+					fmt.printfln(
+						"Failed to rename cluster %s%s%s to %s%s%s in collection %s%s%s\n",
+					)
+					return -1
+				}
 
-	// 			success := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
-	// 			if success {
-	// 				fmt.printf(
-	// 					"Successfully renamed cluster %s%s%s to %s%s%s in collection %s%s%s\n",
-	// 					utils.BOLD_UNDERLINE,
-	// 					old_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					new_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				fn := utils.concat_collection_name(collection_name)
-	// 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-	// 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-	// 			} else {
-	// 				fmt.println(
-	// 					"Failed to rename cluster due to internal error. Please check error logs.",
-	// 				)
-	// 				utils.log_err("Failed to rename cluster.", #procedure)
-	// 			}
-	// 		} else {
-	// 			fmt.println(
-	// 				"Incomplete command. Correct Usage: RENAME CLUSTER <collection_name>.<old_name> TO <new_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Incomplete RENAME command",
-	// 				"User did not provide a valid cluster name to rename.",
-	// 			)
-	// 		}
-	// 		break
-	// 	case const.RECORD:
-	// 		oldRName: string
-	// 		newRName: string
-	// 		collection_name: string //only here if using dot notation
-	// 		cluster_name: string //only here if using dot notation
-	// 		if len(cmd.l_token) == 1 && const.TO in cmd.p_token || cmd.isUsingDotNotation == true {
-	// 			if cmd.isUsingDotNotation == true {
-	// 				oldRName = cmd.l_token[2]
-	// 				newRName = cmd.p_token[const.TO]
-	// 				collection_name = cmd.l_token[0]
-	// 				cluster_name = cmd.l_token[1]
-	// 			} else {
-	// 				oldRName = cmd.l_token[0]
-	// 				newRName = cmd.p_token[const.TO]
-	// 			}
-	// 			//Who wrote this code?? Oh wait, it was me. I'm sorry.
-	// 			result := data.OST_RENAME_RECORD(
-	// 				oldRName,
-	// 				newRName,
-	// 				cmd.isUsingDotNotation,
-	// 				strings.clone(collection_name),
-	// 				strings.clone(cluster_name),
-	// 			)
-	// 			switch (result)
-	// 			{
-	// 			case 0:
-	// 				fmt.printfln(
-	// 					"Record: %s%s%s successfully renamed to %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					oldRName,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					newRName,
-	// 					utils.RESET,
-	// 				)
-	// 				utils.log_runtime_event(
-	// 					"Successfully renamed record",
-	// 					"User successfully renamed a record.",
-	// 				)
-	// 				break
-	// 			case:
-	// 				fmt.printfln(
-	// 					"Failed to rename record: %s%s%s to %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					oldRName,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					newRName,
-	// 					utils.RESET,
-	// 				)
-	// 				utils.log_runtime_event(
-	// 					"Failed to rename record",
-	// 					"User requested to rename a record but failed.",
-	// 				)
-	// 				utils.log_err("Failed to rename record.", #procedure)
-	// 				break
-	// 			}
+				success := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
+				if success {
+					fmt.printf(
+						"Successfully renamed cluster %s%s%s to %s%s%s in collection %s%s%s\n",
+						utils.BOLD_UNDERLINE,
+						old_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						new_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					fn := utils.concat_collection_name(collection_name)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+				} else {
+					fmt.println(
+						"Failed to rename cluster due to internal error. Please check error logs.",
+					)
+					utils.log_err("Failed to rename cluster.", #procedure)
+				}
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: RENAME CLUSTER <collection_name>.<old_name> TO <new_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete RENAME command",
+					"User did not provide a valid cluster name to rename.",
+				)
+			}
+			break
+		case 3:
+			oldRName: string
+			newRName: string
+			collection_name: string //only here if using dot notation
+			cluster_name: string //only here if using dot notation
+			if const.TO in cmd.p_token || cmd.isUsingDotNotation == true {
+				if cmd.isUsingDotNotation == true {
+					oldRName = cmd.l_token[2]
+					newRName = cmd.p_token[const.TO]
+					collection_name = cmd.l_token[0]
+					cluster_name = cmd.l_token[1]
+				} else {
+					oldRName = cmd.l_token[0]
+					newRName = cmd.p_token[const.TO]
+				}
+				result := data.OST_RENAME_RECORD(
+					oldRName,
+					newRName,
+					cmd.isUsingDotNotation,
+					strings.clone(collection_name),
+					strings.clone(cluster_name),
+				)
+				switch (result) 
+				{
+				case 0:
+					fmt.printfln(
+						"Record: %s%s%s successfully renamed to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						oldRName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						newRName,
+						utils.RESET,
+					)
+					utils.log_runtime_event(
+						"Successfully renamed record",
+						"User successfully renamed a record.",
+					)
+					break
+				case:
+					fmt.printfln(
+						"Failed to rename record: %s%s%s to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						oldRName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						newRName,
+						utils.RESET,
+					)
+					utils.log_runtime_event(
+						"Failed to rename record",
+						"User requested to rename a record but failed.",
+					)
+					utils.log_err("Failed to rename record.", #procedure)
+					break
+				}
 
-	// 		} else {
-	// 			fmt.println(
-	// 				"Incomplete command. Correct Usage: RENAME RECORD <collection_name>.<cluster_name>.<old_name> TO <new_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Incomplete RENAME command",
-	// 				"User did not provide a valid record name to rename.",
-	// 			)
-	// 		}
-	// 		break
-	// 	}
-	// 	break
+			} else {
+				fmt.println(
+					"Incomplete command. Correct Usage: RENAME RECORD <collection_name>.<cluster_name>.<old_name> TO <new_name>",
+				)
+				utils.log_runtime_event(
+					"Incomplete RENAME command",
+					"User did not provide a valid record name to rename.",
+				)
+			}
+			break
+		}
+		break
 
 	// // ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	// case const.ERASE:
