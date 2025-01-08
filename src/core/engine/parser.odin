@@ -52,10 +52,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			// Expecting target
 			switch (cmd.c_token) 
 			{
-			case const.WHERE:
-				cmd.t_token = token
-				break
-			case const.HELP:
+			case const.WHERE, const.HELP, const.SET:
 				cmd.t_token = token
 				break
 			case:

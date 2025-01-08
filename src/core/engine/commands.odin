@@ -915,139 +915,139 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 		}
 		break
-	// case const.SET:
-	// 	//set can only be usedon RECORDS and CONFIGS
-	// 	switch cmd.t_token
-	// 	{
-	// 	case const.RECORD:
-	// 		if len(cmd.l_token) == 3 && const.TO in cmd.p_token && cmd.isUsingDotNotation {
-	// 			collectionName := cmd.l_token[0]
-	// 			clusterName := cmd.l_token[1]
-	// 			recordName := cmd.l_token[2]
-	// 			value: string
-	// 			for key, val in cmd.p_token {
-	// 				value = val
-	// 			}
-	// 			fmt.printfln(
-	// 				"Setting record: %s%s%s to %s%s%s",
-	// 				utils.BOLD_UNDERLINE,
-	// 				recordName,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				value,
-	// 				utils.RESET,
-	// 			)
-	// 			file := fmt.tprintf(
-	// 				"%s%s%s",
-	// 				const.OST_COLLECTION_PATH,
-	// 				collectionName,
-	// 				const.OST_FILE_EXTENSION,
-	// 			)
-	// 			ok := data.OST_SET_RECORD_VALUE(
-	// 				file,
-	// 				clusterName,
-	// 				recordName,
-	// 				strings.clone(value),
-	// 			)
-	// 			fn := utils.concat_collection_name(collectionName)
-	// 			metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-	// 			metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+	case const.SET:
+		// 	//set can only be usedon RECORDS and CONFIGS
+		switch (cmd.t_token) 
+		{
+		case const.RECORD:
+			if const.TO in cmd.p_token && cmd.isUsingDotNotation {
+				collectionName := cmd.l_token[0]
+				clusterName := cmd.l_token[1]
+				recordName := cmd.l_token[2]
+				value: string
+				for key, val in cmd.p_token {
+					value = val
+				}
+				fmt.printfln(
+					"Setting record: %s%s%s to %s%s%s",
+					utils.BOLD_UNDERLINE,
+					recordName,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					value,
+					utils.RESET,
+				)
+				file := fmt.tprintf(
+					"%s%s%s",
+					const.OST_COLLECTION_PATH,
+					collectionName,
+					const.OST_FILE_EXTENSION,
+				)
+				ok := data.OST_SET_RECORD_VALUE(
+					file,
+					clusterName,
+					recordName,
+					strings.clone(value),
+				)
+				fn := utils.concat_collection_name(collectionName)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 
-	// 		}
-	// 		break
-	// 	case const.CONFIG:
-	// 		utils.log_runtime_event("Used SET command", "")
-	// 		if len(cmd.l_token) == 1 && const.TO in cmd.p_token {
-	// 			configName := cmd.l_token[0]
-	// 			value: string
-	// 			for key, val in cmd.p_token {
-	// 				value = val
-	// 			}
-	// 			switch (configName)
-	// 			{
-	// 			case "HELP":
-	// 				if value != "VERBOSE" || value != "SIMPLE" {
-	// 					fmt.println(
-	// 						"Invalid value. Valid values for config help are: 'verbose' or 'simple'",
-	// 					)
-	// 					return 1
-	// 				}
+			}
+			break
+		case const.CONFIG:
+			utils.log_runtime_event("Used SET command", "")
+			if const.TO in cmd.p_token {
+				configName := cmd.l_token[0]
+				value: string
+				for key, val in cmd.p_token {
+					value = val
+				}
+				switch (configName) 
+				{
+				case "HELP":
+					if value != "VERBOSE" || value != "SIMPLE" {
+						fmt.println(
+							"Invalid value. Valid values for config help are: 'verbose' or 'simple'",
+						)
+						return 1
+					}
 
-	// 				fmt.printfln(
-	// 					"Setting config: %s%s%s to %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					configName,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					value,
-	// 					utils.RESET,
-	// 				)
-	// 				success := config.OST_UPDATE_CONFIG_VALUE(
-	// 					const.configFour,
-	// 					utils.append_qoutations(value),
-	// 				)
-	// 				if success == false {
-	// 					fmt.printfln("Failed to set HELP config to %s", value)
-	// 				} else {
-	// 					metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
-	// 					metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
-	// 					fmt.printfln("Successfully set HELP config to %s", value)
-	// 				}
-	// 				help.OST_SET_HELP_MODE()
-	// 			case "SERVER":
-	// 				if value != "TRUE" || value != "FALSE" {
-	// 					fmt.println(
-	// 						"Invalid value. Valid values for config server are: 'true' or 'false'",
-	// 					)
-	// 					return 1
-	// 				}
+					fmt.printfln(
+						"Setting config: %s%s%s to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						configName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						value,
+						utils.RESET,
+					)
+					success := config.OST_UPDATE_CONFIG_VALUE(
+						const.configFour,
+						utils.append_qoutations(value),
+					)
+					if success == false {
+						fmt.printfln("Failed to set HELP config to %s", value)
+					} else {
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+						fmt.printfln("Successfully set HELP config to %s", value)
+					}
+					help.OST_SET_HELP_MODE()
+				case "SERVER":
+					if value != "TRUE" || value != "FALSE" {
+						fmt.println(
+							"Invalid value. Valid values for config server are: 'true' or 'false'",
+						)
+						return 1
+					}
 
-	// 				fmt.printfln(
-	// 					"Setting config: %s%s%s to %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					configName,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					value,
-	// 					utils.RESET,
-	// 				)
+					fmt.printfln(
+						"Setting config: %s%s%s to %s%s%s",
+						utils.BOLD_UNDERLINE,
+						configName,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						value,
+						utils.RESET,
+					)
 
 
-	// 				success := config.OST_UPDATE_CONFIG_VALUE(const.configFive, value)
-	// 				if success == false {
-	// 					fmt.printfln("Failed to set SERVER config to %s", value)
-	// 				} else {
-	// 					fmt.printfln("Successfully set SERVER config to %s", value)
-	// 					metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
-	// 					metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
-	// 					if data.OST_READ_RECORD_VALUE(
-	// 						   const.OST_CONFIG_FILE,
-	// 						   const.CONFIG_CLUSTER,
-	// 						   const.BOOLEAN,
-	// 						   const.configFive,
-	// 					   ) ==
-	// 					   "true" {
-	// 						fmt.printfln("Server Mode is now ON")
-	// 						server.OST_START_SERVER(ServerConfig)
-	// 					} else {
-	// 						fmt.printfln("Server is now OFF")
-	// 					}
-	// 				}
-	// 			case:
-	// 				fmt.printfln("Invalid config name. Valid config names are: 'HELP'")
-	// 			}
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
-	// 			)
-	// 		}
-	// 		break
-	// 	case:
-	// 		fmt.printfln(
-	// 			"Invalid command structure. Correct Usage: SET <Target> <Targets_name> TO <value>",
-	// 		)
-	// 		fmt.printfln("The SET command can only be used on RECORDS and CONFIGS")
-	// 	}
+					success := config.OST_UPDATE_CONFIG_VALUE(const.configFive, value)
+					if success == false {
+						fmt.printfln("Failed to set SERVER config to %s", value)
+					} else {
+						fmt.printfln("Successfully set SERVER config to %s", value)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+						if data.OST_READ_RECORD_VALUE(
+							   const.OST_CONFIG_FILE,
+							   const.CONFIG_CLUSTER,
+							   const.BOOLEAN,
+							   const.configFive,
+						   ) ==
+						   "true" {
+							fmt.printfln("Server Mode is now ON")
+							server.OST_START_SERVER(ServerConfig)
+						} else {
+							fmt.printfln("Server is now OFF")
+						}
+					}
+				case:
+					fmt.printfln("Invalid config name. Valid config names are: 'HELP'")
+				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
+				)
+			}
+			break
+		case:
+			fmt.printfln(
+				"Invalid command structure. Correct Usage: SET <Target> <Targets_name> TO <value>",
+			)
+			fmt.printfln("The SET command can only be used on RECORDS and CONFIGS")
+		}
 	// case const.COUNT:
 	// 	utils.log_runtime_event("Used COUNT command", "")
 	// 	switch (cmd.t_token)
