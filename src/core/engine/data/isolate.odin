@@ -39,13 +39,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	quarantine_path := fmt.tprintf("%s%s", const.OST_QUARANTINE_PATH, quarantineFilename)
 	// Move the file to quarantine
 	//
-	err := os.rename(collectionFile, quarantine_path)
-	//THe Odin compiler on Linux doesnt expect a bool return from os.rename
-	when ODIN_OS == .Linux {
-		if err != os.ERROR_NONE {
-			return -1
-		}
-	}
+
 
 	//TODO: So on mac this is throwing an error below but its working as intended. IDK why lol - Schooly
 	//The Odin compiler on Darwin expects a bool return from os.rename
@@ -55,6 +49,29 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	// 		return -2
 	// 	}
 	// }
+	//
+
+	//ID REMOVAL STUFF
+	idsAsInt, idsAsStr := OST_GET_ALL_CLUSTER_IDS(fn)
+	idRemovaleResult := OST_REMOVE_ISOLATED_CLUSTER_IDS(idsAsStr)
+	if !idRemovaleResult {
+		utils.log_err("Error removing isolated cluster IDs", #procedure)
+		return -3
+	}
+
+	delete(idsAsStr)
+	delete(idsAsInt)
+	//END ID REMOVAL STUFF
+
+
+	err := os.rename(collectionFile, quarantine_path)
+	//THe Odin compiler on Linux doesnt expect a bool return from os.rename
+	when ODIN_OS == .Linux {
+		if err != os.ERROR_NONE {
+			return -1
+		}
+	}
+
 
 	result := OST_APPEND_QUARANTINE_METADATA(fn, quarantine_path)
 	return result
@@ -129,4 +146,19 @@ OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, quarantine_path: string) -> i
 	}
 
 	return 0
+}
+
+
+//TODO:
+//in the event that a cluster id in a normal collectionn file
+// is modified, the check systsem bugs out. its looking for an exact match of the cluster
+// id so if that is modified there can be no match thus the id is not found and removed...
+OST_REMOVE_ISOLATED_CLUSTER_IDS :: proc(idsAsStr: [dynamic]string) -> bool {
+	// Remove the cluster id from the cluster ids file
+	for id in idsAsStr {
+		// Remove the cluster id from the cluster ids file
+		OST_REMOVE_ID_FROM_CLUSTER(id, false)
+	}
+
+	return true
 }

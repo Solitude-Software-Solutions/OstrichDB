@@ -589,7 +589,6 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 	buf := make([]byte, 64)
 	defer delete(buf)
 	filePath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
-
 	data, readSuccess := os.read_entire_file(filePath)
 	if !readSuccess {
 		utils.throw_err(
@@ -616,7 +615,6 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 		if name_end == -1 do continue
 		// Extract the cluster name and remove leading/trailing whitespace
 		cluster_name := strings.trim_space(cluster[name_start:][:name_end])
-		// Compare the extracted cluster name with the provided cluster name
 
 		clusterName := fmt.tprintf("|\n|_________%s", cluster_name)
 

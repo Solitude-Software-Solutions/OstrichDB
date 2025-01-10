@@ -40,12 +40,13 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 		fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION),
 	)
 	fileSize := fileInfo.size
+	fmt.println("File size: ", fileSize)
 
 	if fileSize > const.MAX_FILE_SIZE {
 		utils.log_err("File size is too large", #procedure)
 		types.data_integrity_checks.File_Size.Compliant = false
 	}
-	return types.data_integrity_checks.Cluster_IDs.Compliant
+	return types.data_integrity_checks.File_Size.Compliant
 }
 
 //perform collection format check on the passed collection
@@ -53,6 +54,12 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	types.data_integrity_checks.File_Format.Compliant = true
 	clusterScanSuccess, invalidClusterFound := OST_SCAN_CLUSTER_STRUCTURE(fn)
 	headerScanSuccess, invalidHeaderFound := metadata.OST_SCAN_METADATA_HEADER_FORMAT(fn)
+	fmt.println(
+		"Cluster scan success: ",
+		clusterScanSuccess,
+		"Invalid cluster found: ",
+		invalidClusterFound,
+	)
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
 		utils.log_err("Cluster structure is not compliant", #procedure)
 		types.data_integrity_checks.File_Format.Compliant = false
@@ -162,6 +169,7 @@ OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 			)
 			fmt.println("For more information, please see the error log file.")
 			OST_PERFORM_ISOLATION(fn)
+			//todo need to read over each cluster in the collection get their ids and remove them from the cache..
 			return -1
 		}
 	}

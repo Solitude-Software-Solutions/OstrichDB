@@ -47,13 +47,17 @@ OST_GENERATE_ID :: proc(uponCreation: bool) -> i64 {
 // takes in an id and checks if it exists in the USER_IDS cluster
 OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	idStr := fmt.tprintf("%d", id)
-	idFound := OST_CHECK_IF_RECORD_EXISTS(const.OST_ID_PATH, const.USER_ID_CLUSTER, idStr)
+	//this is incorrect, record names are not the same as the id values
+	_, idFound := OST_SCAN_FOR_ID_RECORD_VALUE(const.USER_ID_CLUSTER, "USER_ID", idStr)
 	return idFound
 }
 //same as above but for the cluster_id cluster
 OST_CHECK_IF_CLUSTER_ID_EXISTS :: proc(id: i64) -> bool {
 	idStr := fmt.tprintf("%d", id)
-	idFound := OST_CHECK_IF_RECORD_EXISTS(const.OST_ID_PATH, const.CLUSTER_ID_CLUSTER, idStr)
+	fmt.println("Checking if cluster id %s exists", idStr)
+	//this is incorrect, record names are not the same as the id values
+	_, idFound := OST_SCAN_FOR_ID_RECORD_VALUE(const.CLUSTER_ID_CLUSTER, "CLUSTER_ID", idStr)
+	fmt.println("id was found: ", idFound)
 	return idFound
 }
 
@@ -224,44 +228,44 @@ OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
 	return writeSuccess
 }
 
-//I'm not gonna lie...IDK why I was writting this. Commenting for now but might be useful later - Marshall Burns Dec 2024
-// OST_SCAN_FOR_ID_RECORD_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
-// 	value: string
-// 	success: bool
-// 	idCollection := const.OST_ID_PATH
+OST_SCAN_FOR_ID_RECORD_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
+	value: string
+	success: bool
+	idCollection := const.OST_ID_PATH
 
-// 	data, readSuccess := utils.read_file(idCollection, #procedure)
-// 	if !readSuccess {
-// 		return "", false
-// 	}
+	data, readSuccess := utils.read_file(idCollection, #procedure)
+	if !readSuccess {
+		return "", false
+	}
 
-// 	defer delete(data)
+	defer delete(data)
 
-// 	content := string(data)
-// 	clusters := strings.split(content, "},")
+	content := string(data)
+	clusters := strings.split(content, "},")
 
-// 	for cluster in clusters {
-// 		if !strings.contains(cluster, "cluster_name :identifier:") {
-// 			continue // Skip non-cluster content
-// 		}
+	for cluster in clusters {
+		if !strings.contains(cluster, "cluster_name :identifier:") {
+			continue // Skip non-cluster content
+		}
 
-// 		// Extract cluster name
-// 		name_start := strings.index(cluster, "cluster_name :identifier:")
-// 		if name_start == -1 do continue
-// 		name_start += len("cluster_name :identifier:")
-// 		name_end := strings.index(cluster[name_start:], "\n")
-// 		if name_end == -1 do continue
-// 		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
-// 		// Look for record in this cluster
-// 		lines := strings.split(cluster, "\n")
-// 		for line in lines {
-// 			line := strings.trim_space(line)
-// 			value = strings.trim_space(strings.split(line, ":")[2])
-// 			if strings.has_suffix(line, fmt.tprintf(": %s", rv)) {
-// 				return strings.clone(value), true
-// 			}
-// 		}
-// 	}
+		// Extract cluster name
+		name_start := strings.index(cluster, "cluster_name :identifier:")
+		if name_start == -1 do continue
+		name_start += len("cluster_name :identifier:")
+		name_end := strings.index(cluster[name_start:], "\n")
+		if name_end == -1 do continue
+		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
+		// Look for record in this cluster
+		lines := strings.split(cluster, "\n")
+		for line in lines {
+			line := strings.trim_space(line)
+			// fmt.println("line: ", line)
+			value = strings.trim_space(strings.split(line, ":")[0])
+			if strings.has_suffix(line, fmt.tprintf(": %s", rv)) {
+				return strings.clone(value), true
+			}
+		}
+	}
 
-// 	return "", false
-// }
+	return "", false
+}

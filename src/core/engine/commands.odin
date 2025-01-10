@@ -284,6 +284,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				id := data.OST_GENERATE_ID(true)
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
+
 				switch (result) 
 				{
 				case -1:
@@ -695,7 +697,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collection_name,
 						utils.RESET,
 					)
-					// utils.remove_id_from_cache(clusterID)
+					data.OST_REMOVE_ID_FROM_CLUSTER(fmt.tprintf("%d", clusterID), false)
 				} else {
 					fmt.printfln(
 						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
@@ -1568,7 +1570,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// 	case const.COLLECTION:
 	// 		if len(cmd.l_token) == 1 {
 	// 			collection_name := cmd.l_token[0]
-	// 			result := data.OST_PERFORM_ISOLATION(collection_name)
+	// 			result := data.OST_PERFORM_ISOLATION(collection_name) //todo dont forget to remove all cluster ids from the cache
 	// 			switch result {
 	// 			case 0:
 	// 				fmt.printfln(

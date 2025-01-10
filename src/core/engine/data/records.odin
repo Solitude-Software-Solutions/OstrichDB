@@ -59,6 +59,7 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn, cn, rn: string) -> bool {
 	return false
 }
 
+
 //appends a line to the end of a cluster with the data thats passed in. Not quite the same as the SET_RECORD_VALUE proc. that one is more for updating a records value
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -> int {
@@ -713,67 +714,67 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 
 //finds a the passed in record, and updates its type. keeps its value which will eventually need to be changed
 OST_CHANGE_RECORD_TYPE :: proc(fn, cn, rn, rd, newType: string) -> bool {
-    data, readSuccess := utils.read_file(fn, #procedure)
-    defer delete(data)
-    if !readSuccess {
-        return false
-    }
+	data, readSuccess := utils.read_file(fn, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return false
+	}
 
-    content := string(data)
-    lines := strings.split(content, "\n")
-    defer delete(lines)
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
 
-    newLines := make([dynamic]string)
-    defer delete(newLines)
+	newLines := make([dynamic]string)
+	defer delete(newLines)
 
-    inTargetCluster := false
-    recordUpdated := false
+	inTargetCluster := false
+	recordUpdated := false
 
-    // Find the cluster and update the record
-    for line in lines {
-        trimmedLine := strings.trim_space(line)
+	// Find the cluster and update the record
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
 
-        if trimmedLine == "{" {
-            inTargetCluster = false
-        }
+		if trimmedLine == "{" {
+			inTargetCluster = false
+		}
 
-        if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-            inTargetCluster = true
-        }
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+		}
 
-        if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
-            // Keep the original indentation
-            leadingWhitespace := strings.split(line, rn)[0]
-            // Create new line with updated type
-            newLine := fmt.tprintf("%s%s :%s: %s", leadingWhitespace, rn, newType, rd)
-            append(&newLines, newLine)
-            recordUpdated = true
-        } else {
-            append(&newLines, line)
-        }
+		if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
+			// Keep the original indentation
+			leadingWhitespace := strings.split(line, rn)[0]
+			// Create new line with updated type
+			newLine := fmt.tprintf("%s%s :%s: %s", leadingWhitespace, rn, newType, rd)
+			append(&newLines, newLine)
+			recordUpdated = true
+		} else {
+			append(&newLines, line)
+		}
 
-        if inTargetCluster && trimmedLine == "}," {
-            inTargetCluster = false
-        }
-    }
+		if inTargetCluster && trimmedLine == "}," {
+			inTargetCluster = false
+		}
+	}
 
-    if !recordUpdated {
-        fmt.printfln(
-            "Record %s%s%s not found in cluster %s%s%s",
-            utils.BOLD_UNDERLINE,
-            rn,
-            utils.RESET,
-            utils.BOLD_UNDERLINE,
-            cn,
-            utils.RESET,
-        )
-        return false
-    }
+	if !recordUpdated {
+		fmt.printfln(
+			"Record %s%s%s not found in cluster %s%s%s",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+		)
+		return false
+	}
 
-    // Write the updated content back to file
-    newContent := strings.join(newLines[:], "\n")
-    writeSuccess := utils.write_to_file(fn, transmute([]byte)newContent, #procedure)
-    return writeSuccess
+	// Write the updated content back to file
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := utils.write_to_file(fn, transmute([]byte)newContent, #procedure)
+	return writeSuccess
 }
 
 //finds the location of the passed in record in the passed in cluster
