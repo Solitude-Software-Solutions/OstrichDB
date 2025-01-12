@@ -1354,94 +1354,90 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 
 		break
-	// //SIZE_OF command
-	// case const.SIZE_OF:
-	// 	utils.log_runtime_event("Used SIZE_OF command", "")
-	// 	if len(cmd.l_token) >= 1 {
-	// 		switch cmd.t_token {
-	// 		case const.COLLECTION:
-	// 			collection_name := cmd.l_token[0]
-	// 			file_path := fmt.tprintf(
-	// 				"%s%s%s",
-	// 				const.OST_COLLECTION_PATH,
-	// 				collection_name,
-	// 				const.OST_FILE_EXTENSION,
-	// 			)
-	// 			actual_size, metadata_size := metadata.OST_SUBTRACT_METADATA_SIZE(file_path)
-	// 			if actual_size != -1 {
-	// 				fmt.printf(
-	// 					"Size of collection %s: %d bytes (excluding %d bytes of metadata)\n",
-	// 					collection_name,
-	// 					actual_size,
-	// 					metadata_size,
-	// 				)
-	// 			} else {
-	// 				fmt.printf("Failed to get size of collection %s\n", collection_name)
-	// 			}
-	// 		case const.CLUSTER:
-	// 			if cmd.isUsingDotNotation {
-	// 				collection_name := cmd.l_token[0]
-	// 				cluster_name := cmd.l_token[1]
-	// 				size, success := data.OST_GET_CLUSTER_SIZE(collection_name, cluster_name)
-	// 				if success {
-	// 					fmt.printf(
-	// 						"Size of cluster %s.%s: %d bytes\n",
-	// 						collection_name,
-	// 						cluster_name,
-	// 						size,
-	// 					)
-	// 				} else {
-	// 					fmt.printf(
-	// 						"Failed to get size of cluster %s.%s\n",
-	// 						collection_name,
-	// 						cluster_name,
-	// 					)
-	// 				}
-	// 			} else {
-	// 				fmt.println(
-	// 					"Invalid command. Use dot notation for clusters: SIZE_OF CLUSTER collection_name.cluster_name",
-	// 				)
-	// 			}
-	// 		case const.RECORD:
-	// 			if cmd.isUsingDotNotation && len(cmd.l_token) == 3 {
-	// 				collection_name := cmd.l_token[0]
-	// 				cluster_name := cmd.l_token[1]
-	// 				record_name := cmd.l_token[2]
-	// 				size, success := data.OST_GET_RECORD_SIZE(
-	// 					collection_name,
-	// 					cluster_name,
-	// 					record_name,
-	// 				)
-	// 				if success {
-	// 					fmt.printf(
-	// 						"Size of record %s.%s.%s: %d bytes\n",
-	// 						collection_name,
-	// 						cluster_name,
-	// 						record_name,
-	// 						size,
-	// 					)
-	// 				} else {
-	// 					fmt.printf(
-	// 						"Failed to get size of record %s.%s.%s\n",
-	// 						collection_name,
-	// 						cluster_name,
-	// 						record_name,
-	// 					)
-	// 				}
-	// 			} else {
-	// 				fmt.println(
-	// 					"Invalid command. Use dot notation for records: SIZE_OF RECORD collection_name.cluster_name.record_name",
-	// 				)
-	// 			}
-	// 		case:
-	// 			fmt.println(
-	// 				"Invalid SIZE_OF command. Use SIZE_OF COLLECTION, SIZE_OF CLUSTER, or SIZE_OF RECORD.",
-	// 			)
-	// 		}
-	// 	} else {
-	// 		fmt.println("Incomplete SIZE_OF command. Please specify what to get the size of.")
-	// 	}
-	// 	break
+	//SIZE_OF command
+	case const.SIZE_OF:
+		utils.log_runtime_event("Used SIZE_OF command", "")
+		switch (len(cmd.l_token)) {
+		case 1:
+			collection_name := cmd.l_token[0]
+			file_path := fmt.tprintf(
+				"%s%s%s",
+				const.OST_COLLECTION_PATH,
+				collection_name,
+				const.OST_FILE_EXTENSION,
+			)
+			actual_size, metadata_size := metadata.OST_SUBTRACT_METADATA_SIZE(file_path)
+			if actual_size != -1 {
+				fmt.printf(
+					"Size of collection %s: %d bytes (excluding %d bytes of metadata)\n",
+					collection_name,
+					actual_size,
+					metadata_size,
+				)
+			} else {
+				fmt.printf("Failed to get size of collection %s\n", collection_name)
+			}
+		case 2:
+			if cmd.isUsingDotNotation {
+				collection_name := cmd.l_token[0]
+				cluster_name := cmd.l_token[1]
+				size, success := data.OST_GET_CLUSTER_SIZE(collection_name, cluster_name)
+				if success {
+					fmt.printf(
+						"Size of cluster %s.%s: %d bytes\n",
+						collection_name,
+						cluster_name,
+						size,
+					)
+				} else {
+					fmt.printf(
+						"Failed to get size of cluster %s.%s\n",
+						collection_name,
+						cluster_name,
+					)
+				}
+			} else {
+				fmt.println(
+					"Invalid command. Use dot notation for clusters: SIZE_OF CLUSTER collection_name.cluster_name",
+				)
+			}
+		case 3:
+			if cmd.isUsingDotNotation {
+				collection_name := cmd.l_token[0]
+				cluster_name := cmd.l_token[1]
+				record_name := cmd.l_token[2]
+				size, success := data.OST_GET_RECORD_SIZE(
+					collection_name,
+					cluster_name,
+					record_name,
+				)
+				if success {
+					fmt.printf(
+						"Size of record %s.%s.%s: %d bytes\n",
+						collection_name,
+						cluster_name,
+						record_name,
+						size,
+					)
+				} else {
+					fmt.printf(
+						"Failed to get size of record %s.%s.%s\n",
+						collection_name,
+						cluster_name,
+						record_name,
+					)
+				}
+			} else {
+				fmt.println(
+					"Invalid command. Use dot notation for records: SIZE_OF RECORD collection_name.cluster_name.record_name",
+				)
+			}
+		case:
+			fmt.println(
+				"Invalid SIZE_OF command. Use SIZE_OF COLLECTION, SIZE_OF CLUSTER, or SIZE_OF RECORD.",
+			)
+		}
+		break
 	// case const.TYPE_OF:
 	// 	//only works on records
 	// 	if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {

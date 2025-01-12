@@ -1873,9 +1873,11 @@ OST_GET_RECORD_SIZE :: proc(
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
 			lines := strings.split(cluster, "\n")
 			for line in lines {
-				if strings.has_prefix(line, record_name) {
+				parts := strings.split(line, ":")
+				if strings.has_prefix(line, fmt.tprintf("\t%s", record_name)) {
+					//added the \t to the prefix because all records are indented in the plain text collection file - Marshall Burns Jan 2025
 					parts := strings.split(line, ":")
-					if len(parts) >= 3 {
+					if len(parts) == 3 {
 						record_value := strings.trim_space(strings.join(parts[2:], ":"))
 						return len(record_value), true
 					}
@@ -1883,7 +1885,6 @@ OST_GET_RECORD_SIZE :: proc(
 			}
 		}
 	}
-
 	return 0, false
 }
 
