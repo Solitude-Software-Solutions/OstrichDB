@@ -89,6 +89,7 @@ These operations allow you to perform more complex operations.
 - **`COUNT`**: Returns the number of objects within a scope. Paired with the plural form of the object type (e.g., `RECORDS`, `CLUSTERS`).
 - **`SIZE_OF`**: Returns the size in bytes of an object.
 - **`TYPE_OF`**: Returns the type of a record.
+- **`CHANGE_TYPE`**: Allows you to change the type of a record.
 - **`HELP`**: Displays help information for a specific token.
 - **`ISOLATE`**: Quarentines a collection file. Preventing any further changes to the file
 - **`WHERE`**: Searches for a record or cluster by name. DOES NOT WORK WITH COLLECTIONS.
