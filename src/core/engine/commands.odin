@@ -1438,132 +1438,132 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 		}
 		break
-	// case const.TYPE_OF:
-	// 	//only works on records
-	// 	if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
-	// 		collection_name := cmd.l_token[0]
-	// 		cluster_name := cmd.l_token[1]
-	// 		record_name := cmd.l_token[2]
-	// 		colPath := fmt.tprintf(
-	// 			"%s%s%s",
-	// 			const.OST_COLLECTION_PATH,
-	// 			collection_name,
-	// 			const.OST_FILE_EXTENSION,
-	// 		)
-	// 		rType, success := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
-	// 		if !success {
-	// 			fmt.printfln(
-	// 				"Failed to get record %s.%s.%s's type",
-	// 				collection_name,
-	// 				cluster_name,
-	// 				record_name,
-	// 			)
-	// 			return 1
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Record: %s%s%s->%s%s%s->%s%s%s Type: %s%s%s",
-	// 				utils.BOLD_UNDERLINE,
-	// 				collection_name,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				cluster_name,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				record_name,
-	// 				utils.RESET,
-	// 				utils.BOLD_UNDERLINE,
-	// 				rType,
-	// 				utils.RESET,
-	// 			)
-	// 		}
-	// 	} else {
-	// 		fmt.printfln(
-	// 			"Incomplete command. Correct Usage: TYPE_OF RECORD <collection_name>.<cluster_name>.<record_name>",
-	// 		)
+	case const.TYPE_OF:
+		//only works on records
+		if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
+			collection_name := cmd.l_token[0]
+			cluster_name := cmd.l_token[1]
+			record_name := cmd.l_token[2]
+			colPath := fmt.tprintf(
+				"%s%s%s",
+				const.OST_COLLECTION_PATH,
+				collection_name,
+				const.OST_FILE_EXTENSION,
+			)
+			rType, success := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
+			if !success {
+				fmt.printfln(
+					"Failed to get record %s.%s.%s's type",
+					collection_name,
+					cluster_name,
+					record_name,
+				)
+				return 1
+			} else {
+				fmt.printfln(
+					"Record: %s%s%s->%s%s%s->%s%s%s Type: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					cluster_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					record_name,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					rType,
+					utils.RESET,
+				)
+			}
+		} else {
+			fmt.printfln(
+				"Incomplete command. Correct Usage: TYPE_OF RECORD <collection_name>.<cluster_name>.<record_name>",
+			)
 
-	// 	}
-	// 	utils.log_runtime_event("Used TYPE_OF command", "")
-	// 	break
-	// case const.CHANGE_TYPE:
-	// 	//only works on records
-	// 	switch cmd.t_token {
-	// 	case const.RECORD:
-	// 		if len(cmd.l_token) == 3 && const.TO in cmd.p_token && cmd.isUsingDotNotation == true {
-	// 			collection_name := cmd.l_token[0]
-	// 			cluster_name := cmd.l_token[1]
-	// 			record_name := cmd.l_token[2]
-	// 			new_type := cmd.p_token[const.TO]
-	// 			colPath := fmt.tprintf(
-	// 				"%s%s%s",
-	// 				const.OST_COLLECTION_PATH,
-	// 				collection_name,
-	// 				const.OST_FILE_EXTENSION,
-	// 			)
+		}
+		utils.log_runtime_event("Used TYPE_OF command", "")
+		break
+	case const.CHANGE_TYPE:
+		//only works on records
+		switch (len(cmd.l_token)) {
+		case 3:
+			if const.TO in cmd.p_token && cmd.isUsingDotNotation == true {
+				collection_name := cmd.l_token[0]
+				cluster_name := cmd.l_token[1]
+				record_name := cmd.l_token[2]
+				new_type := cmd.p_token[const.TO]
+				colPath := fmt.tprintf(
+					"%s%s%s",
+					const.OST_COLLECTION_PATH,
+					collection_name,
+					const.OST_FILE_EXTENSION,
+				)
 
-	// 			type_is_valid := false
-	// 			for type in const.VALID_TYPES {
-	// 				if strings.to_upper(new_type) == type {
-	// 					type_is_valid = true
-	// 					break
-	// 				}
-	// 			}
+				type_is_valid := false
+				for type in const.VALID_TYPES {
+					if strings.to_upper(new_type) == type {
+						type_is_valid = true
+						break
+					}
+				}
 
-	// 			if !type_is_valid {
-	// 				fmt.printfln("Invalid type")
-	// 				return 1
-	// 			}
-	// 			//super fucking bad code but tbh its christmas eve and im tired - Marshall
-	// 			if new_type == const.INT {
-	// 				new_type = const.INTEGER
-	// 			} else if new_type == const.STR {
-	// 				new_type = const.STRING
-	// 			} else if new_type == const.BOOL {
-	// 				new_type = const.BOOLEAN
-	// 			} else if new_type == const.FLT {
-	// 				new_type = const.FLOAT
-	// 			}
+				if !type_is_valid {
+					fmt.printfln("Invalid type")
+					return 1
+				}
+				//super fucking bad code but tbh its christmas eve and im tired - Marshall
+				if new_type == const.INT {
+					new_type = const.INTEGER
+				} else if new_type == const.STR {
+					new_type = const.STRING
+				} else if new_type == const.BOOL {
+					new_type = const.BOOLEAN
+				} else if new_type == const.FLT {
+					new_type = const.FLOAT
+				}
 
-	// 			old_type, _ := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
-	// 			rd := data.OST_READ_RECORD_VALUE(colPath, cluster_name, old_type, record_name)
-	// 			success := data.OST_CHANGE_RECORD_TYPE(
-	// 				colPath,
-	// 				cluster_name,
-	// 				record_name,
-	// 				rd,
-	// 				new_type,
-	// 			)
-	// 			if success {
-	// 				fmt.printfln(
-	// 					"Successfully changed record %s.%s.%s's type to %s",
-	// 					collection_name,
-	// 					cluster_name,
-	// 					record_name,
-	// 					new_type,
-	// 				)
-	// 			} else {
-	// 				fmt.printfln(
-	// 					"Failed to change record %s.%s.%s's type to %s",
-	// 					collection_name,
-	// 					cluster_name,
-	// 					record_name,
-	// 					new_type,
-	// 				)
-	// 			}
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Incomplete command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
-	// 			)
-	// 		}
-	// 	case:
-	// 		fmt.printfln(
-	// 			"Invalid command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
-	// 		)
-	// 		utils.log_runtime_event(
-	// 			"Invalid CHANGE_TYPE command",
-	// 			"User did not provide a valid record name to change type.",
-	// 		)
-	// 		break
-	// 	}
+				old_type, _ := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
+				rd := data.OST_READ_RECORD_VALUE(colPath, cluster_name, old_type, record_name)
+				success := data.OST_CHANGE_RECORD_TYPE(
+					colPath,
+					cluster_name,
+					record_name,
+					rd,
+					new_type,
+				)
+				if success {
+					fmt.printfln(
+						"Successfully changed record %s.%s.%s's type to %s",
+						collection_name,
+						cluster_name,
+						record_name,
+						new_type,
+					)
+				} else {
+					fmt.printfln(
+						"Failed to change record %s.%s.%s's type to %s",
+						collection_name,
+						cluster_name,
+						record_name,
+						new_type,
+					)
+				}
+			} else {
+				fmt.printfln(
+					"Incomplete command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
+				)
+			}
+		case:
+			fmt.printfln(
+				"Invalid command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
+			)
+			utils.log_runtime_event(
+				"Invalid CHANGE_TYPE command",
+				"User did not provide a valid record name to change type.",
+			)
+			break
+		}
 	// case const.ISOLATE:
 	// 	utils.log_runtime_event("Used ISOLATE command", "")
 	// 	switch cmd.t_token {
