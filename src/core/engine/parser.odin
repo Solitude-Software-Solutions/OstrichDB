@@ -52,9 +52,41 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			// Expecting target
 			switch (cmd.c_token) 
 			{
-			case const.WHERE, const.HELP, const.SET:
+			case const.SET:
+				if token == const.CONFIG {
+					cmd.t_token = token
+				} else {
+					cmd.t_token = cmd.t_token
+					if strings.contains(token, ".") {
+						cmd.isUsingDotNotation = true
+						objTokensSepByDot := strings.split(strings.trim_space(token), ".")
+						for obj in objTokensSepByDot {
+							append(&cmd.l_token, obj)
+						}
+					}
+				}
+				state = 1
+				break
+			case const.WHERE, const.HELP:
 				cmd.t_token = token
 				break
+			case const.COUNT:
+				switch (token) {
+				case const.COLLECTIONS:
+					cmd.t_token = token
+					break
+				case const.CLUSTERS, const.RECORDS:
+					cmd.t_token = token
+					if strings.contains(token, ".") {
+						cmd.isUsingDotNotation = true
+						objTokensSepByDot := strings.split(strings.trim_space(token), ".")
+						for obj in objTokensSepByDot {
+							append(&cmd.l_token, obj)
+						}
+					}
+					break
+				}
+				state = 1
 			case:
 				cmd.t_token = cmd.t_token
 				if strings.contains(token, ".") {

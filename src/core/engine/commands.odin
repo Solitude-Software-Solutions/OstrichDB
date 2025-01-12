@@ -919,9 +919,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	case const.SET:
 		// 	//set can only be usedon RECORDS and CONFIGS
-		switch (cmd.t_token) 
+		switch (len(cmd.l_token)) 
 		{
-		case const.RECORD:
+		case 3:
 			if const.TO in cmd.p_token && cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
@@ -957,283 +957,287 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			}
 			break
-		case const.CONFIG:
-			utils.log_runtime_event("Used SET command", "")
-			if const.TO in cmd.p_token {
-				configName := cmd.l_token[0]
-				value: string
-				for key, val in cmd.p_token {
-					value = val
-				}
-				switch (configName) 
-				{
-				case "HELP":
-					if value != "VERBOSE" || value != "SIMPLE" {
-						fmt.println(
-							"Invalid value. Valid values for config help are: 'verbose' or 'simple'",
-						)
-						return 1
+		case 0:
+			switch (cmd.t_token) {
+			case const.CONFIG:
+				utils.log_runtime_event("Used SET command", "")
+				if const.TO in cmd.p_token {
+					configName := cmd.l_token[0]
+					value: string
+					for key, val in cmd.p_token {
+						value = val
 					}
-
-					fmt.printfln(
-						"Setting config: %s%s%s to %s%s%s",
-						utils.BOLD_UNDERLINE,
-						configName,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						value,
-						utils.RESET,
-					)
-					success := config.OST_UPDATE_CONFIG_VALUE(
-						const.configFour,
-						utils.append_qoutations(value),
-					)
-					if success == false {
-						fmt.printfln("Failed to set HELP config to %s", value)
-					} else {
-						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
-						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
-						fmt.printfln("Successfully set HELP config to %s", value)
-					}
-					help.OST_SET_HELP_MODE()
-				case "SERVER":
-					if value != "TRUE" || value != "FALSE" {
-						fmt.println(
-							"Invalid value. Valid values for config server are: 'true' or 'false'",
-						)
-						return 1
-					}
-
-					fmt.printfln(
-						"Setting config: %s%s%s to %s%s%s",
-						utils.BOLD_UNDERLINE,
-						configName,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						value,
-						utils.RESET,
-					)
-
-
-					success := config.OST_UPDATE_CONFIG_VALUE(const.configFive, value)
-					if success == false {
-						fmt.printfln("Failed to set SERVER config to %s", value)
-					} else {
-						fmt.printfln("Successfully set SERVER config to %s", value)
-						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
-						metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
-						if data.OST_READ_RECORD_VALUE(
-							   const.OST_CONFIG_FILE,
-							   const.CONFIG_CLUSTER,
-							   const.BOOLEAN,
-							   const.configFive,
-						   ) ==
-						   "true" {
-							fmt.printfln("Server Mode is now ON")
-							server.OST_START_SERVER(ServerConfig)
-						} else {
-							fmt.printfln("Server is now OFF")
+					switch (configName) 
+					{
+					case "HELP":
+						if value != "VERBOSE" || value != "SIMPLE" {
+							fmt.println(
+								"Invalid value. Valid values for config help are: 'verbose' or 'simple'",
+							)
+							return 1
 						}
+
+						fmt.printfln(
+							"Setting config: %s%s%s to %s%s%s",
+							utils.BOLD_UNDERLINE,
+							configName,
+							utils.RESET,
+							utils.BOLD_UNDERLINE,
+							value,
+							utils.RESET,
+						)
+						success := config.OST_UPDATE_CONFIG_VALUE(
+							const.configFour,
+							utils.append_qoutations(value),
+						)
+						if success == false {
+							fmt.printfln("Failed to set HELP config to %s", value)
+						} else {
+							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+							fmt.printfln("Successfully set HELP config to %s", value)
+						}
+						help.OST_SET_HELP_MODE()
+					case "SERVER":
+						if value != "TRUE" || value != "FALSE" {
+							fmt.println(
+								"Invalid value. Valid values for config server are: 'true' or 'false'",
+							)
+							return 1
+						}
+
+						fmt.printfln(
+							"Setting config: %s%s%s to %s%s%s",
+							utils.BOLD_UNDERLINE,
+							configName,
+							utils.RESET,
+							utils.BOLD_UNDERLINE,
+							value,
+							utils.RESET,
+						)
+
+
+						success := config.OST_UPDATE_CONFIG_VALUE(const.configFive, value)
+						if success == false {
+							fmt.printfln("Failed to set SERVER config to %s", value)
+						} else {
+							fmt.printfln("Successfully set SERVER config to %s", value)
+							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
+							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+							if data.OST_READ_RECORD_VALUE(
+								   const.OST_CONFIG_FILE,
+								   const.CONFIG_CLUSTER,
+								   const.BOOLEAN,
+								   const.configFive,
+							   ) ==
+							   "true" {
+								fmt.printfln("Server Mode is now ON")
+								server.OST_START_SERVER(ServerConfig)
+							} else {
+								fmt.printfln("Server is now OFF")
+							}
+						}
+					case:
+						fmt.printfln("Invalid config name. Valid config names are: 'HELP'")
 					}
-				case:
-					fmt.printfln("Invalid config name. Valid config names are: 'HELP'")
+				} else {
+					fmt.printfln(
+						"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
+					)
 				}
-			} else {
-				fmt.printfln(
-					"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
-				)
+				break
 			}
-			break
 		case:
+			//if the length of the token is not 3 or 0
 			fmt.printfln(
 				"Invalid command structure. Correct Usage: SET <Target> <Targets_name> TO <value>",
 			)
 			fmt.printfln("The SET command can only be used on RECORDS and CONFIGS")
 		}
-	// case const.COUNT:
-	// 	utils.log_runtime_event("Used COUNT command", "")
-	// 	switch (cmd.t_token)
-	// 	{
-	// 	case const.COLLECTIONS:
-	// 		result := data.OST_COUNT_COLLECTIONS()
-	// 		switch (result) {
-	// 		case -1:
-	// 			fmt.printfln("Failed to count collections")
-	// 			break
-	// 		case 0:
-	// 			fmt.printfln("There are no collections in the database")
-	// 			break
-	// 		case 1:
-	// 			fmt.printfln("There is %d collection in the database", result)
-	// 			break
-	// 		case:
-	// 			fmt.printfln("There are %d collections in the database", result)
-	// 			break
-	// 		}
-	// 		break
-	// 	case const.CLUSTERS:
-	// 		if len(cmd.l_token) == 1 {
-	// 			collection_name := cmd.l_token[0]
-	// 			result := data.OST_COUNT_CLUSTERS(collection_name)
-	// 			switch (result)
-	// 			{
-	// 			case -1:
-	// 				fmt.printfln(
-	// 					"Failed to count clusters in collection %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case 0:
-	// 				fmt.printfln(
-	// 					"There are no clusters in the collection %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case 1:
-	// 				fmt.printfln(
-	// 					"There is %d cluster in the collection %s%s%s",
-	// 					result,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case:
-	// 				fmt.printfln(
-	// 					"There are %d clusters in the collection %s%s%s",
-	// 					result,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			}
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Invalid command structure. Correct Usage: COUNT CLUSTERS <collection_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Invalid COUNT command",
-	// 				"User did not provide a valid collection name to count clusters.",
-	// 			)
-	// 		}
+	case const.COUNT:
+		utils.log_runtime_event("Used COUNT command", "")
+		switch (cmd.t_token) 
+		{
+		case const.COLLECTIONS:
+			result := data.OST_COUNT_COLLECTIONS()
+			switch (result) {
+			case -1:
+				fmt.printfln("Failed to count collections")
+				break
+			case 0:
+				fmt.printfln("No collections found.")
+				break
+			case 1:
+				fmt.println("1 collection found.")
+				break
+			case:
+				fmt.printfln("%d collections found.", result)
+				break
+			}
+			break
+		case const.CLUSTERS:
+			if len(cmd.l_token) == 1 {
+				collection_name := cmd.l_token[0]
+				result := data.OST_COUNT_CLUSTERS(collection_name)
+				switch (result) 
+				{
+				case -1:
+					fmt.printfln(
+						"Failed to count clusters in collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 0:
+					fmt.printfln(
+						"There are no clusters in the collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 1:
+					fmt.printfln(
+						"There is %d cluster in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case:
+					fmt.printfln(
+						"There are %d clusters in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				}
+			} else {
+				fmt.printfln(
+					"Invalid command structure. Correct Usage: COUNT CLUSTERS <collection_name>",
+				)
+				utils.log_runtime_event(
+					"Invalid COUNT command",
+					"User did not provide a valid collection name to count clusters.",
+				)
+			}
 
-	// 		break
-	// 	case const.RECORDS:
-	// 		//in the event the users is counting the records in a specific cluster
-	// 		if (len(cmd.l_token) >= 2 || cmd.isUsingDotNotation == true) {
-	// 			collection_name := cmd.l_token[0]
-	// 			cluster_name := cmd.l_token[1]
-	// 			result := data.OST_COUNT_RECORDS_IN_CLUSTER(
-	// 				strings.clone(collection_name),
-	// 				strings.clone(cluster_name),
-	// 				true,
-	// 			)
-	// 			switch result {
-	// 			case -1:
-	// 				fmt.printfln(
-	// 					"Error counting records in the cluster %s%s%s collection %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					cluster_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 			case 0:
-	// 				fmt.printfln(
-	// 					"There are no records in the cluster %s%s%s in the collection %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					cluster_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case 1:
-	// 				fmt.printfln(
-	// 					"There is %d record in the cluster %s%s%s in the collection %s%s%s",
-	// 					result,
-	// 					utils.BOLD_UNDERLINE,
-	// 					cluster_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case:
-	// 				fmt.printfln(
-	// 					"There are %d records in the cluster %s%s%s in the collection %s%s%s",
-	// 					result,
-	// 					utils.BOLD_UNDERLINE,
-	// 					cluster_name,
-	// 					utils.RESET,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				return 0
-	// 			}
-	// 		} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true {
-	// 			//in the event the user is counting all records in a collection
-	// 			collection_name := cmd.l_token[0]
-	// 			result := data.OST_COUNT_RECORDS_IN_COLLECTION(collection_name)
+			break
+		case const.RECORDS:
+			//in the event the users is counting the records in a specific cluster
+			if (len(cmd.l_token) >= 2 || cmd.isUsingDotNotation == true) {
+				collection_name := cmd.l_token[0]
+				cluster_name := cmd.l_token[1]
+				result := data.OST_COUNT_RECORDS_IN_CLUSTER(
+					strings.clone(collection_name),
+					strings.clone(cluster_name),
+					true,
+				)
+				switch result {
+				case -1:
+					fmt.printfln(
+						"Error counting records in the cluster %s%s%s collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+				case 0:
+					fmt.printfln(
+						"There are no records in the cluster %s%s%s in the collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 1:
+					fmt.printfln(
+						"There is %d record in the cluster %s%s%s in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case:
+					fmt.printfln(
+						"There are %d records in the cluster %s%s%s in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						cluster_name,
+						utils.RESET,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				}
+			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true {
+				//in the event the user is counting all records in a collection
+				collection_name := cmd.l_token[0]
+				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collection_name)
 
-	// 			switch result
-	// 			{
-	// 			case -1:
-	// 				fmt.printfln(
-	// 					"Error counting records in the collection %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case 0:
-	// 				fmt.printfln(
-	// 					"There are no records in collection %s%s%s",
-	// 					utils.BOLD,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case 1:
-	// 				fmt.printfln(
-	// 					"There is %d record in the collection %s%s%s",
-	// 					result,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case:
-	// 				fmt.printfln(
-	// 					"There are %d records in the collection %s%s%s",
-	// 					result,
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 			}
+				switch result 
+				{
+				case -1:
+					fmt.printfln(
+						"Error counting records in the collection %s%s%s",
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 0:
+					fmt.printfln(
+						"There are no records in collection %s%s%s",
+						utils.BOLD,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case 1:
+					fmt.printfln(
+						"There is %d record in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+					break
+				case:
+					fmt.printfln(
+						"There are %d records in the collection %s%s%s",
+						result,
+						utils.BOLD_UNDERLINE,
+						collection_name,
+						utils.RESET,
+					)
+				}
 
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Invalid command structure. Correct Usage: COUNT RECORDS <collection_name>.<cluster_name>",
-	// 			)
-	// 			utils.log_runtime_event(
-	// 				"Invalid COUNT command",
-	// 				"User did not provide a valid cluster name to count records.",
-	// 			)
-	// 		}
-	// 		break
-	// 	}
-	// 	break
+			} else {
+				fmt.printfln(
+					"Invalid command structure. Correct Usage: COUNT RECORDS <collection_name>.<cluster_name>",
+				)
+				utils.log_runtime_event(
+					"Invalid COUNT command",
+					"User did not provide a valid cluster name to count records.",
+				)
+			}
+			break
+		}
+		break
 	// //PURGE command
 	// case const.PURGE:
 	// 	utils.log_runtime_event("Used PURGE command", "")
