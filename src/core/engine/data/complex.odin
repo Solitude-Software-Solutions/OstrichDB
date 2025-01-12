@@ -15,14 +15,17 @@ import "core:strings"
 //essentially will look over the passed in string and as long as its encased in [] it will split the string into an array based on the commas
 OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 	result := strings.split(strArr, ",")
-	// for i in result { //debugging
-	// 	fmt.println(i)
-	// }
+	for i in result { 	//debugging
+		fmt.println(i)
+	}
 	return result
 }
 
 //checks that array values the user wants to store in a record is the correct type
 OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
+	fmt.printfln("Verify Array Values in %s", #procedure)
+	fmt.println("strArray: ", strArray)
+	fmt.println("rType: ", rType)
 	verified := false
 	//retrieve the record type
 	arrayValues := OST_PARSE_ARRAY(strArray)
@@ -30,38 +33,28 @@ OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 	switch (rType) {
 	case const.INTEGER_ARRAY:
 		for i in arrayValues {
-			_, err := strconv.parse_int(i)
-			if err != true {
-				verified = err
-			}
+			_, parseSuccess := strconv.parse_int(i)
+			verified = parseSuccess
 		}
-		break
+		return verified
 	case const.FLOAT_ARRAY:
 		for i in arrayValues {
-			_, err := strconv.parse_f64(i)
-			if err != true {
-				verified = err
-			}
+			_, parseSuccess := strconv.parse_f64(i)
+			verified = parseSuccess
 		}
-		break
+		return verified
 	case const.BOOLEAN_ARRAY:
 		for i in arrayValues {
-			_, err := strconv.parse_bool(i)
-			if err != true {
-				verified = err
-			}
+			_, parseSuccess := strconv.parse_bool(i)
+			verified = parseSuccess
+
 		}
-		break
+		return verified
 	}
+
 	return verified
 }
 
-
-// OST_PARSE_OBJECT :: proc(strObj: string) -> map[string]string {
-// 	obj: map[string]string
-
-// 	return obj
-// }
 
 //makes sure the date is in the correct format & length. then returns the date as a string
 OST_PARSE_DATE :: proc(date: string) -> (string, int) {
