@@ -1564,40 +1564,41 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			break
 		}
-	// case const.ISOLATE:
-	// 	utils.log_runtime_event("Used ISOLATE command", "")
-	// 	switch cmd.t_token {
-	// 	case const.COLLECTION:
-	// 		if len(cmd.l_token) == 1 {
-	// 			collection_name := cmd.l_token[0]
-	// 			result := data.OST_PERFORM_ISOLATION(collection_name) //todo dont forget to remove all cluster ids from the cache
-	// 			switch result {
-	// 			case 0:
-	// 				fmt.printfln(
-	// 					"Successfully isolated collection: %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			case:
-	// 				fmt.printfln(
-	// 					"Failed to isolate collection: %s%s%s",
-	// 					utils.BOLD_UNDERLINE,
-	// 					collection_name,
-	// 					utils.RESET,
-	// 				)
-	// 				break
-	// 			}
-	// 		} else {
-	// 			fmt.printfln(
-	// 				"Incomplete command. Correct Usage: ISOLATE COLLECTION <collection_name>",
-	// 			)
-	// 		}
-	// 		break
-	// 	}
-	// 	break
-	//END OF ACTION TOKEN EVALUATION
+	case const.ISOLATE:
+		utils.log_runtime_event("Used ISOLATE command", "")
+		switch (len(cmd.l_token)) {
+		case 1:
+			collection_name := cmd.l_token[0]
+			result := data.OST_PERFORM_ISOLATION(collection_name) //todo dont forget to remove all cluster ids from the cache
+			switch result {
+			case 0:
+				fmt.printfln(
+					"Successfully isolated collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+				)
+				break
+			case:
+				fmt.printfln(
+					"Failed to isolate collection: %s%s%s",
+					utils.BOLD_UNDERLINE,
+					collection_name,
+					utils.RESET,
+				)
+				break
+			}
+			break
+		case:
+			fmt.printfln("Incomplete command. Correct Usage: ISOLATE <collection_name>")
+			utils.log_runtime_event(
+				"Incomplete ISOLATE command",
+				"User did not provide a valid collection name to isolate.",
+			)
+			break
+		}
+		break
+	//END OF COMMAND TOKEN EVALUATION
 	case:
 		fmt.printfln(
 			"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
