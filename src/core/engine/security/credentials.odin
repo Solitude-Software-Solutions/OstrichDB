@@ -78,6 +78,9 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	data.OST_CREATE_CLUSTER_BLOCK("./history.ost", types.user.user_id, types.user.username.Value)
 	inituserName = fmt.tprintf("secure_%s", inituserName)
 	data.OST_CREATE_COLLECTION(inituserName, 1)
+	mk := OST_GEN_MASTER_KEY()
+	mkAsString := transmute(string)mk
+
 	OST_STORE_USER_CREDS(
 		inituserName,
 		types.user.username.Value,
@@ -115,6 +118,14 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		types.user.user_id,
 		"store_method",
 		algoMethodAsString,
+	)
+
+	OST_STORE_USER_CREDS(
+		inituserName,
+		types.user.username.Value,
+		types.user.user_id,
+		"m_k",
+		mkAsString,
 	)
 	engineInit := config.OST_UPDATE_CONFIG_VALUE(const.configOne, "true")
 
