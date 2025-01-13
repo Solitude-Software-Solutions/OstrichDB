@@ -161,7 +161,7 @@ VALID_RECORD_TYPES: []string : {
 	TIME,
 	DATETIME,
 }
-MAX_SESSION_TIME: time.Duration : 259200000000000000 //3 days in nanoseconds
+MAX_SESSION_TIME: time.Duration : 86400000000000 //1 day in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print
 // MAX_SESSION_TIME: time.Duration : 60000000000 //1 minute in nano seconds only used for testing
 MAX_FILE_SIZE: i64 : 10000000 //10MB max database file size
