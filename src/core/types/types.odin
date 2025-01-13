@@ -86,6 +86,7 @@ User :: struct {
 	store_method:   int,
 	//below is literally for the users command HISTORY
 	commandHistory: CommandHistory,
+	m_k:            []u8, //master key
 }
 
 //a users command history
@@ -124,7 +125,6 @@ Data_Integrity_Checks :: struct {
 	File_Format_Version: Data_Integrity_Info, //ensure that the file format version is compliant with the current version. MEDIUM SEVERITY
 	Cluster_IDs:         Data_Integrity_Info, //ensure that the value of all cluster ids within a collection are in the cache. HIGH SEVERITY
 	Data_Types:          Data_Integrity_Info, //ensure that all records have a data type and that its an approved one  HIGH SEVERITY
-	//possibly add number of checks failed vs checks passed/ran
 }
 
 Data_Integrity_Info :: struct {
