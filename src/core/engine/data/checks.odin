@@ -54,12 +54,12 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	types.data_integrity_checks.File_Format.Compliant = true
 	clusterScanSuccess, invalidClusterFound := OST_SCAN_CLUSTER_STRUCTURE(fn)
 	headerScanSuccess, invalidHeaderFound := metadata.OST_SCAN_METADATA_HEADER_FORMAT(fn)
-	fmt.println(
-		"Cluster scan success: ",
-		clusterScanSuccess,
-		"Invalid cluster found: ",
-		invalidClusterFound,
-	)
+	// fmt.println(
+	// 	"Cluster scan success: ",
+	// 	clusterScanSuccess,
+	// 	"Invalid cluster found: ",
+	// 	invalidClusterFound,
+	// )
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
 		utils.log_err("Cluster structure is not compliant", #procedure)
 		types.data_integrity_checks.File_Format.Compliant = false
@@ -69,10 +69,10 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 		utils.log_err("Header format is not compliant", #procedure)
 		types.data_integrity_checks.File_Format.Compliant = false
 	}
-	fmt.println(
-		"Collection format check getting: ",
-		types.data_integrity_checks.File_Format.Compliant,
-	)
+	// fmt.println(
+	// 	"Collection format check getting: ",
+	// 	types.data_integrity_checks.File_Format.Compliant,
+	// ) //debugging
 	return types.data_integrity_checks.File_Format.Compliant
 }
 
