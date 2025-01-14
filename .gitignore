@@ -6,6 +6,7 @@ ols.json
 .exe
 .out
 .vscode
+.vs
 .DS_Store
 
 # Uncomment these two when actually implementing zig
