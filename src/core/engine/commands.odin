@@ -317,7 +317,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.printfln(
-					"Invalid command. Correct Usage: NEW CLUSTER <collection_name>.<cluster_name>",
+					"Invalid command. Correct Usage: NEW <collection_name>.<cluster_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete NEW command",
@@ -434,7 +434,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.printfln(
-					"Incomplete command. Correct Usage: NEW RECORD <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
+					"Incomplete command. Correct Usage: NEW <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
 				)
 				utils.log_runtime_event(
 					"Incomplete NEW RECORD command",
@@ -523,9 +523,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 
 			} else {
-				fmt.println(
-					"Incomplete command. Correct Usage: RENAME COLLECTION <old_name> TO <new_name>",
-				)
+				fmt.println("Incomplete command. Correct Usage: RENAME <old_name> TO <new_name>")
 			}
 			break
 		case 2:
@@ -572,7 +570,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: RENAME CLUSTER <collection_name>.<old_name> TO <new_name>",
+					"Incomplete command. Correct Usage: RENAME <collection_name>.<old_name> TO <new_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete RENAME command",
@@ -639,7 +637,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: RENAME RECORD <collection_name>.<cluster_name>.<old_name> TO <new_name>",
+					"Incomplete command. Correct Usage: RENAME <collection_name>.<cluster_name>.<old_name> TO <new_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete RENAME command",
@@ -714,7 +712,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: ERASE CLUSTER <collection_name>.<cluster_name>",
+					"Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete ERASE command",
@@ -841,9 +839,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				str := data.OST_FETCH_COLLECTION(collection)
 				fmt.println(str)
 			} else {
-				fmt.println(
-					"Incomplete command. Correct Usage: FETCH COLLECTION <collection_name>",
-				)
+				fmt.println("Incomplete command. Correct Usage: FETCH <collection_name>")
 				utils.log_runtime_event(
 					"Incomplete FETCH command",
 					"User did not provide a valid collection name to fetch.",
@@ -858,7 +854,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(clusterContent)
 			} else {
 				fmt.println(
-					"Incomplete command. Correct Usage: FETCH CLUSTER <collection_name>.<cluster_name>",
+					"Incomplete command. Correct Usage: FETCH <collection_name>.<cluster_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete FETCH command",
@@ -901,7 +897,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			} else {
 				fmt.printfln(
-					"Incomplete command. Correct Usage: FETCH RECORD <collection_name>.<cluster_name>.<record_name>",
+					"Incomplete command. Correct Usage: FETCH <collection_name>.<cluster_name>.<record_name>",
 				)
 				utils.log_runtime_event(
 					"Incomplete FETCH command",
@@ -910,7 +906,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case:
-			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Target> <Targets_name>")
+			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Targets_name>")
 			utils.log_runtime_event(
 				"Invalid FETCH command",
 				"User did not provide a valid target.",
@@ -1050,7 +1046,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case:
 			//if the length of the token is not 3 or 0
 			fmt.printfln(
-				"Invalid command structure. Correct Usage: SET <Target> <Targets_name> TO <value>",
+				"Invalid command structure. Correct Usage: SET <collection_name>.<cluster_name>.<record_name> TO <value>",
 			)
 			fmt.printfln("The SET command can only be used on RECORDS and CONFIGS")
 		}
@@ -1478,7 +1474,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 		} else {
 			fmt.printfln(
-				"Incomplete command. Correct Usage: TYPE_OF RECORD <collection_name>.<cluster_name>.<record_name>",
+				"Incomplete command. Correct Usage: TYPE_OF <collection_name>.<cluster_name>.<record_name>",
 			)
 
 		}
@@ -1551,12 +1547,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			} else {
 				fmt.printfln(
-					"Incomplete command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
+					"Incomplete command. Correct Usage: CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_type>",
 				)
 			}
 		case:
 			fmt.printfln(
-				"Invalid command. Correct Usage: CHANGE_TYPE RECORD <collection_name>.<cluster_name>.<record_name> TO <new_type>",
+				"Invalid command. Correct Usage: CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_type>",
 			)
 			utils.log_runtime_event(
 				"Invalid CHANGE_TYPE command",
