@@ -184,7 +184,7 @@ BannedUserNames := []string {
 }
 
 //TEST CONSTANTS
-TEST_ID: i64 : 000000000000
+TEST_ID: i64 : 100000000000
 TEST_COLLECTION: string : "test_collection"
 TEST_CLUSTER: string : "test_cluster"
 TEST_RECORD: string : "test_record"

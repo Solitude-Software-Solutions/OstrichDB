@@ -255,101 +255,6 @@ OST_READ_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 }
 
 
-//set the record name, if the name is too long, return an error
-OST_SET_RECORD_NAME :: proc(rn: string) -> (string, int) {
-	if len(rn) > 128 {
-		fmt.println("The entered record name is too long. Please try again.")
-		return "", 1
-	}
-
-	record.name = rn
-	return strings.clone(record.name), 0
-}
-
-
-//Present user with prompt on where to save the record
-OST_CHOOSE_RECORD_LOCATION :: proc(rName, rType: string) -> (col: string, clu: string) {
-	buf := make([]byte, 1024)
-	defer delete(buf)
-
-	fmt.printfln(
-		"Select the collection that you would like to store the record: %s%s%s in.",
-		utils.BOLD_UNDERLINE,
-		rName,
-		utils.RESET,
-	)
-
-	n, colNameSuccess := os.read(os.stdin, buf)
-	if colNameSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read user input for collection name", #procedure)
-	}
-
-
-	collectionName := strings.trim_right(string(buf[:n]), "\r\n")
-	collectionNameUpper := strings.to_upper(collectionName)
-	collectionExists := OST_CHECK_IF_COLLECTION_EXISTS(collectionNameUpper, 0)
-	fmt.printfln(
-		"Select the cluster that you would like to store the record: %s%s%s in.",
-		utils.BOLD_UNDERLINE,
-		rName,
-		utils.RESET,
-	)
-
-	switch collectionExists {
-	case true:
-		col = collectionNameUpper
-		break
-	case false:
-		fmt.printfln("Could not find collection: %s. Please try again", collectionNameUpper)
-		OST_CHOOSE_RECORD_LOCATION(rName, rType)
-	}
-
-	checks := OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionNameUpper)
-	switch (checks) 
-	{
-	case -1:
-		return "", ""
-	}
-
-	nn, cluNameSuccess := os.read(os.stdin, buf)
-	if cluNameSuccess != 0 {
-		error2 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Could not read user input for cluster name", #procedure)
-	}
-
-	cluster := strings.trim_right(string(buf[:nn]), "\r\n")
-	cluster = strings.to_upper(cluster)
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collectionNameUpper,
-		const.OST_FILE_EXTENSION,
-	)
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cluster)
-
-	switch clusterExists {
-	case true:
-		clu = cluster
-		break
-	case false:
-		fmt.printfln("Could not find cluster: %s. Please try again", cluster)
-		OST_CHOOSE_RECORD_LOCATION(rName, rType)
-	}
-
-
-	return col, clu
-}
 //gets every record of the passed in rName and returns the record type, the records data, the cluster it is in, and the collection it is in
 //exclusivley used with the RENAME command if the user is NOT using dot notation
 OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
@@ -437,45 +342,7 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 //Does what it says, renames a record
 //So basically since I started implementing dot notation on the command line I had to rework a lot of shit.
 //"params" is only given an arg when used during dot notation. We will call this a temp fix but lets be real... - Marshall Burns aka @SchoolyB Oct5th 2024
-OST_RENAME_RECORD :: proc(old, new: string, dotNotation: bool, params: ..string) -> (result: int) {
-	OST_FETCH_EVERY_RECORD_BY_NAME(old)
-	buf := make([]byte, 1024)
-	defer delete(buf)
-	fn, cn: string
-	paramOne: string
-	paramTwo: string
-	if dotNotation == true {
-		//accessing params
-		paramOne = params[0]
-		paramTwo = params[1]
-		// fmt.printfln("paramone %s: ", paramOne) //debugging
-		// fmt.printfln("paramtwo %s: ", paramTwo) //debugging
-
-		fn = paramOne //collection name from command line
-		cn = paramTwo //cluster name from command line
-
-		//since thse value are coming from command line itself no need to uppercase :)
-	} else {
-		fmt.printfln(
-			"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
-			utils.BOLD_UNDERLINE,
-			old,
-			utils.RESET,
-		)
-
-		col, colInputSuccess := os.read(os.stdin, buf)
-		if colInputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Could not read user input for collection name", #procedure)
-		}
-		fn = strings.trim_right(string(buf[:col]), "\r\n")
-		fn = strings.to_upper(fn)
-	}
+OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
 		fmt.printfln("Collection with name:%s%s%s does not exist", utils.BOLD, fn, utils.RESET)
@@ -483,60 +350,15 @@ OST_RENAME_RECORD :: proc(old, new: string, dotNotation: bool, params: ..string)
 		return -1
 	}
 
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	collectionPath := utils.concat_collection_name(fn)
 
-
-	checks := OST_HANDLE_INTEGRITY_CHECK_RESULT(fn)
-	switch (checks) 
-	{
-	case -1:
-		return -1
-	}
-
-	if dotNotation == false {
-		//do this if NOT using dot notation
-		fmt.printfln(
-			"Enter the name of the cluster that contains the record: %s%s%s that you would like to rename.",
-			utils.BOLD,
-			old,
-			utils.RESET,
-		)
-
-		buf = make([]byte, 1024)
-		clu, cluInputSuccess := os.read(os.stdin, buf)
-		if cluInputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Could not read user input for cluster name", #procedure)
-		}
-		cn = strings.trim_right(string(buf[:clu]), "\r\n")
-		cn = strings.to_upper(cn)
-	}
 
 	if !OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn) {
 		fmt.printfln("Cluster with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)
-		fmt.println("Please try again with a different name")
 		return -1
 	}
 
-
-	file := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		strings.to_upper(fn),
-		const.OST_FILE_EXTENSION,
-	)
-
-	rExists := OST_CHECK_IF_RECORD_EXISTS(file, cn, new)
+	rExists := OST_CHECK_IF_RECORD_EXISTS(collectionPath, cn, new)
 
 	switch rExists 
 	{
@@ -598,13 +420,15 @@ OST_RENAME_RECORD :: proc(old, new: string, dotNotation: bool, params: ..string)
 				}
 
 				// Add the modified cluster to the new content
+				fmt.printfln("New Cluster: %s", newCluster)
 				append(&newContent, ..newCluster[:])
 				append(&newContent, "}")
 				append(&newContent, ",\n\n")
 			} else if len(cluster) > 0 {
+				fmt.printfln("Cluster: %s", cluster)
 				// Keep other clusters unchanged
 				append(&newContent, ..transmute([]u8)cluster)
-				append(&newContent, "}")
+				append(&newContent, "\n}")
 				append(&newContent, ",\n\n")
 			}
 		}

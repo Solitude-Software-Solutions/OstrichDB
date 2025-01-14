@@ -275,12 +275,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collection_name,
 					utils.RESET,
 				)
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
+				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				// switch (checks)
+				// {
+				// case -1:
+				// 	return -1
+				// }
 
 				id := data.OST_GENERATE_ID(true)
 				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
@@ -331,58 +331,42 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Used NEW RECORD command",
 				"User requested to create a new record.",
 			)
-			collection_name: string
-			cluster_name: string
-			if len(cmd.l_token) == 3 &&
-			   const.OF_TYPE in cmd.p_token &&
-			   cmd.isUsingDotNotation == true {
-				rName, nameSuccess := data.OST_SET_RECORD_NAME(cmd.l_token[2])
+			collection_name := cmd.l_token[0]
+			cluster_name := cmd.l_token[1]
+			record_name := cmd.l_token[2]
+			if len(record_name) > 128 {
+				fmt.printfln(
+					"Record name: %s%s%s is too long. Please choose a name less than 128 characters.",
+					utils.BOLD_UNDERLINE,
+					record_name,
+					utils.RESET,
+				)
+				return -1
+			}
+			filePath := fmt.tprintf(
+				"%s%s%s",
+				const.OST_COLLECTION_PATH,
+				collection_name,
+				const.OST_FILE_EXTENSION,
+			)
+
+			if const.OF_TYPE in cmd.p_token && cmd.isUsingDotNotation == true {
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[const.OF_TYPE])
-				if nameSuccess == 0 && typeSuccess == 0 {
+				if typeSuccess == 0 {
 					fmt.printfln(
 						"Creating record: %s%s%s of type: %s%s%s",
 						utils.BOLD_UNDERLINE,
-						rName,
+						record_name,
 						utils.RESET,
 						utils.BOLD_UNDERLINE,
 						rType,
 						utils.RESET,
 					)
-					//All hail the re-engineered parser - Marshall Burns aka @SchoolyB
-					if cmd.isUsingDotNotation == true {
-						collection_name = cmd.l_token[0]
-						cluster_name = cmd.l_token[1]
-						filePath := fmt.tprintf(
-							"%s%s%s",
-							const.OST_COLLECTION_PATH,
-							collection_name,
-							const.OST_FILE_EXTENSION,
-						)
-						appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
-							filePath,
-							cluster_name,
-							rName,
-							"",
-							rType,
-						)
-						if appendSuccess == 0 {
-							break
-						}
-					}
-
-					data.OST_GET_ALL_COLLECTION_NAMES(false)
-					collection_name, cluster_name := data.OST_CHOOSE_RECORD_LOCATION(rName, rType)
-					filePath := fmt.tprintf(
-						"%s%s%s",
-						const.OST_COLLECTION_PATH,
-						collection_name,
-						const.OST_FILE_EXTENSION,
-					)
 
 					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
 						filePath,
 						cluster_name,
-						rName,
+						record_name,
 						"",
 						rType,
 					)
@@ -392,7 +376,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						fmt.printfln(
 							"Record: %s%s%s of type: %s%s%s created successfully",
 							utils.BOLD_UNDERLINE,
-							rName,
+							record_name,
 							utils.RESET,
 							utils.BOLD_UNDERLINE,
 							rType,
@@ -407,7 +391,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						fmt.printfln(
 							"Failed to create record: %s%s%s of type: %s%s%s",
 							utils.BOLD_UNDERLINE,
-							rName,
+							record_name,
 							utils.RESET,
 							utils.BOLD_UNDERLINE,
 							rType,
@@ -424,7 +408,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					fmt.printfln(
 						"Failed to create record: %s%s%s of type: %s%s%s. Please try again.",
 						utils.BOLD_UNDERLINE,
-						rName,
+						record_name,
 						utils.RESET,
 						utils.BOLD_UNDERLINE,
 						rType,
@@ -535,15 +519,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection_name := cmd.l_token[0]
 				new_name := cmd.p_token[const.TO]
 
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-				switch (checks) 
-				{
-				case -1:
-					fmt.printfln(
-						"Failed to rename cluster %s%s%s to %s%s%s in collection %s%s%s\n",
-					)
-					return -1
-				}
+				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				// switch (checks)
+				// {
+				// case -1:
+				// 	fmt.printfln(
+				// 		"Failed to rename cluster %s%s%s to %s%s%s in collection %s%s%s\n",
+				// 	)
+				// 	return -1
+				// }
 
 				success := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
 				if success {
@@ -594,11 +578,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					newRName = cmd.p_token[const.TO]
 				}
 				result := data.OST_RENAME_RECORD(
-					oldRName,
-					newRName,
-					cmd.isUsingDotNotation,
 					strings.clone(collection_name),
 					strings.clone(cluster_name),
+					oldRName,
+					newRName,
 				)
 				switch (result) 
 				{
