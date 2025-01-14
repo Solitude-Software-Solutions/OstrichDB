@@ -918,7 +918,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	case const.SET:
-		// 	//set can only be usedon RECORDS and CONFIGS
+		//set can only be used on RECORDS and CONFIGS
 		switch (len(cmd.l_token)) 
 		{
 		case 3:
@@ -926,10 +926,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
-				value: string
-				for key, val in cmd.p_token {
-					value = val
-				}
+				value := cmd.p_token[const.TO] // Get the full string value that was collected by the parser
+
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
 					utils.BOLD_UNDERLINE,
@@ -939,22 +937,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					value,
 					utils.RESET,
 				)
+
 				file := fmt.tprintf(
 					"%s%s%s",
 					const.OST_COLLECTION_PATH,
 					collectionName,
 					const.OST_FILE_EXTENSION,
 				)
+
 				ok := data.OST_SET_RECORD_VALUE(
 					file,
 					clusterName,
 					recordName,
 					strings.clone(value),
 				)
+
 				fn := utils.concat_collection_name(collectionName)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-
 			}
 			break
 		case 0:

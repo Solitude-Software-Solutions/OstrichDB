@@ -40,7 +40,7 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 		fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION),
 	)
 	fileSize := fileInfo.size
-	fmt.println("File size: ", fileSize)
+	// fmt.println("File size: ", fileSize) //debugging
 
 	if fileSize > const.MAX_FILE_SIZE {
 		utils.log_err("File size is too large", #procedure)

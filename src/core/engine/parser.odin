@@ -32,7 +32,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 		l_token            = make([dynamic]string),
 		p_token            = make(map[string]string),
 		isUsingDotNotation = false,
-		t_token            = "", //todo: autocomplete made this and empty str. i assume to fill in a value for a target that is not needed
+		t_token            = "",
 	}
 
 	if len(tokens) == 0 {
@@ -42,10 +42,22 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	cmd.c_token = tokens[0] //setting the command token
 	state := 0 //state machine exclusively used for parameter token shit
 	currentModifier := "" //stores the current modifier such as TO
+	collectingString := false
+	stringValue := ""
 
 	//iterate over remaining ATOM tokens and set/append them to the cmd
 	for i := 1; i < len(tokens); i += 1 {
 		token := tokens[i]
+
+		if collectingString {
+			if stringValue != "" {
+				stringValue = strings.concatenate([]string{stringValue, " ", token})
+			} else {
+				stringValue = token
+			}
+			continue
+		}
+
 
 		switch state {
 		case 0:
@@ -118,12 +130,15 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 				}
 			}
 		case 2:
-			// Expecting object after modifier
-			cmd.p_token[currentModifier] = token // Preserve original case for modifier values
-			state = 1
-
+			stringValue = token
+			collectingString = true
 		}
 
+	}
+
+	// If we collected a string value, store it
+	if collectingString && stringValue != "" {
+		cmd.p_token[currentModifier] = stringValue
 	}
 
 	return cmd
