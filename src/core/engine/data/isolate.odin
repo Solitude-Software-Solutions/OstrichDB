@@ -78,22 +78,24 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 }
 
 
-//Appends 2 new metadata header members to a collection file.
+//Appends 3 new metadata header members to a collection file.
 //%ocn - Original Collection Name
 //%doq - Date of Quarantine
+//%toq - Time of Quarantine
 OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, quarantine_path: string) -> int {
-	// Read the quarantined file
+
 	data, readSuccess := utils.read_file(quarantine_path, #procedure)
 	if !readSuccess {
 		return -2
 	}
-
 	defer delete(data)
+
 	// Format date and time strings
 	date, h, m, s := utils.get_date_and_time()
-	// Create new metadata entries
+
+
 	new_metadata := fmt.tprintf(
-		"# Original Collection Name: %s\n# Date of Quarantine: %s\n# Time of Quarantine: %s:%s:%s\n",
+		"# Original Collection Name: %s\n# Date of Quarantine: %s\n# Time of Quarantine: %s:%s:%s",
 		fn,
 		date,
 		h,
@@ -108,7 +110,7 @@ OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, quarantine_path: string) -> i
 
 	header_end_idx := -1
 	for line, i in lines {
-		if strings.has_prefix(line, "# [Ostrich File Header End]") {
+		if strings.has_prefix(line, strings.trim_right(const.METADATA_END, "\n")) {
 			header_end_idx = i
 			break
 		}
@@ -123,13 +125,14 @@ OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, quarantine_path: string) -> i
 	new_lines := make([dynamic]string)
 	defer delete(new_lines)
 
+	// Copy lines up to header end
 	for i := 0; i < header_end_idx; i += 1 {
 		append(&new_lines, lines[i])
 	}
 
 	// Add new metadata lines
 	append(&new_lines, new_metadata)
-	append(&new_lines, lines[header_end_idx]) // Add header end line
+	append(&new_lines, strings.trim_right(const.METADATA_END, "\n")) // Remove \n as join will add it
 
 	// Add remaining content
 	for i := header_end_idx + 1; i < len(lines); i += 1 {
@@ -147,7 +150,6 @@ OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, quarantine_path: string) -> i
 
 	return 0
 }
-
 
 //TODO:
 //in the event that a cluster id in a normal collectionn file
