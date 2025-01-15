@@ -19,13 +19,13 @@ import "core:time"
 
 
 METADATA_HEADER: []string = {
-	"# [Ostrich File Header Start]\n",
+	const.METADATA_START,
 	"# File Format Version: %ffv\n",
 	"# Date of Creation: %fdoc\n",
 	"# Date Last Modified: %fdlm\n",
 	"# File Size: %fs Bytes\n",
 	"# Checksum: %cs\n",
-	"# [Ostrich File Header End]},\n\n\n\n",
+	const.METADATA_END,
 }
 
 
@@ -60,28 +60,18 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	defer delete(data)
 
 	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
 
-	metadataEndIndex := -1
-	for i in 0 ..< len(lines) {
-		line := lines[i]
-		if strings.has_prefix(line, "# [Ostrich File Header End]") {
-			metadataEndIndex = i
-			break
-		}
-	}
-
-	if metadataEndIndex == -1 {
+	// Find metadata end marker
+	metadataEnd := strings.index(content, const.METADATA_END)
+	if metadataEnd == -1 {
 		utils.log_err("Metadata end marker not found", #procedure)
 		return -1, -1
 	}
 
-	metadataSize := 0
-	for i := 0; i <= metadataEndIndex; i += 1 {
-		metadataSize += len(lines[i]) + 1 // +1 for newline character
-	}
+	// Add length of end marker to get total metadata size
+	metadataSize := metadataEnd + len(const.METADATA_END)
 
+	// Return actual content size (total - metadata) and metadata size
 	return totalSize - metadataSize, metadataSize
 }
 
@@ -149,7 +139,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	}
 
 	dataAsStr := cast(string)rawData
-	if strings.has_prefix(dataAsStr, "# [Ostrich File Header Start]") {
+	if strings.has_prefix(dataAsStr, "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@") {
 		return false
 	}
 
@@ -211,7 +201,7 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 					lines[i] = fmt.tprintf("# File Size: %d Bytes", actualSize)
 					updated = true
 				} else {
-					fmt.println("Error calculating file size")
+					fmt.printfln("Error calculating file size for file %s", fn)
 				}
 			}
 			break
@@ -331,13 +321,39 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	//checks if the metadata header is the appropriate length
-	if len(lines) < 7 {
-		utils.log_err(
-			"Invalid metadata header detected\n The metadata header was not the appropriate length",
-			#procedure,
-		)
+	// Check if the metadata header is present
+	if !strings.has_prefix(lines[0], const.METADATA_START) {
+		utils.log_err("Missing metadata start marker", #procedure)
 		return 1, true
+	}
+
+	// Find the end of metadata section
+	metadataEndIndex := -1
+	for i in 0 ..< len(lines) {
+		if strings.has_prefix(lines[i], const.METADATA_END) {
+			metadataEndIndex = i
+			break
+		}
+	}
+
+	if metadataEndIndex == -1 {
+		utils.log_err("Missing metadata end marker", #procedure)
+		return 1, true
+	}
+
+	// Verify the header has the correct number of lines
+	expectedLines := 7 // 5 metadata fields + start and end markers
+	if metadataEndIndex != expectedLines - 1 {
+		utils.log_err("Invalid metadata header length", #procedure)
+		return 1, true
+	}
+
+	// Check each metadata field
+	for i in 1 ..< 5 {
+		if !strings.has_prefix(lines[i], types.schema.Metadata_Header_Body[i - 1]) {
+			utils.log_err(fmt.tprintf("Invalid metadata field format: %s", lines[i]), #procedure)
+			return 1, true
+		}
 	}
 
 	//checks if the file format verion file and the projects version file match
@@ -365,20 +381,6 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 		)
 		return 1, true
 	}
-
-
-	// check if the header start and end markers are present at the correct lines
-	if !strings.has_prefix(lines[0], "# [Ostrich File Header Start]") ||
-	   !strings.has_prefix(lines[6], "# [Ostrich File Header End]") {
-		return 1, true
-	}
-
-	for i in 1 ..< 5 {
-		if !strings.has_prefix(lines[i], types.schema.Metadata_Header_Body[i - 1]) {
-			return 1, true
-		}
-	}
-
 
 	return 0, false
 }

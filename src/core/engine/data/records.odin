@@ -1579,8 +1579,8 @@ OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
 			   !strings.has_prefix(trimmedLine, "cluster_name") &&
 			   !strings.has_prefix(trimmedLine, "cluster_id") &&
 			   strings.contains(trimmedLine, ":") &&
-			   !strings.contains(trimmedLine, "[Ostrich File Header Start]") &&
-			   !strings.contains(trimmedLine, "[Ostrich File Header End]") {
+			   !strings.contains(trimmedLine, const.METADATA_START) &&
+			   !strings.contains(trimmedLine, const.METADATA_END) {
 				recordCount += 1
 			}
 		}
