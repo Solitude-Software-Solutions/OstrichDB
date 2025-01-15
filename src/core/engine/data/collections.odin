@@ -103,7 +103,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 	case 2, 3, 4:
 		pathNameExtension := fmt.tprintf(
 			"%s%s%s",
-			const.OST_BIN_PATH,
+			const.OST_CORE_PATH,
 			fileName,
 			const.OST_FILE_EXTENSION,
 		)

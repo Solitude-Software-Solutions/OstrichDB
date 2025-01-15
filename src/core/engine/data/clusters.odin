@@ -18,10 +18,11 @@ import "core:strings"
 
 main :: proc() {
 	metadata.OST_CREATE_FFVF()
-	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
-	OST_CREATE_BACKUP_DIR()
+	os.make_directory(const.OST_CORE_PATH)
 	os.make_directory(const.OST_QUARANTINE_PATH)
 	os.make_directory(const.OST_COLLECTION_PATH)
+	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
+	OST_CREATE_BACKUP_DIR()
 }
 
 
@@ -874,7 +875,7 @@ OST_GET_CLUSTER_SIZE :: proc(
 //removes a users history from the history collecion. Used when DELETING a user and tests
 OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 
-	historyPath := "./history.ost"
+	historyPath := const.OST_HISTORY_PATH
 	data, readSuccess := os.read_entire_file(historyPath)
 	defer delete(data)
 	if !readSuccess {

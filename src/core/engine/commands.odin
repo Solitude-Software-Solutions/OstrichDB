@@ -1004,7 +1004,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
 							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
 							if data.OST_READ_RECORD_VALUE(
-								   const.OST_CONFIG_FILE,
+								   const.OST_CONFIG_PATH,
 								   const.CONFIG_CLUSTER,
 								   const.BOOLEAN,
 								   const.configFive,

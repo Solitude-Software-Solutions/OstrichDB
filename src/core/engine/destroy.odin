@@ -94,7 +94,7 @@ OST_DESTROY :: proc() {
 	}
 
 	//remove files in binary dir
-	files := []string{"./ids.ost", "./history.ost", "./ostrich.config.ost", "./main.bin"}
+	files := []string{"./core/ids.ost", "./core/history.ost", "./core/config.ost", "./main.bin"}
 
 	for file in files {
 		err := os.remove(file)

@@ -1,4 +1,5 @@
 package engine
+import "../../core/const"
 import "../engine/data"
 import "../engine/data/metadata"
 import "../types"
@@ -25,7 +26,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	//append the last command to the history file
 	data.OST_APPEND_RECORD_TO_CLUSTER(
-		"./history.ost",
+		const.OST_HISTORY_PATH,
 		types.current_user.username.Value,
 		strings.to_upper(recordName),
 		strings.to_upper(strings.clone(input)),
@@ -34,7 +35,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	//get value of the command that was just stored as a record
 	historyRecordValue := data.OST_READ_RECORD_VALUE(
-		"./history.ost",
+		const.OST_HISTORY_PATH,
 		types.current_user.username.Value,
 		"COMMAND",
 		strings.to_upper(recordName),
@@ -44,5 +45,5 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	append(&types.current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
 
 	//update the history file size value in the metadata
-	metadata.OST_UPDATE_METADATA_VALUE("./history.ost", 3)
+	metadata.OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 3)
 }

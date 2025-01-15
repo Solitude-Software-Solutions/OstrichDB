@@ -147,7 +147,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
 		types.current_user.role.Value = strings.clone(userRole)
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
-			const.OST_CONFIG_FILE,
+			const.OST_CONFIG_PATH,
 			const.CONFIG_CLUSTER,
 			const.CONFIG,
 			const.configThree,

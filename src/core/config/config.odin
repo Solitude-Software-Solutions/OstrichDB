@@ -15,9 +15,9 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 main :: proc() {
-	data.OST_CREATE_COLLECTION("ostrich.config", 3)
+	data.OST_CREATE_COLLECTION("config", 3)
 	id := data.OST_GENERATE_ID(true)
-	data.OST_CREATE_CLUSTER_BLOCK("ostrich.config.ost", id, const.CONFIG_CLUSTER)
+	data.OST_CREATE_CLUSTER_BLOCK("./core/config.ost", id, const.CONFIG_CLUSTER)
 
 	appendSuccess := OST_APPEND_ALL_CONFIG_RECORDS()
 	if !appendSuccess {
@@ -26,10 +26,10 @@ main :: proc() {
 		fmt.println("Please rebuild OstrichDB")
 	}
 }
-//self explanatory :D - Marshall
+
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	configExists: bool
-	binDir, e := os.open(".")
+	binDir, e := os.open("./core/")
 	defer os.close(binDir)
 
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)
@@ -43,7 +43,7 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 		utils.log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
-		if file.name == const.OST_CONFIG_FILE {
+		if file.name == "config.ost" {
 			configExists = true
 		}
 	}

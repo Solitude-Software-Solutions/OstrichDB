@@ -47,7 +47,6 @@ OST_START_ENGINE :: proc() -> int {
 	switch (types.engine.Initialized) 
 	{
 	case false:
-		// config.main()
 		security.OST_INIT_ADMIN_SETUP()
 		break
 

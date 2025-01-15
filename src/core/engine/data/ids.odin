@@ -73,13 +73,13 @@ OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 		return
 	}
 	//create a cluster for cluster ids
-	OST_CREATE_CLUSTER_BLOCK("ids.ost", cluOneid, const.CLUSTER_ID_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluOneid, const.CLUSTER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
 
 	//TODO: SEE THE COMMENT IN OST_GENERATE_ID!!!! - Marshall Burns Dec 2024
 	cluTwoid := OST_GENERATE_ID(true)
 	//create a cluster for user ids
-	OST_CREATE_CLUSTER_BLOCK("ids.ost", cluTwoid, const.USER_ID_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluTwoid, const.USER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
 	metadata.OST_UPDATE_METADATA_VALUE(const.OST_ID_PATH, 2)

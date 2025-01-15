@@ -75,7 +75,11 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", types.user.user_id), 1)
 
 
-	data.OST_CREATE_CLUSTER_BLOCK("./history.ost", types.user.user_id, types.user.username.Value)
+	data.OST_CREATE_CLUSTER_BLOCK(
+		const.OST_HISTORY_PATH,
+		types.user.user_id,
+		types.user.username.Value,
+	)
 	inituserName = fmt.tprintf("secure_%s", inituserName)
 	data.OST_CREATE_COLLECTION(inituserName, 1)
 	mk := OST_GEN_MASTER_KEY()
@@ -619,7 +623,7 @@ OST_CREATE_NEW_USER :: proc(
 
 	// Create history cluster.
 	data.OST_CREATE_CLUSTER_BLOCK(
-		"./history.ost",
+		const.OST_HISTORY_PATH,
 		types.user.user_id,
 		types.new_user.username.Value,
 	)

@@ -18,7 +18,7 @@ import "core:strings"
 OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 	types.data_integrity_checks.Cluster_IDs.Compliant = true // Assume compliant initially
 	idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
-	fmt.println("IDs found in collection: ", idsFoundInCollection) //debugging
+	// fmt.println("IDs found in collection: ", idsFoundInCollection) //debugging
 	defer delete(idsFoundInCollection)
 	defer delete(idsAsStringArray)
 

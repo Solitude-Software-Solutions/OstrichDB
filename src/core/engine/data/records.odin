@@ -1467,7 +1467,7 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 	records: [dynamic]string
 	histBuf: [1024]byte
 
-	data, readSuccess := utils.read_file("./history.ost", #procedure)
+	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
 	defer delete(data)
 	if !readSuccess {
 		return records
@@ -1508,7 +1508,7 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 			const.OST_FILE_EXTENSION,
 		)
 	} else if isCounting == false {
-		collectionPath = fmt.tprintf("%s%s%s", const.OST_BIN_PATH, fn, const.OST_FILE_EXTENSION)
+		collectionPath = fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
 	}
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
@@ -1715,7 +1715,7 @@ OST_GET_RECORD_SIZE :: proc(
 
 OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
 
-	data, readSuccess := utils.read_file("./history.ost", #procedure)
+	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
 	if !readSuccess {
 		return -1
 	}

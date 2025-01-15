@@ -2,7 +2,7 @@
 
 ### HELP
 The `HELP` command displays helpful information about OstrichDB.'
-`HELP `Can be used alone to display general information or chained with specific tokens to display detailed information about that token. For example: `HELP COLLECTION` will display detailed information about collections. The `HELP` command can produce different levels of information depending on if the `OST_HELP` value in the `/bin/ostrich.config` file is set to `simple` or `verbose`. Currently it is set to `verbose`. If you'd like the help information that us shown to be more simple, set the `OST_HELP` value to `simple`.
+`HELP `Can be used alone to display general information or chained with specific tokens to display detailed information about that token. For example: `HELP COLLECTION` will display detailed information about collections. The `HELP` command can produce different levels of information depending on if the `OST_HELP` value in the `/bin/config` file is set to `simple` or `verbose`. Currently it is set to `verbose`. If you'd like the help information that us shown to be more simple, set the `OST_HELP` value to `simple`.
 
 ### VERSION START
 The `VERSION` command fetches the current installed version of OstrichDB. The versioning scheme for OstrichDB is `release type._major version.minor version.patch version_build type`.
@@ -18,7 +18,7 @@ The `LOGOUT` command logs out the current user WITHOUT closing OstrichDB. This c
 ### LOGOUT END
 
 ### RESTART START
-The `RESTART` command restarts OstrichDB. This command makes a function call that then calls the built-in restart script. 
+The `RESTART` command restarts OstrichDB. This command makes a function call that then calls the built-in restart script.
 ### RESTART END
 
 ### REBUILD START

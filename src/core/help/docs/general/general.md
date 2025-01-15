@@ -7,7 +7,7 @@ OstrichDB allows for the use of dot notation to quickly perform actions on data 
 ## General Commands
 
 ### HELP
-Displays information about OstrichDB. Use `HELP` alone for general info or `HELP <command>` for specific details about a token. The verbosity level of the help shown can be set in `/bin/ostrich.config` or by using `SET CONFIG HELP TO VERBOSE/SIMPLE`.
+Displays information about OstrichDB. Use `HELP` alone for general info or `HELP <command>` for specific details about a token. The verbosity level of the help shown can be set in `/bin/core/config.ost` or by using `SET CONFIG HELP TO VERBOSE/SIMPLE`.
 
 ### VERSION
 Shows the current OstrichDB version. Format: `release type._major.minor.patch_build type` (e.g., `Pre_Rel_v0.4.0_dev`).
@@ -42,18 +42,18 @@ Displays all previous commands entered by the current user.
 
 ### NEW
 Creates new objects or users.
-Example: `NEW CLUSTER <collection_name>.<cluster_name>` 
+Example: `NEW CLUSTER <collection_name>.<cluster_name>`
 or
 `NEW USER`
 
 ### FETCH
 Retrieves and displays data from the specified object.
-Example: `FETCH RECORD <collection_name>.<cluster_name>.<record_name>` 
+Example: `FETCH RECORD <collection_name>.<cluster_name>.<record_name>`
 
 ### SET
 Sets a value for a record or config.
-Example: `SET RECORD <collection_name>.<cluster_name>.<record_name> TO <value>` 
-or 
+Example: `SET RECORD <collection_name>.<cluster_name>.<record_name> TO <value>`
+or
 `SET CONFIG <config_name> TO <value>`
 
 ### RENAME

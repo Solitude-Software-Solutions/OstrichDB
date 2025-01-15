@@ -419,7 +419,7 @@ test_command_history :: proc(t: ^testing.T) {
 
 	// Append command to history
 	data.OST_APPEND_RECORD_TO_CLUSTER(
-		"./history.ost",
+		const.OST_HISTORY_PATH,
 		const.TEST_USERNAME,
 		fmt.tprintf("HISTORY_%d", initial_count + 1),
 		strings.to_upper(test_command),
@@ -432,7 +432,7 @@ test_command_history :: proc(t: ^testing.T) {
 
 	// Verify command content
 	record_value := data.OST_READ_RECORD_VALUE(
-		"./history.ost",
+		const.OST_HISTORY_PATH,
 		const.TEST_USERNAME,
 		"COMMAND",
 		fmt.tprintf("HISTORY_%d", new_count),
