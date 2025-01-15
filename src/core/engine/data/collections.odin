@@ -298,7 +298,7 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 //reads and retuns everything below the metadata header in the .ost file
 OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	fileStart := -1
-	startingPoint := "# [Ostrich File Header End]},"
+	startingPoint := "BTM@@@@@@@@@@@@@@@" //has to be half of the metadata header end mark and not the full thing..IDK why - Marshall
 	filePath := strings.concatenate([]string{const.OST_COLLECTION_PATH, fn})
 	filePathAndExt := strings.concatenate([]string{filePath, const.OST_FILE_EXTENSION})
 	data, readSuccess := os.read_entire_file(filePathAndExt)
