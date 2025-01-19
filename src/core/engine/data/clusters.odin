@@ -293,31 +293,43 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 	defer delete(data)
 
 	content := string(data)
-	clusters := strings.split(content, "}")
+	clusters := strings.split(content, "},")
 	newContent := make([dynamic]u8)
 	defer delete(newContent)
 
 	clusterFound := false
 	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", old)) {
-			// if a cluster with the old name is found, replace the name with the new name
-			clusterFound = true
-			newCluster, e := strings.replace(
-				cluster,
-				fmt.tprintf("cluster_name :identifier: %s", old),
-				fmt.tprintf("cluster_name :identifier: %s", new),
-				1,
-			)
-			//append the new data to the new content variable
-			append(&newContent, ..transmute([]u8)newCluster)
-			// append the closing brace
-			append(&newContent, '}')
-		} else if len(strings.trim_space(cluster)) > 0 {
-			// For other clusters, just add them back unchanged and add the closing brace
-			append(&newContent, ..transmute([]u8)cluster)
-			// append(&newContent, '}')
+		// Find the cluster name in the current cluster
+		name_start := strings.index(cluster, "cluster_name :identifier:")
+		if name_start != -1 {
+			// Move past the identifier prefix
+			name_start += len("cluster_name :identifier:")
+			// Find the end of the line
+			name_end := strings.index(cluster[name_start:], "\n")
+			if name_end != -1 {
+				// Extract the actual cluster name
+				cluster_name := strings.trim_space(cluster[name_start:][:name_end])
+
+				// Check for exact match
+				if cluster_name == old {
+					clusterFound = true
+					newCluster, e := strings.replace(
+						cluster,
+						fmt.tprintf("cluster_name :identifier: %s", old),
+						fmt.tprintf("cluster_name :identifier: %s", new),
+						1,
+					)
+					append(&newContent, ..transmute([]u8)newCluster)
+					append(&newContent, "},")
+				} else if len(strings.trim_space(cluster)) > 0 {
+					append(&newContent, ..transmute([]u8)cluster)
+					append(&newContent, "},")
+				}
+			}
 		}
 	}
+
+	fmt.println("new content: ", string(newContent[:])) //debugging
 
 	if !clusterFound {
 		utils.throw_err(
