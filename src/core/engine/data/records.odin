@@ -1509,6 +1509,12 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 		)
 	} else if isCounting == false {
 		collectionPath = fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
+		fmt.printfln(
+			"%s procedure is counting records in cluster: %s within collection: %s",
+			#procedure,
+			cn,
+			fn,
+		)
 	}
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
@@ -1519,21 +1525,27 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 
 	content := string(data)
 	clusters := strings.split(content, "},")
-	// fmt.printfln("clusters: %s", clusters)
+	// fmt.printfln("clusters: %s", clusters) //debugging
 	for cluster in clusters {
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			lines := strings.split(cluster, "\n")
 			recordCount := 0
 
 			for line in lines {
+				// fmt.printfln("line: %s", line) //debugging
 				trimmedLine := strings.trim_space(line)
 				if len(trimmedLine) > 0 &&
 				   !strings.has_prefix(trimmedLine, "cluster_name") &&
 				   !strings.has_prefix(trimmedLine, "cluster_id") &&
+				   !strings.contains(trimmedLine, "#") &&
+				   !strings.contains(trimmedLine, const.METADATA_START) &&
+				   !strings.contains(trimmedLine, const.METADATA_END) &&
 				   strings.contains(trimmedLine, ":") {
+					// fmt.printfln("trimmedLine: %s", trimmedLine) //debugging
 					recordCount += 1
 				}
 			}
+			// fmt.printfln("Record count: %d", recordCount) //debugging
 			return recordCount
 		}
 	}
