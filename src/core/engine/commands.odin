@@ -23,6 +23,7 @@ import "core:strings"
 
 
 OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
+	//TODO: not even using these...
 	incompleteCommandErr := utils.new_err(
 		.INCOMPLETE_COMMAND,
 		utils.get_err_msg(.INCOMPLETE_COMMAND),
