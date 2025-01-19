@@ -1509,12 +1509,12 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 		)
 	} else if isCounting == false {
 		collectionPath = fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
-		fmt.printfln(
-			"%s procedure is counting records in cluster: %s within collection: %s",
-			#procedure,
-			cn,
-			fn,
-		)
+		// fmt.printfln(
+		// 	"%s procedure is counting records in cluster: %s within collection: %s",
+		// 	#procedure,
+		// 	cn,
+		// 	fn,
+		// ) //debugging
 	}
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
