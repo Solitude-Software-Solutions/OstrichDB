@@ -36,56 +36,68 @@ Displays a tree view all collections and thier clusters within OstrichDB
 ### HISTORY
 Displays all previous commands entered by the current user.
 
-
+### DESTROY
+Deletes all data, users and configuartions from OstrichDB. Use with caution.
 
 ## Object Management Commands
 
 ### NEW
 Creates new objects or users.
-Example: `NEW CLUSTER <collection_name>.<cluster_name>`
+Example: `NEW <collection_name>.<cluster_name>`
 or
 `NEW USER`
 
 ### FETCH
 Retrieves and displays data from the specified object.
-Example: `FETCH RECORD <collection_name>.<cluster_name>.<record_name>`
+Example: `FETCH <collection_name>.<cluster_name>.<record_name>`
 
 ### SET
 Sets a value for a record or config.
-Example: `SET RECORD <collection_name>.<cluster_name>.<record_name> TO <value>`
+Example: `SET <collection_name>.<cluster_name>.<record_name> TO <value>`
 or
 `SET CONFIG <config_name> TO <value>`
 
 ### RENAME
 Changes object names.
-Example: `RENAME COLLECTION <old_collection_name> TO <new_collection_name>`
+Example: `RENAME <old_collection_name> TO <new_collection_name>`
 
 ### ERASE
 Deletes objects completely.
-Example: `ERASE CLUSTER <collection_name>.<cluster_name>`
+Example: `ERASE <collection_name>.<cluster_name>`
 
 ### BACKUP
 Creates a backup of data. Currently only supports collections.
-Syntax: `BACKUP COLLECTION <collection_name>`
+Syntax: `BACKUP <collection_name>`
 Backups are stored in `/bin/backups` with `.ost` extension.
 
 ### PURGE
 Removes all data from an object while maintaining the object structure.
-Example: `PURGE COLLECTION <collection_name>`
+Example: `PURGE <collection_name>`
 
 ### COUNT
 Returns the number of objects within a scope. Paired with the plural form of the object type (e.g., `RECORDS`, `CLUSTERS`).
-Example: `COUNT CLUSTERS <collection_name>`
+Example: `COUNT <collection_name>`
 
 ### SIZE_OF
 Returns the size in bytes of an object.
-Example: `SIZE_OF COLLECTION <collection_name>`
+Example: `SIZE_OF <collection_name>`
+
+### TYPE_OF
+Returns the data type of a record.
+Example: `TYPE_OF <collection_name>.<cluster_name>.<record_name>`
+
+### CHANGE_TYPE
+Changes the data type of a record.
+Example: `CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_data_type>`
 
 ### WHERE
 Either searches all or a specific collection for the location of a cluster or record.
-Example: `WHERE CLUSTER <cluster_name>`
+Example: `WHERE <cluster_name>`
 or
 `WHERE <object_name>`
+
+### ISOLATE
+Isolates a collection from the DBMS making it un-writtable.
 
 ## Data Structure Concepts
 
