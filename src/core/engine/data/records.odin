@@ -709,122 +709,6 @@ OST_GET_RECORD_TYPE :: proc(fn, cn, rn: string) -> (recordType: string, success:
 	return "", false
 }
 
-//The following conversion funcs are used to convert the passed in record value to the correct data type
-//Originally these where all in one single proce but that was breaking shit.
-OST_CONVERT_RECORD_TO_INT :: proc(rValue: string) -> (int, bool) {
-	val, ok := strconv.parse_int(rValue)
-	if ok {
-		return val, true
-	} else {
-		fmt.printfln("Failed to parse int")
-		return 0, false
-	}
-}
-
-OST_CONVERT_RECORD_TO_FLOAT :: proc(rValue: string) -> (f64, bool) {
-	val, ok := strconv.parse_f64(rValue)
-	if ok {
-		return val, true
-	} else {
-		fmt.printfln("Failed to parse float")
-		return 0.0, false
-	}
-}
-
-//todo: as of 12/22/2024 I dicovered there is a parse_bool proc in the strconv package
-//need to update this proc to use it - Marshall Burns
-OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
-	lower_str := strings.to_lower(strings.trim_space(rValue))
-	if lower_str == "true" {
-		return true, true
-	} else if lower_str == "false" {
-		return false, true
-	} else {
-		//no need to do anything other than return here. Once false is returned error handling system will do its thing
-		return false, false
-	}
-}
-
-
-//The following converstion procs take in the string from the command line, splits it by commas
-//appends each split value to an array. Easy Day
-//Note: Memory is freed in the procecudure that calls these conversion procs
-//TODO: All of these can be combined into one proc with a switch statement but more work than Im willing to do rn - Marshall Burns aka @SchoolyB
-OST_CONVERT_RECORD_TO_INT_ARRAY :: proc(rValue: string) -> ([dynamic]int, bool) {
-	newArray := make([dynamic]int)
-	strValue := OST_PARSE_ARRAY(rValue)
-	for i in strValue {
-		val, ok := strconv.parse_int(i)
-		append(&newArray, val)
-	}
-	return newArray, true
-}
-
-
-OST_CONVERT_RECORD_TO_FLT_ARRAY :: proc(rValue: string) -> ([dynamic]f64, bool) {
-	newArray := make([dynamic]f64)
-	strValue := OST_PARSE_ARRAY(rValue)
-	for i in strValue {
-		val, ok := strconv.parse_f64(i)
-		append(&newArray, val)
-	}
-	return newArray, true
-}
-
-OST_CONVERT_RECORD_TO_BOOL_ARRAY :: proc(rValue: string) -> ([dynamic]bool, bool) {
-	newArray := make([dynamic]bool)
-	strValue := OST_PARSE_ARRAY(rValue)
-	for i in strValue {
-		lower_str := strings.to_lower(strings.trim_space(i))
-		if lower_str == "true" {
-			append(&newArray, true)
-		} else if lower_str == "false" {
-			append(&newArray, false)
-		} else {
-			fmt.printfln("Failed to parse bool array")
-			return newArray, false
-		}
-	}
-	return newArray, true
-}
-
-OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
-	newArray := make([dynamic]string)
-	strValue := OST_PARSE_ARRAY(rValue)
-	for i in strValue {
-		append(&newArray, i)
-	}
-	return newArray, true
-}
-
-//Dont really need the following 3 procs, could just call the parse procs where needed but fuck it - Marshall Burns
-OST_CONVERT_RECORD_TO_DATE :: proc(rValue: string) -> (string, bool) {
-	date, err := OST_PARSE_DATE(rValue)
-	if err == 0 {
-		return date, true
-	} else {
-		return "", false
-	}
-}
-
-OST_CONVERT_RECORD_TO_TIME :: proc(rValue: string) -> (string, bool) {
-	time, err := OST_PARSE_TIME(rValue)
-	if err == 0 {
-		return time, true
-	} else {
-		return "", false
-	}
-}
-
-OST_CONVERT_RECORD_TO_DATETIME :: proc(rValue: string) -> (string, bool) {
-	dateTime, err := OST_PARSE_DATETIME(rValue)
-	if err == 0 {
-		return dateTime, true
-	} else {
-		return "", false
-	}
-}
-
 
 //reads over a specific collection file and looks for records with the passed in name
 OST_SCAN_COLLECTION_FOR_RECORD :: proc(
@@ -965,9 +849,6 @@ OST_FIND_RECORD_MATCHES_IN_CLUSTERS :: proc(content: string, rName: string) -> [
 
 //Reworked for dot notation - Marshall Burns aka @SchoolyB
 OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
-	colNameBuf := make([]byte, 1024)
-	defer delete(colNameBuf)
-
 	result := OST_CHECK_IF_RECORD_EXISTS(file, cn, rn)
 
 	if !result {

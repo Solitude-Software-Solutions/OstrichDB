@@ -1493,25 +1493,33 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				}
 				//super fucking bad code but tbh its christmas eve and im tired - Marshall
-				if new_type == const.INT {
+				if new_type == const.INT || new_type == const.INTEGER {
 					new_type = const.INTEGER
-				} else if new_type == const.STR {
+				} else if new_type == const.STR || new_type == const.STRING {
+					fmt.println("THIS SHOULD NOT BE HAPPENING")
 					new_type = const.STRING
-				} else if new_type == const.BOOL {
+				} else if new_type == const.BOOL || new_type == const.BOOLEAN {
 					new_type = const.BOOLEAN
-				} else if new_type == const.FLT {
+				} else if new_type == const.FLT || new_type == const.FLOAT {
 					new_type = const.FLOAT
+				} else if new_type == const.STRING_ARRAY || new_type == const.STR_ARRAY {
+					new_type = const.STRING_ARRAY
+					fmt.println("THIS SHOULD BE HAPPENING")
+				} else if new_type == const.INT_ARRAY || new_type == const.INTEGER_ARRAY {
+					new_type = const.INTEGER_ARRAY
+				} else if new_type == const.BOOL_ARRAY || new_type == const.BOOLEAN_ARRAY {
+					new_type = const.BOOLEAN_ARRAY
+				} else if new_type == const.FLOAT_ARRAY || new_type == const.FLT_ARRAY {
+					new_type = const.FLOAT_ARRAY
 				}
 
-				old_type, _ := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
-				rd := data.OST_READ_RECORD_VALUE(colPath, cluster_name, old_type, record_name)
-				success := data.OST_CHANGE_RECORD_TYPE(
+				success := data.OST_HANDLE_TYPE_CHANGE(
 					colPath,
 					cluster_name,
 					record_name,
-					rd,
 					new_type,
 				)
+
 				if success {
 					fmt.printfln(
 						"Successfully changed record %s.%s.%s's type to %s",

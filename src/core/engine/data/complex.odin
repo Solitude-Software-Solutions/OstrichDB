@@ -1,5 +1,7 @@
 package data
+import "../../../utils"
 import "../../const"
+import "../data"
 import "core:fmt"
 import "core:strconv"
 import "core:strings"
@@ -9,8 +11,8 @@ import "core:strings"
 // Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
-
 //This file is used to define the structure of the complex data types and how OstrichDB will handle them
+
 
 //essentially will look over the passed in string and as long as its encased in [] it will split the string into an array based on the commas
 OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
