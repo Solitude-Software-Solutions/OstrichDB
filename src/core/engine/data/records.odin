@@ -420,7 +420,7 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 				}
 
 				// Add the modified cluster to the new content
-				fmt.printfln("New Cluster: %s", newCluster)
+				// fmt.printfln("New Cluster: %s", newCluster) //debugging
 				append(&newContent, ..newCluster[:])
 				append(&newContent, "}")
 				append(&newContent, ",\n\n")
