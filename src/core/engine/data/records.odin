@@ -863,7 +863,6 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		return false
 	}
 
-	//todo: update this call to include the cluster name as well
 	recordType, getTypeSuccess := OST_GET_RECORD_TYPE(file, cn, rn)
 	//Array allocations
 	intArrayValue: [dynamic]int

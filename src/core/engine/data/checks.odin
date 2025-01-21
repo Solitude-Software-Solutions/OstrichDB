@@ -170,7 +170,6 @@ OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 			)
 			fmt.println("For more information, please see the error log file.")
 			OST_PERFORM_ISOLATION(fn)
-			//todo need to read over each cluster in the collection get their ids and remove them from the cache..
 			return -1
 		}
 	}

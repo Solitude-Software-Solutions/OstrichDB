@@ -19,9 +19,6 @@ import "core:strings"
 
 //generates a random ID, ensures its not currently in use by a user or a cluster
 //the uponCreation param is used to evalute at whether or not the cluster or user that the ID will be assigned to has been created yet
-//TODO: A possible solution to the issue of skipping the check is:
-//when a cluster is being first created it doesnt need and id.
-//the cluster then creates created without that ID then the ID is generated and appended
 OST_GENERATE_ID :: proc(uponCreation: bool) -> i64 {
 	idAlreadyExists := false
 	//ensure the generated id length is 16 digits
@@ -76,7 +73,6 @@ OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluOneid, const.CLUSTER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
 
-	//TODO: SEE THE COMMENT IN OST_GENERATE_ID!!!! - Marshall Burns Dec 2024
 	cluTwoid := OST_GENERATE_ID(true)
 	//create a cluster for user ids
 	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluTwoid, const.USER_ID_CLUSTER)

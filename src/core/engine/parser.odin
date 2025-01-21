@@ -12,7 +12,6 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-//todo: this isnt even being used nor would it work lol
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	using const
 	validModifiers := []string{OF_TYPE, TO}

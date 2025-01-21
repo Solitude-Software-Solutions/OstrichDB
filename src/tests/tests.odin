@@ -450,7 +450,7 @@ test_command_history :: proc(t: ^testing.T) {
 	//todo: need to delete the test users history cluster from the collection. when done testing.
 }
 
-//todo: nmeed to find a way to run this test. it requires the security poackage but cant import it because the tests package is import into security...
+//todo: nmeed to find a way to run this test. it requires the security package but cant import it because the tests package is import into security...
 // test_auth_process :: proc(t: ^testing.T) {
 //     test_counter += 1
 // 	    start_time := time.now()

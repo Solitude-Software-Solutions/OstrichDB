@@ -1556,7 +1556,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			collection_name := cmd.l_token[0]
-			result := data.OST_PERFORM_ISOLATION(collection_name) //todo dont forget to remove all cluster ids from the cache
+			result := data.OST_PERFORM_ISOLATION(collection_name)
 			switch result {
 			case 0:
 				fmt.printfln(

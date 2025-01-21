@@ -35,8 +35,6 @@ OST_CONVERT_RECORD_TO_FLOAT :: proc(rValue: string) -> (f64, bool) {
 	}
 }
 
-//todo: as of 12/22/2024 I dicovered there is a parse_bool proc in the strconv package
-//need to update this proc to use it - Marshall Burns
 OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 	lower_str := strings.to_lower(strings.trim_space(rValue))
 	if lower_str == "true" {
@@ -53,7 +51,6 @@ OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
 //The following converstion procs take in the string from the command line, splits it by commas
 //appends each split value to an array. Easy Day
 //Note: Memory is freed in the procecudure that calls these conversion procs
-//TODO: All of these can be combined into one proc with a switch statement but more work than Im willing to do rn - Marshall Burns aka @SchoolyB
 OST_CONVERT_RECORD_TO_INT_ARRAY :: proc(rValue: string) -> ([dynamic]int, bool) {
 	newArray := make([dynamic]int)
 	strValue := OST_PARSE_ARRAY(rValue)
@@ -304,7 +301,6 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 
 
 //handles a records type and value change
-//todo: move this to records.odin
 OST_HANDLE_TYPE_CHANGE :: proc(colPath, cn, rn, newType: string) -> bool {
 	fmt.printfln("%s is getting  newType: %s", #procedure, newType)
 	oldType, _ := data.OST_GET_RECORD_TYPE(colPath, cn, rn)
