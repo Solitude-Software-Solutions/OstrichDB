@@ -58,9 +58,9 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	// fmt.println(
 	// 	"Cluster scan success: ",
 	// 	clusterScanSuccess,
-	// 	"Invalid cluster found: ",
-	// 	invalidClusterFound,
-	// )
+	// 	"Invalid header success: ",
+	// 	headerScanSuccess,
+	// ) //debugging
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
 		utils.log_err("Cluster structure is not compliant", #procedure)
 		types.data_integrity_checks.File_Format.Compliant = false

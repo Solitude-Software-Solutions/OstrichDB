@@ -677,30 +677,30 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 
 		if trimmed == "{" {
 			if in_cluster {
-				return 0, true
+				return -1, true
 			}
 			in_cluster = true
 			bracket_count += 1
 			cluster_start_line = line_number
 		} else if trimmed == "}," {
 			if !in_cluster {
-				return 0, true
+				return -2, true
 			}
 			bracket_count -= 1
 			if bracket_count == 0 {
 				in_cluster = false
 			}
 		} else if trimmed == "}" {
-			return 0, true
+			return -3, true
 		}
 	}
 
 	if in_cluster {
-		return 0, true
+		return -4, true
 	}
 
 	if bracket_count != 0 {
-		return 0, true
+		return -5, true
 	}
 
 	return 0, false
