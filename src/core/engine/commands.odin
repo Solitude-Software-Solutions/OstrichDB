@@ -1489,14 +1489,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 
 				if !type_is_valid {
-					fmt.printfln("Invalid type")
+					fmt.printfln("Invalid type provided")
 					return 1
 				}
 				//super fucking bad code but tbh its christmas eve and im tired - Marshall
 				if new_type == const.INT || new_type == const.INTEGER {
 					new_type = const.INTEGER
 				} else if new_type == const.STR || new_type == const.STRING {
-					fmt.println("THIS SHOULD NOT BE HAPPENING")
 					new_type = const.STRING
 				} else if new_type == const.BOOL || new_type == const.BOOLEAN {
 					new_type = const.BOOLEAN
