@@ -135,7 +135,6 @@ OST_CONVERT_VALUE_TO_NEW_TYPE :: proc(value, oldT, newT: string) -> (string, boo
 	if len(value) == 0 {
 		return "", true
 	}
-	fmt.printfln("%s is getting value: %s,oldype: %s, newType: %s", #procedure, value, oldT, newT)
 	oldVIsArray := strings.has_prefix(oldT, "[]")
 	newVIsArray := strings.has_prefix(newT, "[]")
 
@@ -149,9 +148,6 @@ OST_CONVERT_VALUE_TO_NEW_TYPE :: proc(value, oldT, newT: string) -> (string, boo
 		for val in values { 	//for each value in the array
 			converted, ok := OST_CONVERT_SINGLE_VALUE(val, oldT, newT) //convert the value
 			if !ok {
-				fmt.println(
-					"OST_CONVERT_VALUE_TO_NEW_TYPE: Could not convert array value due to OST_CONVERT_SINGLE_VALUE failure 1",
-				)
 				return "", false
 			}
 			append(&newValues, converted) //append the converted value to the new array
@@ -163,9 +159,6 @@ OST_CONVERT_VALUE_TO_NEW_TYPE :: proc(value, oldT, newT: string) -> (string, boo
 	if !oldVIsArray && newVIsArray { 	//if the old value is not an array and the new value is
 		converted, ok := OST_CONVERT_SINGLE_VALUE(value, oldT, newT) //convert the single value
 		if !ok {
-			fmt.println(
-				"OST_CONVERT_VALUE_TO_NEW_TYPE: Could not convert single value due to OST_CONVERT_SINGLE_VALUE failure 2",
-			)
 			return "", false
 		}
 		return converted, true
@@ -186,6 +179,7 @@ OST_CONVERT_VALUE_TO_NEW_TYPE :: proc(value, oldT, newT: string) -> (string, boo
 }
 
 
+//filthy fucking code I am so sorry - Marshall Burns aka @SchoolyB
 OST_CONVERT_SINGLE_VALUE :: proc(
 	value: string,
 	oldType: string,
@@ -194,13 +188,6 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 	string,
 	bool,
 ) {
-	fmt.printfln(
-		"%s is getting value: %s,oldType: %s, newType: %s",
-		#procedure,
-		value,
-		oldType,
-		newType,
-	)
 	//if the types are the same, no conversion is needed
 	if oldType == newType {
 		return value, true
@@ -222,31 +209,6 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 			}
 			return "\"\"", true
 		case:
-			fmt.println("Invalid old type when new type is STRING")
-			return "", false
-		}
-	case const.STRING_ARRAY:
-		// New type is STRING_ARRAY
-		switch (oldType) {
-		case const.STRING:
-			// Remove any existing quotes
-			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
-			// Format as array with proper quotes
-			return value, true
-		case:
-			fmt.println("Invalid old type when new type is STRING_ARRAY")
-			return "", false
-		}
-	case const.INTEGER_ARRAY:
-		// New type is INTEGER_ARRAY
-		switch (oldType) {
-		case const.INTEGER:
-			// Remove any existing quotes
-			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
-			// Format as array with proper quotes
-			return value, true
-		case:
-			fmt.println("Invalid old type when new type is INTEGER_ARRAY")
 			return "", false
 		}
 	case const.INTEGER:
@@ -260,12 +222,80 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 			}
 			return value, true
 		case:
-			fmt.println("Invalid old type when new type is INTEGER")
 			return "", false
 		}
-
+	case const.FLOAT:
+		//New type is FLOAT
+		switch (oldType) {
+		case const.STRING:
+			//Old type is STRING
+			_, ok := strconv.parse_f64(value)
+			if !ok {
+				return "", false
+			}
+			return value, true
+		case:
+			return "", false
+		}
+	case const.BOOLEAN:
+		//New type is BOOLEAN
+		switch (oldType) {
+		case const.STRING:
+			//Old type is STRING
+			lower_str := strings.to_lower(strings.trim_space(value))
+			if lower_str == "true" || lower_str == "false" {
+				return lower_str, true
+			}
+			return "", false
+		case:
+			return "", false
+		}
+	//ARRAY CONVERSIONS
+	case const.STRING_ARRAY:
+		// New type is STRING_ARRAY
+		switch (oldType) {
+		case const.STRING:
+			// Remove any existing quotes
+			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
+			// Format as array with proper quotes
+			return value, true
+		case:
+			return "", false
+		}
+	case const.INTEGER_ARRAY:
+		// New type is INTEGER_ARRAY
+		switch (oldType) {
+		case const.INTEGER:
+			// Remove any existing quotes
+			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
+			// Format as array with proper quotes
+			return value, true
+		case:
+			return "", false
+		}
+	case const.BOOLEAN_ARRAY:
+		// New type is BOOLEAN_ARRAY
+		switch (oldType) {
+		case const.BOOLEAN:
+			// Remove any existing quotes
+			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
+			// Format as array with proper quotes
+			return value, true
+		case:
+			return "", false
+		}
+	case const.FLOAT_ARRAY:
+		// New type is FLOAT_ARRAY
+		switch (oldType) {
+		case const.FLOAT:
+			// Remove any existing quotes
+			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
+			// Format as array with proper quotes
+			return value, true
+		case:
+			return "", false
+		}
 	case:
-		fmt.println("Invalid new type")
 		return "", false
 	}
 
