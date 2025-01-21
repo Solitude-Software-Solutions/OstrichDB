@@ -1,4 +1,4 @@
-# **OstrichDB**
+saw # **OstrichDB**
 
 OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin programming language. It can be run serverless from the command line or deployed in server mode, offering flexibility for different use cases. With a focus on simplicity and straightforward setup, OstrichDB provides an intuitive command structure for managing data using both single and multi-token commands.
 
@@ -191,18 +191,14 @@ Other supported data types include:
 - More configuration options
 - Database file compression and zipping
 - Several new command tokens:
-  - `SORT`: Sort records or clusters by field
   - `IMPORT`: Load data from external sources(JSON, CSV, etc.)
   - `EXPORT`: Export data to various formats
-  - `VALIDATE`: Check data integrity
   - `LOCK`: Prevent data modification
   - `UNLOCK`: Allow data modification
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
-  - `ALL`: Perform operations on all objects within a scope
-- Support for additional data types
 - Enhanced security (database encryption/decryption, secure deletion)
-- Commnad chaining for complex operations
+- Command chaining for complex operations
 - Server-based architecture improvements
 - External API support for popular programming languages
 - Windows support
