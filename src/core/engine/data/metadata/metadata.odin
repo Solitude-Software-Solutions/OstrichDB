@@ -314,7 +314,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	}
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
-		return 1, true
+		return -1, true
 	}
 
 	content := string(data)
@@ -322,15 +322,16 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	defer delete(lines)
 
 	// Check if the metadata header is present
-	if !strings.has_prefix(lines[0], const.METADATA_START) {
+	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
+		fmt.println("Lines[0]: ", lines[0])
 		utils.log_err("Missing metadata start marker", #procedure)
-		return 1, true
+		return -2, true
 	}
 
 	// Find the end of metadata section
 	metadataEndIndex := -1
 	for i in 0 ..< len(lines) {
-		if strings.has_prefix(lines[i], const.METADATA_END) {
+		if strings.has_prefix(lines[i], "@@@@@@@@@@@@@@@BTM") {
 			metadataEndIndex = i
 			break
 		}
@@ -338,21 +339,21 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 
 	if metadataEndIndex == -1 {
 		utils.log_err("Missing metadata end marker", #procedure)
-		return 1, true
+		return -3, true
 	}
 
 	// Verify the header has the correct number of lines
 	expectedLines := 7 // 5 metadata fields + start and end markers
 	if metadataEndIndex != expectedLines - 1 {
 		utils.log_err("Invalid metadata header length", #procedure)
-		return 1, true
+		return 4, true
 	}
 
 	// Check each metadata field
 	for i in 1 ..< 5 {
 		if !strings.has_prefix(lines[i], types.schema.Metadata_Header_Body[i - 1]) {
 			utils.log_err(fmt.tprintf("Invalid metadata field format: %s", lines[i]), #procedure)
-			return 1, true
+			return -5, true
 		}
 	}
 
@@ -360,13 +361,13 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	versionMatch := OST_VALIDATE_FILE_FORMAT_VERSION()
 	if !versionMatch {
 		utils.log_err("Invalid file format version being used", #procedure)
-		return 1, true
+		return -6, true
 	}
 
 	ffv_parts := strings.split(lines[1], ": ")
 	if len(ffv_parts) < 2 {
 		utils.log_err("Invalid file format version line format", #procedure)
-		return 1, true
+		return -7, true
 	}
 	collectionVersionValue := ffv_parts[1]
 
@@ -379,7 +380,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 			"File format version in collection file does not match the file format version",
 			#procedure,
 		)
-		return 1, true
+		return -8, true
 	}
 
 	return 0, false

@@ -721,7 +721,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				case -1:
 					return -1
 				}
-
 				if data.OST_ERASE_RECORD(collection_name, cluster_name, record_name) == true {
 					fmt.printfln(
 						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
