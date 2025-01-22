@@ -3,6 +3,7 @@ package metadata
 import "../../../../utils"
 import "../../../const"
 import "../../../types"
+import "core:crypto"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -75,52 +76,41 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	return totalSize - metadataSize, metadataSize
 }
 
+// Calculates a SHA-256 checksum for .ost files based on file content
+OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
+	data, readSuccess := os.read_entire_file(fn)
+	if !readSuccess {
+		utils.log_err("Could not read file for checksum calculation", #procedure)
+		return ""
+	}
+	defer delete(data)
 
-// Generates a random 32 char checksum for .ost files.
-OST_GENERATE_CHECKSUM :: proc() -> string {
-	checksum: string
-	possibleNums: []string = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
-	possibleChars: []string = {
-		"A",
-		"B",
-		"C",
-		"D",
-		"E",
-		"F",
-		"G",
-		"H",
-		"I",
-		"J",
-		"K",
-		"L",
-		"M",
-		"N",
-		"O",
-		"P",
-		"Q",
-		"R",
-		"S",
-		"T",
-		"U",
-		"V",
-		"W",
-		"X",
-		"Y",
-		"Z",
+	content := string(data)
+	metadataEnd := strings.index(content, const.METADATA_END)
+	if metadataEnd == -1 {
+		// For new files, generate unique initial checksum
+		uniqueContent := fmt.tprintf("%s_%v", fn, time.now())
+		hashedContent := hash.hash_string(hash.Algorithm.SHA256, uniqueContent)
+		// Convert to single continuous hex string
+		return strings.clone(fmt.tprintf("%x", hashedContent))
 	}
 
-	for c := 0; c < 16; c += 1 {
-		randC := rand.choice(possibleChars)
-		checksum = strings.concatenate([]string{checksum, randC})
-	}
+	// Get content after metadata section
+	actualContent := content[metadataEnd + len(const.METADATA_END):]
 
-	for n := 0; n < 16; n += 1 {
-		randN := rand.choice(possibleNums)
-		checksum = strings.concatenate([]string{checksum, randN})
-	}
-	return strings.clone(checksum)
+	// Calculate hash and return as continuous hex string
+	hashedContent := hash.hash_string(hash.Algorithm.SHA256, actualContent)
+	
+	//Fix up the formatting
+	splitComma := strings.split(fmt.tprintf("%x", hashedContent), ",")
+	joinedSplit := strings.join(splitComma, "")
+	trimRBracket := strings.trim(joinedSplit, "]")
+	trimLBRacket := strings.trim(trimRBracket, "[")
+	NoWhitespace, _ := strings.replace(trimLBRacket, " ", "", -1)
+
+
+	return strings.clone(NoWhitespace)
 }
-
 
 //!Only used when to append the meta template upon .ost file creation NOT modification
 //this appends the metadata header to the file as well as sets the time of creation
@@ -213,7 +203,7 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 			break
 		case 5:
 			if strings.has_prefix(line, "# Checksum:") {
-				lines[i] = fmt.tprintf("# Checksum: %s", OST_GENERATE_CHECKSUM())
+				lines[i] = fmt.tprintf("# Checksum: %s", OST_GENERATE_CHECKSUM(fn))
 				updated = true
 			}
 			break
