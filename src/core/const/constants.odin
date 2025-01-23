@@ -60,6 +60,7 @@ TYPE_OF :: "TYPE_OF" //not the same as OF_TYPE. This is used as an command token
 CHANGE_TYPE :: "CHANGE_TYPE"
 DESTROY :: "DESTROY"
 ISOLATE :: "ISOLATE"
+VALIDATE :: "VALIDATE"
 //Target Tokens
 COLLECTION :: "COLLECTION"
 CLUSTER :: "CLUSTER"
