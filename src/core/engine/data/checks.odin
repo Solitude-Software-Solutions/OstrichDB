@@ -97,7 +97,7 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 	storedChecksum := ""
 
 	for line in lines {
-		fmt.println("Line: ", line) //debugging
+		// fmt.println("Line: ", line) //debugging
 		if strings.contains(line, "# Checksum:") {
 			fmt.println("found liune with checksum")
 			storedChecksum = strings.split(line, ": ")[1]
@@ -105,7 +105,7 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 		}
 	}
 
-	currentChecksum := metadata.OST_GENERATE_CHECKSUM(fn)
+	currentChecksum := metadata.OST_GENERATE_CHECKSUM(filePath)
 	fmt.println("Stored checksum: ", storedChecksum) //debugging
 	fmt.println("Current checksum: ", currentChecksum) //debugging
 

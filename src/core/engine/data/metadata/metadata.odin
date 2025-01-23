@@ -108,7 +108,7 @@ OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
 	trimLBRacket := strings.trim(trimRBracket, "[")
 	NoWhitespace, _ := strings.replace(trimLBRacket, " ", "", -1)
 
-	fmt.println("Generated checksum: ", NoWhitespace) //debugging
+	// fmt.println("Generated checksum: ", NoWhitespace) //debugging
 	return strings.clone(NoWhitespace)
 }
 
