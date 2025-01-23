@@ -64,6 +64,7 @@ ErrorType :: enum {
 	FILE_FORMAT_NOT_VALID,
 	FILE_FORMAT_VERSION_NOT_SUPPORTED,
 	CLUSTER_IDS_NOT_VALID,
+	INVALID_CHECKSUM,
 	INVALID_DATA_TYPE_FOUND,
 	INVALID_VALUE_FOR_EXPECTED_TYPE,
 
@@ -123,6 +124,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.FILE_FORMAT_NOT_VALID             = "Collection File Formatting Is Not Valid",
 	.FILE_FORMAT_VERSION_NOT_SUPPORTED = "Collection File Format Version Is Not Supported",
 	.CLUSTER_IDS_NOT_VALID             = "Cluster IDs Found In Collection Do Not Match Valid Cluster IDs",
+	.INVALID_CHECKSUM                  = "Checksum mismatch. File may be corrupt",
 	.INVALID_DATA_TYPE_FOUND           = "Invalid Data Type(s) Found In Collection",
 	.INVALID_VALUE_FOR_EXPECTED_TYPE   = "An invalid value was given for the expected type",
 }
