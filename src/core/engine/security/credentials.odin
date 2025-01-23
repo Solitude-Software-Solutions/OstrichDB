@@ -142,6 +142,16 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
+	//update metadata fields
+	metadata.OST_METADATA_ON_CREATE(const.OST_HISTORY_PATH)
+	metadata.OST_METADATA_ON_CREATE(
+		fmt.tprintf(
+			"%s%s%s",
+			const.OST_SECURE_COLLECTION_PATH,
+			inituserName,
+			const.OST_FILE_EXTENSION,
+		),
+	)
 	fmt.println("Please re-launch OstrichDB...")
 	return 0
 }

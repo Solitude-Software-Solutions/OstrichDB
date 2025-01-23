@@ -233,6 +233,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						cmd.l_token[0],
 						utils.RESET,
 					)
+					fileName := utils.concat_collection_name(cmd.l_token[0])
+					metadata.OST_METADATA_ON_CREATE(fileName)
 				} else {
 					fmt.printf(
 						"Failed to create collection %s%s%s.\n",
@@ -316,6 +318,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fn := utils.concat_collection_name(collection_name)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
 			} else {
 				fmt.printfln(
 					"Invalid command. Correct Usage: NEW <collection_name>.<cluster_name>",
@@ -386,6 +389,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						fn := utils.concat_collection_name(collection_name)
 						metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 						metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+						metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
 
 						break
 					case -1, 1:
@@ -547,6 +551,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					fn := utils.concat_collection_name(collection_name)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+					metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
 				} else {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
@@ -694,6 +699,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fn := utils.concat_collection_name(collection_name)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
@@ -934,6 +940,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fn := utils.concat_collection_name(collectionName)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
 				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
+				metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
 			}
 			break
 		case 0:
@@ -1584,6 +1591,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		break
+	//VALIDATE command
+	case const.VALIDATE:
+		switch (len(cmd.l_token)) {
+		case 1:
+			collectionName := cmd.l_token[0]
+
+			result := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+
+		}
 	//END OF COMMAND TOKEN EVALUATION
 	case:
 		fmt.printfln(

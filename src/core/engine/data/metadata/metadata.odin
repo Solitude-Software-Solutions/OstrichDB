@@ -86,7 +86,7 @@ OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
 	defer delete(data)
 
 	content := string(data)
-	metadataEnd := strings.index(content, const.METADATA_END)
+	metadataEnd := strings.index(content, const.METADATA_END) //checksum doesn't include metadata
 	if metadataEnd == -1 {
 		// For new files, generate unique initial checksum
 		uniqueContent := fmt.tprintf("%s_%v", fn, time.now())
@@ -100,7 +100,7 @@ OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
 
 	// Calculate hash and return as continuous hex string
 	hashedContent := hash.hash_string(hash.Algorithm.SHA256, actualContent)
-	
+
 	//Fix up the formatting
 	splitComma := strings.split(fmt.tprintf("%x", hashedContent), ",")
 	joinedSplit := strings.join(splitComma, "")
@@ -108,9 +108,10 @@ OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
 	trimLBRacket := strings.trim(trimRBracket, "[")
 	NoWhitespace, _ := strings.replace(trimLBRacket, " ", "", -1)
 
-
+	fmt.println("Generated checksum: ", NoWhitespace) //debugging
 	return strings.clone(NoWhitespace)
 }
+
 
 //!Only used when to append the meta template upon .ost file creation NOT modification
 //this appends the metadata header to the file as well as sets the time of creation
@@ -128,7 +129,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 		utils.log_err("Error readinding collection file", #procedure)
 	}
 
-	dataAsStr := cast(string)rawData
+	dataAsStr := cast(string)rawData //todo: why in the hell did I use cast??? just use string() instead???
 	if strings.has_prefix(dataAsStr, "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@") {
 		return false
 	}
@@ -222,7 +223,7 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	err := os.write_entire_file(fn, transmute([]byte)new_content)
 }
 
-//!Only used on .ost file creation whether secure or not
+//used when creating a new collection file whether public or not
 OST_METADATA_ON_CREATE :: proc(fn: string) {
 	OST_UPDATE_METADATA_VALUE(fn, 1)
 	OST_UPDATE_METADATA_VALUE(fn, 3)
@@ -295,13 +296,6 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 ) {
 	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
 
-	types.schema.Metadata_Header_Body = [5]string {
-		"# File Format Version: ",
-		"# Date of Creation: ",
-		"# Date Last Modified: ",
-		"# File Size: ",
-		"# Checksum: ",
-	}
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
 		return -1, true
@@ -341,7 +335,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 
 	// Check each metadata field
 	for i in 1 ..< 5 {
-		if !strings.has_prefix(lines[i], types.schema.Metadata_Header_Body[i - 1]) {
+		if !strings.has_prefix(lines[i], types.Metadata_Header_Body[i - 1]) {
 			utils.log_err(fmt.tprintf("Invalid metadata field format: %s", lines[i]), #procedure)
 			return -5, true
 		}
@@ -385,4 +379,74 @@ OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
 		return false
 	}
 	return true
+}
+
+//returns the string value of the passed metadata field
+// colType: 1 = public(standard), 2 = history, 3 = config, 4 = ids
+OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: string, err: int) {
+	file: string
+	switch (colType) {
+	case 1:
+		file = utils.concat_collection_name(fn)
+		break
+	case 2:
+		file = const.OST_HISTORY_PATH
+		break
+	case 3:
+		file = const.OST_CONFIG_PATH
+		break
+	case 4:
+		file = const.OST_ID_PATH
+		break
+	}
+
+	data, readSuccess := utils.read_file(file, #procedure)
+	if !readSuccess {
+		utils.log_err("Error reading file", #procedure)
+		return "", 1
+	}
+	defer delete(data)
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	// Check if the metadata header is present
+	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
+		fmt.println("Lines[0]: ", lines[0])
+		utils.log_err("Missing metadata start marker", #procedure)
+		return "", -1
+	}
+
+	// Find the end of metadata section
+	metadataEndIndex := -1
+	for i in 0 ..< len(lines) {
+		if strings.has_prefix(lines[i], "@@@@@@@@@@@@@@@BTM") {
+			metadataEndIndex = i
+			break
+		}
+	}
+
+	if metadataEndIndex == -1 {
+		utils.log_err("Missing metadata end marker", #procedure)
+		return "", -2
+	}
+
+	// Verify the header has the correct number of lines
+	expectedLines := 7 // 5 metadata fields + start and end markers
+	if metadataEndIndex != expectedLines - 1 {
+		utils.log_err("Invalid metadata header length", #procedure)
+		return "", -3
+	}
+
+	for i in 1 ..< 5 {
+		if strings.has_prefix(lines[i], field) {
+			val := strings.split(lines[i], ": ")
+			fmt.println("Val: ", val)
+			return val[1], 0
+		}
+	}
+
+
+	return "", -4
 }

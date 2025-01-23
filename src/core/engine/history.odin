@@ -44,6 +44,9 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	//append the command from the file to the command history buffer
 	append(&types.current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
 
-	//update the history file size value in the metadata
+
+	//update the history file size, date last modified and checksum
+	metadata.OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 2)
 	metadata.OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 3)
+	metadata.OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 5)
 }

@@ -50,7 +50,7 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 }
 //same as above but for the cluster_id cluster
 OST_CHECK_IF_CLUSTER_ID_EXISTS :: proc(id: i64) -> bool {
-	fmt.printfln("checking if id: %d exists", id)
+	// fmt.printfln("checking if id: %d exists", id) //debugging
 	idStr := fmt.tprintf("%d", id)
 	// fmt.println("Checking if cluster id %s exists", idStr) //debugging
 	//this is incorrect, record names are not the same as the id values
@@ -78,8 +78,7 @@ OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluTwoid, const.USER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
-	metadata.OST_UPDATE_METADATA_VALUE(const.OST_ID_PATH, 2)
-	metadata.OST_UPDATE_METADATA_VALUE(const.OST_ID_PATH, 3)
+	metadata.OST_METADATA_ON_CREATE(const.OST_ID_PATH)
 }
 
 //appends eiter a user id or a cluster id to their respective clusters in the id collection

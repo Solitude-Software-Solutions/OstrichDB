@@ -77,6 +77,46 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	return types.data_integrity_checks.File_Format.Compliant
 }
 
+OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
+	types.data_integrity_checks.Checksum.Compliant = true
+	filePath := utils.concat_collection_name(fn)
+
+	data, err := utils.read_file(filePath, #procedure)
+	defer delete(data)
+	if err != true {
+		utils.log_err("Error reading file", #procedure)
+		types.data_integrity_checks.Checksum.Compliant = false
+		return types.data_integrity_checks.Checksum.Compliant
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+
+	defer delete(lines)
+
+	storedChecksum := ""
+
+	for line in lines {
+		fmt.println("Line: ", line) //debugging
+		if strings.contains(line, "# Checksum:") {
+			fmt.println("found liune with checksum")
+			storedChecksum = strings.split(line, ": ")[1]
+			break
+		}
+	}
+
+	currentChecksum := metadata.OST_GENERATE_CHECKSUM(fn)
+	fmt.println("Stored checksum: ", storedChecksum) //debugging
+	fmt.println("Current checksum: ", currentChecksum) //debugging
+
+	if storedChecksum != currentChecksum {
+		utils.log_err("Checksums do not match", #procedure)
+		types.data_integrity_checks.Checksum.Compliant = false
+	}
+
+	return types.data_integrity_checks.Checksum.Compliant
+}
+
 
 //performs all data integrity checks on the passed collection and returns the results
 OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
@@ -85,6 +125,7 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 	checkOneResult := OST_VALIDATE_IDS(fn)
 	checkTwoResult := OST_VALIDATE_FILE_SIZE(fn)
 	checkThreeResult := OST_VALIDATE_COLLECTION_FORMAT(fn)
+	checkFourResult := OST_VALIDATE_CHECKSUM(fn)
 	//integrity check one - cluster ids
 	switch checkOneResult {
 	case false:
@@ -125,11 +166,25 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 		utils.throw_err(error3)
 		utils.log_err("Collection format is not compliant", #procedure)
 	}
+	//integrity check four - checksum
+	switch checkFourResult {
+	case false:
+		types.data_integrity_checks.Checksum.Severity = .HIGH
+		types.Severity_Code = 2
+		error4 := utils.new_err(
+			.INVALID_CHECKSUM,
+			utils.get_err_msg(.INVALID_CHECKSUM),
+			#procedure,
+		)
+		utils.throw_err(error4)
+		utils.log_err("Checksum is not compliant", #procedure)
+	}
 
-	//do more checks here
+	//append other check results here
 	append(&checks, checkOneResult)
 	append(&checks, checkTwoResult)
 	append(&checks, checkThreeResult)
+	append(&checks, checkFourResult)
 	return checks
 }
 
@@ -160,13 +215,15 @@ OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 				utils.RESET,
 			)
 			fmt.printfln(
-				"Status of the all checks:\n%s: %v\n%s: %v\n%s: %v",
+				"Status of the all checks:\n%s: %v\n%s: %v\n%s: %v\n%s: %v",
 				"Cluster ID Compliancy Passed",
 				types.data_integrity_checks.Cluster_IDs.Compliant,
 				"File Size Passed",
 				types.data_integrity_checks.File_Size.Compliant,
 				"Collection Format Passed",
 				types.data_integrity_checks.File_Format.Compliant,
+				"Checksum Passed",
+				types.data_integrity_checks.Checksum.Compliant,
 			)
 			fmt.println("For more information, please see the error log file.")
 			OST_PERFORM_ISOLATION(fn)
