@@ -104,7 +104,9 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 			break
 		}
 	}
-
+	//TODO: for some reason the checksum that is generated here is not the same as the stored value..even though nothing in the file has changed. SHOULD BE THE EXACT SAME
+	//So the reason the values arent the same is because checksum value is being generated from the file with the checksum value in it. But the "currentCheckSum value" is a new generation
+	//which now reads over the file INCLUDING the storedChecksum value. So the storedChecksum value is being included in the checksum generation. So the checksum value is different
 	currentChecksum := metadata.OST_GENERATE_CHECKSUM(filePath)
 	fmt.println("Stored checksum: ", storedChecksum) //debugging
 	fmt.println("Current checksum: ", currentChecksum) //debugging
