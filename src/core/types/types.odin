@@ -125,6 +125,7 @@ Data_Integrity_Checks :: struct {
 	File_Format_Version: Data_Integrity_Info, //ensure that the file format version is compliant with the current version. MEDIUM SEVERITY
 	Cluster_IDs:         Data_Integrity_Info, //ensure that the value of all cluster ids within a collection are in the cache. HIGH SEVERITY
 	Data_Types:          Data_Integrity_Info, //ensure that all records have a data type and that its an approved one  HIGH SEVERITY
+	Checksum:            Data_Integrity_Info, //ensure that the checksum of the file is correctly calculated and matches the value in the file. HIGH SEVERITY
 }
 
 Data_Integrity_Info :: struct {
@@ -146,11 +147,13 @@ Message_Color: string //used in checks.odin
 Severity_Code: int //used in checks.odin
 
 
-schema: Collection_File_Schema
-Collection_File_Schema :: struct {
-	Metadata_Header_Body: [5]string, //doesnt count the header start and end lines
+Metadata_Header_Body := [5]string {
+	"# File Format Version: ",
+	"# Date of Creation: ",
+	"# Date Last Modified: ",
+	"# File Size: ",
+	"# Checksum: ",
 }
-
 
 //Server Stuff Below
 //Server Stuff Below
