@@ -86,29 +86,31 @@ OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
 	defer delete(data)
 
 	content := string(data)
-	metadataEnd := strings.index(content, const.METADATA_END) //checksum doesn't include metadata
+
+	//find metadata section boundaries
+	metadataStart := strings.index(content, const.METADATA_START)
+	metadataEnd := strings.index(content, const.METADATA_END)
+
 	if metadataEnd == -1 {
 		// For new files, generate unique initial checksum
 		uniqueContent := fmt.tprintf("%s_%v", fn, time.now())
 		hashedContent := hash.hash_string(hash.Algorithm.SHA256, uniqueContent)
-		// Convert to single continuous hex string
 		return strings.clone(fmt.tprintf("%x", hashedContent))
 	}
 
-	// Get content after metadata section
+	//extract content minus metadata header
 	actualContent := content[metadataEnd + len(const.METADATA_END):]
 
-	// Calculate hash and return as continuous hex string
+	//hash sub metadata header content
 	hashedContent := hash.hash_string(hash.Algorithm.SHA256, actualContent)
 
-	//Fix up the formatting
+	//format hash so that its fucking readable...
 	splitComma := strings.split(fmt.tprintf("%x", hashedContent), ",")
 	joinedSplit := strings.join(splitComma, "")
 	trimRBracket := strings.trim(joinedSplit, "]")
 	trimLBRacket := strings.trim(trimRBracket, "[")
 	NoWhitespace, _ := strings.replace(trimLBRacket, " ", "", -1)
 
-	// fmt.println("Generated checksum: ", NoWhitespace) //debugging
 	return strings.clone(NoWhitespace)
 }
 

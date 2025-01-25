@@ -99,7 +99,7 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 	for line in lines {
 		// fmt.println("Line: ", line) //debugging
 		if strings.contains(line, "# Checksum:") {
-			fmt.println("found liune with checksum")
+			// fmt.println("found line with checksum") //debugging
 			storedChecksum = strings.split(line, ": ")[1]
 			break
 		}
@@ -108,8 +108,8 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 	//So the reason the values arent the same is because checksum value is being generated from the file with the checksum value in it. But the "currentCheckSum value" is a new generation
 	//which now reads over the file INCLUDING the storedChecksum value. So the storedChecksum value is being included in the checksum generation. So the checksum value is different
 	currentChecksum := metadata.OST_GENERATE_CHECKSUM(filePath)
-	fmt.println("Stored checksum: ", storedChecksum) //debugging
-	fmt.println("Current checksum: ", currentChecksum) //debugging
+	// fmt.println("Stored checksum: ", storedChecksum) //debugging
+	// fmt.println("Current checksum: ", currentChecksum) //debugging
 
 	if storedChecksum != currentChecksum {
 		utils.log_err("Checksums do not match", #procedure)
