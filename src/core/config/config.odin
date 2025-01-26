@@ -17,6 +17,7 @@ import "core:strings"
 main :: proc() {
 	data.OST_CREATE_COLLECTION("config", 3)
 	id := data.OST_GENERATE_ID(true)
+	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 	data.OST_CREATE_CLUSTER_BLOCK("./core/config.ost", id, const.CONFIG_CLUSTER)
 
 	appendSuccess := OST_APPEND_ALL_CONFIG_RECORDS()
