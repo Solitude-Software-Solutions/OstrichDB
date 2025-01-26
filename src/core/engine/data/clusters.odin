@@ -306,6 +306,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 			name_start += len("cluster_name :identifier:")
 			// Find the end of the line
 			name_end := strings.index(cluster[name_start:], "\n")
+			fmt.println("nameEnd: ", name_end) //debugging
 			if name_end != -1 {
 				// Extract the actual cluster name
 				cluster_name := strings.trim_space(cluster[name_start:][:name_end])
@@ -329,7 +330,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 		}
 	}
 
-	fmt.println("new content: ", string(newContent[:])) //debugging
+	// fmt.println("new content: ", string(newContent[:])) //debugging
 
 	if !clusterFound {
 		utils.throw_err(
@@ -482,13 +483,15 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	defer delete(data)
 
 	content := string(data)
-	clusterClosingBrace := strings.split(content, "}")
-	clusterOpeningBrace := strings.split(content, "{")
+
+	clusters := strings.split(content, "},")
+	clusterOpeningBrace := strings.split(content, "{") //only used when 1 cluster is found
 	newContent := make([dynamic]u8)
 	defer delete(newContent)
 	clusterFound := false
-
 	clusterCount := OST_COUNT_CLUSTERS(fn)
+	cluNameActual: string
+
 	if clusterCount == 1 { 	//fixes the issue where the metedata header would be deleted if the cluster was the only one in the file
 		for i := 0; i < len(clusterOpeningBrace); i += 1 {
 			cluster := clusterOpeningBrace[i] // everything in the file up to the first instance of "{"
@@ -498,15 +501,27 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 				append(&newContent, ..transmute([]u8)cluster) //adding back the metadata header content
 			}
 		}
-	} else {
-		for i := 0; i < len(clusterClosingBrace); i += 1 {
-			cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
-			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-				clusterFound = true
-			} else if len(strings.trim_space(cluster)) > 0 {
-				append(&newContent, ..transmute([]u8)cluster) // Add closing brace and comma to the cluster
-				if i < len(clusterClosingBrace) - 1 {
-					append(&newContent, "}")
+	} else { 	//TODO: Still is deleting metadata header.
+		for cluster in clusters {
+			// Find the cluster name in the current cluster
+			name_start := strings.index(cluster, "cluster_name :identifier:")
+			if name_start != -1 {
+				// Move past the identifier prefix
+				name_start += len("cluster_name :identifier:")
+				// Find the end of the line
+				name_end := strings.index(cluster[name_start:], "\n")
+				if name_end != -1 {
+					// Extract the actual cluster name
+					cluster_name := strings.trim_space(cluster[name_start:][:name_end])
+
+					// Check for exact match
+					if cluster_name == cn {
+						clusterFound = true
+						// Skip this cluster (effectively deleting it)
+					} else if len(strings.trim_space(cluster)) > 0 {
+						append(&newContent, ..transmute([]u8)cluster)
+						append(&newContent, "},")
+					}
 				}
 			}
 		}
