@@ -483,19 +483,31 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 	content := string(data)
 	clusterClosingBrace := strings.split(content, "}")
+	clusterOpeningBrace := strings.split(content, "{")
 	newContent := make([dynamic]u8)
 	defer delete(newContent)
 	clusterFound := false
 
-
-	for i := 0; i < len(clusterClosingBrace); i += 1 {
-		cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-			clusterFound = true
-		} else if len(strings.trim_space(cluster)) > 0 {
-			append(&newContent, ..transmute([]u8)cluster) // Add closing brace
-			if i < len(clusterClosingBrace) - 1 {
-				append(&newContent, "}")
+	clusterCount := OST_COUNT_CLUSTERS(fn)
+	if clusterCount == 1 { 	//fixes the issue where the metedata header would be deleted if the cluster was the only one in the file
+		for i := 0; i < len(clusterOpeningBrace); i += 1 {
+			cluster := clusterOpeningBrace[i] // everything in the file up to the first instance of "{"
+			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+				clusterFound = true
+			} else if len(strings.trim_space(cluster)) > 0 {
+				append(&newContent, ..transmute([]u8)cluster) //adding back the metadata header content
+			}
+		}
+	} else {
+		for i := 0; i < len(clusterClosingBrace); i += 1 {
+			cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
+			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+				clusterFound = true
+			} else if len(strings.trim_space(cluster)) > 0 {
+				append(&newContent, ..transmute([]u8)cluster) // Add closing brace and comma to the cluster
+				if i < len(clusterClosingBrace) - 1 {
+					append(&newContent, "}")
+				}
 			}
 		}
 	}

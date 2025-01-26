@@ -309,7 +309,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 
 	// Check if the metadata header is present
 	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
-		fmt.println("Lines[0]: ", lines[0])
+		// fmt.println("Lines[0]: ", lines[0]) //debugging
 		utils.log_err("Missing metadata start marker", #procedure)
 		return -2, true
 	}
