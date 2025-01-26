@@ -1,4 +1,4 @@
-saw # **OstrichDB**
+# **OstrichDB**
 
 OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin programming language. It can be run serverless from the command line or deployed in server mode, offering flexibility for different use cases. With a focus on simplicity and straightforward setup, OstrichDB provides an intuitive command structure for managing data using both single and multi-token commands.
 
