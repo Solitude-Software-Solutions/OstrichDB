@@ -22,10 +22,10 @@ jobs:
     - name: Add Odin to PATH
       run: echo "${GITHUB_WORKSPACE}/Odin" >> $GITHUB_PATH
 
-   - name: Make scripts executable
+    - name: Make CI build script executable
       run: chmod +x scripts/ci-build.sh
 
-    - name: Run build script
+    - name: Run CI build script
       run: |
         cd scripts
         ./ci-build.sh
