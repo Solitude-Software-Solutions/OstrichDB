@@ -253,17 +253,17 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 		cluster_str := strings.trim_space(cluster_str)
 		if cluster_str == "" do continue
 		// Finds the start index of "cluster_name :" in the string
-		name_start := strings.index(cluster_str, "cluster_name :identifier:")
+		nameStart := strings.index(cluster_str, "cluster_name :identifier:")
 		// If "cluster_name :" is not found, skip this cluster
-		if name_start == -1 do continue
+		if nameStart == -1 do continue
 		// Move the start index to after "cluster_name :"
-		name_start += len("cluster_name :identifier:")
+		nameStart += len("cluster_name :identifier:")
 		// Find the end of the cluster name
-		name_end := strings.index(cluster_str[name_start:], "\n")
+		nameEnd := strings.index(cluster_str[nameStart:], "\n")
 		// If newline is not found, skip this cluster
-		if name_end == -1 do continue
+		if nameEnd == -1 do continue
 		// Extract the cluster name and remove leading/trailing whitespace
-		cluster_name := strings.trim_space(cluster_str[name_start:][:name_end])
+		cluster_name := strings.trim_space(cluster_str[nameStart:][:nameEnd])
 		// Compare the extracted cluster name with the provided cluster name
 		if strings.compare(cluster_name, cn) == 0 {
 			return true
@@ -273,9 +273,9 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 }
 
 OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) -> bool {
-	collection_path := utils.concat_collection_name(collection_name)
+	collectionPath := utils.concat_collection_name(collection_name)
 	// check if the desired new cluster name already exists
-	if OST_CHECK_IF_CLUSTER_EXISTS(collection_path, new) {
+	if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, new) {
 		fmt.printfln(
 			"Cluster with name:%s%s%s already exists in collection: %s%s%s",
 			utils.BOLD_UNDERLINE,
@@ -289,7 +289,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 		return false
 	}
 
-	data, readSuccess := utils.read_file(collection_path, #procedure)
+	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	defer delete(data)
 
 	content := string(data)
@@ -300,16 +300,16 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 	clusterFound := false
 	for cluster in clusters {
 		// Find the cluster name in the current cluster
-		name_start := strings.index(cluster, "cluster_name :identifier:")
-		if name_start != -1 {
+		nameStart := strings.index(cluster, "cluster_name :identifier:")
+		if nameStart != -1 {
 			// Move past the identifier prefix
-			name_start += len("cluster_name :identifier:")
+			nameStart += len("cluster_name :identifier:")
 			// Find the end of the line
-			name_end := strings.index(cluster[name_start:], "\n")
-			fmt.println("nameEnd: ", name_end) //debugging
-			if name_end != -1 {
+			nameEnd := strings.index(cluster[nameStart:], "\n")
+			fmt.println("nameEnd: ", nameEnd) //debugging
+			if nameEnd != -1 {
 				// Extract the actual cluster name
-				cluster_name := strings.trim_space(cluster[name_start:][:name_end])
+				cluster_name := strings.trim_space(cluster[nameStart:][:nameEnd])
 
 				// Check for exact match
 				if cluster_name == old {
@@ -353,7 +353,7 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 	}
 
 	// write new content to file
-	writeSuccess := utils.write_to_file(collection_path, newContent[:], #procedure)
+	writeSuccess := utils.write_to_file(collectionPath, newContent[:], #procedure)
 
 	return writeSuccess
 }
@@ -362,9 +362,9 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 //only used to create a cluster from the COMMAND LINE
 OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, id: i64) -> int {
 
-	collection_path := utils.concat_collection_name(collectionName)
+	collectionPath := utils.concat_collection_name(collectionName)
 
-	clusterExist := OST_CHECK_IF_CLUSTER_EXISTS(collection_path, clusterName)
+	clusterExist := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, clusterName)
 	if clusterExist {
 		return -1
 	}
@@ -373,7 +373,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
 	//step#1: open the file
-	clusterFile, openSuccess := os.open(collection_path, os.O_APPEND | os.O_WRONLY, 0o666)
+	clusterFile, openSuccess := os.open(collectionPath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(clusterFile)
 	if openSuccess != 0 {
 		error1 := utils.new_err(
@@ -434,7 +434,7 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	buf: [64]byte
 	file: string
-	collection_path := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_collection_name(fn)
 
 	// Skip confirmation if in testing mode
 	if !types.TESTING {
@@ -479,53 +479,54 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 		}
 	}
 
-	data, readSuccess := utils.read_file(collection_path, #procedure)
+	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	defer delete(data)
 
 	content := string(data)
 
+	// Find the end of the metadata header
+	headerEnd := strings.index(content, const.METADATA_END)
+	// Move past the metadata header
+	headerEnd += len(const.METADATA_END) + 1
+
+	//split content into metadata header and body
+	metaDataHeader := content[:headerEnd]
+	body := content[headerEnd:]
+
+
 	clusters := strings.split(content, "},")
-	clusterOpeningBrace := strings.split(content, "{") //only used when 1 cluster is found
 	newContent := make([dynamic]u8)
 	defer delete(newContent)
 	clusterFound := false
-	clusterCount := OST_COUNT_CLUSTERS(fn)
-	cluNameActual: string
+	append(&newContent, ..transmute([]u8)metaDataHeader)
 
-	if clusterCount == 1 { 	//fixes the issue where the metedata header would be deleted if the cluster was the only one in the file
-		for i := 0; i < len(clusterOpeningBrace); i += 1 {
-			cluster := clusterOpeningBrace[i] // everything in the file up to the first instance of "{"
-			if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-				clusterFound = true
-			} else if len(strings.trim_space(cluster)) > 0 {
-				append(&newContent, ..transmute([]u8)cluster) //adding back the metadata header content
-			}
-		}
-	} else { 	//TODO: Still is deleting metadata header.
-		for cluster in clusters {
-			// Find the cluster name in the current cluster
-			name_start := strings.index(cluster, "cluster_name :identifier:")
-			if name_start != -1 {
-				// Move past the identifier prefix
-				name_start += len("cluster_name :identifier:")
-				// Find the end of the line
-				name_end := strings.index(cluster[name_start:], "\n")
-				if name_end != -1 {
-					// Extract the actual cluster name
-					cluster_name := strings.trim_space(cluster[name_start:][:name_end])
 
-					// Check for exact match
-					if cluster_name == cn {
-						clusterFound = true
-						// Skip this cluster (effectively deleting it)
-					} else if len(strings.trim_space(cluster)) > 0 {
-						append(&newContent, ..transmute([]u8)cluster)
-						append(&newContent, "},")
-					}
+	for cluster in clusters {
+		// Find the cluster name in the current cluster
+		nameStart := strings.index(cluster, "cluster_name :identifier:")
+		if nameStart != -1 {
+			// Move past the identifier prefix
+			nameStart += len("cluster_name :identifier:")
+			// Find the end of the line
+			nameEnd := strings.index(cluster[nameStart:], "\n")
+			if nameEnd != -1 {
+				// Extract the actual cluster name and remove leading/trailing whitespace
+				cluster_name := strings.trim_space(cluster[nameStart:][:nameEnd])
+
+				// Skip this cluster if it matches the one we want to delete
+				if cluster_name == cn {
+					clusterFound = true
+					continue
 				}
 			}
 		}
+		//perseve non-empty clusters
+		if len(strings.trim_space(cluster)) > 0 {
+			append(&newContent, ..transmute([]u8)cluster)
+			append(&newContent, "},")
+		}
 	}
+
 
 	if !clusterFound {
 		utils.throw_err(
@@ -546,7 +547,7 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 		utils.log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
-	writeSuccess := utils.write_to_file(collection_path, newContent[:], #procedure)
+	writeSuccess := utils.write_to_file(collectionPath, newContent[:], #procedure)
 	utils.log_runtime_event(
 		"Database Cluster",
 		"User confirmed deletion of cluster and it was successfully deleted.",
@@ -556,15 +557,15 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 
 OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
-	cluster_content: string
-	collection_path := fmt.tprintf(
+	clusterContent: string
+	collectionPath := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
 		fn,
 		const.OST_FILE_EXTENSION,
 	)
 
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collection_path, cn)
+	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
 	switch clusterExists 
 	{
 	case false:
@@ -579,7 +580,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 		)
 		break
 	}
-	data, readSuccess := os.read_entire_file(collection_path)
+	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
 		utils.throw_err(
 			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
@@ -597,10 +598,10 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 			start_index := strings.index(cluster, "{")
 			if start_index != -1 {
 				// Extract the content between braces
-				cluster_content = cluster[start_index + 1:]
+				clusterContent = cluster[start_index + 1:]
 				// Trim any leading or trailing whitespace
-				cluster_content = strings.trim_space(cluster_content)
-				return strings.clone(cluster_content)
+				clusterContent = strings.trim_space(clusterContent)
+				return strings.clone(clusterContent)
 			}
 		}
 	}
@@ -644,17 +645,17 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 		cluster := strings.trim_space(cluster)
 		if cluster == "" do continue
 		// Finds the start index of "cluster_name :" in the string
-		name_start := strings.index(cluster, "cluster_name :identifier:")
+		nameStart := strings.index(cluster, "cluster_name :identifier:")
 		// If "cluster_name :" is not found, skip this cluster
-		if name_start == -1 do continue
+		if nameStart == -1 do continue
 		// Move the start index to after "cluster_name :"
-		name_start += len("cluster_name :identifier:")
+		nameStart += len("cluster_name :identifier:")
 		// Find the end of the cluster name
-		name_end := strings.index(cluster[name_start:], "\n")
+		nameEnd := strings.index(cluster[nameStart:], "\n")
 		// If newline is not found, skip this cluster
-		if name_end == -1 do continue
+		if nameEnd == -1 do continue
 		// Extract the cluster name and remove leading/trailing whitespace
-		cluster_name := strings.trim_space(cluster[name_start:][:name_end])
+		cluster_name := strings.trim_space(cluster[nameStart:][:nameEnd])
 
 		clusterName := fmt.tprintf("|\n|_________%s", cluster_name)
 
@@ -695,7 +696,7 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	in_cluster := false
+	inCluster := false
 	bracket_count := 0
 	cluster_start_line := 0
 
@@ -703,26 +704,26 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 		trimmed := strings.trim_space(line)
 
 		if trimmed == "{" {
-			if in_cluster {
+			if inCluster {
 				return -1, true
 			}
-			in_cluster = true
+			inCluster = true
 			bracket_count += 1
 			cluster_start_line = line_number
 		} else if trimmed == "}," {
-			if !in_cluster {
+			if !inCluster {
 				return -2, true
 			}
 			bracket_count -= 1
 			if bracket_count == 0 {
-				in_cluster = false
+				inCluster = false
 			}
 		} else if trimmed == "}" {
 			return -3, true
 		}
 	}
 
-	if in_cluster {
+	if inCluster {
 		return -4, true
 	}
 
@@ -746,7 +747,7 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 
 	content := string(data)
 	cluster_count := 0
-	in_cluster := false
+	inCluster := false
 
 	lines := strings.split(content, "\n")
 	defer delete(lines)
@@ -754,10 +755,10 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 	for line in lines {
 		trimmed := strings.trim_space(line)
 		if trimmed == "{" {
-			in_cluster = true
+			inCluster = true
 			cluster_count += 1
 		} else if trimmed == "}," {
-			in_cluster = false
+			inCluster = false
 		}
 	}
 
@@ -768,7 +769,7 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 //Dude...THIS IS A FUCKING MESS AND ITS ALL AI GENERATED AND WORKS LMAO
 // Added some comments to help explain as best as I can - SchoolyB
 OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
-	collection_path := fmt.tprintf(
+	collectionPath := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
 		fn,
@@ -776,7 +777,7 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	)
 
 	// Read the entire file
-	data, readSuccess := os.read_entire_file(collection_path)
+	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
 		utils.throw_err(
 			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
@@ -795,15 +796,15 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	//split the content into clusters
 	content := string(data)
 	clusters := strings.split(content, "{")
-	new_content := make([dynamic]u8)
-	defer delete(new_content)
+	newContent := make([dynamic]u8)
+	defer delete(newContent)
 
 	//check if the cluster exists
 	clusterFound := false
 	for i := 0; i < len(clusters); i += 1 {
 		if i == 0 {
 			// Preserve the metadata header and its following whitespace
-			append(&new_content, ..transmute([]u8)clusters[i])
+			append(&newContent, ..transmute([]u8)clusters[i])
 			continue
 		}
 		//concatenate the open brace with the cluster
@@ -812,7 +813,7 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			clusterFound = true
 			lines := strings.split(cluster, "\n")
-			append(&new_content, ..transmute([]u8)openBraceWithNewline)
+			append(&newContent, ..transmute([]u8)openBraceWithNewline)
 			emptyLineAdded := false
 			for line, line_index in lines {
 				trimmed_line := strings.trim_space(line)
@@ -822,31 +823,31 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 					//preserves the indentation
 					indent := strings.index(line, trimmed_line)
 					if indent > 0 {
-						append(&new_content, ..transmute([]u8)line[:indent])
+						append(&newContent, ..transmute([]u8)line[:indent])
 					}
-					//adds the line line and a newline character to the new_content array
-					append(&new_content, ..transmute([]u8)strings.trim_space(line))
-					append(&new_content, '\n')
+					//adds the line line and a newline character to the newContent array
+					append(&newContent, ..transmute([]u8)strings.trim_space(line))
+					append(&newContent, '\n')
 
 					//this ensures that the cluster_id line is followed by an empty line for formatting purposes
 					if strings.contains(trimmed_line, "cluster_id :identifier:") &&
 					   !emptyLineAdded {
 						if line_index + 1 < len(lines) &&
 						   len(strings.trim_space(lines[line_index + 1])) == 0 {
-							append(&new_content, '\n')
+							append(&newContent, '\n')
 							emptyLineAdded = true
 						}
 					}
 				}
 			}
-			append(&new_content, ..transmute([]u8)closeBrace)
+			append(&newContent, ..transmute([]u8)closeBrace)
 
 			//this ensures that the closing brace is followed by any trailing whitespace
 			if last_brace := strings.last_index(cluster, "}"); last_brace != -1 {
-				append(&new_content, ..transmute([]u8)cluster[last_brace + 1:])
+				append(&newContent, ..transmute([]u8)cluster[last_brace + 1:])
 			}
 		} else {
-			append(&new_content, ..transmute([]u8)cluster)
+			append(&newContent, ..transmute([]u8)cluster)
 		}
 	}
 
@@ -862,7 +863,7 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 		return false
 	}
 	//write the new content to the collection file
-	writeSuccess := os.write_entire_file(collection_path, new_content[:])
+	writeSuccess := os.write_entire_file(collectionPath, newContent[:])
 	if !writeSuccess {
 		utils.throw_err(
 			utils.new_err(
@@ -886,13 +887,13 @@ OST_GET_CLUSTER_SIZE :: proc(
 	size: int,
 	success: bool,
 ) {
-	collection_path := fmt.tprintf(
+	collectionPath := fmt.tprintf(
 		"%s%s%s",
 		const.OST_COLLECTION_PATH,
 		collection_name,
 		const.OST_FILE_EXTENSION,
 	)
-	data, read_success := os.read_entire_file(collection_path)
+	data, read_success := os.read_entire_file(collectionPath)
 	if !read_success {
 		return 0, false
 	}
