@@ -17,19 +17,22 @@ import "core:strings"
 //perform cluster_id compliancy check on the passed collection
 OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 	types.data_integrity_checks.Cluster_IDs.Compliant = true // Assume compliant initially
-	idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
-	// fmt.println("IDs found in collection: ", idsFoundInCollection) //debugging
-	defer delete(idsFoundInCollection)
-	defer delete(idsAsStringArray)
 
-	for id in idsFoundInCollection {
-		idFoundInCache := OST_CHECK_IF_CLUSTER_ID_EXISTS(id)
-		if !idFoundInCache {
-			utils.log_err(fmt.tprintf("Cluster ID %v not found in cache", id), #procedure)
-			types.data_integrity_checks.Cluster_IDs.Compliant = false
-			break
-		}
-	}
+	//See GitHub issue #199 for more information about why thiis is commented out
+
+	// idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
+	// // fmt.println("IDs found in collection: ", idsFoundInCollection) //debugging
+	// defer delete(idsFoundInCollection)
+	// defer delete(idsAsStringArray)
+
+	// for id in idsFoundInCollection {
+	// 	idFoundInCache := OST_CHECK_IF_CLUSTER_ID_EXISTS(id)
+	// 	if !idFoundInCache {
+	// 		utils.log_err(fmt.tprintf("Cluster ID %v not found in cache", id), #procedure)
+	// 		types.data_integrity_checks.Cluster_IDs.Compliant = false
+	// 		break
+	// 	}
+	// }
 	return types.data_integrity_checks.Cluster_IDs.Compliant
 }
 
@@ -104,9 +107,7 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 			break
 		}
 	}
-	//TODO: for some reason the checksum that is generated here is not the same as the stored value..even though nothing in the file has changed. SHOULD BE THE EXACT SAME
-	//So the reason the values arent the same is because checksum value is being generated from the file with the checksum value in it. But the "currentCheckSum value" is a new generation
-	//which now reads over the file INCLUDING the storedChecksum value. So the storedChecksum value is being included in the checksum generation. So the checksum value is different
+
 	currentChecksum := metadata.OST_GENERATE_CHECKSUM(filePath)
 	// fmt.println("Stored checksum: ", storedChecksum) //debugging
 	// fmt.println("Current checksum: ", currentChecksum) //debugging

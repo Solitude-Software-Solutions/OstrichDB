@@ -1599,6 +1599,25 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			result := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 
+			if result == 0 {
+				fmt.printfln(
+					"Collection: %s%s%s data integrity status: %svalid%s",
+					utils.BOLD_UNDERLINE,
+					collectionName,
+					utils.RESET,
+					utils.GREEN,
+					utils.RESET,
+				)
+			} else {
+				fmt.printfln(
+					"Collection: %s%s%s data integrity status: %sinvalid%s",
+					utils.BOLD_UNDERLINE,
+					collectionName,
+					utils.RESET,
+					utils.RED,
+					utils.RESET,
+				)
+			}
 		}
 	//END OF COMMAND TOKEN EVALUATION
 	case:
