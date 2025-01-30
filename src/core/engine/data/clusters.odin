@@ -241,29 +241,29 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 	// fmt.println("Reading collection file: ", fn) //debugging
 	// fmt.println("Checking if cluster exists: ", cn) //debugging
-	data, read_success := utils.read_file(fn, #procedure)
+	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
 
 	content := string(data)
 
-	cluster_strings := strings.split(content, "},")
-	defer delete(cluster_strings)
+	clusterStrings := strings.split(content, "},")
+	defer delete(clusterStrings)
 
-	for cluster_str in cluster_strings {
-		cluster_str := strings.trim_space(cluster_str)
-		if cluster_str == "" do continue
+	for clusterStr in clusterStrings {
+		clusterStr := strings.trim_space(clusterStr)
+		if clusterStr == "" do continue
 		// Finds the start index of "cluster_name :" in the string
-		nameStart := strings.index(cluster_str, "cluster_name :identifier:")
+		nameStart := strings.index(clusterStr, "cluster_name :identifier:")
 		// If "cluster_name :" is not found, skip this cluster
 		if nameStart == -1 do continue
 		// Move the start index to after "cluster_name :"
 		nameStart += len("cluster_name :identifier:")
 		// Find the end of the cluster name
-		nameEnd := strings.index(cluster_str[nameStart:], "\n")
+		nameEnd := strings.index(clusterStr[nameStart:], "\n")
 		// If newline is not found, skip this cluster
 		if nameEnd == -1 do continue
 		// Extract the cluster name and remove leading/trailing whitespace
-		cluster_name := strings.trim_space(cluster_str[nameStart:][:nameEnd])
+		cluster_name := strings.trim_space(clusterStr[nameStart:][:nameEnd])
 		// Compare the extracted cluster name with the provided cluster name
 		if strings.compare(cluster_name, cn) == 0 {
 			return true
@@ -686,8 +686,8 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStructureFound: bool) {
 	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
 
-	data, read_success := os.read_entire_file(file)
-	if !read_success {
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
 		return 1, true
 	}
 	defer delete(data)
@@ -697,8 +697,8 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 	defer delete(lines)
 
 	inCluster := false
-	bracket_count := 0
-	cluster_start_line := 0
+	bracketCount := 0
+	clusterStartLine := 0
 
 	for line, line_number in lines {
 		trimmed := strings.trim_space(line)
@@ -708,14 +708,14 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 				return -1, true
 			}
 			inCluster = true
-			bracket_count += 1
-			cluster_start_line = line_number
+			bracketCount += 1
+			clusterStartLine = line_number
 		} else if trimmed == "}," {
 			if !inCluster {
 				return -2, true
 			}
-			bracket_count -= 1
-			if bracket_count == 0 {
+			bracketCount -= 1
+			if bracketCount == 0 {
 				inCluster = false
 			}
 		} else if trimmed == "}" {
@@ -727,7 +727,7 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 		return -4, true
 	}
 
-	if bracket_count != 0 {
+	if bracketCount != 0 {
 		return -5, true
 	}
 
@@ -738,15 +738,15 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
 
-	data, read_success := os.read_entire_file(file)
-	if !read_success {
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
 		utils.log_err("Failed to read collection file", #procedure)
 		return 0
 	}
 	defer delete(data)
 
 	content := string(data)
-	cluster_count := 0
+	clusterCount := 0
 	inCluster := false
 
 	lines := strings.split(content, "\n")
@@ -756,13 +756,13 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 		trimmed := strings.trim_space(line)
 		if trimmed == "{" {
 			inCluster = true
-			cluster_count += 1
+			clusterCount += 1
 		} else if trimmed == "}," {
 			inCluster = false
 		}
 	}
 
-	return cluster_count
+	return clusterCount
 }
 
 //deletes all data from a cluster except identifier data such as cluster name and id
@@ -815,13 +815,13 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 			lines := strings.split(cluster, "\n")
 			append(&newContent, ..transmute([]u8)openBraceWithNewline)
 			emptyLineAdded := false
-			for line, line_index in lines {
-				trimmed_line := strings.trim_space(line)
-				if strings.contains(trimmed_line, "cluster_name :identifier:") ||
-				   strings.contains(trimmed_line, "cluster_id :identifier:") {
+			for line, lineIndex in lines {
+				trimmedLine := strings.trim_space(line)
+				if strings.contains(trimmedLine, "cluster_name :identifier:") ||
+				   strings.contains(trimmedLine, "cluster_id :identifier:") {
 
 					//preserves the indentation
-					indent := strings.index(line, trimmed_line)
+					indent := strings.index(line, trimmedLine)
 					if indent > 0 {
 						append(&newContent, ..transmute([]u8)line[:indent])
 					}
@@ -830,10 +830,10 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 					append(&newContent, '\n')
 
 					//this ensures that the cluster_id line is followed by an empty line for formatting purposes
-					if strings.contains(trimmed_line, "cluster_id :identifier:") &&
+					if strings.contains(trimmedLine, "cluster_id :identifier:") &&
 					   !emptyLineAdded {
-						if line_index + 1 < len(lines) &&
-						   len(strings.trim_space(lines[line_index + 1])) == 0 {
+						if lineIndex + 1 < len(lines) &&
+						   len(strings.trim_space(lines[lineIndex + 1])) == 0 {
 							append(&newContent, '\n')
 							emptyLineAdded = true
 						}
@@ -843,8 +843,8 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 			append(&newContent, ..transmute([]u8)closeBrace)
 
 			//this ensures that the closing brace is followed by any trailing whitespace
-			if last_brace := strings.last_index(cluster, "}"); last_brace != -1 {
-				append(&newContent, ..transmute([]u8)cluster[last_brace + 1:])
+			if lastBrace := strings.last_index(cluster, "}"); lastBrace != -1 {
+				append(&newContent, ..transmute([]u8)cluster[lastBrace + 1:])
 			}
 		} else {
 			append(&newContent, ..transmute([]u8)cluster)
@@ -893,8 +893,8 @@ OST_GET_CLUSTER_SIZE :: proc(
 		collection_name,
 		const.OST_FILE_EXTENSION,
 	)
-	data, read_success := os.read_entire_file(collectionPath)
-	if !read_success {
+	data, readSuccess := os.read_entire_file(collectionPath)
+	if !readSuccess {
 		return 0, false
 	}
 	defer delete(data)
