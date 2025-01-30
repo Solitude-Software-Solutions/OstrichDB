@@ -96,13 +96,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		OST_APPEND_COMMAND_TO_HISTORY(input)
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
-		result := OST_EXECUTE_COMMAND(&cmd)
 
-		switch (result) 
-		{
-		case 0:
-			return 0
-		}
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := OST_GET_SESSION_DURATION()
 		maxDurationMet := OST_CHECK_SESSION_DURATION(sessionDuration)
@@ -113,6 +107,9 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		case true:
 			OST_HANDLE_MAX_SESSION_DURATION_MET()
 		}
+
+		result := OST_EXECUTE_COMMAND(&cmd)
+
 		//Command line end
 	}
 

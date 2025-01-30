@@ -44,7 +44,7 @@ OST_CHECK_SESSION_DURATION :: proc(sessionDuration: time.Duration) -> bool {
 
 OST_HANDLE_MAX_SESSION_DURATION_MET :: proc() {
 	fmt.printfln(
-		"Maximum session time of %s3 Days%s has been met. You will be automatically logged out. Please log back in.",
+		"Maximum session time of %s1 Day%s has been met. You will be automatically logged out. Please log back in.",
 		utils.BOLD,
 		utils.RESET,
 	)
