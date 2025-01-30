@@ -69,21 +69,21 @@ OST_APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	cluster_start := -1
-	closing_brace := -1
+	clusterStart := -1
+	closingBrace := -1
 
 	for i := 0; i < len(lines); i += 1 {
 		if strings.contains(lines[i], cn) {
-			cluster_start = i
+			clusterStart = i
 		}
-		if cluster_start != -1 && strings.contains(lines[i], "}") {
-			closing_brace = i
+		if clusterStart != -1 && strings.contains(lines[i], "}") {
+			closingBrace = i
 			break
 		}
 	}
 
 	//if the cluster is not found or the structure is invalid, return
-	if cluster_start == -1 || closing_brace == -1 {
+	if clusterStart == -1 || closingBrace == -1 {
 		error2 := new_err(.CANNOT_FIND_CLUSTER, get_err_msg(.CANNOT_FIND_CLUSTER), #procedure)
 		throw_err(error2)
 		log_err("Unable to find cluster/valid structure", #procedure)
@@ -91,19 +91,19 @@ OST_APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	}
 
 	// Create the new line
-	new_line := fmt.tprintf("\t%s :%s: %s", rn, rType, rd)
+	newLine := fmt.tprintf("\t%s :%s: %s", rn, rType, rd)
 
 	// Insert the new line and adjust the closing brace
-	new_lines := make([dynamic]string, len(lines) + 1)
-	copy(new_lines[:closing_brace], lines[:closing_brace])
-	new_lines[closing_brace] = new_line
-	new_lines[closing_brace + 1] = "},"
-	if closing_brace + 1 < len(lines) {
-		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
+	newLines := make([dynamic]string, len(lines) + 1)
+	copy(newLines[:closingBrace], lines[:closingBrace])
+	newLines[closingBrace] = newLine
+	newLines[closingBrace + 1] = "},"
+	if closingBrace + 1 < len(lines) {
+		copy(newLines[closingBrace + 2:], lines[closingBrace + 1:])
 	}
 
-	new_content := strings.join(new_lines[:], "\n")
-	writeSuccess := utils.write_to_file(fn, transmute([]byte)new_content, #procedure)
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := utils.write_to_file(fn, transmute([]byte)newContent, #procedure)
 	if !writeSuccess {
 		return -1
 	}
