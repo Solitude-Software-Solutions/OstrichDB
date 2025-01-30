@@ -77,16 +77,16 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	cluster_start := -1
-	closing_brace := -1
+	clusterStart := -1
+	closingBrace := -1
 
 	// Find the cluster and its closing brace
 	for i := 0; i < len(lines); i += 1 {
 		if strings.contains(lines[i], cn) {
-			cluster_start = i
+			clusterStart = i
 		}
-		if cluster_start != -1 && strings.contains(lines[i], "}") {
-			closing_brace = i
+		if clusterStart != -1 && strings.contains(lines[i], "}") {
+			closingBrace = i
 			break
 		}
 	}
@@ -109,7 +109,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 		return 1
 	}
 	//if the cluster is not found or the structure is invalid, return
-	if cluster_start == -1 || closing_brace == -1 {
+	if clusterStart == -1 || closingBrace == -1 {
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
@@ -125,11 +125,11 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 
 	// Insert the new line and adjust the closing brace
 	new_lines := make([dynamic]string, len(lines) + 1)
-	copy(new_lines[:closing_brace], lines[:closing_brace])
-	new_lines[closing_brace] = new_line
-	new_lines[closing_brace + 1] = "},"
-	if closing_brace + 1 < len(lines) {
-		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
+	copy(new_lines[:closingBrace], lines[:closingBrace])
+	new_lines[closingBrace] = new_line
+	new_lines[closingBrace + 1] = "},"
+	if closingBrace + 1 < len(lines) {
+		copy(new_lines[closingBrace + 2:], lines[closingBrace + 1:])
 	}
 
 	new_content := strings.join(new_lines[:], "\n")
@@ -157,22 +157,22 @@ OST_APPEND_CREDENTIAL_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	cluster_start := -1
-	closing_brace := -1
+	clusterStart := -1
+	closingBrace := -1
 
 	// Find the cluster and its closing brace
 	for i := 0; i < len(lines); i += 1 {
 		if strings.contains(lines[i], cn) {
-			cluster_start = i
+			clusterStart = i
 		}
-		if cluster_start != -1 && strings.contains(lines[i], "}") {
-			closing_brace = i
+		if clusterStart != -1 && strings.contains(lines[i], "}") {
+			closingBrace = i
 			break
 		}
 	}
 
 	//if the cluster is not found or the structure is invalid, return
-	if cluster_start == -1 || closing_brace == -1 {
+	if clusterStart == -1 || closingBrace == -1 {
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
@@ -188,11 +188,11 @@ OST_APPEND_CREDENTIAL_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 
 	// Insert the new line and adjust the closing brace
 	new_lines := make([dynamic]string, len(lines) + 1)
-	copy(new_lines[:closing_brace], lines[:closing_brace])
-	new_lines[closing_brace] = new_line
-	new_lines[closing_brace + 1] = "},"
-	if closing_brace + 1 < len(lines) {
-		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
+	copy(new_lines[:closingBrace], lines[:closingBrace])
+	new_lines[closingBrace] = new_line
+	new_lines[closingBrace + 1] = "},"
+	if closingBrace + 1 < len(lines) {
+		copy(new_lines[closingBrace + 2:], lines[closingBrace + 1:])
 	}
 
 	new_content := strings.join(new_lines[:], "\n")
@@ -215,22 +215,22 @@ OST_READ_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	cluster_start := -1
-	closing_brace := -1
+	clusterStart := -1
+	closingBrace := -1
 
 	// Find the cluster and its closing brace
 	for line, i in lines {
 		if strings.contains(line, cn) {
-			cluster_start = i
+			clusterStart = i
 		}
-		if cluster_start != -1 && strings.contains(line, "}") {
-			closing_brace = i
+		if clusterStart != -1 && strings.contains(line, "}") {
+			closingBrace = i
 			break
 		}
 	}
 
 	// If the cluster is not found or the structure is invalid, return an empty string
-	if cluster_start == -1 || closing_brace == -1 {
+	if clusterStart == -1 || closingBrace == -1 {
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
@@ -242,7 +242,7 @@ OST_READ_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 	}
 
 	type := fmt.tprintf(":%s:", rType)
-	for i in cluster_start ..= closing_brace {
+	for i in clusterStart ..= closingBrace {
 		if strings.contains(lines[i], rn) {
 			record := strings.split(lines[i], type)
 			if len(record) > 1 {
@@ -281,12 +281,12 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 				cluster := strings.trim_space(cluster)
 				if cluster == "" do continue
 				//get the cluster name
-				name_start := strings.index(cluster, "cluster_name :identifier:")
-				if name_start == -1 do continue
-				name_start += len("cluster_name :identifier:")
-				name_end := strings.index(cluster[name_start:], "\n")
-				if name_end == -1 do continue
-				clusterName = strings.trim_space(cluster[name_start:][:name_end])
+				nameStart := strings.index(cluster, "cluster_name :identifier:")
+				if nameStart == -1 do continue
+				nameStart += len("cluster_name :identifier:")
+				nameEnd := strings.index(cluster[nameStart:], "\n")
+				if nameEnd == -1 do continue
+				clusterName = strings.trim_space(cluster[nameStart:][:nameEnd])
 
 				//split the cluster into lines to find the record type and record data
 				lines := strings.split(cluster, "\n")
@@ -735,12 +735,12 @@ OST_SCAN_COLLECTION_FOR_RECORD :: proc(
 		}
 
 		// Extract cluster name
-		name_start := strings.index(cluster, "cluster_name :identifier:")
-		if name_start == -1 do continue
-		name_start += len("cluster_name :identifier:")
-		name_end := strings.index(cluster[name_start:], "\n")
-		if name_end == -1 do continue
-		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
+		nameStart := strings.index(cluster, "cluster_name :identifier:")
+		if nameStart == -1 do continue
+		nameStart += len("cluster_name :identifier:")
+		nameEnd := strings.index(cluster[nameStart:], "\n")
+		if nameEnd == -1 do continue
+		currentClusterName := strings.trim_space(cluster[nameStart:][:nameEnd])
 		// Look for record in this cluster
 		lines := strings.split(cluster, "\n")
 		for line in lines {
