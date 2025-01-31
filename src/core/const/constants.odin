@@ -8,7 +8,7 @@ import "core:time"
 //=========================================================//
 
 //PATH CONSTANTS
-OST_FFVF :: "ost_file_format_version.tmp"
+OST_FFVF_PATH :: "ost_file_format_version.tmp"
 OST_TMP_PATH :: "./tmp/"
 OST_COLLECTION_PATH :: "./collections/"
 OST_SECURE_COLLECTION_PATH :: "./secure/"
@@ -168,6 +168,16 @@ VALID_RECORD_TYPES: []string : {
 METADATA_START :: "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@\n"
 METADATA_END :: "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@\n"
 
+
+METADATA_HEADER: []string : {
+	METADATA_START,
+	"# File Format Version: %ffv\n",
+	"# Date of Creation: %fdoc\n",
+	"# Date Last Modified: %fdlm\n",
+	"# File Size: %fs Bytes\n",
+	"# Checksum: %cs\n",
+	METADATA_END,
+}
 
 MAX_SESSION_TIME: time.Duration : 86400000000000 //1 day in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print
