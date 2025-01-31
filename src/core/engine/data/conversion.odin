@@ -185,20 +185,22 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 	string,
 	bool,
 ) {
+	using const
+
 	//if the types are the same, no conversion is needed
 	if oldType == newType {
 		return value, true
 	}
 
 	switch (newType) {
-	case const.STRING:
+	case STRING:
 		//New type is STRING
 		switch (oldType) {
-		case const.INTEGER, const.FLOAT, const.BOOLEAN:
+		case INTEGER, FLOAT, BOOLEAN:
 			//Old type is INTEGER, FLOAT, or BOOLEAN
 			value := utils.append_qoutations(value)
 			return value, true
-		case const.STRING_ARRAY:
+		case STRING_ARRAY:
 			value := strings.trim_prefix(value, "[")
 			value = strings.trim_suffix(value, "]")
 			if len(value) > 0 {
@@ -208,10 +210,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case const.INTEGER:
+	case INTEGER:
 		//New type is INTEGER
 		switch (oldType) {
-		case const.STRING:
+		case STRING:
 			//Old type is STRING
 			_, ok := strconv.parse_int(value, 10)
 			if !ok {
@@ -221,10 +223,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case const.FLOAT:
+	case FLOAT:
 		//New type is FLOAT
 		switch (oldType) {
-		case const.STRING:
+		case STRING:
 			//Old type is STRING
 			_, ok := strconv.parse_f64(value)
 			if !ok {
@@ -234,10 +236,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case const.BOOLEAN:
+	case BOOLEAN:
 		//New type is BOOLEAN
 		switch (oldType) {
-		case const.STRING:
+		case STRING:
 			//Old type is STRING
 			lower_str := strings.to_lower(strings.trim_space(value))
 			if lower_str == "true" || lower_str == "false" {
@@ -248,10 +250,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 			return "", false
 		}
 	//ARRAY CONVERSIONS
-	case const.STRING_ARRAY:
+	case STRING_ARRAY:
 		// New type is STRING_ARRAY
 		switch (oldType) {
-		case const.STRING:
+		case STRING:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes
@@ -259,10 +261,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case const.INTEGER_ARRAY:
+	case INTEGER_ARRAY:
 		// New type is INTEGER_ARRAY
 		switch (oldType) {
-		case const.INTEGER:
+		case INTEGER:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes
@@ -270,10 +272,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case const.BOOLEAN_ARRAY:
+	case BOOLEAN_ARRAY:
 		// New type is BOOLEAN_ARRAY
 		switch (oldType) {
-		case const.BOOLEAN:
+		case BOOLEAN:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes
@@ -281,10 +283,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case const.FLOAT_ARRAY:
+	case FLOAT_ARRAY:
 		// New type is FLOAT_ARRAY
 		switch (oldType) {
-		case const.FLOAT:
+		case FLOAT:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes
@@ -302,9 +304,11 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 
 //handles a records type and value change
 OST_HANDLE_TYPE_CHANGE :: proc(colPath, cn, rn, newType: string) -> bool {
-	fmt.printfln("%s is getting  newType: %s", #procedure, newType)
-	oldType, _ := data.OST_GET_RECORD_TYPE(colPath, cn, rn)
-	recordValue := data.OST_READ_RECORD_VALUE(colPath, cn, oldType, rn)
+	using data
+
+	// fmt.printfln("%s is getting  newType: %s", #procedure, newType) //debugging
+	oldType, _ := OST_GET_RECORD_TYPE(colPath, cn, rn)
+	recordValue := OST_READ_RECORD_VALUE(colPath, cn, oldType, rn)
 
 	new_value, success := OST_CONVERT_VALUE_TO_NEW_TYPE(recordValue, oldType, newType)
 	if !success {
@@ -312,8 +316,8 @@ OST_HANDLE_TYPE_CHANGE :: proc(colPath, cn, rn, newType: string) -> bool {
 		return false
 	} else {
 
-		typeChangeSucess := data.OST_CHANGE_RECORD_TYPE(colPath, cn, rn, recordValue, newType)
-		valueChangeSuccess := data.OST_SET_RECORD_VALUE(colPath, cn, rn, new_value)
+		typeChangeSucess := OST_CHANGE_RECORD_TYPE(colPath, cn, rn, recordValue, newType)
+		valueChangeSuccess := OST_SET_RECORD_VALUE(colPath, cn, rn, new_value)
 		if !typeChangeSucess || !valueChangeSuccess {
 			utils.log_err("Could not change record type or value", #procedure)
 			return false
@@ -322,7 +326,6 @@ OST_HANDLE_TYPE_CHANGE :: proc(colPath, cn, rn, newType: string) -> bool {
 		}
 	}
 
-	fmt.println("Returning false at end of OST_HANDLE_TYPE_CHANGE")
 	return false
 }
 
