@@ -12,6 +12,7 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
+//checks if a token is a valid modifier only used in the parser
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	using const
 	validModifiers := []string{OF_TYPE, TO}
@@ -23,7 +24,10 @@ OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	return false
 }
 
+//Takes the users input and parser it into a command. The command is then returned to the caller in engine.odin
 OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
+	using const
+
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
 	//dot notation allows for accessing context like this: <action> grandparent.parent.child or <action> parent.child
@@ -63,8 +67,8 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			// Expecting target
 			switch (cmd.c_token) 
 			{
-			case const.SET:
-				if token == const.CONFIG {
+			case SET:
+				if token == CONFIG {
 					cmd.t_token = token
 				} else {
 					cmd.t_token = cmd.t_token
@@ -78,15 +82,15 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 				}
 				state = 1
 				break
-			case const.WHERE, const.HELP:
+			case WHERE, HELP:
 				cmd.t_token = token
 				break
-			case const.COUNT:
+			case COUNT:
 				switch (token) {
-				case const.COLLECTIONS:
+				case COLLECTIONS:
 					cmd.t_token = token
 					break
-				case const.CLUSTERS, const.RECORDS:
+				case CLUSTERS, RECORDS:
 					cmd.t_token = token
 					if strings.contains(token, ".") {
 						cmd.isUsingDotNotation = true
