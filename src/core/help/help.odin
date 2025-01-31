@@ -44,20 +44,19 @@ validCommands := []string {
 //called when user only enters the "HELP" command without any arguments
 // will take in the value from the config file. if verbose is true then show data from verbose help file, and vice versa
 OST_SET_HELP_MODE :: proc() -> bool {
-	value := data.OST_READ_RECORD_VALUE(
-		const.OST_CONFIG_PATH,
-		const.CONFIG_CLUSTER,
-		const.STRING,
-		const.CONFIG_FOUR,
-	)
+	using const
+	using types
+	using utils
+
+	value := data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, STRING, CONFIG_FOUR)
 
 	switch (value) 
 	{
 	case "VERBOSE":
-		types.help_mode.verbose = true
+		help_mode.verbose = true
 		break
 	case "SIMPLE":
-		types.help_mode.verbose = false
+		help_mode.verbose = false
 		break
 	case:
 		fmt.println(
@@ -65,9 +64,10 @@ OST_SET_HELP_MODE :: proc() -> bool {
 		)
 	}
 
-	return types.help_mode.verbose
+	return help_mode.verbose
 }
 
+//checks if the token that the user wants help with is valid
 OST_CHECK_HELP_EXISTS :: proc(cmd: string) -> bool {
 	cmdUpper := strings.to_upper(cmd)
 	for validCmd in validCommands {
@@ -78,9 +78,13 @@ OST_CHECK_HELP_EXISTS :: proc(cmd: string) -> bool {
 	return false
 }
 
+//Returns a specific portion of the help file based on the subject passed. can be simple or verbose
 OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
+	using const
+	using utils
+
 	helpMode := OST_SET_HELP_MODE()
-	help_text: string
+	helpText: string
 	data: []byte
 	ok: bool
 
@@ -88,19 +92,19 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 	if !validCommnad {
 		fmt.printfln(
 			"Cannot get help with %s%s%s as it is not a valid command.\nPlease try valid OstrichDB commmand\nor enter 'HELP' with no trailing arguments",
-			utils.BOLD_UNDERLINE,
+			BOLD_UNDERLINE,
 			subject,
-			utils.RESET,
+			RESET,
 		)
 		return ""
 	}
 	switch (helpMode) 
 	{
 	case true:
-		data, ok = os.read_entire_file(const.VERBOSE_HELP_FILE)
+		data, ok = os.read_entire_file(VERBOSE_HELP_FILE)
 		break
 	case false:
-		data, ok = os.read_entire_file(const.SIMPLE_HELP_FILE)
+		data, ok = os.read_entire_file(SIMPLE_HELP_FILE)
 	}
 	if !ok {
 		return ""
@@ -108,35 +112,32 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 	defer delete(data)
 
 	content := string(data)
-	help_section_start := fmt.tprintf("### %s START", subject)
-	help_section_end := fmt.tprintf("### %s END", subject)
+	helpSectionStart := fmt.tprintf("### %s START", subject)
+	helpSectionEnd := fmt.tprintf("### %s END", subject)
 
-	start_index := strings.index(content, help_section_start)
+	start_index := strings.index(content, helpSectionStart)
 	if start_index == -1 {
-		return fmt.tprintf("No help found for %s%s%s", utils.BOLD_UNDERLINE, subject, utils.RESET)
+		return fmt.tprintf("No help found for %s%s%s", BOLD_UNDERLINE, subject, RESET)
 	}
 
-	start_index += len(help_section_start)
-	end_index := strings.index(content[start_index:], help_section_end)
+	start_index += len(helpSectionStart)
+	end_index := strings.index(content[start_index:], helpSectionEnd)
 	if end_index == -1 {
-		return fmt.tprintf(
-			"Malformed help section for %s%s%s",
-			utils.BOLD_UNDERLINE,
-			subject,
-			utils.RESET,
-		)
+		return fmt.tprintf("Malformed help section for %s%s%s", BOLD_UNDERLINE, subject, RESET)
 	}
 
-	help_text = strings.trim_space(content[start_index:][:end_index])
+	helpText = strings.trim_space(content[start_index:][:end_index])
 	fmt.printfln("\n")
-	fmt.printfln(help_text)
+	fmt.printfln(helpText)
 	fmt.printfln("\n")
-	return strings.clone(help_text)
+	return strings.clone(helpText)
 }
 
 //ready and returns everything from the general help file
 OST_GET_GENERAL_HELP :: proc() -> string {
-	data, ok := os.read_entire_file(const.GENERAL_HELP_FILE)
+	using const
+
+	data, ok := os.read_entire_file(GENERAL_HELP_FILE)
 	if !ok {
 		return ""
 	}
@@ -150,7 +151,9 @@ OST_GET_GENERAL_HELP :: proc() -> string {
 
 //shows a table of explaining atoms
 OST_GET_ATOMS_HELP :: proc() -> string {
-	data, ok := os.read_entire_file(const.ATOMS_HELP_FILE)
+	using const
+
+	data, ok := os.read_entire_file(ATOMS_HELP_FILE)
 	if !ok {
 		return ""
 	}
