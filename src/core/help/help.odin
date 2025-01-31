@@ -53,10 +53,10 @@ OST_SET_HELP_MODE :: proc() -> bool {
 	switch (value) 
 	{
 	case "VERBOSE":
-		help_mode.verbose = true
+		helpMode.verbose = true
 		break
 	case "SIMPLE":
-		help_mode.verbose = false
+		helpMode.verbose = false
 		break
 	case:
 		fmt.println(
@@ -64,7 +64,7 @@ OST_SET_HELP_MODE :: proc() -> bool {
 		)
 	}
 
-	return help_mode.verbose
+	return helpMode.verbose
 }
 
 //checks if the token that the user wants help with is valid

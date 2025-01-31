@@ -104,7 +104,7 @@ Ids :: struct {
 	userIdCount:    int,
 }
 
-help_mode: Help_Mode
+helpMode: Help_Mode
 Help_Mode :: struct {
 	verbose: bool, //if its false then its simple
 }
