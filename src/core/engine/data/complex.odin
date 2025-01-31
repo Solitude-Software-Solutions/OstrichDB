@@ -25,24 +25,26 @@ OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 
 //checks that array values the user wants to store in a record is the correct type
 OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
+	using const
+
 	verified := false
 	//retrieve the record type
 	arrayValues := OST_PARSE_ARRAY(strArray)
 
 	switch (rType) {
-	case const.INTEGER_ARRAY:
+	case INTEGER_ARRAY:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_int(i)
 			verified = parseSuccess
 		}
 		return verified
-	case const.FLOAT_ARRAY:
+	case FLOAT_ARRAY:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_f64(i)
 			verified = parseSuccess
 		}
 		return verified
-	case const.BOOLEAN_ARRAY:
+	case BOOLEAN_ARRAY:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_bool(i)
 			verified = parseSuccess
@@ -160,6 +162,7 @@ OST_PARSE_TIME :: proc(time: string) -> (string, int) {
 	timeStr = fmt.tprintf("%02d:%02d:%02d", hour, minute, second)
 	return timeStr, 0
 }
+
 //parses the passed in string ensuring proper format and length
 //Example datetime: 2024-03-14T09:30:00
 OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, int) {
