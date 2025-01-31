@@ -8,13 +8,6 @@ import "core:time"
 //=========================================================//
 
 
-//=================================================/src/core/commands/=================================================//
-/*
-Type: Command
-Desc: Used to define the tokens that make up an Ostrich Command
-Helpful Hint: Commands are built of ATOMs (A)ction, (T)arget, (O)bject, (M)odifier(s), or (S)cope
-Usage Locations: commands.odin & parser.odin
-*/
 Command :: struct {
 	c_token:            string, //command token
 	l_token:            [dynamic]string, //location token
@@ -22,27 +15,13 @@ Command :: struct {
 	isUsingDotNotation: bool, //if the command is using dot notation
 	t_token:            string, //target token only needed for very specific commands like WHERE,HELP, and NEW USER
 }
-//=================================================/src/core/data/=================================================//
-/*
-Type: Record
-Desc: Used to define the structure of a record withinin the Ostrich Database
-      Records are the smallest unit of data within the Ostrich Database
-Usage Locations: records.odin
-*/
+
 Record :: struct {
 	name:  string,
 	type:  string,
 	value: string,
 }
 
-//=================================================/src/core/engine/=================================================//
-/*
-Type: Engine
-Desc: Used to define the overall structure of the Ostrich Engine
-      The engine is the core of the Ostrich Database and WILL
-        be used to control *most* operations within the database
-Usage Locations: NOT YET FULLY IMPLEMENTED but will be used engine.odin
-*/
 OstrichEngine: Engine
 Engine :: struct {
 	EngineRuntime: time.Duration, // The amount of time the engine has been running
@@ -52,25 +31,12 @@ Engine :: struct {
 	UserLoggedIn:  bool, // if a user is logged in...NO ACTION CAN BE PERFORMED WITHOUT A USER LOGGED IN
 }
 
-//=================================================/src/core/security/=================================================//
-/*
 
-Type: User_Credential
-Desc: Used to define the structure of a user credential within the Ostrich Database
-      User credentials are used to authenticate a user within the database
-Usage Locations: credentials.odin
-*/
 User_Credential :: struct {
 	Value:  string, //username
 	Length: int, //length of the username
 }
 
-/*
-Type: User
-Desc: Used to define the structure of a user within the Ostrich Database
-      Users are the entities that interact with the Ostrich Database
-Usage Locations: credentials.odin
-*/
 user: User
 current_user: User //used to track the user of the current session
 new_user: User //used for creating new accounts post initialization
@@ -110,15 +76,7 @@ Help_Mode :: struct {
 }
 
 
-// =================================================/src/core/data/=================================================//
-/*
-Type: Data_Integrity_Checks
-Desc: Used to ensure data integrity within the Ostrich Database
-Usage Locations: records.odin, clusters.odin, collections.odin
-*/
 data_integrity_checks: Data_Integrity_Checks
-
-
 Data_Integrity_Checks :: struct {
 	File_Size:           Data_Integrity_Info, //ensure file size isnt larger than const.MAX_FILE_SIZE. LOW SEVERITY
 	File_Format:         Data_Integrity_Info, //ensure proper format of the file ie closing brackets, commas, etc... HIGH SEVERITY
