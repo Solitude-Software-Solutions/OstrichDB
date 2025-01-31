@@ -23,18 +23,19 @@ import "core:strings"
 
 
 OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
+	using metadata
+	using const
+	using utils
+	// using data //cant use this when using utils namespace
+
 	//TODO: not even using these...
-	incompleteCommandErr := utils.new_err(
+	incompleteCommandErr := new_err(
 		.INCOMPLETE_COMMAND,
-		utils.get_err_msg(.INCOMPLETE_COMMAND),
+		get_err_msg(.INCOMPLETE_COMMAND),
 		#procedure,
 	)
 
-	invalidCommandErr := utils.new_err(
-		.INVALID_COMMAND,
-		utils.get_err_msg(.INVALID_COMMAND),
-		#procedure,
-	)
+	invalidCommandErr := new_err(.INVALID_COMMAND, get_err_msg(.INVALID_COMMAND), #procedure)
 
 	//Semi global Server shit
 	ServerConfig := types.Server_Config {
@@ -43,58 +44,47 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	defer delete(cmd.l_token)
 
 
-	switch (cmd.c_token)
+	switch (cmd.c_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
-	case const.VERSION:
-		utils.log_runtime_event("Used VERSION command", "User requested version information.")
-		fmt.printfln(
-			"Using OstrichDB Version: %s%s%s",
-			utils.BOLD,
-			utils.get_ost_version(),
-			utils.RESET,
-		)
+	case VERSION:
+		log_runtime_event("Used VERSION command", "User requested version information.")
+		fmt.printfln("Using OstrichDB Version: %s%s%s", BOLD, get_ost_version(), RESET)
 		break
-	case const.EXIT:
+	case EXIT:
 		//logout then exit the program
-		utils.log_runtime_event("Used EXIT command", "User requested to exit the program.")
+		log_runtime_event("Used EXIT command", "User requested to exit the program.")
 		OST_USER_LOGOUT(1)
-	case const.LOGOUT:
+	case LOGOUT:
 		//only returns user to signin.
-		utils.log_runtime_event("Used LOGOUT command", "User requested to logout.")
+		log_runtime_event("Used LOGOUT command", "User requested to logout.")
 		fmt.printfln("Logging out...")
 		OST_USER_LOGOUT(0)
 		return 0
-	case const.RESTART:
-		utils.log_runtime_event("Used RESTART command", "User requested to restart OstrichDB.")
+	case RESTART:
+		log_runtime_event("Used RESTART command", "User requested to restart OstrichDB.")
 		OST_RESTART()
-	case const.REBUILD:
-		utils.log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
+	case REBUILD:
+		log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
 		OST_REBUILD()
-	case const.DESTROY:
-		utils.log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
+	case DESTROY:
+		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
 		OST_DESTROY()
-	case const.TEST:
-		utils.log_runtime_event("Used TEST command", "User requested to run tests.")
+	case TEST:
+		log_runtime_event("Used TEST command", "User requested to run tests.")
 		tests.main()
-	case const.CLEAR:
-		utils.log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
+	case CLEAR:
+		log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")
 		break
-	case const.TREE:
-		utils.log_runtime_event(
-			"Used TREE command",
-			"User requested to view a tree of the database.",
-		)
+	case TREE:
+		log_runtime_event("Used TREE command", "User requested to view a tree of the database.")
 		data.OST_GET_DATABASE_TREE()
 
 	//COMMAND HISTORY CLUSTER FUCK START :(
-	case const.HISTORY:
-		utils.log_runtime_event(
-			"Used HISTORY command",
-			"User requested to view the command history.",
-		)
+	case HISTORY:
+		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
 		commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
 
 		for cmd, index in commandHistory {
@@ -106,13 +96,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		inputNumber: [1024]byte
 		n, inputSuccess := os.read(os.stdin, inputNumber[:])
 		if inputSuccess != 0 {
-			error := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error)
-			utils.log_err("Cannot read user input for HISTORY command.", #procedure)
+			error := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+			throw_err(error)
+			log_err("Cannot read user input for HISTORY command.", #procedure)
 		}
 
 		// convert string to index
@@ -128,35 +114,26 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//HISTORY CLUSTER FUCK END :)
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
-	case const.HELP:
-		utils.log_runtime_event("Used HELP command", "User requested help information.")
+	case HELP:
+		log_runtime_event("Used HELP command", "User requested help information.")
 		if len(cmd.t_token) == 0 {
-			utils.log_runtime_event(
-				"Used HELP command",
-				"User requested general help information.",
-			)
+			log_runtime_event("Used HELP command", "User requested general help information.")
 			help.OST_GET_GENERAL_HELP()
-		} else if cmd.t_token == const.ATOM || cmd.t_token == const.ATOMS {
-			utils.log_runtime_event("Used HELP command", "User requested atom help information.")
+		} else if cmd.t_token == ATOM || cmd.t_token == ATOMS {
+			log_runtime_event("Used HELP command", "User requested atom help information.")
 			help.OST_GET_ATOMS_HELP()
 		} else {
-			utils.log_runtime_event(
-				"Used HELP command",
-				"User requested specific help information.",
-			)
+			log_runtime_event("Used HELP command", "User requested specific help information.")
 			help.OST_GET_SPECIFIC_HELP(cmd.t_token)
 		}
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
 
 	//WHERE: Used to search for a specific object within the DBMS
-	case const.WHERE:
-		utils.log_runtime_event(
-			"Used WHERE command",
-			"User requested to search for a specific object.",
-		)
+	case WHERE:
+		log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
 		switch (cmd.t_token) {
-		case const.CLUSTER, const.RECORD:
+		case CLUSTER, RECORD:
 			data.OST_WHERE_OBJECT(cmd.t_token, cmd.l_token[0])
 		case:
 			break
@@ -167,20 +144,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.println(
 				"Incomplete command. Correct Usage: WHERE <target> <target_name> or WHERE <target_name>",
 			)
-			utils.log_runtime_event(
+			log_runtime_event(
 				"Incomplete WHERE command",
 				"User did not provide a target name to search for.",
 			)
 		}
 		break
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
-	case const.BACKUP:
-		utils.log_runtime_event("Used BACKUP command", "User requested to backup data.")
+	case BACKUP:
+		log_runtime_event("Used BACKUP command", "User requested to backup data.")
 		switch (len(cmd.l_token)) {
 		case 1:
 			name := data.OST_CHOOSE_BACKUP_NAME()
 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(cmd.l_token[0])
-			switch (checks)
+			switch (checks) 
 			{
 			case -1:
 				return -1
@@ -189,13 +166,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if success {
 				fmt.printfln(
 					"Successfully backed up collection: %s%s%s.",
-					utils.BOLD,
+					BOLD,
 					cmd.l_token[0],
-					utils.RESET,
+					RESET,
 				)
 			} else {
 				fmt.println("Backup failed. Please try again.")
-				utils.log_err("Failed to backup collection.", #procedure)
+				log_err("Failed to backup collection.", #procedure)
 				return -1
 			}
 
@@ -205,58 +182,50 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.println(
 				"Backing up a cluster or record is not currently support in OstrichDB. Try backing up a collection instead.",
 			)
-			utils.log_runtime_event(
-				"Invalid BACKUP command",
-				"User did not provide a valid target.",
-			)
+			log_runtime_event("Invalid BACKUP command", "User did not provide a valid target.")
 		}
 		break
 	//NEW: Allows for the creation of new records, clusters, or collections
-	case const.NEW:
-		utils.log_runtime_event("Used NEW command", "")
+	case NEW:
+		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
 			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
 			switch (exists) {
 			case false:
-				fmt.printf(
-					"Creating collection: %s%s%s\n",
-					utils.BOLD_UNDERLINE,
-					cmd.l_token[0],
-					utils.RESET,
-				)
+				fmt.printf("Creating collection: %s%s%s\n", BOLD_UNDERLINE, cmd.l_token[0], RESET)
 				success := data.OST_CREATE_COLLECTION(cmd.l_token[0], 0)
 				if success {
 					fmt.printf(
 						"Collection: %s%s%s created successfully.\n",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						cmd.l_token[0],
-						utils.RESET,
+						RESET,
 					)
-					fileName := utils.concat_collection_name(cmd.l_token[0])
-					metadata.OST_METADATA_ON_CREATE(fileName)
+					fileName := concat_collection_name(cmd.l_token[0])
+					OST_METADATA_ON_CREATE(fileName)
 				} else {
 					fmt.printf(
 						"Failed to create collection %s%s%s.\n",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						cmd.l_token[0],
-						utils.RESET,
+						RESET,
 					)
-					utils.log_runtime_event(
+					log_runtime_event(
 						"Failed to create collection",
 						"User tried to create a collection but failed.",
 					)
-					utils.log_err("Failed to create new collection", #procedure)
+					log_err("Failed to create new collection", #procedure)
 				}
 				break
 			case true:
 				fmt.printf(
 					"Collection: %s%s%s already exists. Please choose a different name.\n",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					cmd.l_token[0],
-					utils.RESET,
+					RESET,
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Duplicate collection name",
 					"User tried to create a collection with a name that already exists.",
 				)
@@ -271,12 +240,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cluster_name = cmd.l_token[1]
 				fmt.printf(
 					"Creating cluster: %s%s%s within collection: %s%s%s\n",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					cluster_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
+					RESET,
+					BOLD_UNDERLINE,
 					collection_name,
-					utils.RESET,
+					RESET,
 				)
 				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
 				// switch (checks)
@@ -289,41 +258,41 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				result := data.OST_CREATE_CLUSTER(collection_name, cluster_name, id)
 				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 
-				switch (result)
+				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
 						"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
+						RESET,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					break
 				case 1, 2, 3:
-					error1 := utils.new_err(
+					error1 := new_err(
 						.CANNOT_CREATE_CLUSTER,
-						utils.get_err_msg(.CANNOT_CREATE_CLUSTER),
+						get_err_msg(.CANNOT_CREATE_CLUSTER),
 						#procedure,
 					)
-					utils.throw_custom_err(
+					throw_custom_err(
 						error1,
 						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
 					)
-					utils.log_err("Failed to create new cluster.", #procedure)
+					log_err("Failed to create new cluster.", #procedure)
 					break
 				}
-				fn := utils.concat_collection_name(collection_name)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
+				fn := concat_collection_name(collection_name)
+				OST_UPDATE_METADATA_VALUE(fn, 2)
+				OST_UPDATE_METADATA_VALUE(fn, 3)
+				OST_UPDATE_METADATA_VALUE(fn, 5)
 			} else {
 				fmt.printfln(
 					"Invalid command. Correct Usage: NEW <collection_name>.<cluster_name>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Incomplete NEW command",
 					"User did not provide a cluster name to create.",
 				)
@@ -331,93 +300,90 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			break
 		case 3:
-			utils.log_runtime_event(
-				"Used NEW RECORD command",
-				"User requested to create a new record.",
-			)
-			collection_name := cmd.l_token[0]
-			cluster_name := cmd.l_token[1]
-			record_name := cmd.l_token[2]
-			if len(record_name) > 128 {
+			log_runtime_event("Used NEW RECORD command", "User requested to create a new record.")
+			collectionName := cmd.l_token[0]
+			clusterName := cmd.l_token[1]
+			recordName := cmd.l_token[2]
+			if len(recordName) > 128 {
 				fmt.printfln(
 					"Record name: %s%s%s is too long. Please choose a name less than 128 characters.",
-					utils.BOLD_UNDERLINE,
-					record_name,
-					utils.RESET,
+					BOLD_UNDERLINE,
+					recordName,
+					RESET,
 				)
 				return -1
 			}
 			filePath := fmt.tprintf(
 				"%s%s%s",
-				const.OST_COLLECTION_PATH,
-				collection_name,
-				const.OST_FILE_EXTENSION,
+				OST_COLLECTION_PATH,
+				collectionName,
+				OST_FILE_EXTENSION,
 			)
 
-			if const.OF_TYPE in cmd.p_token && cmd.isUsingDotNotation == true {
-				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[const.OF_TYPE])
+			if OF_TYPE in cmd.p_token && cmd.isUsingDotNotation == true {
+				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[OF_TYPE])
 				if typeSuccess == 0 {
 					fmt.printfln(
 						"Creating record: %s%s%s of type: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						record_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
+						recordName,
+						RESET,
+						BOLD_UNDERLINE,
 						rType,
-						utils.RESET,
+						RESET,
 					)
 
 					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
 						filePath,
-						cluster_name,
-						record_name,
+						clusterName,
+						recordName,
 						"",
 						rType,
 					)
-					switch (appendSuccess)
+					switch (appendSuccess) 
 					{
 					case 0:
 						fmt.printfln(
 							"Record: %s%s%s of type: %s%s%s created successfully",
-							utils.BOLD_UNDERLINE,
-							record_name,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
+							BOLD_UNDERLINE,
+							recordName,
+							RESET,
+							BOLD_UNDERLINE,
 							rType,
-							utils.RESET,
+							RESET,
 						)
-						fn := utils.concat_collection_name(collection_name)
-						metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-						metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-						metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
+						fn := concat_collection_name(collectionName)
+						OST_UPDATE_METADATA_VALUE(fn, 2)
+						OST_UPDATE_METADATA_VALUE(fn, 3)
+						OST_UPDATE_METADATA_VALUE(fn, 5)
 
 						break
 					case -1, 1:
 						fmt.printfln(
 							"Failed to create record: %s%s%s of type: %s%s%s",
-							utils.BOLD_UNDERLINE,
-							record_name,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
+							BOLD_UNDERLINE,
+							recordName,
+							RESET,
+							BOLD_UNDERLINE,
 							rType,
-							utils.RESET,
+							RESET,
 						)
-						utils.log_runtime_event(
+						log_runtime_event(
 							"Failed to create record",
 							"User requested to create a record but failed.",
 						)
-						utils.log_err("Failed to create a new record.", #procedure)
+						log_err("Failed to create a new record.", #procedure)
 						break
 					}
 				} else {
 					fmt.printfln(
 						"Failed to create record: %s%s%s of type: %s%s%s. Please try again.",
-						utils.BOLD_UNDERLINE,
-						record_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
+						recordName,
+						RESET,
+						BOLD_UNDERLINE,
 						rType,
-						utils.RESET,
+						RESET,
 					)
 				}
 
@@ -425,7 +391,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: NEW <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Incomplete NEW RECORD command",
 					"User did not provide a record name or type to create.",
 				)
@@ -433,15 +399,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Location> <Parameters>")
-			utils.log_runtime_event(
+			log_runtime_event(
 				"Invalid NEW command",
 				"User did not provide a valid target to create.",
 			)
 			break
 		}
 
-		// case const.USER:
-		// 	utils.log_runtime_event(
+		// case USER:
+		// 	log_runtime_event(
 		// 		"Used NEW USER command",
 		// 		"User chose to create a new user account",
 		// 	)
@@ -451,44 +417,44 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		// 	}
 		// case:
 		// 	fmt.printfln("Invalid command structure. Correct Usage: NEW <Target> <Targets_name>")
-		// 	utils.log_runtime_event(
+		// 	log_runtime_event(
 		// 		"Invalid NEW command",
 		// 		"User did not provide a valid target to create.",
 		// 	)
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
-	case const.RENAME:
-		utils.log_runtime_event("Used RENAME command", "")
-		switch (len(cmd.l_token))
+	case RENAME:
+		log_runtime_event("Used RENAME command", "")
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
-			if const.TO in cmd.p_token {
-				old_name := cmd.l_token[0]
-				new_name := cmd.p_token[const.TO]
+			if TO in cmd.p_token {
+				oldName := cmd.l_token[0]
+				newName := cmd.p_token[TO]
 
 				fmt.printf(
 					"Renaming collection: %s%s%s to %s%s%s\n",
-					utils.BOLD_UNDERLINE,
-					old_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					new_name,
-					utils.RESET,
+					BOLD_UNDERLINE,
+					oldName,
+					RESET,
+					BOLD_UNDERLINE,
+					newName,
+					RESET,
 				)
-				success := data.OST_RENAME_COLLECTION(old_name, new_name)
-				switch (success)
+				success := data.OST_RENAME_COLLECTION(oldName, newName)
+				switch (success) 
 				{
 				case true:
 					fmt.printf(
 						"Successfully renamed collection: %s%s%s to %s%s%s\n",
-						utils.BOLD_UNDERLINE,
-						old_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						new_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						oldName,
+						RESET,
+						BOLD_UNDERLINE,
+						newName,
+						RESET,
 					)
-					utils.log_runtime_event(
+					log_runtime_event(
 						"Successfully renamed collection",
 						"User successfully renamed a collection.",
 					)
@@ -496,18 +462,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				case:
 					fmt.printfln(
 						"Failed to rename collection: %s%s%s to %s%s%s",
-						utils.BOLD_UNDERLINE,
-						old_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						new_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						oldName,
+						RESET,
+						BOLD_UNDERLINE,
+						newName,
+						RESET,
 					)
-					utils.log_runtime_event(
+					log_runtime_event(
 						"Failed to rename collection",
 						"User requested to rename a collection but failed.",
 					)
-					utils.log_err("Failed to rename collection.", #procedure)
+					log_err("Failed to rename collection.", #procedure)
 					break
 				}
 
@@ -516,13 +482,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case 2:
-			cluster_name: string
-			collection_name: string
+			clusterName: string
+			collectionName: string
 
-			if const.TO in cmd.p_token && cmd.isUsingDotNotation == true {
-				old_name := cmd.l_token[1]
-				collection_name := cmd.l_token[0]
-				new_name := cmd.p_token[const.TO]
+			if TO in cmd.p_token && cmd.isUsingDotNotation == true {
+				oldName := cmd.l_token[1]
+				collectionName := cmd.l_token[0]
+				newName := cmd.p_token[TO]
 
 				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
 				// switch (checks)
@@ -534,35 +500,35 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// 	return -1
 				// }
 
-				success := data.OST_RENAME_CLUSTER(collection_name, old_name, new_name)
+				success := data.OST_RENAME_CLUSTER(collectionName, oldName, newName)
 				if success {
 					fmt.printf(
 						"Successfully renamed cluster %s%s%s to %s%s%s in collection %s%s%s\n",
-						utils.BOLD_UNDERLINE,
-						old_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						new_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						oldName,
+						RESET,
+						BOLD_UNDERLINE,
+						newName,
+						RESET,
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
 					)
-					fn := utils.concat_collection_name(collection_name)
-					metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-					metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-					metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
+					fn := concat_collection_name(collectionName)
+					OST_UPDATE_METADATA_VALUE(fn, 2)
+					OST_UPDATE_METADATA_VALUE(fn, 3)
+					OST_UPDATE_METADATA_VALUE(fn, 5)
 				} else {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
 					)
-					utils.log_err("Failed to rename cluster.", #procedure)
+					log_err("Failed to rename cluster.", #procedure)
 				}
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME <collection_name>.<old_name> TO <new_name>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Incomplete RENAME command",
 					"User did not provide a valid cluster name to rename.",
 				)
@@ -571,37 +537,37 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 3:
 			oldRName: string
 			newRName: string
-			collection_name: string //only here if using dot notation
-			cluster_name: string //only here if using dot notation
-			if const.TO in cmd.p_token || cmd.isUsingDotNotation == true {
+			collectionName: string //only here if using dot notation
+			clusterName: string //only here if using dot notation
+			if TO in cmd.p_token || cmd.isUsingDotNotation == true {
 				if cmd.isUsingDotNotation == true {
 					oldRName = cmd.l_token[2]
-					newRName = cmd.p_token[const.TO]
-					collection_name = cmd.l_token[0]
-					cluster_name = cmd.l_token[1]
+					newRName = cmd.p_token[TO]
+					collectionName = cmd.l_token[0]
+					clusterName = cmd.l_token[1]
 				} else {
 					oldRName = cmd.l_token[0]
-					newRName = cmd.p_token[const.TO]
+					newRName = cmd.p_token[TO]
 				}
 				result := data.OST_RENAME_RECORD(
-					strings.clone(collection_name),
-					strings.clone(cluster_name),
+					strings.clone(collectionName),
+					strings.clone(clusterName),
 					oldRName,
 					newRName,
 				)
-				switch (result)
+				switch (result) 
 				{
 				case 0:
 					fmt.printfln(
 						"Record: %s%s%s successfully renamed to %s%s%s",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						oldRName,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
+						RESET,
+						BOLD_UNDERLINE,
 						newRName,
-						utils.RESET,
+						RESET,
 					)
-					utils.log_runtime_event(
+					log_runtime_event(
 						"Successfully renamed record",
 						"User successfully renamed a record.",
 					)
@@ -609,18 +575,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				case:
 					fmt.printfln(
 						"Failed to rename record: %s%s%s to %s%s%s",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						oldRName,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
+						RESET,
+						BOLD_UNDERLINE,
 						newRName,
-						utils.RESET,
+						RESET,
 					)
-					utils.log_runtime_event(
+					log_runtime_event(
 						"Failed to rename record",
 						"User requested to rename a record but failed.",
 					)
-					utils.log_err("Failed to rename record.", #procedure)
+					log_err("Failed to rename record.", #procedure)
 					break
 				}
 
@@ -628,7 +594,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME <collection_name>.<cluster_name>.<old_name> TO <new_name>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Incomplete RENAME command",
 					"User did not provide a valid record name to rename.",
 				)
@@ -638,24 +604,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 
 	// // ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
-	case const.ERASE:
-		utils.log_runtime_event("Used ERASE command", "")
-		switch (len(cmd.l_token))
+	case ERASE:
+		log_runtime_event("Used ERASE command", "")
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			if data.OST_ERASE_COLLECTION(cmd.l_token[0]) == true {
 				fmt.printfln(
 					"Collection: %s%s%s erased successfully",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					cmd.l_token[0],
-					utils.RESET,
+					RESET,
 				)
 			} else {
 				fmt.printfln(
 					"Failed to erase collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					cmd.l_token[0],
-					utils.RESET,
+					RESET,
 				)
 			}
 			break
@@ -668,7 +634,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cluster := cmd.l_token[1]
 				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
 				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-				switch (checks)
+				switch (checks) 
 				{
 				case -1:
 					return -1
@@ -677,91 +643,91 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if data.OST_ERASE_CLUSTER(collection_name, cluster) == true {
 					fmt.printfln(
 						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						cluster,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
+						RESET,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					data.OST_REMOVE_ID_FROM_CLUSTER(fmt.tprintf("%d", clusterID), false)
 				} else {
 					fmt.printfln(
 						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						cluster,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
+						RESET,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 				}
-				fn := utils.concat_collection_name(collection_name)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
+				fn := concat_collection_name(collection_name)
+				OST_UPDATE_METADATA_VALUE(fn, 2)
+				OST_UPDATE_METADATA_VALUE(fn, 3)
+				OST_UPDATE_METADATA_VALUE(fn, 5)
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Incomplete ERASE command",
 					"User did not provide a valid cluster name to erase.",
 				)
 			}
 			break
 		case 3:
-			collection_name: string
-			cluster_name: string
-			record_name: string
+			collectionName: string
+			clusterName: string
+			recordName: string
 
 			if cmd.isUsingDotNotation == true {
-				collection_name := cmd.l_token[0]
-				cluster_name := cmd.l_token[1]
-				record_name := cmd.l_token[2]
+				collectionName := cmd.l_token[0]
+				clusterName := cmd.l_token[1]
+				recordName := cmd.l_token[2]
 
-				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster_name)
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-				switch (checks)
+				clusterID := data.OST_GET_CLUSTER_ID(collectionName, clusterName)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				switch (checks) 
 				{
 				case -1:
 					return -1
 				}
-				if data.OST_ERASE_RECORD(collection_name, cluster_name, record_name) == true {
+				if data.OST_ERASE_RECORD(collectionName, clusterName, recordName) == true {
 					fmt.printfln(
 						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						record_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						recordName,
+						RESET,
+						BOLD_UNDERLINE,
+						clusterName,
+						RESET,
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
 					)
 				} else {
 					fmt.printfln(
 						"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						record_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						recordName,
+						RESET,
+						BOLD_UNDERLINE,
+						clusterName,
+						RESET,
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
 					)
 				}
 			}
 			break
-		// case const.USER:
+		// case USER:
 		// 	secColPath := fmt.tprintf(
 		// 		"%ssecure_%s%s",
-		// 		const.OST_SECURE_COLLECTION_PATH,
+		// 		OST_SECURE_COLLECTION_PATH,
 		// 		types.current_user.username.Value,
-		// 		const.OST_FILE_EXTENSION,
+		// 		OST_FILE_EXTENSION,
 		// 	)
 		// 	result: bool
 		// 	if len(cmd.l_token) == 1 {
@@ -777,24 +743,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		// 			if result {
 		// 				fmt.printfln(
 		// 					"User: %s%s%s successfully deleted.",
-		// 					utils.BOLD_UNDERLINE,
+		// 					BOLD_UNDERLINE,
 		// 					cmd.l_token[0],
-		// 					utils.RESET,
+		// 					RESET,
 		// 				)
 		// 			} else {
 		// 				fmt.printfln(
 		// 					"Failed to delete user: %s%s%s",
-		// 					utils.BOLD_UNDERLINE,
+		// 					BOLD_UNDERLINE,
 		// 					cmd.l_token[0],
-		// 					utils.RESET,
+		// 					RESET,
 		// 				)
 		// 			}
 		// 		} else {
 		// 			fmt.printfln(
 		// 				"User: %s%s%s does not have permission to delete users.",
-		// 				utils.BOLD_UNDERLINE,
+		// 				BOLD_UNDERLINE,
 		// 				types.current_user.username.Value,
-		// 				utils.RESET,
+		// 				RESET,
 		// 			)
 		// 			result = false
 		// 		}
@@ -811,16 +777,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.printfln(
 				"Invalid command structure. Correct Usage: ERASE <collection_name>.<cluster_name>.<record_name>",
 			)
-			utils.log_runtime_event(
-				"Invalid ERASE command",
-				"User did not provide a valid target.",
-			)
+			log_runtime_event("Invalid ERASE command", "User did not provide a valid target.")
 		}
 		break
 	// // FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
-	case const.FETCH:
-		utils.log_runtime_event("Used FETCH command", "")
-		switch (len(cmd.l_token))
+	case FETCH:
+		log_runtime_event("Used FETCH command", "")
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
@@ -829,7 +792,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println(str)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: FETCH <collection_name>")
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Incomplete FETCH command",
 					"User did not provide a valid collection name to fetch.",
 				)
@@ -845,39 +808,40 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println(
 					"Incomplete command. Correct Usage: FETCH <collection_name>.<cluster_name>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Incomplete FETCH command",
 					"User did not provide a valid cluster name to fetch.",
 				)
 			}
 			break
 		case 3:
-			colllection_name: string
-			cluster_name: string
-			record_name: string
-			if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
-				collection_name := cmd.l_token[0]
-				cluster_name := cmd.l_token[1]
-				record_name := cmd.l_token[2]
+			collectionName: string
+			clusterName: string
+			recordName: string
 
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-				switch (checks)
+			if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
+				collectionName := cmd.l_token[0]
+				clusterName := cmd.l_token[1]
+				recordName := cmd.l_token[2]
+
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				switch (checks) 
 				{
 				case -1:
 					return -1
 				}
-				record, found := data.OST_FETCH_RECORD(collection_name, cluster_name, record_name)
+				record, found := data.OST_FETCH_RECORD(collectionName, clusterName, recordName)
 				fmt.printfln(
 					"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
-					utils.BOLD_UNDERLINE,
-					record_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					cluster_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					collection_name,
-					utils.RESET,
+					BOLD_UNDERLINE,
+					recordName,
+					RESET,
+					BOLD_UNDERLINE,
+					clusterName,
+					RESET,
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
 				)
 				if found {
 					fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
@@ -888,7 +852,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: FETCH <collection_name>.<cluster_name>.<record_name>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Incomplete FETCH command",
 					"User did not provide a valid record name to fetch.",
 				)
@@ -896,38 +860,35 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Targets_name>")
-			utils.log_runtime_event(
-				"Invalid FETCH command",
-				"User did not provide a valid target.",
-			)
+			log_runtime_event("Invalid FETCH command", "User did not provide a valid target.")
 		}
 		break
-	case const.SET:
+	case SET:
 		//set can only be used on RECORDS and CONFIGS
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 3:
-			if const.TO in cmd.p_token && cmd.isUsingDotNotation {
+			if TO in cmd.p_token && cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
-				value := cmd.p_token[const.TO] // Get the full string value that was collected by the parser
+				value := cmd.p_token[TO] // Get the full string value that was collected by the parser
 
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					recordName,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
+					RESET,
+					BOLD_UNDERLINE,
 					value,
-					utils.RESET,
+					RESET,
 				)
 
 				file := fmt.tprintf(
 					"%s%s%s",
-					const.OST_COLLECTION_PATH,
+					OST_COLLECTION_PATH,
 					collectionName,
-					const.OST_FILE_EXTENSION,
+					OST_FILE_EXTENSION,
 				)
 
 				ok := data.OST_SET_RECORD_VALUE(
@@ -937,23 +898,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					strings.clone(value),
 				)
 
-				fn := utils.concat_collection_name(collectionName)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 2)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 3)
-				metadata.OST_UPDATE_METADATA_VALUE(fn, 5)
+				fn := concat_collection_name(collectionName)
+				OST_UPDATE_METADATA_VALUE(fn, 2)
+				OST_UPDATE_METADATA_VALUE(fn, 3)
+				OST_UPDATE_METADATA_VALUE(fn, 5)
 			}
 			break
 		case 0:
 			switch (cmd.t_token) {
-			case const.CONFIG:
-				utils.log_runtime_event("Used SET command", "")
-				if const.TO in cmd.p_token {
+			case CONFIG:
+				log_runtime_event("Used SET command", "")
+				if TO in cmd.p_token {
 					configName := cmd.l_token[0]
 					value: string
 					for key, val in cmd.p_token {
 						value = val
 					}
-					switch (configName)
+					switch (configName) 
 					{
 					case "HELP":
 						if value != "VERBOSE" || value != "SIMPLE" {
@@ -965,22 +926,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 						fmt.printfln(
 							"Setting config: %s%s%s to %s%s%s",
-							utils.BOLD_UNDERLINE,
+							BOLD_UNDERLINE,
 							configName,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
+							RESET,
+							BOLD_UNDERLINE,
 							value,
-							utils.RESET,
+							RESET,
 						)
 						success := config.OST_UPDATE_CONFIG_VALUE(
-							const.CONFIG_FOUR,
-							utils.append_qoutations(value),
+							CONFIG_FOUR,
+							append_qoutations(value),
 						)
 						if success == false {
 							fmt.printfln("Failed to set HELP config to %s", value)
 						} else {
-							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
-							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+							OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
+							OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
 							fmt.printfln("Successfully set HELP config to %s", value)
 						}
 						help.OST_SET_HELP_MODE()
@@ -994,27 +955,27 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 						fmt.printfln(
 							"Setting config: %s%s%s to %s%s%s",
-							utils.BOLD_UNDERLINE,
+							BOLD_UNDERLINE,
 							configName,
-							utils.RESET,
-							utils.BOLD_UNDERLINE,
+							RESET,
+							BOLD_UNDERLINE,
 							value,
-							utils.RESET,
+							RESET,
 						)
 
 
-						success := config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_FIVE, value)
+						success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FIVE, value)
 						if success == false {
 							fmt.printfln("Failed to set SERVER config to %s", value)
 						} else {
 							fmt.printfln("Successfully set SERVER config to %s", value)
-							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 2)
-							metadata.OST_UPDATE_METADATA_VALUE(const.OST_CONFIG_PATH, 3)
+							OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
+							OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
 							if data.OST_READ_RECORD_VALUE(
-								   const.OST_CONFIG_PATH,
-								   const.CONFIG_CLUSTER,
-								   const.BOOLEAN,
-								   const.CONFIG_FIVE,
+								   OST_CONFIG_PATH,
+								   CONFIG_CLUSTER,
+								   BOOLEAN,
+								   CONFIG_FIVE,
 							   ) ==
 							   "true" {
 								fmt.printfln("Server Mode is now ON")
@@ -1040,11 +1001,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			fmt.printfln("The SET command can only be used on RECORDS and CONFIGS")
 		}
-	case const.COUNT:
-		utils.log_runtime_event("Used COUNT command", "")
-		switch (cmd.t_token)
+	case COUNT:
+		log_runtime_event("Used COUNT command", "")
+		switch (cmd.t_token) 
 		{
-		case const.COLLECTIONS:
+		case COLLECTIONS:
 			result := data.OST_COUNT_COLLECTIONS()
 			switch (result) {
 			case -1:
@@ -1061,44 +1022,44 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				break
 			}
 			break
-		case const.CLUSTERS:
+		case CLUSTERS:
 			if len(cmd.l_token) == 1 {
 				collection_name := cmd.l_token[0]
 				result := data.OST_COUNT_CLUSTERS(collection_name)
-				switch (result)
+				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
 						"Failed to count clusters in collection %s%s%s",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					break
 				case 0:
 					fmt.printfln(
 						"There are no clusters in the collection %s%s%s",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					break
 				case 1:
 					fmt.printfln(
 						"There is %d cluster in the collection %s%s%s",
 						result,
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					break
 				case:
 					fmt.printfln(
 						"There are %d clusters in the collection %s%s%s",
 						result,
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					break
 				}
@@ -1106,67 +1067,67 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Invalid command structure. Correct Usage: COUNT CLUSTERS <collection_name>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Invalid COUNT command",
 					"User did not provide a valid collection name to count clusters.",
 				)
 			}
 
 			break
-		case const.RECORDS:
+		case RECORDS:
 			//in the event the users is counting the records in a specific cluster
 			if (len(cmd.l_token) >= 2 || cmd.isUsingDotNotation == true) {
-				collection_name := cmd.l_token[0]
-				cluster_name := cmd.l_token[1]
+				collectionName := cmd.l_token[0]
+				clusterName := cmd.l_token[1]
 				result := data.OST_COUNT_RECORDS_IN_CLUSTER(
-					strings.clone(collection_name),
-					strings.clone(cluster_name),
+					strings.clone(collectionName),
+					strings.clone(clusterName),
 					true,
 				)
 				switch result {
 				case -1:
 					fmt.printfln(
 						"Error counting records in the cluster %s%s%s collection %s%s%s",
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						clusterName,
+						RESET,
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
 					)
 				case 0:
 					fmt.printfln(
 						"There are no records in the cluster %s%s%s in the collection %s%s%s",
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						clusterName,
+						RESET,
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
 					)
 					break
 				case 1:
 					fmt.printfln(
 						"There is %d record in the cluster %s%s%s in the collection %s%s%s",
 						result,
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						clusterName,
+						RESET,
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
 					)
 					break
 				case:
 					fmt.printfln(
 						"There are %d records in the cluster %s%s%s in the collection %s%s%s",
 						result,
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						clusterName,
+						RESET,
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
 					)
 					break
 				}
@@ -1175,40 +1136,40 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection_name := cmd.l_token[0]
 				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collection_name)
 
-				switch result
+				switch result 
 				{
 				case -1:
 					fmt.printfln(
 						"Error counting records in the collection %s%s%s",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					break
 				case 0:
 					fmt.printfln(
 						"There are no records in collection %s%s%s",
-						utils.BOLD,
+						BOLD,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					break
 				case 1:
 					fmt.printfln(
 						"There is %d record in the collection %s%s%s",
 						result,
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 					break
 				case:
 					fmt.printfln(
 						"There are %d records in the collection %s%s%s",
 						result,
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						collection_name,
-						utils.RESET,
+						RESET,
 					)
 				}
 
@@ -1216,7 +1177,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Invalid command structure. Correct Usage: COUNT RECORDS <collection_name>.<cluster_name>",
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Invalid COUNT command",
 					"User did not provide a valid cluster name to count records.",
 				)
@@ -1225,45 +1186,40 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// //PURGE command
-	case const.PURGE:
-		utils.log_runtime_event("Used PURGE command", "")
-		switch (len(cmd.l_token))
+	case PURGE:
+		log_runtime_event("Used PURGE command", "")
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			collection_name := cmd.l_token[0]
 			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collection_name, 0)
-			switch exists
+			switch exists 
 			{
 			case true:
 				result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
-				switch result
+				switch result 
 				{
 				case true:
 					fmt.printfln(
 						"Successfully purged collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
+						BOLD_UNDERLINE,
 						cmd.l_token[0],
-						utils.RESET,
+						RESET,
 					)
-					metadata.OST_UPDATE_METADATA_VALUE(collection_name, 3)
+					OST_UPDATE_METADATA_VALUE(collection_name, 3)
 					break
 				case false:
-					fmt.printfln(
-						"Failed to purge collection: %s%s%s",
-						utils.BOLD,
-						cmd.l_token[0],
-						utils.RESET,
-					)
+					fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
 					break
 				}
 			case false:
 				fmt.printfln(
 					"Collection: %s%s%s not found in OstrichDB.",
-					utils.BOLD,
+					BOLD,
 					cmd.l_token[0],
-					utils.RESET,
+					RESET,
 				)
-				utils.log_runtime_event(
+				log_runtime_event(
 					"Invalid PURGE command",
 					"User tried to purge a collection that does not exist.",
 				)
@@ -1271,68 +1227,68 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case 2:
-			collection_name := cmd.l_token[0]
-			cluster_name := cmd.l_token[1]
+			collectionName := cmd.l_token[0]
+			clusterName := cmd.l_token[1]
 			if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
-				result := data.OST_PURGE_CLUSTER(collection_name, cluster_name)
+				result := data.OST_PURGE_CLUSTER(collectionName, clusterName)
 				switch result {
 				case true:
 					fmt.printfln(
 						"Successfully purged cluster: %s%s%s in collection: %s%s%s",
-						utils.BOLD_UNDERLINE,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD_UNDERLINE,
-						collection_name,
-						utils.RESET,
+						BOLD_UNDERLINE,
+						clusterName,
+						RESET,
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
 					)
 					break
 				case false:
 					fmt.printfln(
 						"Failed to purge cluster: %s%s%s in collection: %s%s%s",
-						utils.BOLD,
-						cluster_name,
-						utils.RESET,
-						utils.BOLD,
-						collection_name,
-						utils.RESET,
+						BOLD,
+						clusterName,
+						RESET,
+						BOLD,
+						collectionName,
+						RESET,
 					)
 					break
 				}
 			}
 			break
 		case 3:
-			collection_name := cmd.l_token[0]
-			cluster_name := cmd.l_token[1]
-			record_name := cmd.l_token[2]
-			result := data.OST_PURGE_RECORD(collection_name, cluster_name, record_name)
+			collectionName := cmd.l_token[0]
+			clusterName := cmd.l_token[1]
+			recordName := cmd.l_token[2]
+			result := data.OST_PURGE_RECORD(collectionName, clusterName, recordName)
 			switch result {
 			case true:
 				fmt.printfln(
 					"Successfully purged record: %s%s%s in cluster: %s%s%s in collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
-					record_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					cluster_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					collection_name,
-					utils.RESET,
+					BOLD_UNDERLINE,
+					recordName,
+					RESET,
+					BOLD_UNDERLINE,
+					clusterName,
+					RESET,
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
 				)
 				break
 			case false:
 				fmt.printfln(
 					"Failed to purge record: %s%s%s in cluster: %s%s%s in collection: %s%s%s",
-					utils.BOLD,
-					record_name,
-					utils.RESET,
-					utils.BOLD,
-					cluster_name,
-					utils.RESET,
-					utils.BOLD,
-					collection_name,
-					utils.RESET,
+					BOLD,
+					recordName,
+					RESET,
+					BOLD,
+					clusterName,
+					RESET,
+					BOLD,
+					collectionName,
+					RESET,
 				)
 				break
 			}
@@ -1341,18 +1297,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 		break
 	//SIZE_OF command
-	case const.SIZE_OF:
-		utils.log_runtime_event("Used SIZE_OF command", "")
+	case SIZE_OF:
+		log_runtime_event("Used SIZE_OF command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
 			collection_name := cmd.l_token[0]
 			file_path := fmt.tprintf(
 				"%s%s%s",
-				const.OST_COLLECTION_PATH,
+				OST_COLLECTION_PATH,
 				collection_name,
-				const.OST_FILE_EXTENSION,
+				OST_FILE_EXTENSION,
 			)
-			actual_size, metadata_size := metadata.OST_SUBTRACT_METADATA_SIZE(file_path)
+			actual_size, metadata_size := OST_SUBTRACT_METADATA_SIZE(file_path)
 			if actual_size != -1 {
 				fmt.printf(
 					"Size of collection %s: %d bytes (excluding %d bytes of metadata)\n",
@@ -1365,21 +1321,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 		case 2:
 			if cmd.isUsingDotNotation {
-				collection_name := cmd.l_token[0]
-				cluster_name := cmd.l_token[1]
-				size, success := data.OST_GET_CLUSTER_SIZE(collection_name, cluster_name)
+				collectionName := cmd.l_token[0]
+				clusterName := cmd.l_token[1]
+				size, success := data.OST_GET_CLUSTER_SIZE(collectionName, clusterName)
 				if success {
 					fmt.printf(
 						"Size of cluster %s.%s: %d bytes\n",
-						collection_name,
-						cluster_name,
+						collectionName,
+						clusterName,
 						size,
 					)
 				} else {
 					fmt.printf(
 						"Failed to get size of cluster %s.%s\n",
-						collection_name,
-						cluster_name,
+						collectionName,
+						clusterName,
 					)
 				}
 			} else {
@@ -1389,28 +1345,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 		case 3:
 			if cmd.isUsingDotNotation {
-				collection_name := cmd.l_token[0]
-				cluster_name := cmd.l_token[1]
-				record_name := cmd.l_token[2]
-				size, success := data.OST_GET_RECORD_SIZE(
-					collection_name,
-					cluster_name,
-					record_name,
-				)
+				collectionName := cmd.l_token[0]
+				clusterName := cmd.l_token[1]
+				recordName := cmd.l_token[2]
+				size, success := data.OST_GET_RECORD_SIZE(collectionName, clusterName, recordName)
 				if success {
 					fmt.printf(
 						"Size of record %s.%s.%s: %d bytes\n",
-						collection_name,
-						cluster_name,
-						record_name,
+						collectionName,
+						clusterName,
+						recordName,
 						size,
 					)
 				} else {
 					fmt.printf(
 						"Failed to get size of record %s.%s.%s\n",
-						collection_name,
-						cluster_name,
-						record_name,
+						collectionName,
+						clusterName,
+						recordName,
 					)
 				}
 			} else {
@@ -1424,42 +1376,42 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 		}
 		break
-	case const.TYPE_OF:
+	case TYPE_OF:
 		//only works on records
 		if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
-			collection_name := cmd.l_token[0]
-			cluster_name := cmd.l_token[1]
-			record_name := cmd.l_token[2]
+			collectionName := cmd.l_token[0]
+			clusterName := cmd.l_token[1]
+			recordName := cmd.l_token[2]
 			colPath := fmt.tprintf(
 				"%s%s%s",
-				const.OST_COLLECTION_PATH,
-				collection_name,
-				const.OST_FILE_EXTENSION,
+				OST_COLLECTION_PATH,
+				collectionName,
+				OST_FILE_EXTENSION,
 			)
-			rType, success := data.OST_GET_RECORD_TYPE(colPath, cluster_name, record_name)
+			rType, success := data.OST_GET_RECORD_TYPE(colPath, clusterName, recordName)
 			if !success {
 				fmt.printfln(
 					"Failed to get record %s.%s.%s's type",
-					collection_name,
-					cluster_name,
-					record_name,
+					collectionName,
+					clusterName,
+					recordName,
 				)
 				return 1
 			} else {
 				fmt.printfln(
 					"Record: %s%s%s->%s%s%s->%s%s%s Type: %s%s%s",
-					utils.BOLD_UNDERLINE,
-					collection_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					cluster_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					record_name,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+					BOLD_UNDERLINE,
+					clusterName,
+					RESET,
+					BOLD_UNDERLINE,
+					recordName,
+					RESET,
+					BOLD_UNDERLINE,
 					rType,
-					utils.RESET,
+					RESET,
 				)
 			}
 		} else {
@@ -1468,27 +1420,27 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 
 		}
-		utils.log_runtime_event("Used TYPE_OF command", "")
+		log_runtime_event("Used TYPE_OF command", "")
 		break
-	case const.CHANGE_TYPE:
+	case CHANGE_TYPE:
 		//only works on records
 		switch (len(cmd.l_token)) {
 		case 3:
-			if const.TO in cmd.p_token && cmd.isUsingDotNotation == true {
-				collection_name := cmd.l_token[0]
-				cluster_name := cmd.l_token[1]
-				record_name := cmd.l_token[2]
-				new_type := cmd.p_token[const.TO]
+			if TO in cmd.p_token && cmd.isUsingDotNotation == true {
+				collectionName := cmd.l_token[0]
+				clusterName := cmd.l_token[1]
+				recordName := cmd.l_token[2]
+				newType := cmd.p_token[TO]
 				colPath := fmt.tprintf(
 					"%s%s%s",
-					const.OST_COLLECTION_PATH,
-					collection_name,
-					const.OST_FILE_EXTENSION,
+					OST_COLLECTION_PATH,
+					collectionName,
+					OST_FILE_EXTENSION,
 				)
 
 				type_is_valid := false
-				for type in const.VALID_TYPES {
-					if strings.to_upper(new_type) == type {
+				for type in VALID_TYPES {
+					if strings.to_upper(newType) == type {
 						type_is_valid = true
 						break
 					}
@@ -1499,47 +1451,42 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				}
 				//super fucking bad code but tbh its christmas eve and im tired - Marshall
-				if new_type == const.INT || new_type == const.INTEGER {
-					new_type = const.INTEGER
-				} else if new_type == const.STR || new_type == const.STRING {
-					new_type = const.STRING
-				} else if new_type == const.BOOL || new_type == const.BOOLEAN {
-					new_type = const.BOOLEAN
-				} else if new_type == const.FLT || new_type == const.FLOAT {
-					new_type = const.FLOAT
-				} else if new_type == const.STRING_ARRAY || new_type == const.STR_ARRAY {
-					new_type = const.STRING_ARRAY
+				if newType == INT || newType == INTEGER {
+					newType = INTEGER
+				} else if newType == STR || newType == STRING {
+					newType = STRING
+				} else if newType == BOOL || newType == BOOLEAN {
+					newType = BOOLEAN
+				} else if newType == FLT || newType == FLOAT {
+					newType = FLOAT
+				} else if newType == STRING_ARRAY || newType == STR_ARRAY {
+					newType = STRING_ARRAY
 					fmt.println("THIS SHOULD BE HAPPENING")
-				} else if new_type == const.INT_ARRAY || new_type == const.INTEGER_ARRAY {
-					new_type = const.INTEGER_ARRAY
-				} else if new_type == const.BOOL_ARRAY || new_type == const.BOOLEAN_ARRAY {
-					new_type = const.BOOLEAN_ARRAY
-				} else if new_type == const.FLOAT_ARRAY || new_type == const.FLT_ARRAY {
-					new_type = const.FLOAT_ARRAY
+				} else if newType == INT_ARRAY || newType == INTEGER_ARRAY {
+					newType = INTEGER_ARRAY
+				} else if newType == BOOL_ARRAY || newType == BOOLEAN_ARRAY {
+					newType = BOOLEAN_ARRAY
+				} else if newType == FLOAT_ARRAY || newType == FLT_ARRAY {
+					newType = FLOAT_ARRAY
 				}
 
-				success := data.OST_HANDLE_TYPE_CHANGE(
-					colPath,
-					cluster_name,
-					record_name,
-					new_type,
-				)
+				success := data.OST_HANDLE_TYPE_CHANGE(colPath, clusterName, recordName, newType)
 
 				if success {
 					fmt.printfln(
 						"Successfully changed record %s.%s.%s's type to %s",
-						collection_name,
-						cluster_name,
-						record_name,
-						new_type,
+						collectionName,
+						clusterName,
+						recordName,
+						newType,
 					)
 				} else {
 					fmt.printfln(
 						"Failed to change record %s.%s.%s's type to %s",
-						collection_name,
-						cluster_name,
-						record_name,
-						new_type,
+						collectionName,
+						clusterName,
+						recordName,
+						newType,
 					)
 				}
 			} else {
@@ -1551,14 +1498,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.printfln(
 				"Invalid command. Correct Usage: CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_type>",
 			)
-			utils.log_runtime_event(
+			log_runtime_event(
 				"Invalid CHANGE_TYPE command",
 				"User did not provide a valid record name to change type.",
 			)
 			break
 		}
-	case const.ISOLATE:
-		utils.log_runtime_event("Used ISOLATE command", "")
+	case ISOLATE:
+		log_runtime_event("Used ISOLATE command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
 			collection_name := cmd.l_token[0]
@@ -1567,24 +1514,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			case 0:
 				fmt.printfln(
 					"Successfully isolated collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					collection_name,
-					utils.RESET,
+					RESET,
 				)
 				break
 			case:
 				fmt.printfln(
 					"Failed to isolate collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					collection_name,
-					utils.RESET,
+					RESET,
 				)
 				break
 			}
 			break
 		case:
 			fmt.printfln("Incomplete command. Correct Usage: ISOLATE <collection_name>")
-			utils.log_runtime_event(
+			log_runtime_event(
 				"Incomplete ISOLATE command",
 				"User did not provide a valid collection name to isolate.",
 			)
@@ -1592,7 +1539,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	//VALIDATE command
-	case const.VALIDATE:
+	case VALIDATE:
 		switch (len(cmd.l_token)) {
 		case 1:
 			collectionName := cmd.l_token[0]
@@ -1602,20 +1549,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if result == 0 {
 				fmt.printfln(
 					"Collection: %s%s%s data integrity status: %svalid%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					collectionName,
-					utils.RESET,
-					utils.GREEN,
-					utils.RESET,
+					RESET,
+					GREEN,
+					RESET,
 				)
 			} else {
 				fmt.printfln(
 					"Collection: %s%s%s data integrity status: %sinvalid%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					collectionName,
-					utils.RESET,
-					utils.RED,
-					utils.RESET,
+					RESET,
+					RED,
+					RESET,
 				)
 			}
 		}
@@ -1623,11 +1570,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case:
 		fmt.printfln(
 			"Invalid command: %s%s%s. Please enter a valid OstrichDB command. Enter 'HELP' for more information.",
-			utils.BOLD_UNDERLINE,
+			BOLD_UNDERLINE,
 			cmd.c_token,
-			utils.RESET,
+			RESET,
 		)
-		utils.log_runtime_event("Invalid command", "User entered an invalid command.")
+		log_runtime_event("Invalid command", "User entered an invalid command.")
 
 	}
 	return 1
