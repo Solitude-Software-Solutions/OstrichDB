@@ -28,12 +28,13 @@ GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
 ATOMS_HELP_FILE :: "../src/core/help/docs/atoms/atoms.txt"
 OST_QUARANTINE_PATH :: "./quarantine/"
 //CONFIG FILE CONSTANTS
-configOne :: "OST_ENGINE_INIT"
-configTwo :: "OST_ENGINE_LOGGING"
-configThree :: "OST_USER_LOGGED_IN"
-configFour :: "OST_HELP"
-configFive :: "OST_SERVER_MODE_ON"
-configSix :: "OST_ERROR_SUPPRESSION" //whether errors are printed to the console or not
+CONFIG_ONE :: "OST_ENGINE_INIT"
+CONFIG_TWO :: "OST_ENGINE_LOGGING"
+CONFIG_THREE :: "OST_USER_LOGGED_IN"
+CONFIG_FOUR :: "OST_HELP"
+CONFIG_FIVE :: "OST_SERVER_MODE_ON"
+CONFIG_SIX :: "OST_ERROR_SUPPRESSION" //whether errors are printed to the console or not
+
 //ATOM TOKEN CONSTANTS
 VERSION :: "VERSION"
 HELP :: "HELP" //help can also be a multi token command.

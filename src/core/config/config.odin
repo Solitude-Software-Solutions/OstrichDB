@@ -117,22 +117,22 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 
 	successCount := 0
 	// Append all the records to the config cluster
-	if OST_APPEND_CONFIG_RECORD(configOne, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_ONE, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(configTwo, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_TWO, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(configThree, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_THREE, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(configFour, append_qoutations("SIMPLE"), STRING) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, append_qoutations("SIMPLE"), STRING) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(configFive, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_FIVE, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(configSix, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_SIX, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
 

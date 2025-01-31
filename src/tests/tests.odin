@@ -32,7 +32,7 @@ main :: proc() {
 		const.OST_CONFIG_PATH,
 		const.CONFIG_CLUSTER,
 		const.CONFIG,
-		const.configSix,
+		const.CONFIG_SIX,
 	) //error supression
 	if res == "true" {
 		types.errSupression.enabled = true
