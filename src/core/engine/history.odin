@@ -13,21 +13,24 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
+	using types
+	using metadata
+
 	histBuf: [1024]byte
 	//append the last command to the history buffer
-	types.current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
+	current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
 		"history",
-		types.current_user.username.Value,
+		current_user.username.Value,
 		false,
 	)
-	// types.current_user.commandHistory.cHistoryNamePrefix = "history_" dont need this shit tbh - SchoolyB
-	histCountStr := strconv.itoa(histBuf[:], types.current_user.commandHistory.cHistoryCount)
+	// current_user.commandHistory.cHistoryNamePrefix = "history_" dont need this shit tbh - SchoolyB
+	histCountStr := strconv.itoa(histBuf[:], current_user.commandHistory.cHistoryCount)
 	recordName := fmt.tprintf("%s%s", "history_", histCountStr)
 
 	//append the last command to the history file
 	data.OST_APPEND_RECORD_TO_CLUSTER(
 		const.OST_HISTORY_PATH,
-		types.current_user.username.Value,
+		current_user.username.Value,
 		strings.to_upper(recordName),
 		strings.to_upper(strings.clone(input)),
 		"COMMAND",
@@ -36,17 +39,17 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	//get value of the command that was just stored as a record
 	historyRecordValue := data.OST_READ_RECORD_VALUE(
 		const.OST_HISTORY_PATH,
-		types.current_user.username.Value,
+		current_user.username.Value,
 		"COMMAND",
 		strings.to_upper(recordName),
 	)
 
 	//append the command from the file to the command history buffer
-	append(&types.current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
+	append(&current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
 
 
 	//update the history file size, date last modified and checksum
-	metadata.OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 2)
-	metadata.OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 3)
-	metadata.OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 5)
+	OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 2)
+	OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 3)
+	OST_UPDATE_METADATA_VALUE(const.OST_HISTORY_PATH, 5)
 }
