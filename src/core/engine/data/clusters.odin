@@ -17,10 +17,12 @@ import "core:strings"
 
 
 main :: proc() {
+	using const
+
 	metadata.OST_CREATE_FFVF()
-	os.make_directory(const.OST_CORE_PATH)
-	os.make_directory(const.OST_QUARANTINE_PATH)
-	os.make_directory(const.OST_COLLECTION_PATH)
+	os.make_directory(OST_CORE_PATH)
+	os.make_directory(OST_QUARANTINE_PATH)
+	os.make_directory(OST_COLLECTION_PATH)
 	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
 	OST_CREATE_BACKUP_DIR()
 }
@@ -28,20 +30,17 @@ main :: proc() {
 
 //used to return the value of a ALL cluster ids of all clusters within the passed in file
 OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
+	using utils
 	//the following dynamic arrays DO NOT get deleted at the end of the procedure. They are deleted in the calling procedure
 	IDs := make([dynamic]i64)
 	idsStringArray := make([dynamic]string)
 
-	fullPath := utils.concat_collection_name(fn)
+	fullPath := concat_collection_name(fn)
 	data, readSuccess := os.read_entire_file(fullPath)
 	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading collection file", #procedure)
+		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error reading collection file", #procedure)
 		return IDs, idsStringArray
 	}
 
@@ -58,7 +57,7 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 				append(&IDs, ID)
 				append(&idsStringArray, idStr)
 			} else {
-				utils.log_err(fmt.tprintf("Error parsing cluster ID: %s", idStr), #procedure)
+				log_err(fmt.tprintf("Error parsing cluster ID: %s", idStr), #procedure)
 			}
 		}
 	}
@@ -70,17 +69,15 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 //reads over a file, looks for the passed in cluster and returns its id
 //if fn is an empty string("") then its looking for a cluster in a secure file
 OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
+	using utils
+
 	if fn != "" {
-		fullPath := utils.concat_collection_name(fn)
+		fullPath := concat_collection_name(fn)
 		data, readSuccess := os.read_entire_file(fullPath)
 		if !readSuccess {
-			error1 := utils.new_err(
-				.CANNOT_READ_FILE,
-				utils.get_err_msg(.CANNOT_READ_FILE),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Error reading collection file", #procedure)
+			error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+			throw_err(error1)
+			log_err("Error reading collection file", #procedure)
 			return 0
 		}
 
@@ -100,7 +97,7 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 						if ok {
 							return ID
 						} else {
-							utils.log_err("Error parsing cluster ID", #procedure)
+							log_err("Error parsing cluster ID", #procedure)
 							return 0
 						}
 					}
@@ -108,7 +105,7 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 			}
 		}
 
-		utils.log_err("Cluster not found", #procedure)
+		log_err("Cluster not found", #procedure)
 		return 0
 	} else {
 		//secure file
@@ -121,13 +118,9 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 		)
 		data, readSuccess := os.read_entire_file(secFile)
 		if !readSuccess {
-			error1 := utils.new_err(
-				.CANNOT_READ_FILE,
-				utils.get_err_msg(.CANNOT_READ_FILE),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Error reading secure file", #procedure)
+			error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+			throw_err(error1)
+			log_err("Error reading secure file", #procedure)
 			return 0
 		}
 
@@ -148,7 +141,7 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 							// fmt.println("ID found: ", ID) //debugging
 							return ID
 						} else {
-							utils.log_err("Error parsing cluster ID", #procedure)
+							log_err("Error parsing cluster ID", #procedure)
 							return 0
 						}
 					}
@@ -156,15 +149,16 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 			}
 		}
 
-		utils.log_err("Cluster not found", #procedure)
+		log_err("Cluster not found", #procedure)
 		return 0
 	}
 }
 
-/*
-Creates and appends a new cluster to the specified .ost file
-*/
+
+//Creates and appends a new cluster to the specified .ost file
+//todo: since I have the OST_CREATE_CLUSTER proc, idk if this is needed anymore
 OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: string) -> int {
+	using utils
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
 	if clusterExists == true {
@@ -172,20 +166,15 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 		return 1
 	}
 
-
 	FIRST_HALF: []string = {"{\n\tcluster_name :identifier: %n"}
 	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
 	buf: [32]byte
 	//step#1: open the file
 	clusterFile, openSuccess := os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening collection file", #procedure)
+		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error opening collection file", #procedure)
 	}
 
 
@@ -208,23 +197,23 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 				-1,
 			)
 			if replaceSuccess == false {
-				error2 := utils.new_err(
+				error2 := new_err(
 					.CANNOT_UPDATE_CLUSTER,
-					utils.get_err_msg(.CANNOT_UPDATE_CLUSTER),
+					get_err_msg(.CANNOT_UPDATE_CLUSTER),
 					#procedure,
 				)
-				utils.throw_err(error2)
-				utils.log_err("Error placing id into cluster template", #procedure)
+				throw_err(error2)
+				log_err("Error placing id into cluster template", #procedure)
 			}
 			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
 			if writeSuccess != 0 {
-				error2 := utils.new_err(
+				error2 := new_err(
 					.CANNOT_WRITE_TO_FILE,
-					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+					get_err_msg(.CANNOT_WRITE_TO_FILE),
 					#procedure,
 				)
 
-				utils.log_err("Error writing cluster block to file", #procedure)
+				log_err("Error writing cluster block to file", #procedure)
 			}
 		}
 	}
@@ -272,24 +261,26 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 	return false
 }
 
-OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) -> bool {
-	collectionPath := utils.concat_collection_name(collection_name)
+OST_RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
+	using utils
+
+	collectionPath := concat_collection_name(fn)
 	// check if the desired new cluster name already exists
 	if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, new) {
 		fmt.printfln(
 			"Cluster with name:%s%s%s already exists in collection: %s%s%s",
-			utils.BOLD_UNDERLINE,
+			BOLD_UNDERLINE,
 			new,
-			utils.RESET,
-			utils.BOLD_UNDERLINE,
-			collection_name,
-			utils.RESET,
+			RESET,
+			BOLD_UNDERLINE,
+			fn,
+			RESET,
 		)
 		fmt.println("Please try again with a different name")
 		return false
 	}
 
-	data, readSuccess := utils.read_file(collectionPath, #procedure)
+	data, readSuccess := read_file(collectionPath, #procedure)
 	defer delete(data)
 
 	content := string(data)
@@ -333,36 +324,37 @@ OST_RENAME_CLUSTER :: proc(collection_name: string, old: string, new: string) ->
 	// fmt.println("new content: ", string(newContent[:])) //debugging
 
 	if !clusterFound {
-		utils.throw_err(
-			utils.new_err(
+		throw_err(
+			new_err(
 				.CANNOT_FIND_CLUSTER,
 				fmt.tprintf(
 					"Cluster: %s%s%s not found in collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					old,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					collection_name,
-					utils.RESET,
+					RESET,
+					BOLD_UNDERLINE,
+					fn,
+					RESET,
 				),
 				#procedure,
 			),
 		)
-		utils.log_err("Error finding cluster in collection file", #procedure)
+		log_err("Error finding cluster in collection file", #procedure)
 		return false
 	}
 
 	// write new content to file
-	writeSuccess := utils.write_to_file(collectionPath, newContent[:], #procedure)
+	writeSuccess := write_to_file(collectionPath, newContent[:], #procedure)
 
 	return writeSuccess
 }
 
 
 //only used to create a cluster from the COMMAND LINE
-OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, id: i64) -> int {
+OST_CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
+	using utils
 
-	collectionPath := utils.concat_collection_name(collectionName)
+	collectionPath := concat_collection_name(fn)
 
 	clusterExist := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, clusterName)
 	if clusterExist {
@@ -376,13 +368,9 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 	clusterFile, openSuccess := os.open(collectionPath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(clusterFile)
 	if openSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_OPEN_FILE,
-			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error opening collection file", #procedure)
+		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error opening collection file", #procedure)
 		return 1
 	}
 
@@ -406,23 +394,23 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 				-1,
 			)
 			if replaceSuccess == false {
-				error2 := utils.new_err(
+				error2 := new_err(
 					.CANNOT_UPDATE_CLUSTER,
-					utils.get_err_msg(.CANNOT_UPDATE_CLUSTER),
+					get_err_msg(.CANNOT_UPDATE_CLUSTER),
 					#procedure,
 				)
-				utils.throw_err(error2)
-				utils.log_err("Error placing id into cluster template", #procedure)
+				throw_err(error2)
+				log_err("Error placing id into cluster template", #procedure)
 				return 2
 			}
 			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
 			if writeSuccess != 0 {
-				error2 := utils.new_err(
+				error2 := new_err(
 					.CANNOT_WRITE_TO_FILE,
-					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+					get_err_msg(.CANNOT_WRITE_TO_FILE),
 					#procedure,
 				)
-				utils.log_err("Error writing cluster block to file", #procedure)
+				log_err("Error writing cluster block to file", #procedure)
 				return 3
 			}
 		}
@@ -432,6 +420,8 @@ OST_CREATE_CLUSTER_FROM_CL :: proc(collectionName: string, clusterName: string, 
 
 
 OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
+	using utils
+
 	buf: [64]byte
 	file: string
 	collectionPath := utils.concat_collection_name(fn)
@@ -450,12 +440,8 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error1)
+			error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+			throw_err(error1)
 			return false
 		}
 
@@ -464,22 +450,22 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 		switch cap {
 		case const.NO:
-			utils.log_runtime_event("User canceled deletion", "User canceled deletion of database")
+			log_runtime_event("User canceled deletion", "User canceled deletion of database")
 			return false
 		case const.YES:
 		// Continue with deletion
 		case:
-			utils.log_runtime_event(
+			log_runtime_event(
 				"User entered invalid input",
 				"User entered invalid input when trying to delete cluster",
 			)
-			error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
-			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
+			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false
 		}
 	}
 
-	data, readSuccess := utils.read_file(collectionPath, #procedure)
+	data, readSuccess := read_file(collectionPath, #procedure)
 	defer delete(data)
 
 	content := string(data)
@@ -529,26 +515,26 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 
 	if !clusterFound {
-		utils.throw_err(
-			utils.new_err(
+		throw_err(
+			new_err(
 				.CANNOT_FIND_CLUSTER,
 				fmt.tprintf(
 					"Cluster: %s%s%s not found in collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					cn,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
+					RESET,
+					BOLD_UNDERLINE,
 					fn,
-					utils.RESET,
+					RESET,
 				),
 				#procedure,
 			),
 		)
-		utils.log_err("Error finding cluster in collection", #procedure)
+		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
-	writeSuccess := utils.write_to_file(collectionPath, newContent[:], #procedure)
-	utils.log_runtime_event(
+	writeSuccess := write_to_file(collectionPath, newContent[:], #procedure)
+	log_runtime_event(
 		"Database Cluster",
 		"User confirmed deletion of cluster and it was successfully deleted.",
 	)
@@ -557,13 +543,11 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 
 OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
+	using const
+	using utils
+
 	clusterContent: string
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	collectionPath := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
 	switch clusterExists 
@@ -571,20 +555,18 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	case false:
 		fmt.printfln(
 			"Cluster %s%s%s does not exist within collection '%s%s%s'",
-			utils.BOLD_UNDERLINE,
+			BOLD_UNDERLINE,
 			cn,
-			utils.RESET,
-			utils.BOLD_UNDERLINE,
+			RESET,
+			BOLD_UNDERLINE,
 			fn,
-			utils.RESET,
+			RESET,
 		)
 		break
 	}
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-		)
+		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
 		return ""
 	}
 	defer delete(data)
@@ -606,35 +588,36 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 		}
 	}
 
-	utils.throw_err(
-		utils.new_err(
+	throw_err(
+		new_err(
 			.CANNOT_FIND_CLUSTER,
 			fmt.tprintf(
 				"Cluster %s%s%s not found in collection: %s%s%s",
-				utils.BOLD_UNDERLINE,
+				BOLD_UNDERLINE,
 				cn,
-				utils.RESET,
-				utils.BOLD_UNDERLINE,
+				RESET,
+				BOLD_UNDERLINE,
 				fn,
-				utils.RESET,
+				RESET,
 			),
 			#procedure,
 		),
 	)
-	utils.log_err("Error finding cluster in collection", #procedure)
+	log_err("Error finding cluster in collection", #procedure)
 	return ""
 }
 
 
 OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
+	using const
+	using utils
+
 	buf := make([]byte, 64)
 	defer delete(buf)
-	filePath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+	filePath := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
 	data, readSuccess := os.read_entire_file(filePath)
 	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-		)
+		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
 		return 0
 	}
 
@@ -684,7 +667,10 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 //scans each cluster in a collection file and ensures its proper structure.
 //Want this to return 0 and false if the scan was successful AND no invalid structures were found
 OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStructureFound: bool) {
-	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+	using const
+	using utils
+
+	file := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
 
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
@@ -736,8 +722,7 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 
 //counts the number of clusters in a collection file
 OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
-	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
-
+	file := utils.concat_collection_name(fn)
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
 		utils.log_err("Failed to read collection file", #procedure)
@@ -769,20 +754,16 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 //Dude...THIS IS A FUCKING MESS AND ITS ALL AI GENERATED AND WORKS LMAO
 // Added some comments to help explain as best as I can - SchoolyB
 OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	using const
+	using utils
+
+	collectionPath := concat_collection_name(fn)
 
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-		)
-		utils.log_err("Error reading collection file", #procedure)
+		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
+		log_err("Error reading collection file", #procedure)
 		return false
 	}
 	defer delete(data)
@@ -852,47 +833,25 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	}
 
 	if !clusterFound {
-		utils.throw_err(
-			utils.new_err(
-				.CANNOT_FIND_CLUSTER,
-				utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-				#procedure,
-			),
-		)
-		utils.log_err("Error finding cluster in collection", #procedure)
+		throw_err(new_err(.CANNOT_FIND_CLUSTER, get_err_msg(.CANNOT_FIND_CLUSTER), #procedure))
+		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
 	//write the new content to the collection file
 	writeSuccess := os.write_entire_file(collectionPath, newContent[:])
 	if !writeSuccess {
-		utils.throw_err(
-			utils.new_err(
-				.CANNOT_WRITE_TO_FILE,
-				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#procedure,
-			),
-		)
-		utils.log_err("Error writing to collection file", #procedure)
+		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+		log_err("Error writing to collection file", #procedure)
 		return false
 	}
 
 	return true
-
 }
 
-OST_GET_CLUSTER_SIZE :: proc(
-	collection_name: string,
-	cluster_name: string,
-) -> (
-	size: int,
-	success: bool,
-) {
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collection_name,
-		const.OST_FILE_EXTENSION,
-	)
+OST_GET_CLUSTER_SIZE :: proc(fn: string, cn: string) -> (size: int, success: bool) {
+	using const
+
+	collectionPath := utils.concat_collection_name(fn)
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
 		return 0, false
@@ -903,7 +862,7 @@ OST_GET_CLUSTER_SIZE :: proc(
 	clusters := strings.split(content, "},")
 
 	for cluster in clusters {
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			return len(cluster), true
 		}
 	}
@@ -914,15 +873,14 @@ OST_GET_CLUSTER_SIZE :: proc(
 
 //removes a users history from the history collecion. Used when DELETING a user and tests
 OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
+	using const
+	using utils
 
-	historyPath := const.OST_HISTORY_PATH
-	data, readSuccess := os.read_entire_file(historyPath)
+	data, readSuccess := os.read_entire_file(OST_HISTORY_PATH)
 	defer delete(data)
 	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-		)
-		utils.log_err("Error reading collection file", #procedure)
+		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
+		log_err("Error reading collection file", #procedure)
 		return false
 	}
 	content := string(data)
@@ -945,37 +903,31 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	}
 
 	if !clusterFound {
-		utils.throw_err(
-			utils.new_err(
+		throw_err(
+			new_err(
 				.CANNOT_FIND_CLUSTER,
 				fmt.tprintf(
 					"Cluster: %s%s%s not found in collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					userName,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
+					RESET,
+					BOLD_UNDERLINE,
 					userName,
-					utils.RESET,
+					RESET,
 				),
 				#procedure,
 			),
 		)
-		utils.log_err("Error finding cluster in collection", #procedure)
+		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
-	writeSuccess := os.write_entire_file(historyPath, newContent[:])
+	writeSuccess := os.write_entire_file(OST_HISTORY_PATH, newContent[:])
 	if !writeSuccess {
-		utils.throw_err(
-			utils.new_err(
-				.CANNOT_WRITE_TO_FILE,
-				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#procedure,
-			),
-		)
-		utils.log_err("Error writing to collection file", #procedure)
+		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+		log_err("Error writing to collection file", #procedure)
 		return false
 	}
-	utils.log_runtime_event(
+	log_runtime_event(
 		"Database Cluster",
 		"User confirmed deletion of cluster and it was successfully deleted.",
 	)

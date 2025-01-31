@@ -286,7 +286,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// }
 
 				id := data.OST_GENERATE_ID(true)
-				result := data.OST_CREATE_CLUSTER_FROM_CL(collection_name, cluster_name, id)
+				result := data.OST_CREATE_CLUSTER(collection_name, cluster_name, id)
 				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 
 				switch (result) 

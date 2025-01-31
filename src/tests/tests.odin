@@ -173,11 +173,7 @@ test_cluster_creation :: proc(t: ^testing.T) {
 	utils.log_runtime_event("Test Started", "Running test_cluster_creation")
 
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
-	result := data.OST_CREATE_CLUSTER_FROM_CL(
-		const.TEST_COLLECTION,
-		const.TEST_CLUSTER,
-		const.TEST_ID,
-	)
+	result := data.OST_CREATE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
 	defer data.OST_ERASE_COLLECTION(const.TEST_COLLECTION) //clean up
 	res: bool
@@ -198,7 +194,7 @@ test_cluster_deletion :: proc(t: ^testing.T) {
 
 
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	data.OST_CREATE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 	result := data.OST_ERASE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER)
 
 	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
@@ -221,7 +217,7 @@ test_cluster_renamimg :: proc(t: ^testing.T) {
 
 
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	data.OST_CREATE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 	result := data.OST_RENAME_CLUSTER(
 		const.TEST_COLLECTION,
 		const.TEST_CLUSTER,
@@ -249,7 +245,7 @@ test_record_creation :: proc(t: ^testing.T) {
 
 
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	data.OST_CREATE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 
 	id := data.OST_GET_CLUSTER_ID(const.TEST_COLLECTION, const.TEST_CLUSTER)
 	// defer utils.remove_id_from_cache(id)
@@ -289,7 +285,7 @@ test_record_deletion :: proc(t: ^testing.T) {
 
 
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	data.OST_CREATE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 
 	col := fmt.tprintf(
 		"%s%s%s",
@@ -329,7 +325,7 @@ test_record_renaming :: proc(t: ^testing.T) {
 	utils.log_runtime_event("Test Started", "Running test_record_renaming")
 
 	data.OST_CREATE_COLLECTION(const.TEST_COLLECTION, 0)
-	data.OST_CREATE_CLUSTER_FROM_CL(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
+	data.OST_CREATE_CLUSTER(const.TEST_COLLECTION, const.TEST_CLUSTER, const.TEST_ID)
 
 	col := fmt.tprintf(
 		"%s%s%s",
