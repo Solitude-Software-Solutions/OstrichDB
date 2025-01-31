@@ -49,7 +49,7 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-	switch (types.engine.Initialized) 
+	switch (types.OstrichEngine.Initialized) 
 	{
 	case false:
 		security.OST_INIT_ADMIN_SETUP()

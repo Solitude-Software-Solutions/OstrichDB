@@ -43,7 +43,7 @@ Desc: Used to define the overall structure of the Ostrich Engine
         be used to control *most* operations within the database
 Usage Locations: NOT YET FULLY IMPLEMENTED but will be used engine.odin
 */
-engine: Engine
+OstrichEngine: Engine
 Engine :: struct {
 	EngineRuntime: time.Duration, // The amount of time the engine has been running
 	Status:        int, // 0, 1, 2
