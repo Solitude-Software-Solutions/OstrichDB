@@ -78,6 +78,7 @@ OST_GENERATE_SALT :: proc() -> []u8 {
 	return saltSlice
 }
 
+//Hashes p using the hashing method provided
 // p - password, hMethod - store/hashing method, isAuth - is the user authenticating or creating an account, isInitializing - is this being done pre or post engine initialization
 OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing: bool) -> []u8 {
 	//generate the salt
@@ -110,8 +111,11 @@ OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing:
 	return hashedPassword
 }
 
+//Chooses which hashing algorithm to use on p based on the choice provided
 // choice - hashing method, p - password, isInitializing - is this being done pre or post engine initialization
 OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []u8 {
+	using types
+
 	x := choice
 	hashedPassword: []u8
 	switch (x) 
@@ -121,11 +125,11 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_224, p)
 		}
 		if (isInitializing == true) {
-			types.user.hashedPassword = hashedPassword
-			types.user.store_method = 1
+			user.hashedPassword = hashedPassword
+			user.store_method = 1
 		} else if (isInitializing == false) {
-			types.new_user.hashedPassword = hashedPassword
-			types.new_user.store_method = 1
+			new_user.hashedPassword = hashedPassword
+			new_user.store_method = 1
 		}
 		break
 	case 2:
@@ -133,11 +137,11 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_256, p)
 		}
 		if (isInitializing == true) {
-			types.user.hashedPassword = hashedPassword
-			types.user.store_method = 2
+			user.hashedPassword = hashedPassword
+			user.store_method = 2
 		} else if (isInitializing == false) {
-			types.new_user.hashedPassword = hashedPassword
-			types.new_user.store_method = 2
+			new_user.hashedPassword = hashedPassword
+			new_user.store_method = 2
 		}
 		break
 	case 3:
@@ -145,11 +149,11 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_384, p)
 		}
 		if (isInitializing == true) {
-			types.user.hashedPassword = hashedPassword
-			types.user.store_method = 3
+			user.hashedPassword = hashedPassword
+			user.store_method = 3
 		} else if (isInitializing == false) {
-			types.new_user.hashedPassword = hashedPassword
-			types.new_user.store_method = 3
+			new_user.hashedPassword = hashedPassword
+			new_user.store_method = 3
 		}
 		break
 	case 4:
@@ -157,11 +161,11 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_512, p)
 		}
 		if (isInitializing == true) {
-			types.user.hashedPassword = hashedPassword
-			types.user.store_method = 4
+			user.hashedPassword = hashedPassword
+			user.store_method = 4
 		} else if (isInitializing == false) {
-			types.new_user.hashedPassword = hashedPassword
-			types.new_user.store_method = 4
+			new_user.hashedPassword = hashedPassword
+			new_user.store_method = 4
 		}
 		break
 	case 5:
@@ -169,18 +173,18 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA512_256, p)
 		}
 		if (isInitializing == true) {
-			types.user.hashedPassword = hashedPassword
-			types.user.store_method = 5
+			user.hashedPassword = hashedPassword
+			user.store_method = 5
 		} else if (isInitializing == false) {
-			types.new_user.hashedPassword = hashedPassword
-			types.new_user.store_method = 5
+			new_user.hashedPassword = hashedPassword
+			new_user.store_method = 5
 		}
 	}
 	return hashedPassword
 }
 
-// hp - hashed password
 // //encode the hashed password then convert it to a string and return it
+// hp - hashed password
 OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 	encodedHash := hex.encode(hp)
 	str := transmute(string)encodedHash
