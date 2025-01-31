@@ -14,7 +14,7 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-MAX_FILE_NAME_LENGTH_AS_BYTES: [512]byte
+MAX_FILE_NAME_LENGTH: [512]byte
 
 
 //used for the command line
@@ -35,32 +35,28 @@ OST_CHOOSE_COLLECTION_NAME :: proc() {
 	_ = OST_CREATE_COLLECTION(strings.clone(name), 0)
 }
 
-
 /*
 Creates a new collection file with metadata within the DB
-collections are "collectiions" of clusters stored in a .ost file
-Params: fileName - the desired file(cluster) name
-	    type - the type of file to create,
-				0 is standard
-				1 is secure
-				2 if it is the history file
-				3 config file
-				4 id cache file
-
+0 standard
+1 secure
+2 history file
+3 config file
+4 id cache file
 */
-OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
+
+OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
 	switch (collectionType) 
 	{
 	case 0:
 		//standard cluster file
-		if OST_PERFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
+		if OST_PERFORM_COLLECTION_NAME_CHECK(fn) == 1 {
 			return false
 		}
-		pathNameExtension := utils.concat_collection_name(fileName)
-		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o666)
-		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
+		collectionPath := utils.concat_collection_name(fn)
+		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
+		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -71,22 +67,22 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 			utils.log_err("Error creating new collection file", #procedure)
 			return false
 		}
-		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
+		metadata.OST_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	case 1:
 		//secure file
-		if OST_PERFORM_COLLECTION_NAME_CHECK(fileName) == 1 {
+		if OST_PERFORM_COLLECTION_NAME_CHECK(fn) == 1 {
 			return false
 		}
-		pathNameExtension := fmt.tprintf(
+		collectionPath := fmt.tprintf(
 			"%s%s%s",
 			const.OST_SECURE_COLLECTION_PATH,
-			fileName,
+			fn,
 			const.OST_FILE_EXTENSION,
 		)
-		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o644)
-		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
+		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
+		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -97,18 +93,13 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
+		metadata.OST_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	case 2, 3, 4:
-		pathNameExtension := fmt.tprintf(
-			"%s%s%s",
-			const.OST_CORE_PATH,
-			fileName,
-			const.OST_FILE_EXTENSION,
-		)
-		createFile, createSuccess := os.open(pathNameExtension, os.O_CREATE, 0o644)
-		metadata.OST_APPEND_METADATA_HEADER(pathNameExtension)
+		collectionPath := fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
+		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
+		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -119,7 +110,7 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_METADATA_ON_CREATE(pathNameExtension)
+		metadata.OST_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	}
@@ -127,10 +118,12 @@ OST_CREATE_COLLECTION :: proc(fileName: string, collectionType: int) -> bool {
 }
 
 
-OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
+OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
+	using utils
+
 	buf: [64]byte
-	fileWithExt := strings.concatenate([]string{fileName, const.OST_FILE_EXTENSION})
-	if !OST_CHECK_IF_COLLECTION_EXISTS(fileName, 0) {
+	fileWithExt := strings.concatenate([]string{fn, const.OST_FILE_EXTENSION})
+	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
 		return false
 	}
 
@@ -138,20 +131,16 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 	if !types.TESTING {
 		fmt.printfln(
 			"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
-			utils.BOLD_UNDERLINE,
-			fileName,
-			utils.RESET,
+			BOLD_UNDERLINE,
+			fn,
+			RESET,
 		)
 		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
 		n, inputSuccess := os.read(os.stdin, buf[:])
 		if inputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Error reading user input", #procedure)
+			error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+			throw_err(error1)
+			log_err("Error reading user input", #procedure)
 		}
 
 		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
@@ -159,63 +148,54 @@ OST_ERASE_COLLECTION :: proc(fileName: string) -> bool {
 
 		switch (cap) {
 		case const.NO:
-			utils.log_runtime_event(
-				"User canceled deletion",
-				"User canceled deletion of collection",
-			)
+			log_runtime_event("User canceled deletion", "User canceled deletion of collection")
 			return false
 		case const.YES:
 		// Continue with deletion
 		case:
-			utils.log_runtime_event(
+			log_runtime_event(
 				"User entered invalid input",
 				"User entered invalid input when trying to delete collection",
 			)
-			error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
-			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
+			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false
 		}
 	}
 
+	collectionPath := concat_collection_name(fn)
+
 	// Delete the file
-	pathAndName := strings.concatenate([]string{const.OST_COLLECTION_PATH, fileName})
-	pathNameExtension := strings.concatenate([]string{pathAndName, const.OST_FILE_EXTENSION})
-	deleteSuccess := os.remove(pathNameExtension)
+	deleteSuccess := os.remove(collectionPath)
 	if deleteSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_DELETE_FILE,
-			utils.get_err_msg(.CANNOT_DELETE_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error deleting .ost file", #procedure)
+		error1 := new_err(.CANNOT_DELETE_FILE, get_err_msg(.CANNOT_DELETE_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error deleting .ost file", #procedure)
 		return false
 	}
 
-	utils.log_runtime_event(
+	log_runtime_event(
 		"Collection deleted",
 		"User confirmed deletion of collection and it was successfully deleted .",
 	)
 	return true
 }
 
-
+//Checks if the passed in collection name is valid
 OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
+	using utils
+
 	nameAsBytes := transmute([]byte)fn
-	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH_AS_BYTES) {
+	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH) {
 		fmt.printfln("Given file name is too long, Cannot exceed 512 bytes")
 		return 1
 	}
 	//CHECK#2: check if the file already exists
 	existenceCheck, readSuccess := os.read_entire_file_from_filename(fn)
 	if readSuccess {
-		error1 := utils.new_err(
-			.FILE_ALREADY_EXISTS,
-			utils.get_err_msg(.FILE_ALREADY_EXISTS),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err(".ost file already exists", #procedure)
+		error1 := new_err(.FILE_ALREADY_EXISTS, get_err_msg(.FILE_ALREADY_EXISTS), #procedure)
+		throw_err(error1)
+		log_err("collection file already exists", #procedure)
 		return 1
 	}
 	//CHECK#3: check if the file name is valid
@@ -276,9 +256,9 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 		return false
 	}
 
-	newName := fmt.tprintf("%s%s", new, const.OST_FILE_EXTENSION)
-	newNameExt := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, newName)
-	renamed := os.rename(colPath, newNameExt)
+	name := utils.concat_collection_name(new)
+	renamed := os.rename(colPath, name)
+
 	when ODIN_OS == .Linux {
 		if renamed != os.ERROR_NONE {
 			utils.log_err("Error renaming .ost file", #procedure)
@@ -295,13 +275,12 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 	return true
 }
 
-//reads and retuns everything below the metadata header in the .ost file
+//reads and returns the body of a collection file
 OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	fileStart := -1
 	startingPoint := "BTM@@@@@@@@@@@@@@@" //has to be half of the metadata header end mark and not the full thing..IDK why - Marshall
-	filePath := strings.concatenate([]string{const.OST_COLLECTION_PATH, fn})
-	filePathAndExt := strings.concatenate([]string{filePath, const.OST_FILE_EXTENSION})
-	data, readSuccess := os.read_entire_file(filePathAndExt)
+	collectionPath := utils.concat_collection_name(fn)
+	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
@@ -329,10 +308,11 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	return strings.clone(str)
 }
 
-
+//Returns an array of all public collections
 OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
+	using const
 
-	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -343,7 +323,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 
 	//only did this to get the length of the collection names
 	for file in foundFiles {
-		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_FILE_EXTENSION) {
 			append(&collectionNames, file.name)
 		}
 	}
@@ -357,7 +337,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 			len(collectionNames),
 		)}
 
-	if len(collectionNames) > const.MAX_COLLECTION_TO_DISPLAY {
+	if len(collectionNames) > MAX_COLLECTION_TO_DISPLAY {
 		fmt.printf("There is %d collections to display, display all? (y/N) ", len(collectionNames))
 		buf: [1024]byte
 		n, inputSuccess := os.read(os.stdin, buf[:])
@@ -376,9 +356,9 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 	}
 
 	for file in foundFiles {
-		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_FILE_EXTENSION) {
 			append(&collectionNames, file.name)
-			withoutExt := strings.split(file.name, const.OST_FILE_EXTENSION)
+			withoutExt := strings.split(file.name, OST_FILE_EXTENSION)
 			fmt.println(withoutExt[0])
 			OST_LIST_CLUSTERS_IN_FILE(withoutExt[0], showRecords)
 		}
@@ -402,16 +382,18 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (found: bool, name: string) {
 	return found, ""
 }
 
-//gets the number of collections in the collections directory
+//gets the number of public collections
 OST_COUNT_COLLECTIONS :: proc() -> int {
-	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+	using const
+
+	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
 	defer delete(collectionNames)
 
 	for file in foundFiles {
-		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_FILE_EXTENSION) {
 			append(&collectionNames, file.name)
 		}
 	}
@@ -420,20 +402,15 @@ OST_COUNT_COLLECTIONS :: proc() -> int {
 
 //deletes all data from a collection file but keeps the metadata header
 OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	using utils
+
+	collectionPath := utils.concat_collection_name(fn)
 
 	// Read the entire file
-	data, readSuccess := os.read_entire_file(collection_path)
+	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
-		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
-		)
-		utils.log_err("Error reading collection file", #procedure)
+		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
+		log_err("Error reading collection file", #procedure)
 		return false
 	}
 	defer delete(data)
@@ -442,10 +419,8 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 	content := string(data)
 	headerEndIndex := strings.index(content, "}")
 	if headerEndIndex == -1 {
-		utils.throw_err(
-			utils.new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #procedure),
-		)
-		utils.log_err("Invalid collection file format", #procedure)
+		throw_err(new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #procedure))
+		log_err("Invalid collection file format", #procedure)
 		return false
 	}
 
@@ -453,19 +428,13 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 	header := content[:headerEndIndex + 1]
 
 	// Write back only the header
-	writeSuccess := os.write_entire_file(collection_path, transmute([]byte)header)
+	writeSuccess := os.write_entire_file(collectionPath, transmute([]byte)header)
 	if !writeSuccess {
-		utils.throw_err(
-			utils.new_err(
-				.CANNOT_WRITE_TO_FILE,
-				utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#procedure,
-			),
-		)
-		utils.log_err("Error writing purged collection file", #procedure)
+		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+		log_err("Error writing purged collection file", #procedure)
 		return false
 	}
-	utils.log_runtime_event("Collection purged", fmt.tprintf("User purged collection: %s", fn))
+	log_runtime_event("Collection purged", fmt.tprintf("User purged collection: %s", fn))
 
 	return true
 }
