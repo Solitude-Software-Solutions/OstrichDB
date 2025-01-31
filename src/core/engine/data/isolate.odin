@@ -21,22 +21,19 @@ import "core:time"
 
 //moves the passed in collection file from the collections dir to the quarantine dir
 OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
-	collectionFile := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	using const
+
+	collectionPath := utils.concat_collection_name(fn)
 
 	// Generate a unique filename for the quarantined file
 	timestamp := time.now()
 	quarantineFilename := fmt.tprintf(
 		"%s_%v%s",
-		strings.trim_suffix(fn, const.OST_FILE_EXTENSION),
+		strings.trim_suffix(fn, OST_FILE_EXTENSION),
 		timestamp,
-		const.OST_FILE_EXTENSION,
+		OST_FILE_EXTENSION,
 	)
-	quarantine_path := fmt.tprintf("%s%s", const.OST_QUARANTINE_PATH, quarantineFilename)
+	isolationPath := fmt.tprintf("%s%s", OST_QUARANTINE_PATH, quarantineFilename)
 	// Move the file to quarantine
 	//
 
@@ -64,7 +61,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	//END ID REMOVAL STUFF
 
 
-	err := os.rename(collectionFile, quarantine_path)
+	err := os.rename(collectionPath, isolationPath)
 	//THe Odin compiler on Linux doesnt expect a bool return from os.rename
 	when ODIN_OS == .Linux {
 		if err != os.ERROR_NONE {
@@ -73,7 +70,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	}
 
 
-	result := OST_APPEND_QUARANTINE_METADATA(fn, quarantine_path)
+	result := OST_APPEND_QUARANTINE_METADATA(fn, isolationPath)
 	return result
 }
 
@@ -82,9 +79,9 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 //%ocn - Original Collection Name
 //%doq - Date of Quarantine
 //%toq - Time of Quarantine
-OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, quarantine_path: string) -> int {
+OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, isolationPath: string) -> int {
 
-	data, readSuccess := utils.read_file(quarantine_path, #procedure)
+	data, readSuccess := utils.read_file(isolationPath, #procedure)
 	if !readSuccess {
 		return -2
 	}
@@ -141,7 +138,7 @@ OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, quarantine_path: string) -> i
 
 	// Write updated content back to file
 	new_content := strings.join(new_lines[:], "\n")
-	writeSuccess := os.write_entire_file(quarantine_path, transmute([]byte)new_content)
+	writeSuccess := os.write_entire_file(isolationPath, transmute([]byte)new_content)
 
 	if !writeSuccess {
 		utils.log_err("Error writing updated metadata to quarantined file", #procedure)
