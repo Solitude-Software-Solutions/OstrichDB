@@ -28,7 +28,7 @@ main :: proc() {
 	data.main()
 
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch (configFound) 
+	switch (configFound)
 	{
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
@@ -43,7 +43,7 @@ main :: proc() {
 		   const.OST_CONFIG_PATH,
 		   const.CONFIG_CLUSTER,
 		   const.BOOLEAN,
-		   const.configOne,
+		   const.CONFIG_ONE,
 	   ) ==
 	   "true" {
 		types.engine.Initialized = true
@@ -51,7 +51,7 @@ main :: proc() {
 	} else {
 		types.engine.Initialized = false
 	}
-	// if config.OST_READ_CONFIG_VALUE(const.configFive) == "true" {
+	// if config.OST_READ_CONFIG_VALUE(const.CONFIG_FIVE) == "true" {
 	// server.OST_START_SERVER(Config) //When testing the server, uncomment this line and comment out the client.OST_TEST_CLIENT(Config) line
 	// }
 	// client.OST_TEST_CLIENT(Config) //When testing the client, uncomment this line and comment out the server.OST_START_SERVER(Config) line

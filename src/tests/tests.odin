@@ -37,7 +37,7 @@ main :: proc() {
 	if res == "true" {
 		types.errSupression.enabled = true
 	} else if res == "false" {
-		config.OST_UPDATE_CONFIG_VALUE(const.configSix, "false")
+		config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_SIX, "false")
 		types.errSupression.enabled = false
 	} else {
 		utils.log_err("Error reading error suppression config", #procedure)

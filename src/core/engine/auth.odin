@@ -150,11 +150,11 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			const.OST_CONFIG_PATH,
 			const.CONFIG_CLUSTER,
 			const.CONFIG,
-			const.configThree,
+			const.CONFIG_THREE,
 		)
 		if userLoggedInValue == "false" {
-			// config.OST_TOGGLE_CONFIG(const.configThree)
-			config.OST_UPDATE_CONFIG_VALUE(const.configThree, "true")
+			// config.OST_TOGGLE_CONFIG(const.CONFIG_THREE)
+			config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_THREE, "true")
 		}
 		break
 	case false:
@@ -187,11 +187,11 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 
 OST_USER_LOGOUT :: proc(param: int) {
 
-	loggedOut := config.OST_UPDATE_CONFIG_VALUE(const.configThree, "false")
+	loggedOut := config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_THREE, "false")
 
 	switch loggedOut {
 	case true:
-		switch (param) 
+		switch (param)
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false

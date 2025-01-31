@@ -48,7 +48,7 @@ OST_SET_HELP_MODE :: proc() -> bool {
 		const.OST_CONFIG_PATH,
 		const.CONFIG_CLUSTER,
 		const.STRING,
-		const.configFour,
+		const.CONFIG_FOUR,
 	)
 
 	switch (value) 

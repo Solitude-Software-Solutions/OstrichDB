@@ -131,7 +131,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		"m_k",
 		mkAsString,
 	)
-	engineInit := config.OST_UPDATE_CONFIG_VALUE(const., "true")
+	engineInit := config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_ONE, "true")
 
 	switch (engineInit)
 	{
