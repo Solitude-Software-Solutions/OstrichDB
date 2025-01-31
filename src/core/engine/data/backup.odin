@@ -19,6 +19,7 @@ OST_CREATE_BACKUP_DIR :: proc() {
 
 
 OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
+	using const
 	using utils
 	//retirve the data from the src collection file
 	srcPath := utils.concat_collection_name(src)
@@ -26,7 +27,7 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	if !readSuccess {
 		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
 		throw_custom_err(error1, "Could not read collection file for backup")
-		utils.log_err("Could not read collection file for backup", #procedure)
+		log_err("Could not read collection file for backup", #procedure)
 		return false
 	}
 
@@ -34,22 +35,22 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	defer delete(data)
 
 	//create a backup file dest and write the src content to it
-	destNameAndPath := fmt.tprintf("%s%s", const.OST_BACKUP_PATH, dest)
-	destFullPath := fmt.tprintf("%s%s", destNameAndPath, const.OST_FILE_EXTENSION)
+	destNameAndPath := fmt.tprintf("%s%s", OST_BACKUP_PATH, dest)
+	destFullPath := fmt.tprintf("%s%s", destNameAndPath, OST_FILE_EXTENSION)
 
 	c, creationSuccess := os.open(destFullPath, os.O_CREATE | os.O_RDWR, 0o666)
 	defer os.close(c)
 	if creationSuccess != 0 {
 		error1 := new_err(.CANNOT_CREATE_FILE, get_err_msg(.CANNOT_CREATE_FILE), #procedure)
 		throw_custom_err(error1, "Could not create collection file for backup")
-		utils.log_err("Could not create backup collection file", #procedure)
+		log_err("Could not create backup collection file", #procedure)
 		return false
 	}
 	w, writeSuccess := os.write(c, data)
 	if writeSuccess != 0 {
 		error1 := new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure)
 		throw_custom_err(error1, "Could not write to collection file for backup")
-		utils.log_err("Could not write to collection file for backup", #procedure)
+		log_err("Could not write to collection file for backup", #procedure)
 		return false
 	}
 
@@ -57,18 +58,16 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 }
 
 OST_CHOOSE_BACKUP_NAME :: proc() -> string {
+	using utils
+
 	buf: [1024]byte
 	fmt.printfln("What would you like to name your collection backup?")
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading input for backup collection name", #procedure)
+		error1 := utils.new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		throw_err(error1)
+		log_err("Error reading input for backup collection name", #procedure)
 	}
 	str := strings.trim_right(string(buf[:n]), "\r\n")
 
@@ -77,7 +76,6 @@ OST_CHOOSE_BACKUP_NAME :: proc() -> string {
 
 //TODO: create a proc that deletes a backup of a collection
 //TODO: create a proc that deletes all backups in the backups directory
-
 
 //TODO: create a proc that restores a collection from a backup:
 //this one will need some work. I see it as when a backup is created there needs to be some kind of identifier that lets the program know
