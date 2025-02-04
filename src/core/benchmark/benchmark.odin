@@ -42,9 +42,9 @@ main :: proc() {
 
 	//Create the collections
 
-	benchmark1, names := B_COLLECTION_OP(1)
-
-	benchmark2 := B_CLUSTER_OP(1000, names)
+	benchmark1, colNames := B_COLLECTION_OP(1)
+	benchmark2, cluNames := B_CLUSTER_OP(100, colNames)
+	benchmark3, recNames := B_RECORDS_OP(colNames, cluNames, 100)
 
 	fmt.println("Finsihed Executing Benchmark: ", benchmark1.op_name)
 	fmt.println("Total Operations: ", benchmark1.total_ops)
@@ -55,6 +55,12 @@ main :: proc() {
 	fmt.println("Total Operations: ", benchmark2.total_ops)
 	fmt.println("Total Time: ", benchmark2.op_time)
 	fmt.println("Operations Per Second: ", benchmark2.ops_per_second)
+
+
+	fmt.println("Finsihed Executing Benchmark: ", benchmark3.op_name)
+	fmt.println("Total Operations: ", benchmark3.total_ops)
+	fmt.println("Total Time: ", benchmark3.op_time)
+	fmt.println("Operations Per Second: ", benchmark3.ops_per_second)
 
 
 	//Create the clusters
@@ -68,53 +74,105 @@ main :: proc() {
 }
 
 
-B_COLLECTION_OP :: proc(num: int) -> (types.Benchmark_Result, [dynamic]string) {
+B_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dynamic]string) {
 	startTime := time.now()
 	names: [dynamic]string
 
-	for i := 0; i < num; i += 1 {
+	for i := 0; i < iterations; i += 1 {
 		benchmarkColName := fmt.tprintf("benchmark_collection_%d", i)
 		B_CREATE_COLLECTION(benchmarkColName)
 		append(&names, benchmarkColName)
 	}
 
 	duration := time.since(startTime)
-	ops_per_second := f64(num) / time.duration_seconds(duration)
+	ops_per_second := f64(iterations) / time.duration_seconds(duration)
 
 	return types.Benchmark_Result {
 			op_name = "Create Collection",
-			total_ops = num,
+			total_ops = iterations,
 			op_time = duration,
 			ops_per_second = ops_per_second,
 		},
 		names
 }
 
-B_CLUSTER_OP :: proc(num: int, colNames: [dynamic]string) -> types.Benchmark_Result {
+B_CLUSTER_OP :: proc(
+	iterations: int,
+	colNames: [dynamic]string,
+) -> (
+	types.Benchmark_Result,
+	[dynamic]string,
+) {
+	names: [dynamic]string
 	startTime := time.now()
 
 
 	//collection names
 	for colName in colNames {
-		B_CREATE_COLLECTION(colName)
-
-
-		for i := 0; i < num; i += 1 {
+		for i := 0; i < iterations; i += 1 {
 			benchmarkCluName := fmt.tprintf("benchmark_cluster_%d", i)
 			B_CREATE_CLUSTER(colName, benchmarkCluName)
+			append(&names, benchmarkCluName)
 		}
 	}
 
 
 	duration := time.since(startTime)
-	ops_per_second := f64(num) / time.duration_seconds(duration)
+	ops_per_second := f64(iterations) / time.duration_seconds(duration)
 
 	return types.Benchmark_Result {
-		op_name = "Create Cluster",
-		total_ops = num,
-		op_time = duration,
-		ops_per_second = ops_per_second,
+			op_name = "Create Cluster",
+			total_ops = iterations,
+			op_time = duration,
+			ops_per_second = ops_per_second,
+		},
+		names
+}
+
+
+B_RECORDS_OP :: proc(
+	colNames, cluNames: [dynamic]string,
+	iterations: int,
+) -> (
+	types.Benchmark_Result,
+	[dynamic]string,
+) {
+
+	names: [dynamic]string
+	startTime := time.now()
+
+
+	//collection names
+	for colName in colNames {
+		for cluName in cluNames {
+			for j := 0; j < iterations; j += 1 {
+				benchmarkRecName := fmt.tprintf("benchmark_record_%d", j)
+				rType := B_GENERATE_RECORD_TYPE()
+				rValue := B_GENERATE_RECORD_VALUES(rType)
+				res := B_CREATE_RECORD(
+					colName,
+					cluName,
+					benchmarkRecName,
+					rType,
+					rValue,
+					iterations,
+				)
+				// fmt.println("debugging-- res: ", res) //debugging
+				append(&names, benchmarkRecName)
+			}
+		}
 	}
+
+	duration := time.since(startTime)
+	ops_per_second := f64(iterations) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+			op_name = "Create Records",
+			total_ops = iterations,
+			op_time = duration,
+			ops_per_second = ops_per_second,
+		},
+		names
 }
 
 
@@ -212,6 +270,102 @@ B_CREATE_CLUSTER :: proc(fn, cn: string) -> bool {
 	return true
 }
 
+B_GENERATE_RECORD_TYPE :: proc() -> string {
+	types := []string{"STRING", "INTEGER", "FLOAT", "BOOLEAN"}
+	return rand.choice(types)
+}
+
+B_GENERATE_RECORD_VALUES :: proc(rType: string) -> string {
+	buf: [32]byte
+	boolValues := []string{"true", "false"}
+	stringValues := "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
+
+	intValue := rand.int63_max(1e16 + 1)
+	intAsStr := fmt.tprintf("%d", intValue)
+
+	floatValue := rand.float64()
+	floatAsStr := fmt.tprintf("%f", floatValue)
+
+
+	switch rType {
+	case "STRING":
+		return utils.append_qoutations(stringValues)
+	case "INTEGER":
+		return intAsStr
+	case "FLOAT":
+		return floatAsStr
+	case "BOOLEAN":
+		return rand.choice(boolValues)
+	}
+
+	return "You should not see this"
+}
+
+
+B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string, iterations: int) -> int {
+	file := concat_benchmark_collection(fn)
+	data, readSuccess := utils.read_file(file, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return -1
+	}
+	// fmt.println("debugging-- passing fn:, ", fn) //debugging
+	// fmt.println("debugging-- passing cn:, ", cn) //debugging
+	// fmt.println("debugging-- passing rn:, ", rn) //debugging
+	// fmt.println("debugging-- passing rValue:, ", rValue) //debugging
+	// fmt.println("debugging-- passing rType:, ", rType) //debugging
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	clusterStart := -1
+	closingBrace := -1
+
+	// Find the cluster and its closing brace
+	for i := 0; i < len(lines); i += 1 {
+		if strings.contains(lines[i], cn) {
+			clusterStart = i
+		}
+		if clusterStart != -1 && strings.contains(lines[i], "}") {
+			closingBrace = i
+			break
+		}
+	}
+
+	//if the cluster is not found or the structure is invalid, return
+	if clusterStart == -1 || closingBrace == -1 {
+		error2 := utils.new_err(
+			.CANNOT_FIND_CLUSTER,
+			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+			#procedure,
+		)
+		utils.throw_err(error2)
+		utils.log_err("Unable to find cluster/valid structure", #procedure)
+		return -1
+	}
+
+	// Create the new line
+	new_line := fmt.tprintf("\t%s :%s: %s", rn, rType, rValue)
+
+	// Insert the new line and adjust the closing brace
+	new_lines := make([dynamic]string, len(lines) + 1)
+	copy(new_lines[:closingBrace], lines[:closingBrace])
+	new_lines[closingBrace] = new_line
+	new_lines[closingBrace + 1] = "},"
+	if closingBrace + 1 < len(lines) {
+		copy(new_lines[closingBrace + 2:], lines[closingBrace + 1:])
+	}
+
+	new_content := strings.join(new_lines[:], "\n")
+	// fmt.println("debugging-- new_content: ", new_content) //debugging
+	writeSuccess := utils.write_to_file(file, transmute([]byte)new_content, #procedure)
+	if !writeSuccess {
+		return -1
+	}
+	return 0
+
+
+}
 
 //COMMON BENCHMARKING UTILS
 concat_benchmark_collection :: proc(name: string) -> string {
