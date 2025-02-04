@@ -42,11 +42,19 @@ main :: proc() {
 
 	//Create the collections
 
-	res := B_COLLECTION_OP()
-	fmt.println("Finsihed Executing Benchmark: ", res.op_name)
-	fmt.println("Total Operations: ", res.total_ops)
-	fmt.println("Total Time: ", res.op_time)
-	fmt.println("Operations Per Second: ", res.ops_per_second)
+	benchmark1, names := B_COLLECTION_OP(1)
+
+	benchmark2 := B_CLUSTER_OP(1000, names)
+
+	fmt.println("Finsihed Executing Benchmark: ", benchmark1.op_name)
+	fmt.println("Total Operations: ", benchmark1.total_ops)
+	fmt.println("Total Time: ", benchmark1.op_time)
+	fmt.println("Operations Per Second: ", benchmark1.ops_per_second)
+
+	fmt.println("Finsihed Executing Benchmark: ", benchmark2.op_name)
+	fmt.println("Total Operations: ", benchmark2.total_ops)
+	fmt.println("Total Time: ", benchmark2.op_time)
+	fmt.println("Operations Per Second: ", benchmark2.ops_per_second)
 
 
 	//Create the clusters
@@ -60,21 +68,50 @@ main :: proc() {
 }
 
 
-B_COLLECTION_OP :: proc() -> types.Benchmark_Result {
+B_COLLECTION_OP :: proc(num: int) -> (types.Benchmark_Result, [dynamic]string) {
 	startTime := time.now()
-	totalOperations := 1000
+	names: [dynamic]string
 
-	for i := 0; i < totalOperations; i += 1 {
+	for i := 0; i < num; i += 1 {
 		benchmarkColName := fmt.tprintf("benchmark_collection_%d", i)
 		B_CREATE_COLLECTION(benchmarkColName)
+		append(&names, benchmarkColName)
 	}
 
 	duration := time.since(startTime)
-	ops_per_second := f64(totalOperations) / time.duration_seconds(duration)
+	ops_per_second := f64(num) / time.duration_seconds(duration)
 
 	return types.Benchmark_Result {
-		op_name = "Create Collection",
-		total_ops = totalOperations,
+			op_name = "Create Collection",
+			total_ops = num,
+			op_time = duration,
+			ops_per_second = ops_per_second,
+		},
+		names
+}
+
+B_CLUSTER_OP :: proc(num: int, colNames: [dynamic]string) -> types.Benchmark_Result {
+	startTime := time.now()
+
+
+	//collection names
+	for colName in colNames {
+		B_CREATE_COLLECTION(colName)
+
+
+		for i := 0; i < num; i += 1 {
+			benchmarkCluName := fmt.tprintf("benchmark_cluster_%d", i)
+			B_CREATE_CLUSTER(colName, benchmarkCluName)
+		}
+	}
+
+
+	duration := time.since(startTime)
+	ops_per_second := f64(num) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+		op_name = "Create Cluster",
+		total_ops = num,
 		op_time = duration,
 		ops_per_second = ops_per_second,
 	}
@@ -82,8 +119,6 @@ B_COLLECTION_OP :: proc() -> types.Benchmark_Result {
 
 
 //PROCEDURES
-
-
 B_CREATE_COLLECTION :: proc(fn: string) -> int {
 	file := concat_benchmark_collection(fn)
 
@@ -110,62 +145,72 @@ B_CREATE_COLLECTION :: proc(fn: string) -> int {
 }
 
 
-// B_CREATE_CLUSTER :: proc(fn, cn: string) -> bool {
-// 	using utils
+B_GENERATE_ID :: proc() -> i64 {
+	//ensure the generated id length is 16 digits
+	ID := rand.int63_max(1e16 + 1)
+	return ID
+}
 
-// 	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
-// 	FIRST_HALF: []string = {"\n{\n\tcluster_name :identifier: %n"}
-// 	buf: [32]byte
-// 	path := concat_benchmark_collection(fn)
+B_CREATE_CLUSTER :: proc(fn, cn: string) -> bool {
+	using utils
 
-// 	colFile, openSuccess := os.open(path, os.O_APPEND | os.O_WRONLY, 0o666)
-// 	defer os.close(colFile)
-// 	if openSuccess != 0 {
-// 		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
-// 		throw_err(error1)
-// 		log_err("Error opening collection file", #procedure)
-// 		return false
-// 	}
+	id := B_GENERATE_ID()
+	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"}
+	FIRST_HALF: []string = {"\n{\n\tcluster_name :identifier: %n"}
+	buf: [32]byte
+	path := concat_benchmark_collection(fn)
+
+	colFile, openSuccess := os.open(path, os.O_APPEND | os.O_WRONLY, 0o666)
+	defer os.close(colFile)
+	if openSuccess != 0 {
+		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error opening collection file", #procedure)
+		return false
+	}
 
 
-// 	for i := 0; i < len(FIRST_HALF); i += 1 {
-// 		if (strings.contains(FIRST_HALF[i], "%n")) {
-// 			newClusterName, replaceSuccess := strings.replace(FIRST_HALF[i], "%n", clusterName, -1)
-// 			writeClusterName, writeSuccess := os.write(colFile, transmute([]u8)newClusterName)
-// 		}
-// 	}
-// 	for i := 0; i < len(LAST_HALF); i += 1 {
-// 		if strings.contains(LAST_HALF[i], "%i") {
-// 			newClusterID, replaceSuccess := strings.replace(
-// 				LAST_HALF[i],
-// 				"%i",
-// 				strconv.append_int(buf[:], id, 10),
-// 				-1,
-// 			)
-// 			if replaceSuccess == false {
-// 				error2 := new_err(
-// 					.CANNOT_UPDATE_CLUSTER,
-// 					get_err_msg(.CANNOT_UPDATE_CLUSTER),
-// 					#procedure,
-// 				)
-// 				throw_err(error2)
-// 				log_err("Error placing id into cluster template", #procedure)
-// 				return false
-// 			}
-// 			writeClusterID, writeSuccess := os.write(colFile, transmute([]u8)newClusterID)
-// 			if writeSuccess != 0 {
-// 				error2 := new_err(
-// 					.CANNOT_WRITE_TO_FILE,
-// 					get_err_msg(.CANNOT_WRITE_TO_FILE),
-// 					#procedure,
-// 				)
-// 				log_err("Error writing cluster block to file", #procedure)
-// 				return false
-// 			}
-// 		}
-// 	}
-// 	return true
-// }
+	for i := 0; i < len(FIRST_HALF); i += 1 {
+		if (strings.contains(FIRST_HALF[i], "%n")) {
+			newClusterName, replaceSuccess := strings.replace(FIRST_HALF[i], "%n", cn, -1)
+			writeClusterName, writeSuccess := os.write(colFile, transmute([]u8)newClusterName)
+		}
+	}
+	for i := 0; i < len(LAST_HALF); i += 1 {
+		if strings.contains(LAST_HALF[i], "%i") {
+			newClusterID, replaceSuccess := strings.replace(
+				LAST_HALF[i],
+				"%i",
+				strconv.append_int(buf[:], id, 10),
+				-1,
+			)
+			if replaceSuccess == false {
+				error2 := new_err(
+					.CANNOT_UPDATE_CLUSTER,
+					get_err_msg(.CANNOT_UPDATE_CLUSTER),
+					#procedure,
+				)
+				throw_err(error2)
+				log_err("Error placing id into cluster template", #procedure)
+				return false
+			}
+			writeClusterID, writeSuccess := os.write(colFile, transmute([]u8)newClusterID)
+			if writeSuccess != 0 {
+				error2 := new_err(
+					.CANNOT_WRITE_TO_FILE,
+					get_err_msg(.CANNOT_WRITE_TO_FILE),
+					#procedure,
+				)
+				log_err("Error writing cluster block to file", #procedure)
+				return false
+			}
+		}
+	}
+
+	//update metadata
+	refresh_metadata(fn)
+	return true
+}
 
 
 //COMMON BENCHMARKING UTILS
@@ -173,4 +218,13 @@ concat_benchmark_collection :: proc(name: string) -> string {
 	using const
 	return strings.clone(fmt.tprintf("%s%s%s", OST_BENCHMARK_PATH, name, OST_FILE_EXTENSION))
 
+}
+
+
+refresh_metadata :: proc(fn: string) {
+	using metadata
+	file := concat_benchmark_collection(fn)
+	OST_UPDATE_METADATA_VALUE(file, 2)
+	OST_UPDATE_METADATA_VALUE(file, 3)
+	OST_UPDATE_METADATA_VALUE(file, 5)
 }
