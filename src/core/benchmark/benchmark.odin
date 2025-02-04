@@ -42,29 +42,24 @@ main :: proc() {
 
 	//Create the collections
 
-	benchmark1, colNames := B_COLLECTION_OP(1)
-	benchmark2, cluNames := B_CLUSTER_OP(100, colNames)
-	benchmark3, recNames := B_RECORDS_OP(colNames, cluNames, 100)
+	benchmark1, colNames := B_COLLECTION_OP(100)
+	benchmark2, cluNames := B_CLUSTER_OP(10, colNames)
+	benchmark3, recNames := B_RECORDS_OP(colNames, cluNames, 1)
 
 	fmt.println("Finsihed Executing Benchmark: ", benchmark1.op_name)
-	fmt.println("Total Operations: ", benchmark1.total_ops)
 	fmt.println("Total Time: ", benchmark1.op_time)
 	fmt.println("Operations Per Second: ", benchmark1.ops_per_second)
 
 	fmt.println("Finsihed Executing Benchmark: ", benchmark2.op_name)
-	fmt.println("Total Operations: ", benchmark2.total_ops)
 	fmt.println("Total Time: ", benchmark2.op_time)
 	fmt.println("Operations Per Second: ", benchmark2.ops_per_second)
 
 
 	fmt.println("Finsihed Executing Benchmark: ", benchmark3.op_name)
-	fmt.println("Total Operations: ", benchmark3.total_ops)
 	fmt.println("Total Time: ", benchmark3.op_time)
 	fmt.println("Operations Per Second: ", benchmark3.ops_per_second)
 
 
-	//Create the clusters
-	//Create the records
 	//Fetch the collections
 	//Fetch the clusters
 	//Fetch the records
@@ -141,27 +136,21 @@ B_RECORDS_OP :: proc(
 	names: [dynamic]string
 	startTime := time.now()
 
+	colName, cluName: string
 
-	//collection names
 	for colName in colNames {
 		for cluName in cluNames {
-			for j := 0; j < iterations; j += 1 {
-				benchmarkRecName := fmt.tprintf("benchmark_record_%d", j)
+			for k := 0; k < iterations; k += 1 {
+				benchmarkRecName := fmt.tprintf("benchmark_record_%d", k)
 				rType := B_GENERATE_RECORD_TYPE()
 				rValue := B_GENERATE_RECORD_VALUES(rType)
-				res := B_CREATE_RECORD(
-					colName,
-					cluName,
-					benchmarkRecName,
-					rType,
-					rValue,
-					iterations,
-				)
+				res := B_CREATE_RECORD(colName, cluName, benchmarkRecName, rType, rValue)
 				// fmt.println("debugging-- res: ", res) //debugging
 				append(&names, benchmarkRecName)
 			}
 		}
 	}
+
 
 	duration := time.since(startTime)
 	ops_per_second := f64(iterations) / time.duration_seconds(duration)
@@ -302,7 +291,7 @@ B_GENERATE_RECORD_VALUES :: proc(rType: string) -> string {
 }
 
 
-B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string, iterations: int) -> int {
+B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 	file := concat_benchmark_collection(fn)
 	data, readSuccess := utils.read_file(file, #procedure)
 	defer delete(data)
