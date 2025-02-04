@@ -2,6 +2,7 @@ package engine
 
 import "../../tests"
 import "../../utils"
+import "../benchmark"
 import "../config"
 import "../const"
 import "../help"
@@ -203,7 +204,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 					fileName := concat_collection_name(cmd.l_token[0])
-					OST_METADATA_ON_CREATE(fileName)
+					OST_UPDATE_METADATA_ON_CREATE(fileName)
 				} else {
 					fmt.printf(
 						"Failed to create collection %s%s%s.\n",
@@ -1566,6 +1567,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 		}
+
+	case BENCHMARK:
+		benchmark.main()
 	//END OF COMMAND TOKEN EVALUATION
 	case:
 		fmt.printfln(

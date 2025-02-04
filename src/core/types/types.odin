@@ -207,3 +207,11 @@ ErrorSuppression :: struct {
 }
 
 TESTING: bool // Global flag to indicate if running in test mode
+
+benchmark_result: Benchmark_Result
+Benchmark_Result :: struct {
+	op_name:        string,
+	op_time:        time.Duration,
+	ops_per_second: f64,
+	total_ops:      int,
+}

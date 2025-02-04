@@ -117,28 +117,38 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 	rawData, readSuccess := os.read_entire_file(fn)
 	defer delete(rawData)
-	fmt.println(readSuccess)
 	if !readSuccess {
 		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
 		throw_err(error1)
 		log_err("Error readinding collection file", #procedure)
+		return false
 	}
 
 	dataAsStr := cast(string)rawData //todo: why in the hell did I use cast??? just use string() instead???
 	if strings.has_prefix(dataAsStr, "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@") {
+		log_err("Metadata header already present", #procedure)
 		return false
 	}
 
-	file, e := os.open(fn, os.O_APPEND | os.O_WRONLY, 0o666)
+	file, openSuccess := os.open(fn, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
 
-	if e != 0 {
+	if openSuccess != 0 {
+		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error opening collection file", #procedure)
 		return false
 	}
 
 	blockAsBytes := transmute([]u8)strings.concatenate(METADATA_HEADER)
 
 	writter, ok := os.write(file, blockAsBytes)
+	if ok != 0 {
+		error1 := new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error writing metadata header to collection file", #procedure)
+		return false
+	}
 	return true
 }
 
@@ -217,7 +227,7 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 }
 
 //used when creating a new collection file whether public or not
-OST_METADATA_ON_CREATE :: proc(fn: string) {
+OST_UPDATE_METADATA_ON_CREATE :: proc(fn: string) {
 	OST_UPDATE_METADATA_VALUE(fn, 1)
 	OST_UPDATE_METADATA_VALUE(fn, 3)
 	OST_UPDATE_METADATA_VALUE(fn, 4)
