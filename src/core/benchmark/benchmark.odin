@@ -18,47 +18,33 @@ import "core:time"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-
-//MY GUIDELINES FOR THE BENCHMARKING OSTRICHDB PACKAGAGE
-// All benchmarking types,procs,utils,etc will be located in this single file.
-// The file will be split into sections.
-// Procs will NOT take any user input, thus all data will be generated randomly.
-// Cluster IDs will be randomly generated but NOT stored in the ./ids.ost file.
-// Created collection files will NOT be in the ./collections dir but in the ./benchmark dir
-// After the benchmark.main() proc runs the ./benchmark directory will be deleted.
-//
-// Benchmarking will evaluate the performance of the following operations:
-// 1. Create 3 collections
-// 2. 1 collection will have 10 clusters, another 100 cluster and the last 1000 clusters
-// 3. The amount of records that each cluster of each file contains will be randomly generated between 10 and 1000
-// 4. The datatype and value for each record will be randomized as well.
-// 5. After all data is set, the next benchmark will be to fetch entire collections, then individual clusters, then individual records.
-// 6. The final benchmark will be to delete all data from the collections.
-
-
 main :: proc() {
+	using utils
+
 	//Create the benchmark directory
 	os.make_directory(const.OST_BENCHMARK_PATH, 0o777)
 
 	//Create the collections
 
-	benchmark1, colNames := B_COLLECTION_OP(100)
-	benchmark2, cluNames := B_CLUSTER_OP(10, colNames)
-	benchmark3, recNames := B_RECORDS_OP(colNames, cluNames, 1)
-
-	fmt.println("Finsihed Executing Benchmark: ", benchmark1.op_name)
-	fmt.println("Total Time: ", benchmark1.op_time)
-	fmt.println("Operations Per Second: ", benchmark1.ops_per_second)
-
-	fmt.println("Finsihed Executing Benchmark: ", benchmark2.op_name)
-	fmt.println("Total Time: ", benchmark2.op_time)
-	fmt.println("Operations Per Second: ", benchmark2.ops_per_second)
+	benchmark1, colNames := B_COLLECTION_OP(1) //pass num of iterations
+	benchmark2, cluNames := B_CLUSTER_OP(10, colNames) //pass num of iterations and collection names
+	benchmark3, recNames := B_RECORDS_OP(colNames, cluNames, 10) //pass collection names, cluster names, and num of iterations
 
 
-	fmt.println("Finsihed Executing Benchmark: ", benchmark3.op_name)
-	fmt.println("Total Time: ", benchmark3.op_time)
-	fmt.println("Operations Per Second: ", benchmark3.ops_per_second)
+	//get grand totals
+	totalOperations := benchmark1.total_ops + benchmark2.total_ops + benchmark3.total_ops
+	totalTime := benchmark1.op_time + benchmark2.op_time + benchmark3.op_time
+	totalOpsPerSecond := f64(totalOperations) / time.duration_seconds(totalTime)
 
+
+	show_benchmark_results(benchmark1)
+	show_benchmark_results(benchmark2)
+	show_benchmark_results(benchmark3)
+	fmt.printfln("----------------------------------")
+	fmt.println("OstrichDB Benchmark Grand Totals")
+	fmt.printfln("Time: %s%d%s", GREEN, totalTime, RESET)
+	fmt.printfln("Operations Per Second: %s%f%s ", GREEN, totalOpsPerSecond, RESET)
+	fmt.printfln("Operations: %s%d%s ", GREEN, totalOperations, RESET)
 
 	//Fetch the collections
 	//Fetch the clusters
@@ -132,32 +118,30 @@ B_RECORDS_OP :: proc(
 	types.Benchmark_Result,
 	[dynamic]string,
 ) {
-
 	names: [dynamic]string
 	startTime := time.now()
-
-	colName, cluName: string
+	recordCounter := 0
 
 	for colName in colNames {
 		for cluName in cluNames {
 			for k := 0; k < iterations; k += 1 {
-				benchmarkRecName := fmt.tprintf("benchmark_record_%d", k)
+				benchmarkRecName := fmt.tprintf("benchmark_record_%d", recordCounter)
 				rType := B_GENERATE_RECORD_TYPE()
 				rValue := B_GENERATE_RECORD_VALUES(rType)
 				res := B_CREATE_RECORD(colName, cluName, benchmarkRecName, rType, rValue)
-				// fmt.println("debugging-- res: ", res) //debugging
 				append(&names, benchmarkRecName)
+				recordCounter += 1
 			}
 		}
 	}
 
-
 	duration := time.since(startTime)
-	ops_per_second := f64(iterations) / time.duration_seconds(duration)
+	total_ops := len(colNames) * len(cluNames) * iterations
+	ops_per_second := f64(total_ops) / time.duration_seconds(duration)
 
 	return types.Benchmark_Result {
 			op_name = "Create Records",
-			total_ops = iterations,
+			total_ops = total_ops,
 			op_time = duration,
 			ops_per_second = ops_per_second,
 		},
@@ -351,6 +335,9 @@ B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 	if !writeSuccess {
 		return -1
 	}
+
+	//update metadata
+	refresh_metadata(fn)
 	return 0
 
 
@@ -370,4 +357,13 @@ refresh_metadata :: proc(fn: string) {
 	OST_UPDATE_METADATA_VALUE(file, 2)
 	OST_UPDATE_METADATA_VALUE(file, 3)
 	OST_UPDATE_METADATA_VALUE(file, 5)
+}
+
+
+show_benchmark_results :: proc(res: types.Benchmark_Result) {
+	using utils
+	fmt.printfln("Benchmark: %s%s%s Complete", BOLD_UNDERLINE, res.op_name, RESET)
+	fmt.printfln("Total Operations: %s%d%s", GREEN, res.total_ops, RESET)
+	fmt.printfln("Total Time: %s%d%s", GREEN, res.op_time, RESET)
+	fmt.printfln("Operations Per Second: %s%f%s\n", GREEN, res.ops_per_second, RESET)
 }
