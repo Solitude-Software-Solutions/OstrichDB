@@ -12,9 +12,10 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
+//checks if a token is a valid modifier only used in the parser
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	using const
-	validModifiers := []string{AND, OF_TYPE, TYPE, ALL_OF, TO}
+	validModifiers := []string{OF_TYPE, TO}
 	for modifier in validModifiers {
 		if strings.to_upper(token) == modifier {
 			return true
@@ -23,34 +24,98 @@ OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	return false
 }
 
+//Takes the users input and parser it into a command. The command is then returned to the caller in engine.odin
 OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
+	using const
+
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
-	//dot notation allows for accessing context like this: <action> <target> child.parent.grandparent or <action> <target> child.parent
+	//dot notation allows for accessing context like this: <action> grandparent.parent.child or <action> parent.child
 	cmd := types.Command {
-		o_token            = make([dynamic]string),
-		m_token            = make(map[string]string),
-		s_token            = make(map[string]string),
+		l_token            = make([dynamic]string),
+		p_token            = make(map[string]string),
 		isUsingDotNotation = false,
+		t_token            = "",
 	}
 
 	if len(tokens) == 0 {
 		return cmd
 	}
 
-	cmd.a_token = tokens[0] //setting the action token
-	state := 0 //state machine exclusively used for modifier token shit
+	cmd.c_token = tokens[0] //setting the command token
+	state := 0 //state machine exclusively used for parameter token shit
 	currentModifier := "" //stores the current modifier such as TO
+	collectingString := false
+	stringValue := ""
 
 	//iterate over remaining ATOM tokens and set/append them to the cmd
 	for i := 1; i < len(tokens); i += 1 {
 		token := tokens[i]
 
+		if collectingString {
+			if stringValue != "" {
+				stringValue = strings.concatenate([]string{stringValue, " ", token})
+			} else {
+				stringValue = token
+			}
+			continue
+		}
+
+
 		switch state {
 		case 0:
 			// Expecting target
-			cmd.t_token = token
-			state = 1
+			switch (cmd.c_token) 
+			{
+			case SET:
+				if token == CONFIG {
+					cmd.t_token = token
+				} else {
+					cmd.t_token = cmd.t_token
+					if strings.contains(token, ".") {
+						cmd.isUsingDotNotation = true
+						objTokensSepByDot := strings.split(strings.trim_space(token), ".")
+						for obj in objTokensSepByDot {
+							append(&cmd.l_token, obj)
+						}
+					}
+				}
+				state = 1
+				break
+			case WHERE, HELP:
+				cmd.t_token = token
+				break
+			case COUNT:
+				switch (token) {
+				case COLLECTIONS:
+					cmd.t_token = token
+					break
+				case CLUSTERS, RECORDS:
+					cmd.t_token = token
+					if strings.contains(token, ".") {
+						cmd.isUsingDotNotation = true
+						objTokensSepByDot := strings.split(strings.trim_space(token), ".")
+						for obj in objTokensSepByDot {
+							append(&cmd.l_token, obj)
+						}
+					}
+					break
+				}
+				state = 1
+			case:
+				cmd.t_token = cmd.t_token
+				if strings.contains(token, ".") {
+					cmd.isUsingDotNotation = true
+					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
+					for obj in objTokensSepByDot {
+						append(&cmd.l_token, obj)
+					}
+				} else {
+					append(&cmd.l_token, token)
+				}
+
+				state = 1
+			}
 		case 1:
 			// Expecting object or modifier
 			if OST_IS_VALID_MODIFIER(token) {
@@ -61,17 +126,22 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 					cmd.isUsingDotNotation = true
 					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
 					for obj in objTokensSepByDot {
-						append(&cmd.o_token, obj)
+						append(&cmd.l_token, obj)
 					}
 				} else {
-					append(&cmd.o_token, token)
+					append(&cmd.l_token, token)
 				}
 			}
 		case 2:
-			// Expecting object after modifier
-			cmd.m_token[currentModifier] = token // Preserve original case for modifier values
-			state = 1
+			stringValue = token
+			collectingString = true
 		}
+
+	}
+
+	// If we collected a string value, store it
+	if collectingString && stringValue != "" {
+		cmd.p_token[currentModifier] = stringValue
 	}
 
 	return cmd

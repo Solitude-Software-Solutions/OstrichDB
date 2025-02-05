@@ -8,15 +8,17 @@ import "core:time"
 //=========================================================//
 
 //PATH CONSTANTS
-OST_FFVF :: "ost_file_format_version.tmp"
+OST_FFVF_PATH :: "ost_file_format_version.tmp"
 OST_TMP_PATH :: "./tmp/"
 OST_COLLECTION_PATH :: "./collections/"
 OST_SECURE_COLLECTION_PATH :: "./secure/"
 OST_BACKUP_PATH :: "./backups/"
-OST_CONFIG_FILE :: "ostrich.config.ost"
-OST_CONFIG_PATH :: "./ostrich.config.ost"
+OST_CORE_PATH :: "./core/"
+OST_CONFIG_PATH :: "./core/config.ost"
+OST_ID_PATH :: "./core/ids.ost"
+OST_HISTORY_PATH :: "./core/history.ost"
+OST_BENCHMARK_PATH :: "./benchmark/"
 CONFIG_CLUSTER :: "OSTRICH_CONFIGS"
-OST_ID_PATH :: "./ids.ost"
 CLUSTER_ID_CLUSTER :: "CLUSTER__IDS"
 USER_ID_CLUSTER :: "USER__IDS"
 OST_BIN_PATH :: "./"
@@ -27,12 +29,13 @@ GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
 ATOMS_HELP_FILE :: "../src/core/help/docs/atoms/atoms.txt"
 OST_QUARANTINE_PATH :: "./quarantine/"
 //CONFIG FILE CONSTANTS
-configOne :: "OST_ENGINE_INIT"
-configTwo :: "OST_ENGINE_LOGGING"
-configThree :: "OST_USER_LOGGED_IN"
-configFour :: "OST_HELP"
-configFive :: "OST_SERVER_MODE_ON"
-configSix :: "OST_ERROR_SUPPRESSION" //whether errors are printed to the console or not
+CONFIG_ONE :: "OST_ENGINE_INIT"
+CONFIG_TWO :: "OST_ENGINE_LOGGING"
+CONFIG_THREE :: "OST_USER_LOGGED_IN"
+CONFIG_FOUR :: "OST_HELP"
+CONFIG_FIVE :: "OST_SERVER_MODE_ON"
+CONFIG_SIX :: "OST_ERROR_SUPPRESSION" //whether errors are printed to the console or not
+
 //ATOM TOKEN CONSTANTS
 VERSION :: "VERSION"
 HELP :: "HELP" //help can also be a multi token command.
@@ -45,7 +48,7 @@ TEST :: "TEST"
 CLEAR :: "CLEAR"
 TREE :: "TREE"
 HISTORY :: "HISTORY"
-//Action Tokens
+//Command Tokens
 NEW :: "NEW"
 BACKUP :: "BACKUP"
 ERASE :: "ERASE"
@@ -55,10 +58,12 @@ COUNT :: "COUNT"
 SET :: "SET"
 PURGE :: "PURGE"
 SIZE_OF :: "SIZE_OF"
-TYPE_OF :: "TYPE_OF" //not the same as OF_TYPE. This is used as an action token to get the type of a record
+TYPE_OF :: "TYPE_OF" //not the same as OF_TYPE. This is used as an command token to get the type of a record
 CHANGE_TYPE :: "CHANGE_TYPE"
 DESTROY :: "DESTROY"
 ISOLATE :: "ISOLATE"
+VALIDATE :: "VALIDATE"
+BENCHMARK :: "BENCHMARK"
 //Target Tokens
 COLLECTION :: "COLLECTION"
 CLUSTER :: "CLUSTER"
@@ -161,7 +166,22 @@ VALID_RECORD_TYPES: []string : {
 	TIME,
 	DATETIME,
 }
-MAX_SESSION_TIME: time.Duration : 259200000000000000 //3 days in nanoseconds
+
+METADATA_START :: "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@\n"
+METADATA_END :: "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@\n"
+
+
+METADATA_HEADER: []string : {
+	METADATA_START,
+	"# File Format Version: %ffv\n",
+	"# Date of Creation: %fdoc\n",
+	"# Date Last Modified: %fdlm\n",
+	"# File Size: %fs Bytes\n",
+	"# Checksum: %cs\n",
+	METADATA_END,
+}
+
+MAX_SESSION_TIME: time.Duration : 86400000000000 //1 day in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print
 // MAX_SESSION_TIME: time.Duration : 60000000000 //1 minute in nano seconds only used for testing
 MAX_FILE_SIZE: i64 : 10000000 //10MB max database file size
@@ -184,7 +204,7 @@ BannedUserNames := []string {
 }
 
 //TEST CONSTANTS
-TEST_ID: i64 : 000000000000
+TEST_ID: i64 : 100000000000
 TEST_COLLECTION: string : "test_collection"
 TEST_CLUSTER: string : "test_cluster"
 TEST_RECORD: string : "test_record"

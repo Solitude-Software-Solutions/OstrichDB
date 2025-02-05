@@ -21,12 +21,15 @@ import "core:strings"
 
 //handles WHERE {target} {target name}
 OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
+	using const
+	using utils
+
 	// Early return for invalid target
-	if target == const.COLLECTION {
+	if target == COLLECTION {
 		return 1, false
 	}
 
-	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -34,7 +37,7 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
 
 	// Collect all valid collection files
 	for file in foundFiles {
-		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_FILE_EXTENSION) {
 			append(&collectionNames, file.name)
 		}
 	}
@@ -43,35 +46,35 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
 
 	// Search through collections
 	for collection in collectionNames {
-		if target == const.CLUSTER {
-			collectionPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collection)
+		if target == CLUSTER {
+			collectionPath := fmt.tprintf("%s%s", OST_COLLECTION_PATH, collection)
 			if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
 				fmt.printfln(
 					"Cluster: %s%s%s -> Collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					targetName,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
+					RESET,
+					BOLD_UNDERLINE,
 					collection,
-					utils.RESET,
+					RESET,
 				)
 				found = true
 				// Remove the return here to continue searching
 			}
-		} else if target == const.RECORD {
+		} else if target == RECORD {
 			colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
 			if success {
 				fmt.printfln(
 					"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
-					utils.BOLD_UNDERLINE,
+					BOLD_UNDERLINE,
 					targetName,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
+					RESET,
+					BOLD_UNDERLINE,
 					cluName,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
+					RESET,
+					BOLD_UNDERLINE,
 					colName,
-					utils.RESET,
+					RESET,
 				)
 				found = true
 				// Remove the return here to continue searching
@@ -85,7 +88,10 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
 
 //handles WHERE {target name}
 OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
-	collectionsDir, errOpen := os.open(const.OST_COLLECTION_PATH)
+	using utils
+	using const
+
+	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -93,7 +99,7 @@ OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
 
 	// Collect all valid collection files
 	for file in foundFiles {
-		if strings.contains(file.name, const.OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_FILE_EXTENSION) {
 			append(&collectionNames, file.name)
 		}
 	}
@@ -102,18 +108,18 @@ OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
 
 	// Search through collections
 	for collection in collectionNames {
-		collectionPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collection)
+		collectionPath := fmt.tprintf("%s%s", OST_COLLECTION_PATH, collection)
 
 		// Check if it's a cluster name
 		if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
 			fmt.printfln(
 				"Cluster: %s%s%s -> Collection: %s%s%s",
-				utils.BOLD_UNDERLINE,
+				BOLD_UNDERLINE,
 				targetName,
-				utils.RESET,
-				utils.BOLD_UNDERLINE,
+				RESET,
+				BOLD_UNDERLINE,
 				collection,
-				utils.RESET,
+				RESET,
 			)
 			found = true
 		}
@@ -123,15 +129,15 @@ OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
 		if success {
 			fmt.printfln(
 				"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
-				utils.BOLD_UNDERLINE,
+				BOLD_UNDERLINE,
 				targetName,
-				utils.RESET,
-				utils.BOLD_UNDERLINE,
+				RESET,
+				BOLD_UNDERLINE,
 				cluName,
-				utils.RESET,
-				utils.BOLD_UNDERLINE,
+				RESET,
+				BOLD_UNDERLINE,
 				colName,
-				utils.RESET,
+				RESET,
 			)
 			found = true
 		}

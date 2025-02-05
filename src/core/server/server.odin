@@ -89,8 +89,8 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 			fmt.println("Connection closed by client")
 			return
 		}
-		fmt.println("Received %d bytes from client", bytes_read) //debugging
-		fmt.println("Data received: ", string(buf[:bytes_read])) //debugging
+		// fmt.println("Received %d bytes from client", bytes_read) //debugging
+		// fmt.println("Data received: ", string(buf[:bytes_read])) //debugging
 		// Parse incoming request
 		method, path, headers := OST_PARSE_REQUEST(buf[:bytes_read])
 		fmt.printf("Parsed request - Method: %s, Path: %s\n", method, path) //debuggging

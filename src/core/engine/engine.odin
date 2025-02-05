@@ -23,31 +23,35 @@ import "core:time"
 
 //initialize the data integrity system
 OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
-	types.data_integrity_checks.File_Size.Severity = .LOW
-	types.data_integrity_checks.File_Format_Version.Severity = .MEDIUM
-	types.data_integrity_checks.Cluster_IDs.Severity = .HIGH
-	types.data_integrity_checks.Data_Types.Severity = .HIGH
-	types.data_integrity_checks.File_Format.Severity = .HIGH
+	using types
 
-	types.data_integrity_checks.File_Size.Error_Message =
+	data_integrity_checks.File_Size.Severity = .LOW
+	data_integrity_checks.File_Format_Version.Severity = .MEDIUM
+	data_integrity_checks.Cluster_IDs.Severity = .HIGH
+	data_integrity_checks.Data_Types.Severity = .HIGH
+	data_integrity_checks.File_Format.Severity = .HIGH
+
+	data_integrity_checks.File_Size.Error_Message =
 	"Collection file size is larger than the maxmimum size of 10mb"
-	types.data_integrity_checks.File_Format.Error_Message =
+	data_integrity_checks.File_Format.Error_Message =
 	"A formatting error was found in the collection file"
-	types.data_integrity_checks.File_Format_Version.Error_Message =
+	data_integrity_checks.File_Format_Version.Error_Message =
 	"Collection file format version is not compliant with the current version"
-	types.data_integrity_checks.Cluster_IDs.Error_Message = "Cluster ID(s) not found in cache"
-	types.data_integrity_checks.Data_Types.Error_Message =
+	data_integrity_checks.Cluster_IDs.Error_Message = "Cluster ID(s) not found in cache"
+	data_integrity_checks.Data_Types.Error_Message =
 	"Data type(s) found in collection are not approved"
 	return 0
 
 }
+
+//Starts the OstrichDB engine:
+//Session timer, sign in, and command line
 OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-	switch (types.engine.Initialized) 
+	switch (types.OstrichEngine.Initialized) 
 	{
 	case false:
-		// config.main()
 		security.OST_INIT_ADMIN_SETUP()
 		break
 
@@ -74,8 +78,9 @@ OST_START_ENGINE :: proc() -> int {
 	return 0
 }
 
-
+//Command line loop
 OST_ENGINE_COMMAND_LINE :: proc() -> int {
+	result := 0
 	fmt.println("Welcome to the OstrichDB DBMS Command Line")
 	utils.log_runtime_event("Entered DBMS command line", "")
 	for {
@@ -97,13 +102,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		OST_APPEND_COMMAND_TO_HISTORY(input)
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
-		result := OST_EXECUTE_COMMAND(&cmd)
 
-		switch (result) 
-		{
-		case 0:
-			return 0
-		}
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := OST_GET_SESSION_DURATION()
 		maxDurationMet := OST_CHECK_SESSION_DURATION(sessionDuration)
@@ -114,17 +113,22 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		case true:
 			OST_HANDLE_MAX_SESSION_DURATION_MET()
 		}
+
+		result = OST_EXECUTE_COMMAND(&cmd)
+
 		//Command line end
 	}
+	return result
 
 }
 
-
+//Used to restart the engine
 OST_RESTART :: proc() {
 	libc.system("../scripts/restart.sh")
 	os.exit(0)
 }
 
+//Used to rebuild and restart the engine
 OST_REBUILD :: proc() {
 	libc.system("../scripts/build.sh")
 	os.exit(0)

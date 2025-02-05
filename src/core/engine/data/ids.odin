@@ -19,9 +19,6 @@ import "core:strings"
 
 //generates a random ID, ensures its not currently in use by a user or a cluster
 //the uponCreation param is used to evalute at whether or not the cluster or user that the ID will be assigned to has been created yet
-//TODO: A possible solution to the issue of skipping the check is:
-//when a cluster is being first created it doesnt need and id.
-//the cluster then creates created without that ID then the ID is generated and appended
 OST_GENERATE_ID :: proc(uponCreation: bool) -> i64 {
 	idAlreadyExists := false
 	//ensure the generated id length is 16 digits
@@ -47,73 +44,78 @@ OST_GENERATE_ID :: proc(uponCreation: bool) -> i64 {
 // takes in an id and checks if it exists in the USER_IDS cluster
 OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	idStr := fmt.tprintf("%d", id)
-	idFound := OST_CHECK_IF_RECORD_EXISTS(const.OST_ID_PATH, const.USER_ID_CLUSTER, idStr)
+	//this is incorrect, record names are not the same as the id values
+	_, idFound := OST_SCAN_FOR_ID_RECORD_VALUE(const.USER_ID_CLUSTER, "USER_ID", idStr)
 	return idFound
 }
 //same as above but for the cluster_id cluster
 OST_CHECK_IF_CLUSTER_ID_EXISTS :: proc(id: i64) -> bool {
+	// fmt.printfln("checking if id: %d exists", id) //debugging
 	idStr := fmt.tprintf("%d", id)
-	idFound := OST_CHECK_IF_RECORD_EXISTS(const.OST_ID_PATH, const.CLUSTER_ID_CLUSTER, idStr)
+	// fmt.println("Checking if cluster id %s exists", idStr) //debugging
+	//this is incorrect, record names are not the same as the id values
+	_, idFound := OST_SCAN_FOR_ID_RECORD_VALUE(const.CLUSTER_ID_CLUSTER, "CLUSTER_ID", idStr)
+	// fmt.println("id was found: ", idFound) //debugging
 	return idFound
 }
 
 
 OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
+	using const
+
 	OST_CREATE_COLLECTION("ids", 4)
 	cluOneid := OST_GENERATE_ID(true)
 
 	// doing this prevents the creation of cluster_id records each time the program starts up. Only allows it once
-	if OST_CHECK_IF_CLUSTER_EXISTS(const.OST_ID_PATH, const.CLUSTER_ID_CLUSTER) == true &&
-	   OST_CHECK_IF_CLUSTER_EXISTS(const.OST_ID_PATH, const.USER_ID_CLUSTER) == true {
+	if OST_CHECK_IF_CLUSTER_EXISTS(OST_ID_PATH, CLUSTER_ID_CLUSTER) == true &&
+	   OST_CHECK_IF_CLUSTER_EXISTS(OST_ID_PATH, USER_ID_CLUSTER) == true {
 		return
 	}
 	//create a cluster for cluster ids
-	OST_CREATE_CLUSTER_BLOCK("ids.ost", cluOneid, const.CLUSTER_ID_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluOneid, CLUSTER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
 
-	//TODO: SEE THE COMMENT IN OST_GENERATE_ID!!!! - Marshall Burns Dec 2024
 	cluTwoid := OST_GENERATE_ID(true)
 	//create a cluster for user ids
-	OST_CREATE_CLUSTER_BLOCK("ids.ost", cluTwoid, const.USER_ID_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluTwoid, USER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
-	metadata.OST_UPDATE_METADATA_VALUE(const.OST_ID_PATH, 2)
-	metadata.OST_UPDATE_METADATA_VALUE(const.OST_ID_PATH, 3)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_ID_PATH)
 }
 
 //appends eiter a user id or a cluster id to their respective clusters in the id collection
 //0 = cluster id, 1 = user id
 OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
+	using types
+	using const
+
 	idBuf: [1024]byte
 	switch (idType) 
 	{
 	case 0:
-		types.id.clusterIdCount = OST_COUNT_RECORDS_IN_CLUSTER(
-			"ids",
-			const.CLUSTER_ID_CLUSTER,
-			false,
-		)
+		// fmt.printfln("Appending cluster id: %s to id clusters", idStr) //debugging
+		id.clusterIdCount = OST_COUNT_RECORDS_IN_CLUSTER("ids", CLUSTER_ID_CLUSTER, false)
 
-		idCountStr := strconv.itoa(idBuf[:], types.id.clusterIdCount)
+		idCountStr := strconv.itoa(idBuf[:], id.clusterIdCount)
 		recordName := fmt.tprintf("%s%s", "clusterID_", idCountStr)
 
 		appendSuccess := OST_APPEND_RECORD_TO_CLUSTER(
-			const.OST_ID_PATH,
-			const.CLUSTER_ID_CLUSTER,
+			OST_ID_PATH,
+			CLUSTER_ID_CLUSTER,
 			recordName,
 			idStr,
 			"CLUSTER_ID",
 		)
 		break
 	case 1:
-		types.id.userIdCount = OST_COUNT_RECORDS_IN_CLUSTER("ids", const.USER_ID_CLUSTER, false)
+		id.userIdCount = OST_COUNT_RECORDS_IN_CLUSTER("ids", USER_ID_CLUSTER, false)
 
-		idCountStr := strconv.itoa(idBuf[:], types.id.userIdCount)
+		idCountStr := strconv.itoa(idBuf[:], id.userIdCount)
 		recordName := fmt.tprintf("%s%s", "userID_", idCountStr)
 
 		appendSuccess := OST_APPEND_RECORD_TO_CLUSTER(
-			const.OST_ID_PATH,
-			const.USER_ID_CLUSTER,
+			OST_ID_PATH,
+			USER_ID_CLUSTER,
 			recordName,
 			idStr,
 			"USER_ID",
@@ -224,44 +226,46 @@ OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
 	return writeSuccess
 }
 
-//I'm not gonna lie...IDK why I was writting this. Commenting for now but might be useful later - Marshall Burns Dec 2024
-// OST_SCAN_FOR_ID_RECORD_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
-// 	value: string
-// 	success: bool
-// 	idCollection := const.OST_ID_PATH
+//Scans the ids.ost file for a record with the passed in record value
+// cn = cluster name, rt = record type, rv = record value
+OST_SCAN_FOR_ID_RECORD_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
+	value: string
+	success: bool
 
-// 	data, readSuccess := utils.read_file(idCollection, #procedure)
-// 	if !readSuccess {
-// 		return "", false
-// 	}
 
-// 	defer delete(data)
+	data, readSuccess := utils.read_file(const.OST_ID_PATH, #procedure)
+	if !readSuccess {
+		return "", false
+	}
 
-// 	content := string(data)
-// 	clusters := strings.split(content, "},")
+	defer delete(data)
 
-// 	for cluster in clusters {
-// 		if !strings.contains(cluster, "cluster_name :identifier:") {
-// 			continue // Skip non-cluster content
-// 		}
+	content := string(data)
+	clusters := strings.split(content, "},")
 
-// 		// Extract cluster name
-// 		name_start := strings.index(cluster, "cluster_name :identifier:")
-// 		if name_start == -1 do continue
-// 		name_start += len("cluster_name :identifier:")
-// 		name_end := strings.index(cluster[name_start:], "\n")
-// 		if name_end == -1 do continue
-// 		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
-// 		// Look for record in this cluster
-// 		lines := strings.split(cluster, "\n")
-// 		for line in lines {
-// 			line := strings.trim_space(line)
-// 			value = strings.trim_space(strings.split(line, ":")[2])
-// 			if strings.has_suffix(line, fmt.tprintf(": %s", rv)) {
-// 				return strings.clone(value), true
-// 			}
-// 		}
-// 	}
+	for cluster in clusters {
+		if !strings.contains(cluster, "cluster_name :identifier:") {
+			continue // Skip non-cluster content
+		}
 
-// 	return "", false
-// }
+		// Extract cluster name
+		name_start := strings.index(cluster, "cluster_name :identifier:")
+		if name_start == -1 do continue
+		name_start += len("cluster_name :identifier:")
+		name_end := strings.index(cluster[name_start:], "\n")
+		if name_end == -1 do continue
+		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
+		// Look for record in this cluster
+		lines := strings.split(cluster, "\n")
+		for line in lines {
+			line := strings.trim_space(line)
+			// fmt.println("line: ", line)
+			value = strings.trim_space(strings.split(line, ":")[0])
+			if strings.has_suffix(line, fmt.tprintf(": %s", rv)) {
+				return strings.clone(value), true
+			}
+		}
+	}
+
+	return "", false
+}

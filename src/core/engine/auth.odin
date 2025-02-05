@@ -19,21 +19,21 @@ import "core:strings"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
-
+//This beffy S.O.B handles user authentication
 OST_RUN_SIGNIN :: proc() -> bool {
+	using const
+	using types
+	using utils
+
 	//get the username input from the user
 	buf: [1024]byte
 	fmt.printfln("Please enter your username:")
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read user input during sign in", #procedure)
+		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		throw_err(error1)
+		log_err("Could not read user input during sign in", #procedure)
 		return false
 	}
 
@@ -47,9 +47,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	found, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
-		const.OST_SECURE_COLLECTION_PATH,
+		OST_SECURE_COLLECTION_PATH,
 		userName,
-		const.OST_FILE_EXTENSION,
+		OST_FILE_EXTENSION,
 	)
 	userNameFound := data.OST_READ_RECORD_VALUE(
 		secColPath,
@@ -59,28 +59,28 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	)
 	userRole := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "role")
 	if userRole == "admin" {
-		types.user.role.Value = "admin"
+		user.role.Value = "admin"
 	} else if userRole == "user" {
-		types.user.role.Value = "user"
+		user.role.Value = "user"
 	} else if userRole == "guest" {
-		types.user.role.Value = "guest"
+		user.role.Value = "guest"
 	}
 
 	if (userNameFound != usernameCapitalized) {
-		error2 := utils.new_err(
+		error2 := new_err(
 			.ENTERED_USERNAME_NOT_FOUND,
-			utils.get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
+			get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
 			#procedure,
 		)
-		utils.throw_err(error2)
+		throw_err(error2)
 		fmt.printfln(
 			"There is no account within OstrichDB associated with the entered username. Please try again.",
 		)
-		utils.log_err("User entered a username that does not exist in the database", #procedure)
+		log_err("User entered a username that does not exist in the database", #procedure)
 		return false
 	}
 
-	types.user.username.Value = strings.clone(usernameCapitalized)
+	user.username.Value = strings.clone(usernameCapitalized)
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
@@ -111,13 +111,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	libc.system("stty -echo")
 	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error3 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error3)
-		utils.log_err("Could not read user input during sign in", #procedure)
+		error3 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		throw_err(error3)
+		log_err("Could not read user input during sign in", #procedure)
 		libc.system("stty echo")
 		return false
 	}
@@ -143,18 +139,18 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		OST_START_SESSION_TIMER()
 		fmt.printfln("\n\nSucessfully signed in!")
 		fmt.printfln("Welcome, %s!\n", userNameFound)
-		types.USER_SIGNIN_STATUS = true
-		types.current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
-		types.current_user.role.Value = strings.clone(userRole)
+		USER_SIGNIN_STATUS = true
+		current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
+		current_user.role.Value = strings.clone(userRole)
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
-			const.OST_CONFIG_FILE,
-			const.CONFIG_CLUSTER,
-			const.CONFIG,
-			const.configThree,
+			OST_CONFIG_PATH,
+			CONFIG_CLUSTER,
+			CONFIG,
+			CONFIG_THREE,
 		)
 		if userLoggedInValue == "false" {
-			// config.OST_TOGGLE_CONFIG(const.configThree)
-			config.OST_UPDATE_CONFIG_VALUE(const.configThree, "true")
+			// config.OST_TOGGLE_CONFIG(const.CONFIG_THREE)
+			config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_THREE, "true")
 		}
 		break
 	case false:
@@ -162,7 +158,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.USER_SIGNIN_STATUS = false
 		os.exit(0)
 	}
-	return types.USER_SIGNIN_STATUS
+	return USER_SIGNIN_STATUS
 
 }
 
@@ -185,9 +181,10 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 	return false
 }
 
+//Handles logic for signing out a user
+//param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
 OST_USER_LOGOUT :: proc(param: int) {
-
-	loggedOut := config.OST_UPDATE_CONFIG_VALUE(const.configThree, "false")
+	loggedOut := config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_THREE, "false")
 
 	switch loggedOut {
 	case true:
