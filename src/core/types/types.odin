@@ -214,4 +214,5 @@ Benchmark_Result :: struct {
 	op_time:        time.Duration,
 	ops_per_second: f64,
 	total_ops:      int,
+	success:        bool,
 }
