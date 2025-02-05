@@ -1,5 +1,7 @@
 package data
+import "../../../utils"
 import "../../const"
+import "../data"
 import "core:fmt"
 import "core:strconv"
 import "core:strings"
@@ -9,13 +11,13 @@ import "core:strings"
 // Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
-
 //This file is used to define the structure of the complex data types and how OstrichDB will handle them
+
 
 //essentially will look over the passed in string and as long as its encased in [] it will split the string into an array based on the commas
 OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 	result := strings.split(strArr, ",")
-	// for i in result { //debugging
+	// for i in result { 	//debugging
 	// 	fmt.println(i)
 	// }
 	return result
@@ -23,45 +25,37 @@ OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 
 //checks that array values the user wants to store in a record is the correct type
 OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
+	using const
+
 	verified := false
 	//retrieve the record type
 	arrayValues := OST_PARSE_ARRAY(strArray)
 
 	switch (rType) {
-	case const.INTEGER_ARRAY:
+	case INTEGER_ARRAY:
 		for i in arrayValues {
-			_, err := strconv.parse_int(i)
-			if err != true {
-				verified = err
-			}
+			_, parseSuccess := strconv.parse_int(i)
+			verified = parseSuccess
 		}
-		break
-	case const.FLOAT_ARRAY:
+		return verified
+	case FLOAT_ARRAY:
 		for i in arrayValues {
-			_, err := strconv.parse_f64(i)
-			if err != true {
-				verified = err
-			}
+			_, parseSuccess := strconv.parse_f64(i)
+			verified = parseSuccess
 		}
-		break
-	case const.BOOLEAN_ARRAY:
+		return verified
+	case BOOLEAN_ARRAY:
 		for i in arrayValues {
-			_, err := strconv.parse_bool(i)
-			if err != true {
-				verified = err
-			}
+			_, parseSuccess := strconv.parse_bool(i)
+			verified = parseSuccess
+
 		}
-		break
+		return verified
 	}
+
 	return verified
 }
 
-
-// OST_PARSE_OBJECT :: proc(strObj: string) -> map[string]string {
-// 	obj: map[string]string
-
-// 	return obj
-// }
 
 //makes sure the date is in the correct format & length. then returns the date as a string
 OST_PARSE_DATE :: proc(date: string) -> (string, int) {
@@ -168,6 +162,7 @@ OST_PARSE_TIME :: proc(time: string) -> (string, int) {
 	timeStr = fmt.tprintf("%02d:%02d:%02d", hour, minute, second)
 	return timeStr, 0
 }
+
 //parses the passed in string ensuring proper format and length
 //Example datetime: 2024-03-14T09:30:00
 OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, int) {

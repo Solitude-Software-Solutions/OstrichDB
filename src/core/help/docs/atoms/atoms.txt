@@ -20,9 +20,9 @@
 |COUNT      |Action         |Multi            |Counts the number of records in a collection or cluster            |
 |PURGE      |Action         |Multi            |Removed data from an object while mainting it's structure          |
 |SIZE_OF    |Action         |Multi            |Displays the size of a collection, cluster, or record in bytes     |
-|COLLECTION |Target         |                 |Specifies a database instance within the DBMS                       |
-|CLUSTER    |Target         |                 |Specifies a data organization unit within a DBMS collection         |
-|RECORD     |Target         |                 |Specifies a data storage unit within the DBMS                      |
+|TYPE_OF    |Action         |Multi            |Displays the type of record                                         |
+|CHANGE_TYPE|Action         |Multi            |Changes the type of a record                                        |
+|ISOLATE    |Action         |Multi            |Isolates a collection from the rest of the DBMS         |
 |TO         |Modifier       |                 |Used with RENAME to specify new name for DBMS objects              |
 |OF_TYPE    |Modifier       |                 |Specifies data type for DBMS records                              |
 |<Any Token> |Help Target   |                 |Paired with the HELP action to show information about the token     |

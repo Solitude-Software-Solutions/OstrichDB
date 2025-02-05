@@ -59,6 +59,7 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn, cn, rn: string) -> bool {
 	return false
 }
 
+
 //appends a line to the end of a cluster with the data thats passed in. Not quite the same as the SET_RECORD_VALUE proc. that one is more for updating a records value
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -> int {
@@ -76,16 +77,16 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	cluster_start := -1
-	closing_brace := -1
+	clusterStart := -1
+	closingBrace := -1
 
 	// Find the cluster and its closing brace
 	for i := 0; i < len(lines); i += 1 {
 		if strings.contains(lines[i], cn) {
-			cluster_start = i
+			clusterStart = i
 		}
-		if cluster_start != -1 && strings.contains(lines[i], "}") {
-			closing_brace = i
+		if clusterStart != -1 && strings.contains(lines[i], "}") {
+			closingBrace = i
 			break
 		}
 	}
@@ -108,7 +109,7 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 		return 1
 	}
 	//if the cluster is not found or the structure is invalid, return
-	if cluster_start == -1 || closing_brace == -1 {
+	if clusterStart == -1 || closingBrace == -1 {
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
@@ -124,11 +125,11 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 
 	// Insert the new line and adjust the closing brace
 	new_lines := make([dynamic]string, len(lines) + 1)
-	copy(new_lines[:closing_brace], lines[:closing_brace])
-	new_lines[closing_brace] = new_line
-	new_lines[closing_brace + 1] = "},"
-	if closing_brace + 1 < len(lines) {
-		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
+	copy(new_lines[:closingBrace], lines[:closingBrace])
+	new_lines[closingBrace] = new_line
+	new_lines[closingBrace + 1] = "},"
+	if closingBrace + 1 < len(lines) {
+		copy(new_lines[closingBrace + 2:], lines[closingBrace + 1:])
 	}
 
 	new_content := strings.join(new_lines[:], "\n")
@@ -156,22 +157,22 @@ OST_APPEND_CREDENTIAL_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	cluster_start := -1
-	closing_brace := -1
+	clusterStart := -1
+	closingBrace := -1
 
 	// Find the cluster and its closing brace
 	for i := 0; i < len(lines); i += 1 {
 		if strings.contains(lines[i], cn) {
-			cluster_start = i
+			clusterStart = i
 		}
-		if cluster_start != -1 && strings.contains(lines[i], "}") {
-			closing_brace = i
+		if clusterStart != -1 && strings.contains(lines[i], "}") {
+			closingBrace = i
 			break
 		}
 	}
 
 	//if the cluster is not found or the structure is invalid, return
-	if cluster_start == -1 || closing_brace == -1 {
+	if clusterStart == -1 || closingBrace == -1 {
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
@@ -187,11 +188,11 @@ OST_APPEND_CREDENTIAL_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 
 	// Insert the new line and adjust the closing brace
 	new_lines := make([dynamic]string, len(lines) + 1)
-	copy(new_lines[:closing_brace], lines[:closing_brace])
-	new_lines[closing_brace] = new_line
-	new_lines[closing_brace + 1] = "},"
-	if closing_brace + 1 < len(lines) {
-		copy(new_lines[closing_brace + 2:], lines[closing_brace + 1:])
+	copy(new_lines[:closingBrace], lines[:closingBrace])
+	new_lines[closingBrace] = new_line
+	new_lines[closingBrace + 1] = "},"
+	if closingBrace + 1 < len(lines) {
+		copy(new_lines[closingBrace + 2:], lines[closingBrace + 1:])
 	}
 
 	new_content := strings.join(new_lines[:], "\n")
@@ -214,22 +215,22 @@ OST_READ_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	cluster_start := -1
-	closing_brace := -1
+	clusterStart := -1
+	closingBrace := -1
 
 	// Find the cluster and its closing brace
 	for line, i in lines {
 		if strings.contains(line, cn) {
-			cluster_start = i
+			clusterStart = i
 		}
-		if cluster_start != -1 && strings.contains(line, "}") {
-			closing_brace = i
+		if clusterStart != -1 && strings.contains(line, "}") {
+			closingBrace = i
 			break
 		}
 	}
 
 	// If the cluster is not found or the structure is invalid, return an empty string
-	if cluster_start == -1 || closing_brace == -1 {
+	if clusterStart == -1 || closingBrace == -1 {
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
@@ -241,7 +242,7 @@ OST_READ_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 	}
 
 	type := fmt.tprintf(":%s:", rType)
-	for i in cluster_start ..= closing_brace {
+	for i in clusterStart ..= closingBrace {
 		if strings.contains(lines[i], rn) {
 			record := strings.split(lines[i], type)
 			if len(record) > 1 {
@@ -254,101 +255,6 @@ OST_READ_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 }
 
 
-//set the record name, if the name is too long, return an error
-OST_SET_RECORD_NAME :: proc(rn: string) -> (string, int) {
-	if len(rn) > 128 {
-		fmt.println("The entered record name is too long. Please try again.")
-		return "", 1
-	}
-
-	record.name = rn
-	return strings.clone(record.name), 0
-}
-
-
-//Present user with prompt on where to save the record
-OST_CHOOSE_RECORD_LOCATION :: proc(rName, rType: string) -> (col: string, clu: string) {
-	buf := make([]byte, 1024)
-	defer delete(buf)
-
-	fmt.printfln(
-		"Select the collection that you would like to store the record: %s%s%s in.",
-		utils.BOLD_UNDERLINE,
-		rName,
-		utils.RESET,
-	)
-
-	n, colNameSuccess := os.read(os.stdin, buf)
-	if colNameSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Could not read user input for collection name", #procedure)
-	}
-
-
-	collectionName := strings.trim_right(string(buf[:n]), "\r\n")
-	collectionNameUpper := strings.to_upper(collectionName)
-	collectionExists := OST_CHECK_IF_COLLECTION_EXISTS(collectionNameUpper, 0)
-	fmt.printfln(
-		"Select the cluster that you would like to store the record: %s%s%s in.",
-		utils.BOLD_UNDERLINE,
-		rName,
-		utils.RESET,
-	)
-
-	switch collectionExists {
-	case true:
-		col = collectionNameUpper
-		break
-	case false:
-		fmt.printfln("Could not find collection: %s. Please try again", collectionNameUpper)
-		OST_CHOOSE_RECORD_LOCATION(rName, rType)
-	}
-
-	checks := OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionNameUpper)
-	switch (checks) 
-	{
-	case -1:
-		return "", ""
-	}
-
-	nn, cluNameSuccess := os.read(os.stdin, buf)
-	if cluNameSuccess != 0 {
-		error2 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Could not read user input for cluster name", #procedure)
-	}
-
-	cluster := strings.trim_right(string(buf[:nn]), "\r\n")
-	cluster = strings.to_upper(cluster)
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		collectionNameUpper,
-		const.OST_FILE_EXTENSION,
-	)
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cluster)
-
-	switch clusterExists {
-	case true:
-		clu = cluster
-		break
-	case false:
-		fmt.printfln("Could not find cluster: %s. Please try again", cluster)
-		OST_CHOOSE_RECORD_LOCATION(rName, rType)
-	}
-
-
-	return col, clu
-}
 //gets every record of the passed in rName and returns the record type, the records data, the cluster it is in, and the collection it is in
 //exclusivley used with the RENAME command if the user is NOT using dot notation
 OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
@@ -375,12 +281,12 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 				cluster := strings.trim_space(cluster)
 				if cluster == "" do continue
 				//get the cluster name
-				name_start := strings.index(cluster, "cluster_name :identifier:")
-				if name_start == -1 do continue
-				name_start += len("cluster_name :identifier:")
-				name_end := strings.index(cluster[name_start:], "\n")
-				if name_end == -1 do continue
-				clusterName = strings.trim_space(cluster[name_start:][:name_end])
+				nameStart := strings.index(cluster, "cluster_name :identifier:")
+				if nameStart == -1 do continue
+				nameStart += len("cluster_name :identifier:")
+				nameEnd := strings.index(cluster[nameStart:], "\n")
+				if nameEnd == -1 do continue
+				clusterName = strings.trim_space(cluster[nameStart:][:nameEnd])
 
 				//split the cluster into lines to find the record type and record data
 				lines := strings.split(cluster, "\n")
@@ -436,45 +342,7 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 //Does what it says, renames a record
 //So basically since I started implementing dot notation on the command line I had to rework a lot of shit.
 //"params" is only given an arg when used during dot notation. We will call this a temp fix but lets be real... - Marshall Burns aka @SchoolyB Oct5th 2024
-OST_RENAME_RECORD :: proc(old, new: string, dotNotation: bool, params: ..string) -> (result: int) {
-	OST_FETCH_EVERY_RECORD_BY_NAME(old)
-	buf := make([]byte, 1024)
-	defer delete(buf)
-	fn, cn: string
-	paramOne: string
-	paramTwo: string
-	if dotNotation == true {
-		//accessing params
-		paramOne = params[0]
-		paramTwo = params[1]
-		// fmt.printfln("paramone %s: ", paramOne) //debugging
-		// fmt.printfln("paramtwo %s: ", paramTwo) //debugging
-
-		fn = paramOne //collection name from command line
-		cn = paramTwo //cluster name from command line
-
-		//since thse value are coming from command line itself no need to uppercase :)
-	} else {
-		fmt.printfln(
-			"Enter the name of the collection that contains the record: %s%s%s that you would like to rename.",
-			utils.BOLD_UNDERLINE,
-			old,
-			utils.RESET,
-		)
-
-		col, colInputSuccess := os.read(os.stdin, buf)
-		if colInputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Could not read user input for collection name", #procedure)
-		}
-		fn = strings.trim_right(string(buf[:col]), "\r\n")
-		fn = strings.to_upper(fn)
-	}
+OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
 		fmt.printfln("Collection with name:%s%s%s does not exist", utils.BOLD, fn, utils.RESET)
@@ -482,60 +350,15 @@ OST_RENAME_RECORD :: proc(old, new: string, dotNotation: bool, params: ..string)
 		return -1
 	}
 
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	collectionPath := utils.concat_collection_name(fn)
 
-
-	checks := OST_HANDLE_INTEGRITY_CHECK_RESULT(fn)
-	switch (checks) 
-	{
-	case -1:
-		return -1
-	}
-
-	if dotNotation == false {
-		//do this if NOT using dot notation
-		fmt.printfln(
-			"Enter the name of the cluster that contains the record: %s%s%s that you would like to rename.",
-			utils.BOLD,
-			old,
-			utils.RESET,
-		)
-
-		buf = make([]byte, 1024)
-		clu, cluInputSuccess := os.read(os.stdin, buf)
-		if cluInputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Could not read user input for cluster name", #procedure)
-		}
-		cn = strings.trim_right(string(buf[:clu]), "\r\n")
-		cn = strings.to_upper(cn)
-	}
 
 	if !OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn) {
 		fmt.printfln("Cluster with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)
-		fmt.println("Please try again with a different name")
 		return -1
 	}
 
-
-	file := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		strings.to_upper(fn),
-		const.OST_FILE_EXTENSION,
-	)
-
-	rExists := OST_CHECK_IF_RECORD_EXISTS(file, cn, new)
+	rExists := OST_CHECK_IF_RECORD_EXISTS(collectionPath, cn, new)
 
 	switch rExists 
 	{
@@ -597,13 +420,15 @@ OST_RENAME_RECORD :: proc(old, new: string, dotNotation: bool, params: ..string)
 				}
 
 				// Add the modified cluster to the new content
+				// fmt.printfln("New Cluster: %s", newCluster) //debugging
 				append(&newContent, ..newCluster[:])
 				append(&newContent, "}")
 				append(&newContent, ",\n\n")
 			} else if len(cluster) > 0 {
+				fmt.printfln("Cluster: %s", cluster)
 				// Keep other clusters unchanged
 				append(&newContent, ..transmute([]u8)cluster)
-				append(&newContent, "}")
+				append(&newContent, "\n}")
 				append(&newContent, ",\n\n")
 			}
 		}
@@ -713,67 +538,67 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 
 //finds a the passed in record, and updates its type. keeps its value which will eventually need to be changed
 OST_CHANGE_RECORD_TYPE :: proc(fn, cn, rn, rd, newType: string) -> bool {
-    data, readSuccess := utils.read_file(fn, #procedure)
-    defer delete(data)
-    if !readSuccess {
-        return false
-    }
+	data, readSuccess := utils.read_file(fn, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return false
+	}
 
-    content := string(data)
-    lines := strings.split(content, "\n")
-    defer delete(lines)
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
 
-    newLines := make([dynamic]string)
-    defer delete(newLines)
+	newLines := make([dynamic]string)
+	defer delete(newLines)
 
-    inTargetCluster := false
-    recordUpdated := false
+	inTargetCluster := false
+	recordUpdated := false
 
-    // Find the cluster and update the record
-    for line in lines {
-        trimmedLine := strings.trim_space(line)
+	// Find the cluster and update the record
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
 
-        if trimmedLine == "{" {
-            inTargetCluster = false
-        }
+		if trimmedLine == "{" {
+			inTargetCluster = false
+		}
 
-        if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
-            inTargetCluster = true
-        }
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+		}
 
-        if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
-            // Keep the original indentation
-            leadingWhitespace := strings.split(line, rn)[0]
-            // Create new line with updated type
-            newLine := fmt.tprintf("%s%s :%s: %s", leadingWhitespace, rn, newType, rd)
-            append(&newLines, newLine)
-            recordUpdated = true
-        } else {
-            append(&newLines, line)
-        }
+		if inTargetCluster && strings.contains(trimmedLine, fmt.tprintf("%s :", rn)) {
+			// Keep the original indentation
+			leadingWhitespace := strings.split(line, rn)[0]
+			// Create new line with updated type
+			newLine := fmt.tprintf("%s%s :%s: %s", leadingWhitespace, rn, newType, rd)
+			append(&newLines, newLine)
+			recordUpdated = true
+		} else {
+			append(&newLines, line)
+		}
 
-        if inTargetCluster && trimmedLine == "}," {
-            inTargetCluster = false
-        }
-    }
+		if inTargetCluster && trimmedLine == "}," {
+			inTargetCluster = false
+		}
+	}
 
-    if !recordUpdated {
-        fmt.printfln(
-            "Record %s%s%s not found in cluster %s%s%s",
-            utils.BOLD_UNDERLINE,
-            rn,
-            utils.RESET,
-            utils.BOLD_UNDERLINE,
-            cn,
-            utils.RESET,
-        )
-        return false
-    }
+	if !recordUpdated {
+		fmt.printfln(
+			"Record %s%s%s not found in cluster %s%s%s",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+			utils.BOLD_UNDERLINE,
+			cn,
+			utils.RESET,
+		)
+		return false
+	}
 
-    // Write the updated content back to file
-    newContent := strings.join(newLines[:], "\n")
-    writeSuccess := utils.write_to_file(fn, transmute([]byte)newContent, #procedure)
-    return writeSuccess
+	// Write the updated content back to file
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := utils.write_to_file(fn, transmute([]byte)newContent, #procedure)
+	return writeSuccess
 }
 
 //finds the location of the passed in record in the passed in cluster
@@ -884,122 +709,6 @@ OST_GET_RECORD_TYPE :: proc(fn, cn, rn: string) -> (recordType: string, success:
 	return "", false
 }
 
-//The following conversion funcs are used to convert the passed in record value to the correct data type
-//Originally these where all in one single proce but that was breaking shit.
-OST_CONVERT_RECORD_TO_INT :: proc(rValue: string) -> (int, bool) {
-	val, ok := strconv.parse_int(rValue)
-	if ok {
-		return val, true
-	} else {
-		fmt.printfln("Failed to parse int")
-		return 0, false
-	}
-}
-
-OST_CONVERT_RECORD_TO_FLOAT :: proc(rValue: string) -> (f64, bool) {
-	val, ok := strconv.parse_f64(rValue)
-	if ok {
-		return val, true
-	} else {
-		fmt.printfln("Failed to parse float")
-		return 0.0, false
-	}
-}
-
-//todo: as of 12/22/2024 I dicovered there is a parse_bool proc in the strconv package
-//need to update this proc to use it - Marshall Burns
-OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
-	lower_str := strings.to_lower(strings.trim_space(rValue))
-	if lower_str == "true" {
-		return true, true
-	} else if lower_str == "false" {
-		return false, true
-	} else {
-		//no need to do anything other than return here. Once false is returned error handling system will do its thing
-		return false, false
-	}
-}
-
-
-//The following converstion procs take in the string from the command line, splits it by commas
-//appends each split value to an array. Easy Day
-//Note: Memory is freed in the procecudure that calls these conversion procs
-//TODO: All of these can be combined into one proc with a switch statement but more work than Im willing to do rn - Marshall Burns aka @SchoolyB
-OST_CONVERT_RECORD_TO_INT_ARRAY :: proc(rValue: string) -> ([dynamic]int, bool) {
-	newArray := make([dynamic]int)
-	strValue := OST_PARSE_ARRAY(rValue)
-	for i in strValue {
-		val, ok := strconv.parse_int(i)
-		append(&newArray, val)
-	}
-	return newArray, true
-}
-
-
-OST_CONVERT_RECORD_TO_FLT_ARRAY :: proc(rValue: string) -> ([dynamic]f64, bool) {
-	newArray := make([dynamic]f64)
-	strValue := OST_PARSE_ARRAY(rValue)
-	for i in strValue {
-		val, ok := strconv.parse_f64(i)
-		append(&newArray, val)
-	}
-	return newArray, true
-}
-
-OST_CONVERT_RECORD_TO_BOOL_ARRAY :: proc(rValue: string) -> ([dynamic]bool, bool) {
-	newArray := make([dynamic]bool)
-	strValue := OST_PARSE_ARRAY(rValue)
-	for i in strValue {
-		lower_str := strings.to_lower(strings.trim_space(i))
-		if lower_str == "true" {
-			append(&newArray, true)
-		} else if lower_str == "false" {
-			append(&newArray, false)
-		} else {
-			fmt.printfln("Failed to parse bool array")
-			return newArray, false
-		}
-	}
-	return newArray, true
-}
-
-OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
-	newArray := make([dynamic]string)
-	strValue := OST_PARSE_ARRAY(rValue)
-	for i in strValue {
-		append(&newArray, i)
-	}
-	return newArray, true
-}
-
-//Dont really need the following 3 procs, could just call the parse procs where needed but fuck it - Marshall Burns
-OST_CONVERT_RECORD_TO_DATE :: proc(rValue: string) -> (string, bool) {
-	date, err := OST_PARSE_DATE(rValue)
-	if err == 0 {
-		return date, true
-	} else {
-		return "", false
-	}
-}
-
-OST_CONVERT_RECORD_TO_TIME :: proc(rValue: string) -> (string, bool) {
-	time, err := OST_PARSE_TIME(rValue)
-	if err == 0 {
-		return time, true
-	} else {
-		return "", false
-	}
-}
-
-OST_CONVERT_RECORD_TO_DATETIME :: proc(rValue: string) -> (string, bool) {
-	dateTime, err := OST_PARSE_DATETIME(rValue)
-	if err == 0 {
-		return dateTime, true
-	} else {
-		return "", false
-	}
-}
-
 
 //reads over a specific collection file and looks for records with the passed in name
 OST_SCAN_COLLECTION_FOR_RECORD :: proc(
@@ -1026,12 +735,12 @@ OST_SCAN_COLLECTION_FOR_RECORD :: proc(
 		}
 
 		// Extract cluster name
-		name_start := strings.index(cluster, "cluster_name :identifier:")
-		if name_start == -1 do continue
-		name_start += len("cluster_name :identifier:")
-		name_end := strings.index(cluster[name_start:], "\n")
-		if name_end == -1 do continue
-		currentClusterName := strings.trim_space(cluster[name_start:][:name_end])
+		nameStart := strings.index(cluster, "cluster_name :identifier:")
+		if nameStart == -1 do continue
+		nameStart += len("cluster_name :identifier:")
+		nameEnd := strings.index(cluster[nameStart:], "\n")
+		if nameEnd == -1 do continue
+		currentClusterName := strings.trim_space(cluster[nameStart:][:nameEnd])
 		// Look for record in this cluster
 		lines := strings.split(cluster, "\n")
 		for line in lines {
@@ -1140,9 +849,6 @@ OST_FIND_RECORD_MATCHES_IN_CLUSTERS :: proc(content: string, rName: string) -> [
 
 //Reworked for dot notation - Marshall Burns aka @SchoolyB
 OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
-	colNameBuf := make([]byte, 1024)
-	defer delete(colNameBuf)
-
 	result := OST_CHECK_IF_RECORD_EXISTS(file, cn, rn)
 
 	if !result {
@@ -1157,7 +863,6 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		return false
 	}
 
-	//todo: update this call to include the cluster name as well
 	recordType, getTypeSuccess := OST_GET_RECORD_TYPE(file, cn, rn)
 	//Array allocations
 	intArrayValue: [dynamic]int
@@ -1502,12 +1207,8 @@ OST_PARSE_RECORD :: proc(record: string) -> types.Record {
 
 //deletes a arecord from a cluster
 OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	using utils
+	collection_path := concat_collection_name(fn)
 
 
 	// Skip confirmation if in testing mode
@@ -1642,7 +1343,7 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 	records: [dynamic]string
 	histBuf: [1024]byte
 
-	data, readSuccess := utils.read_file("./history.ost", #procedure)
+	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
 	defer delete(data)
 	if !readSuccess {
 		return records
@@ -1683,7 +1384,13 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 			const.OST_FILE_EXTENSION,
 		)
 	} else if isCounting == false {
-		collectionPath = fmt.tprintf("%s%s%s", const.OST_BIN_PATH, fn, const.OST_FILE_EXTENSION)
+		collectionPath = fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
+		// fmt.printfln(
+		// 	"%s procedure is counting records in cluster: %s within collection: %s",
+		// 	#procedure,
+		// 	cn,
+		// 	fn,
+		// ) //debugging
 	}
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
@@ -1694,21 +1401,27 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 
 	content := string(data)
 	clusters := strings.split(content, "},")
-	// fmt.printfln("clusters: %s", clusters)
+	// fmt.printfln("clusters: %s", clusters) //debugging
 	for cluster in clusters {
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			lines := strings.split(cluster, "\n")
 			recordCount := 0
 
 			for line in lines {
+				// fmt.printfln("line: %s", line) //debugging
 				trimmedLine := strings.trim_space(line)
 				if len(trimmedLine) > 0 &&
 				   !strings.has_prefix(trimmedLine, "cluster_name") &&
 				   !strings.has_prefix(trimmedLine, "cluster_id") &&
+				   !strings.contains(trimmedLine, "#") &&
+				   !strings.contains(trimmedLine, const.METADATA_START) &&
+				   !strings.contains(trimmedLine, const.METADATA_END) &&
 				   strings.contains(trimmedLine, ":") {
+					// fmt.printfln("trimmedLine: %s", trimmedLine) //debugging
 					recordCount += 1
 				}
 			}
+			// fmt.printfln("Record count: %d", recordCount) //debugging
 			return recordCount
 		}
 	}
@@ -1754,8 +1467,8 @@ OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
 			   !strings.has_prefix(trimmedLine, "cluster_name") &&
 			   !strings.has_prefix(trimmedLine, "cluster_id") &&
 			   strings.contains(trimmedLine, ":") &&
-			   !strings.contains(trimmedLine, "[Ostrich File Header Start]") &&
-			   !strings.contains(trimmedLine, "[Ostrich File Header End]") {
+			   !strings.contains(trimmedLine, const.METADATA_START) &&
+			   !strings.contains(trimmedLine, const.METADATA_END) {
 				recordCount += 1
 			}
 		}
@@ -1872,9 +1585,11 @@ OST_GET_RECORD_SIZE :: proc(
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cluster_name)) {
 			lines := strings.split(cluster, "\n")
 			for line in lines {
-				if strings.has_prefix(line, record_name) {
+				parts := strings.split(line, ":")
+				if strings.has_prefix(line, fmt.tprintf("\t%s", record_name)) {
+					//added the \t to the prefix because all records are indented in the plain text collection file - Marshall Burns Jan 2025
 					parts := strings.split(line, ":")
-					if len(parts) >= 3 {
+					if len(parts) == 3 {
 						record_value := strings.trim_space(strings.join(parts[2:], ":"))
 						return len(record_value), true
 					}
@@ -1882,14 +1597,13 @@ OST_GET_RECORD_SIZE :: proc(
 			}
 		}
 	}
-
 	return 0, false
 }
 
 
 OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
 
-	data, readSuccess := utils.read_file("./history.ost", #procedure)
+	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
 	if !readSuccess {
 		return -1
 	}

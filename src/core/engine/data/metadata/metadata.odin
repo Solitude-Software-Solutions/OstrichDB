@@ -3,6 +3,7 @@ package metadata
 import "../../../../utils"
 import "../../../const"
 import "../../../types"
+import "core:crypto"
 import "core:crypto/hash"
 import "core:fmt"
 import "core:math/rand"
@@ -16,17 +17,6 @@ import "core:time"
 // Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
-
-
-METADATA_HEADER: []string = {
-	"# [Ostrich File Header Start]\n",
-	"# File Format Version: %ffv\n",
-	"# Date of Creation: %fdoc\n",
-	"# Date Last Modified: %fdlm\n",
-	"# File Size: %fs Bytes\n",
-	"# Checksum: %cs\n",
-	"# [Ostrich File Header End]},\n\n\n\n",
-}
 
 
 //Sets the files format version(FFV)
@@ -44,6 +34,8 @@ OST_GET_FS :: proc(file: string) -> os.File_Info {
 //this will get the size of the file and then subtract the size of the metadata header
 //then return the difference
 OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
+	using const
+	using utils
 	fileInfo, err := os.stat(file)
 	if err != 0 {
 		utils.log_err("Error getting file info", #procedure)
@@ -54,115 +46,109 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
-		utils.log_err("Error reading file", #procedure)
+		log_err("Error reading file", #procedure)
 		return -1, -1
 	}
 	defer delete(data)
 
 	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
 
-	metadataEndIndex := -1
-	for i in 0 ..< len(lines) {
-		line := lines[i]
-		if strings.has_prefix(line, "# [Ostrich File Header End]") {
-			metadataEndIndex = i
-			break
-		}
-	}
-
-	if metadataEndIndex == -1 {
-		utils.log_err("Metadata end marker not found", #procedure)
+	// Find metadata end marker
+	metadataEnd := strings.index(content, METADATA_END)
+	if metadataEnd == -1 {
+		log_err("Metadata end marker not found", #procedure)
 		return -1, -1
 	}
 
-	metadataSize := 0
-	for i := 0; i <= metadataEndIndex; i += 1 {
-		metadataSize += len(lines[i]) + 1 // +1 for newline character
-	}
+	// Add length of end marker to get total metadata size
+	metadataSize := metadataEnd + len(METADATA_END)
 
+	// Return actual content size (total - metadata) and metadata size
 	return totalSize - metadataSize, metadataSize
 }
 
+// Calculates a SHA-256 checksum for .ost files based on file content
+OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
+	using const
+	using utils
 
-// Generates a random 32 char checksum for .ost files.
-OST_GENERATE_CHECKSUM :: proc() -> string {
-	checksum: string
-	possibleNums: []string = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
-	possibleChars: []string = {
-		"A",
-		"B",
-		"C",
-		"D",
-		"E",
-		"F",
-		"G",
-		"H",
-		"I",
-		"J",
-		"K",
-		"L",
-		"M",
-		"N",
-		"O",
-		"P",
-		"Q",
-		"R",
-		"S",
-		"T",
-		"U",
-		"V",
-		"W",
-		"X",
-		"Y",
-		"Z",
+	data, readSuccess := os.read_entire_file(fn)
+	if !readSuccess {
+		log_err("Could not read file for checksum calculation", #procedure)
+		return ""
+	}
+	defer delete(data)
+
+	content := string(data)
+
+	//find metadata section boundaries
+	metadataStart := strings.index(content, METADATA_START)
+	metadataEnd := strings.index(content, METADATA_END)
+
+	if metadataEnd == -1 {
+		// For new files, generate unique initial checksum
+		uniqueContent := fmt.tprintf("%s_%v", fn, time.now())
+		hashedContent := hash.hash_string(hash.Algorithm.SHA256, uniqueContent)
+		return strings.clone(fmt.tprintf("%x", hashedContent))
 	}
 
-	for c := 0; c < 16; c += 1 {
-		randC := rand.choice(possibleChars)
-		checksum = strings.concatenate([]string{checksum, randC})
-	}
+	//extract content minus metadata header
+	actualContent := content[metadataEnd + len(METADATA_END):]
 
-	for n := 0; n < 16; n += 1 {
-		randN := rand.choice(possibleNums)
-		checksum = strings.concatenate([]string{checksum, randN})
-	}
-	return strings.clone(checksum)
+	//hash sub metadata header content
+	hashedContent := hash.hash_string(hash.Algorithm.SHA256, actualContent)
+
+	//format hash so that its fucking readable...
+	splitComma := strings.split(fmt.tprintf("%x", hashedContent), ",")
+	joinedSplit := strings.join(splitComma, "")
+	trimRBracket := strings.trim(joinedSplit, "]")
+	trimLBRacket := strings.trim(trimRBracket, "[")
+	NoWhitespace, _ := strings.replace(trimLBRacket, " ", "", -1)
+
+	return strings.clone(NoWhitespace)
 }
 
 
 //!Only used when to append the meta template upon .ost file creation NOT modification
 //this appends the metadata header to the file as well as sets the time of creation
 OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
+	using const
+	using utils
+
 	rawData, readSuccess := os.read_entire_file(fn)
 	defer delete(rawData)
-	fmt.println(readSuccess)
 	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error readinding collection file", #procedure)
-	}
-
-	dataAsStr := cast(string)rawData
-	if strings.has_prefix(dataAsStr, "# [Ostrich File Header Start]") {
+		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error readinding collection file", #procedure)
 		return false
 	}
 
-	file, e := os.open(fn, os.O_APPEND | os.O_WRONLY, 0o666)
+	dataAsStr := cast(string)rawData //todo: why in the hell did I use cast??? just use string() instead???
+	if strings.has_prefix(dataAsStr, "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@") {
+		log_err("Metadata header already present", #procedure)
+		return false
+	}
+
+	file, openSuccess := os.open(fn, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
 
-	if e != 0 {
+	if openSuccess != 0 {
+		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error opening collection file", #procedure)
 		return false
 	}
 
 	blockAsBytes := transmute([]u8)strings.concatenate(METADATA_HEADER)
 
 	writter, ok := os.write(file, blockAsBytes)
+	if ok != 0 {
+		error1 := new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure)
+		throw_err(error1)
+		log_err("Error writing metadata header to collection file", #procedure)
+		return false
+	}
 	return true
 }
 
@@ -170,13 +156,11 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 //fn = file name, param = metadata value to update.
 //1 = time of creation, 2 = last time modified, 3 = file size, 4 = file format version, 5 = checksum
 OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
+	using utils
+
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := utils.new_err(
-			.CANNOT_READ_FILE,
-			utils.get_err_msg(.CANNOT_READ_FILE),
-			#procedure,
-		)
+		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
 		return
 	}
 	defer delete(data)
@@ -186,22 +170,22 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	defer delete(lines)
 
 	//not doing anything with h,m,s yet but its there if needed
-	current_date, h, m, s := utils.get_date_and_time() // sets the files date of creation(FDOC) or file date last modified(FDLM)
-	file_info := OST_GET_FS(fn)
-	file_size := file_info.size
+	currentDate, h, m, s := utils.get_date_and_time() // sets the files date of creation(FDOC) or file date last modified(FDLM)
+	fileInfo := OST_GET_FS(fn)
+	fileSize := fileInfo.size
 
 	updated := false
 	for line, i in lines {
 		switch param {
 		case 1:
 			if strings.has_prefix(line, "# Date of Creation:") {
-				lines[i] = fmt.tprintf("# Date of Creation: %s", current_date)
+				lines[i] = fmt.tprintf("# Date of Creation: %s", currentDate)
 				updated = true
 			}
 			break
 		case 2:
 			if strings.has_prefix(line, "# Date Last Modified:") {
-				lines[i] = fmt.tprintf("# Date Last Modified: %s", current_date)
+				lines[i] = fmt.tprintf("# Date Last Modified: %s", currentDate)
 				updated = true
 			}
 		case 3:
@@ -211,7 +195,7 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 					lines[i] = fmt.tprintf("# File Size: %d Bytes", actualSize)
 					updated = true
 				} else {
-					fmt.println("Error calculating file size")
+					fmt.printfln("Error calculating file size for file %s", fn)
 				}
 			}
 			break
@@ -223,7 +207,7 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 			break
 		case 5:
 			if strings.has_prefix(line, "# Checksum:") {
-				lines[i] = fmt.tprintf("# Checksum: %s", OST_GENERATE_CHECKSUM())
+				lines[i] = fmt.tprintf("# Checksum: %s", OST_GENERATE_CHECKSUM(fn))
 				updated = true
 			}
 			break
@@ -238,12 +222,12 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 		return
 	}
 
-	new_content := strings.join(lines, "\n")
-	err := os.write_entire_file(fn, transmute([]byte)new_content)
+	newContent := strings.join(lines, "\n")
+	err := os.write_entire_file(fn, transmute([]byte)newContent)
 }
 
-//!Only used on .ost file creation whether secure or not
-OST_METADATA_ON_CREATE :: proc(fn: string) {
+//used when creating a new collection file whether public or not
+OST_UPDATE_METADATA_ON_CREATE :: proc(fn: string) {
 	OST_UPDATE_METADATA_VALUE(fn, 1)
 	OST_UPDATE_METADATA_VALUE(fn, 3)
 	OST_UPDATE_METADATA_VALUE(fn, 4)
@@ -252,26 +236,25 @@ OST_METADATA_ON_CREATE :: proc(fn: string) {
 
 //Creates the file format version file in the temp dir
 OST_CREATE_FFVF :: proc() {
-	CURRENT_FFV := utils.get_ost_version()
+	using const
+	using utils
+
+	CURRENT_FFV := get_ost_version()
 	os.make_directory(const.OST_TMP_PATH)
 
-	FFVF := const.OST_FFVF
-	tmpPath := const.OST_TMP_PATH
-	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF)
+	tmpPath := OST_TMP_PATH
+	pathAndName := fmt.tprintf("%s%s", tmpPath, OST_FFVF_PATH)
 
 	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
 	defer os.close(file)
 
 	if createSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_CREATE_FILE,
-			utils.get_err_msg(.CANNOT_CREATE_FILE),
-			#procedure,
-		)
-		utils.throw_custom_err(error1, "Cannot create file format version file")
+		error1 := new_err(.CANNOT_CREATE_FILE, get_err_msg(.CANNOT_CREATE_FILE), #procedure)
+		throw_custom_err(error1, "Cannot create file format version file")
 	}
-	os.close(file)
+
 	//close then open the file again to write to it
+	os.close(file)
 
 	f, openSuccess := os.open(pathAndName, os.O_WRONLY, 0o666)
 	defer os.close(f)
@@ -280,26 +263,29 @@ OST_CREATE_FFVF :: proc() {
 	if ok != 0 {
 		error1 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
-			utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+			get_err_msg(.CANNOT_WRITE_TO_FILE),
 			#procedure,
 		)
-		utils.throw_custom_err(error1, "Cannot write to file format version file")
+		throw_custom_err(error1, "Cannot write to file format version file")
 	}
 }
 
 //Gets the file format version from the file format version file
 OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
-	FFVF := const.OST_FFVF
-	tmpPath := const.OST_TMP_PATH
+	using const
+	using utils
+
+	FFVF := OST_FFVF_PATH
+	tmpPath := OST_TMP_PATH
 	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF)
 
 	ffvf, openSuccess := os.open(pathAndName)
 	if openSuccess != 0 {
-		utils.log_err("Could not open file format version file", #procedure)
+		log_err("Could not open file format version file", #procedure)
 	}
 	data, e := os.read_entire_file(ffvf)
 	if e == false {
-		utils.log_err("Could not read file format version file", #procedure)
+		log_err("Could not read file format version file", #procedure)
 		return nil
 	}
 	os.close(ffvf)
@@ -313,44 +299,67 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	scanSuccess: int,
 	invalidHeaderFormat: bool,
 ) {
-	file := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, fn, const.OST_FILE_EXTENSION)
+	using const
+	using utils
 
-	types.schema.Metadata_Header_Body = [5]string {
-		"# File Format Version: ",
-		"# Date of Creation: ",
-		"# Date Last Modified: ",
-		"# File Size: ",
-		"# Checksum: ",
-	}
-	data, readSuccess := utils.read_file(file, #procedure)
+	file := concat_collection_name(fn)
+
+	data, readSuccess := read_file(file, #procedure)
 	if !readSuccess {
-		return 1, true
+		return -1, true
 	}
 
 	content := string(data)
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	//checks if the metadata header is the appropriate length
-	if len(lines) < 7 {
-		utils.log_err(
-			"Invalid metadata header detected\n The metadata header was not the appropriate length",
-			#procedure,
-		)
-		return 1, true
+	// Check if the metadata header is present
+	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
+		// fmt.println("Lines[0]: ", lines[0]) //debugging
+		utils.log_err("Missing metadata start marker", #procedure)
+		return -2, true
+	}
+
+	// Find the end of metadata section
+	metadataEndIndex := -1
+	for i in 0 ..< len(lines) {
+		if strings.has_prefix(lines[i], "@@@@@@@@@@@@@@@BTM") {
+			metadataEndIndex = i
+			break
+		}
+	}
+
+	if metadataEndIndex == -1 {
+		log_err("Missing metadata end marker", #procedure)
+		return -3, true
+	}
+
+	// Verify the header has the correct number of lines
+	expectedLines := 7 // 5 metadata fields + start and end markers
+	if metadataEndIndex != expectedLines - 1 {
+		log_err("Invalid metadata header length", #procedure)
+		return 4, true
+	}
+
+	// Check each metadata field
+	for i in 1 ..< 5 {
+		if !strings.has_prefix(lines[i], types.Metadata_Header_Body[i - 1]) {
+			log_err(fmt.tprintf("Invalid metadata field format: %s", lines[i]), #procedure)
+			return -5, true
+		}
 	}
 
 	//checks if the file format verion file and the projects version file match
 	versionMatch := OST_VALIDATE_FILE_FORMAT_VERSION()
 	if !versionMatch {
-		utils.log_err("Invalid file format version being used", #procedure)
-		return 1, true
+		log_err("Invalid file format version being used", #procedure)
+		return -6, true
 	}
 
 	ffv_parts := strings.split(lines[1], ": ")
 	if len(ffv_parts) < 2 {
-		utils.log_err("Invalid file format version line format", #procedure)
-		return 1, true
+		log_err("Invalid file format version line format", #procedure)
+		return -7, true
 	}
 	collectionVersionValue := ffv_parts[1]
 
@@ -359,26 +368,12 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	//match, now have to ensure the collection file matches as well.
 	FFV := OST_GET_FILE_FORMAT_VERSION()
 	if strings.compare(collectionVersionValue, string(FFV)) != 0 {
-		utils.log_err(
+		log_err(
 			"File format version in collection file does not match the file format version",
 			#procedure,
 		)
-		return 1, true
+		return -8, true
 	}
-
-
-	// check if the header start and end markers are present at the correct lines
-	if !strings.has_prefix(lines[0], "# [Ostrich File Header Start]") ||
-	   !strings.has_prefix(lines[6], "# [Ostrich File Header End]") {
-		return 1, true
-	}
-
-	for i in 1 ..< 5 {
-		if !strings.has_prefix(lines[i], types.schema.Metadata_Header_Body[i - 1]) {
-			return 1, true
-		}
-	}
-
 
 	return 0, false
 }
@@ -392,4 +387,77 @@ OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
 		return false
 	}
 	return true
+}
+
+//returns the string value of the passed metadata field
+// colType: 1 = public(standard), 2 = history, 3 = config, 4 = ids
+OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: string, err: int) {
+	using const
+	using utils
+
+	file: string
+	switch (colType) {
+	case 1:
+		file = concat_collection_name(fn)
+		break
+	case 2:
+		file = OST_HISTORY_PATH
+		break
+	case 3:
+		file = OST_CONFIG_PATH
+		break
+	case 4:
+		file = OST_ID_PATH
+		break
+	}
+
+	data, readSuccess := utils.read_file(file, #procedure)
+	if !readSuccess {
+		utils.log_err("Error reading file", #procedure)
+		return "", 1
+	}
+	defer delete(data)
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+	// Check if the metadata header is present
+	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
+		fmt.println("Lines[0]: ", lines[0])
+		log_err("Missing metadata start marker", #procedure)
+		return "", -1
+	}
+
+	// Find the end of metadata section
+	metadataEndIndex := -1
+	for i in 0 ..< len(lines) {
+		if strings.has_prefix(lines[i], "@@@@@@@@@@@@@@@BTM") {
+			metadataEndIndex = i
+			break
+		}
+	}
+
+	if metadataEndIndex == -1 {
+		log_err("Missing metadata end marker", #procedure)
+		return "", -2
+	}
+
+	// Verify the header has the correct number of lines
+	expectedLines := 7 // 5 metadata fields + start and end markers
+	if metadataEndIndex != expectedLines - 1 {
+		log_err("Invalid metadata header length", #procedure)
+		return "", -3
+	}
+
+	for i in 1 ..< 5 {
+		if strings.has_prefix(lines[i], field) {
+			val := strings.split(lines[i], ": ")
+			fmt.println("Val: ", val)
+			return val[1], 0
+		}
+	}
+
+
+	return "", -4
 }

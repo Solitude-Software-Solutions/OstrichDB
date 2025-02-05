@@ -2,7 +2,7 @@
 
 ### HELP
 The `HELP` command displays helpful information about OstrichDB.'
-`HELP `Can be used alone to display general information or chained with specific tokens to display detailed information about that token. For example: `HELP COLLECTION` will display detailed information about collections. The `HELP` command can produce different levels of information depending on if the `OST_HELP` value in the `/bin/ostrich.config` file is set to `simple` or `verbose`. Currently it is set to `verbose`. If you'd like the help information that us shown to be more simple, set the `OST_HELP` value to `simple`.
+`HELP `Can be used alone to display general information or chained with specific tokens to display detailed information about that token. For example: `HELP COLLECTION` will display detailed information about collections. The `HELP` command can produce different levels of information depending on if the `OST_HELP` value in the `/bin/config` file is set to `simple` or `verbose`. Currently it is set to `verbose`. If you'd like the help information that us shown to be more simple, set the `OST_HELP` value to `simple`.
 
 ### VERSION START
 The `VERSION` command fetches the current installed version of OstrichDB. The versioning scheme for OstrichDB is `release type._major version.minor version.patch version_build type`.
@@ -18,7 +18,7 @@ The `LOGOUT` command logs out the current user WITHOUT closing OstrichDB. This c
 ### LOGOUT END
 
 ### RESTART START
-The `RESTART` command restarts OstrichDB. This command makes a function call that then calls the built-in restart script. 
+The `RESTART` command restarts OstrichDB. This command makes a function call that then calls the built-in restart script.
 ### RESTART END
 
 ### REBUILD START
@@ -38,27 +38,31 @@ The `TREE` token is a single-token action. It is used to display a tree like str
 ### TREE END
 
 ### HISTORY START
-THe `HISTORY` token is a single-token action. It is used to display a history of all the commands that have been used in the current sesssion of the OstrichDB command line. This command is useful for tracking the commands that have been entered and repeating them. Example: `HISTORY`.
+The `HISTORY` token is a single-token action. It is used to display a history of all the commands that have been used in the current sesssion of the OstrichDB command line. This command is useful for tracking the commands that have been entered and repeating them. Example: `HISTORY`.
 ### HISTORY END
 
+### DESTROY START
+The `DESTROY` token is a single-token action. It is used to delete all data, configurations, and users from the OstrichDB database. This command is useful for starting fresh with a clean database. Example: `DESTROY`.
+### DESTROY END
+
 ### NEW START
-The `NEW` token is a multi-token action. It is used to create new objects within OstrichDB. `NEW` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name. This tells the parser exactly what object to create and what to name it. For example: `NEW COLLECTION <collection_name>` will create a new collection with the specified name. For clusters and records, use dot notation: `NEW CLUSTER <collection_name>.<cluster_name>` or `NEW RECORD <collection_name>.<cluster_name>.<record_name>`.
+The `NEW` token is a multi-token action. It is used to create new objects within OstrichDB. This tells the parser exactly what object to create and what to name it. For example: `NEW <collection_name>` will create a new collection with the specified name. For clusters and records, use dot notation: `NEW CLUSTER <collection_name>.<cluster_name>` or `NEW RECORD <collection_name>.<cluster_name>.<record_name>`.
 ### NEW END
 
 ### FETCH START
-The `FETCH` token is a multi-token action. It is used to retrieve objects within OstrichDB. `FETCH` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name using dot notation. This tells the parser where to look and what data to retrieve. For example: `FETCH COLLECTION <collection_name>` will retrieve ALL the data from the collection with the specified name. For clusters and records: `FETCH CLUSTER <collection_name>.<cluster_name>` or `FETCH RECORD <collection_name>.<cluster_name>.<record_name>`.
+The `FETCH` token is a multi-token action. It is used to retrieve objects within OstrichDB. This tells the parser where to look and what data to retrieve. For example: `FETCH <collection_name>` will retrieve ALL the data from the collection with the specified name. For clusters and records: `FETCH CLUSTER <collection_name>.<cluster_name>` or `FETCH RECORD <collection_name>.<cluster_name>.<record_name>`.
 ### FETCH END
 
 ### SET START
-The `SET` token is a multi-token action. It is used to set the value of a record or config. `SET` MUST be followed by a target token such as `RECORD` or `CONFIG` and the object name using dot notation for records. This tells the parser exactly what object to set the value of and what to set it to. For example: `SET RECORD <collection_name>.<cluster_name>.<record_name> TO <record_value>` will set the value of the record with the specified name to the specified value. For configs: `SET CONFIG <config_name> TO <value>`.
+The `SET` token is a multi-token action. It is used to set the value of a record or config.For example: `SET <collection_name>.<cluster_name>.<record_name> TO <record_value>` will set the value of the record with the specified name to the specified value. For configs: `SET CONFIG <config_name> TO <value>`.
 ### SET END
 
 ### RENAME START
-The `RENAME` token is a multi-token action. It is used to change the name of objects within OstrichDB. `RENAME` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name. This tells the parser exactly what object to rename and what to name it. For example: `RENAME COLLECTION <collection_name> TO <new_collection_name>` will rename the collection with the specified name to the new specified name.
+The `RENAME` token is a multi-token action. It is used to change the name of objects within OstrichDB. This tells the parser exactly what object to rename and what to name it. For example: `RENAME COLLECTION <collection_name> TO <new_collection_name>` will rename the collection with the specified name to the new specified name.
 ### RENAME END
 
 ### ERASE START
-The `ERASE` token is a multi-token action. It is used to delete objects within OstrichDB. `ERASE` MUST be followed by a target token such as `COLLECTION`, `CLUSTER`, or `RECORD` and an object name. This tells the parser exactly what object to delete and what to name it. For example: `ERASE COLLECTION <collection_name>` will delete the collection with the specified name.
+The `ERASE` token is a multi-token action. It is used to delete objects within OstrichDB. This tells the parser exactly what object to delete and what to name it. For example: `ERASE COLLECTION <collection_name>` will delete the collection with the specified name.
 ### ERASE END
 
 ### PURGE START
@@ -73,6 +77,13 @@ The `COUNT` token is a multi-token action. It is used to return the number of ob
 The `SIZE_OF` token is a multi-token action. It is used to return the size in bytes of an object. `SIZE_OF` MUST be followed by a target token such as `RECORD`, `CLUSTER`, or `COLLECTION` and an object name. For example: `SIZE_OF COLLECTION <collection_name>` will return the size in bytes of the collection with the specified name.
 ### SIZE_OF END
 
+### TYPE_OF START
+The `TYPE_OF` token is a multi-token action. It is used to return the data type of a record. `TYPE_OF` For example: `TYPE_OF RECORD <collection_name>.<cluster_name>.<record_name>` will return the type of the record with the specified name.
+### TYPE_OF END
+
+### CHANGE_TYPE START
+The `CHANGE_TYPE` token is a multi-token action. It is used to change the data type of a record. `CHANGE_TYPE`. For example: `CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_data_type>` will change the data type of the record with the specified name to the new specified data type.
+
 ### WHERE START
 The `WHERE` token is a multi-token action. It is used to search for the location of a cluster or record within OstrichDB. `WHERE` can be followed by the target token ie `CLUSTER` or `RECORD` then the target object name or just the object name. For example: `WHERE RECORD <record_name>` will search all collections for the location of any record with the specified name.
 ### WHERE END
@@ -80,6 +91,10 @@ The `WHERE` token is a multi-token action. It is used to search for the location
 ### BACKUP START
 The `BACKUP` token is a multi-token action. It is used to create a backup of all data within OstrichDB. `BACKUP` MUST be followed by the target token `COLLECTION` and an object name. For example: `BACKUP COLLECTION <collection_name>` will create a backup of the collection with the specified name. Backups are stored in the `/bin/backups` directory and end with the `.ost` file extension.
 ### BACKUP END
+
+
+### ISOLATE START
+The `ISOLATE` token is a multi-token action. It is used to isolate a collection from the rest of the database. For example: `ISOLATE <collection_name>` will isolate the collection with the specified name from the rest of the database. This is useful for testing and debugging.
 
 ### COLLECTION START
 Collections are individual databases that are "collections" of smaller data objects called "clusters". Collection files are stored in the `/bin/collections` and end with the `.ost` file extension. Within the OstrichDB command line `COLLECTION`is a target token. This is used to specify that an action will be preformed on a collection. For example: `NEW COLLECTION <collection_name>` will create a new collection with the specified name.
