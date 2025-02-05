@@ -424,7 +424,7 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 	buf: [64]byte
 	file: string
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := concat_collection_name(fn)
 
 	// Skip confirmation if in testing mode
 	if !types.TESTING {
@@ -547,7 +547,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	using utils
 
 	clusterContent: string
-	collectionPath := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
+	collectionPath := concat_collection_name(fn)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
 	switch clusterExists 
@@ -614,7 +614,7 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 
 	buf := make([]byte, 64)
 	defer delete(buf)
-	filePath := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
+	filePath := concat_collection_name(fn)
 	data, readSuccess := os.read_entire_file(filePath)
 	if !readSuccess {
 		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
@@ -670,7 +670,7 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 	using const
 	using utils
 
-	file := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
+	file := concat_collection_name(fn)
 
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
@@ -722,7 +722,9 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 
 //counts the number of clusters in a collection file
 OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
-	file := utils.concat_collection_name(fn)
+	using utils
+
+	file := concat_collection_name(fn)
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
 		utils.log_err("Failed to read collection file", #procedure)
@@ -850,8 +852,9 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 
 OST_GET_CLUSTER_SIZE :: proc(fn: string, cn: string) -> (size: int, success: bool) {
 	using const
+	using utils
 
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := concat_collection_name(fn)
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
 		return 0, false

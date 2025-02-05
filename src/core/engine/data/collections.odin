@@ -67,7 +67,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 			utils.log_err("Error creating new collection file", #procedure)
 			return false
 		}
-		metadata.OST_METADATA_ON_CREATE(collectionPath)
+		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	case 1:
@@ -93,7 +93,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_METADATA_ON_CREATE(collectionPath)
+		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	case 2, 3, 4:
@@ -110,7 +110,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_METADATA_ON_CREATE(collectionPath)
+		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	}

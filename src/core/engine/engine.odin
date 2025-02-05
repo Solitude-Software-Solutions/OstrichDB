@@ -80,6 +80,7 @@ OST_START_ENGINE :: proc() -> int {
 
 //Command line loop
 OST_ENGINE_COMMAND_LINE :: proc() -> int {
+	result := 0
 	fmt.println("Welcome to the OstrichDB DBMS Command Line")
 	utils.log_runtime_event("Entered DBMS command line", "")
 	for {
@@ -113,10 +114,11 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			OST_HANDLE_MAX_SESSION_DURATION_MET()
 		}
 
-		result := OST_EXECUTE_COMMAND(&cmd)
+		result = OST_EXECUTE_COMMAND(&cmd)
 
 		//Command line end
 	}
+	return result
 
 }
 

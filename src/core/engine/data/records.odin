@@ -1207,12 +1207,8 @@ OST_PARSE_RECORD :: proc(record: string) -> types.Record {
 
 //deletes a arecord from a cluster
 OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	using utils
+	collection_path := concat_collection_name(fn)
 
 
 	// Skip confirmation if in testing mode

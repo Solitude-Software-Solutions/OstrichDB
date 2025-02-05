@@ -28,7 +28,7 @@ main :: proc() {
 		port = 8083,
 	}
 
-	main()
+
 	data.main()
 
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
@@ -42,7 +42,7 @@ main :: proc() {
 
 	//Print the Ostrich logo and version
 	version := string(get_ost_version())
-	fmt.printfln(fmt.tprintf(ostrich_art, GREEN, version, RESET))
+	fmt.println(fmt.tprintf(ostrich_art, GREEN, version, RESET))
 	if data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, BOOLEAN, CONFIG_ONE) == "true" {
 		OstrichEngine.Initialized = true
 		log_runtime_event("OstrichDB Engine Initialized", "")
