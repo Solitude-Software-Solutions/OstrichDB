@@ -24,22 +24,25 @@ main :: proc() {
 	//Create the benchmark directory
 	os.make_directory(const.OST_BENCHMARK_PATH, 0o777)
 
-	//Create the collections
 
-	benchmark1, colNames := B_COLLECTION_OP(1) //pass num of iterations
-	benchmark2, cluNames := B_CLUSTER_OP(10, colNames) //pass num of iterations and collection names
-	benchmark3, recNames := B_RECORDS_OP(colNames, cluNames, 10) //pass collection names, cluster names, and num of iterations
+	//Creation Benchmarks
+	benchmark1, colNames := B_CREATE_COLLECTION_OP(1) //pass num of iterations
+	benchmark2, cluNames := B_CREATE_CLUSTER_OP(10, colNames) //pass num of iterations and collection names
+	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, 10) //pass collection names, cluster names, and num of iterations
 
+	//Fetching Benchmarks
+	benchmark4 := B_FETCH_COLLECTION_OP(1) //pass num of iterations
 
 	//get grand totals
-	totalOperations := benchmark1.total_ops + benchmark2.total_ops + benchmark3.total_ops
-	totalTime := benchmark1.op_time + benchmark2.op_time + benchmark3.op_time
+	totalOperations :=
+		benchmark1.total_ops + benchmark2.total_ops + benchmark3.total_ops + benchmark4.total_ops
+	totalTime := benchmark1.op_time + benchmark2.op_time + benchmark3.op_time + benchmark4.op_time
 	totalOpsPerSecond := f64(totalOperations) / time.duration_seconds(totalTime)
-
 
 	show_benchmark_results(benchmark1)
 	show_benchmark_results(benchmark2)
 	show_benchmark_results(benchmark3)
+	show_benchmark_results(benchmark4)
 	fmt.printfln("----------------------------------")
 	fmt.println("OstrichDB Benchmark Grand Totals")
 	fmt.printfln("Time: %s%d%s", GREEN, totalTime, RESET)
@@ -55,7 +58,9 @@ main :: proc() {
 }
 
 
-B_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dynamic]string) {
+//BENCHMARKING OPERATION PROCEDURES START HERE
+//All "B_<name>_OP" procedures perform the actual benchmarking operations
+B_CREATE_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dynamic]string) {
 	startTime := time.now()
 	names: [dynamic]string
 
@@ -77,7 +82,7 @@ B_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dynamic]st
 		names
 }
 
-B_CLUSTER_OP :: proc(
+B_CREATE_CLUSTER_OP :: proc(
 	iterations: int,
 	colNames: [dynamic]string,
 ) -> (
@@ -111,7 +116,7 @@ B_CLUSTER_OP :: proc(
 }
 
 
-B_RECORDS_OP :: proc(
+B_CREATE_RECORD_OP :: proc(
 	colNames, cluNames: [dynamic]string,
 	iterations: int,
 ) -> (
@@ -148,8 +153,23 @@ B_RECORDS_OP :: proc(
 		names
 }
 
+B_FETCH_COLLECTION_OP :: proc(iterations: int) -> types.Benchmark_Result {
+	startTime := time.now()
+	for i := 0; i < iterations; i += 1 {
+		B_FETCH_COLLECTION(fmt.tprintf("benchmark_collection_%d", i))
+	}
+	duration := time.since(startTime)
+	ops_per_second := f64(iterations) / time.duration_seconds(duration)
 
-//PROCEDURES
+	return types.Benchmark_Result {
+		op_name = "Fetch Collection",
+		total_ops = iterations,
+		op_time = duration,
+		ops_per_second = ops_per_second,
+	}
+}
+
+//CREATION PROCEDURES START
 B_CREATE_COLLECTION :: proc(fn: string) -> int {
 	file := concat_benchmark_collection(fn)
 
@@ -174,7 +194,6 @@ B_CREATE_COLLECTION :: proc(fn: string) -> int {
 	}
 	return 0
 }
-
 
 B_GENERATE_ID :: proc() -> i64 {
 	//ensure the generated id length is 16 digits
@@ -274,7 +293,6 @@ B_GENERATE_RECORD_VALUES :: proc(rType: string) -> string {
 	return "You should not see this"
 }
 
-
 B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 	file := concat_benchmark_collection(fn)
 	data, readSuccess := utils.read_file(file, #procedure)
@@ -339,11 +357,41 @@ B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 	//update metadata
 	refresh_metadata(fn)
 	return 0
+}
+//CREATION PROCEDURES END
 
 
+//FETCHING PROCEDURES START
+//All FETCH procs only ensure that the file is read and the starting point is found nothing more
+
+
+B_FETCH_COLLECTION :: proc(fn: string) -> int {
+	fileStart := -1
+	startingPoint := "BTM@@@@@@@@@@@@@@@"
+	file := concat_benchmark_collection(fn)
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
+		return -1
+	}
+	defer delete(data)
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+	for i := 0; i < len(lines); i += 1 {
+		if strings.contains(lines[i], startingPoint) {
+			fileStart = i + 1
+			break
+		}
+	}
+	if fileStart == -1 || fileStart >= len(lines) {
+		return -2
+	}
+
+	return 0
 }
 
 //COMMON BENCHMARKING UTILS
+//Might move them to their own file in the package at some point - Marshall
 concat_benchmark_collection :: proc(name: string) -> string {
 	using const
 	return strings.clone(fmt.tprintf("%s%s%s", OST_BENCHMARK_PATH, name, OST_FILE_EXTENSION))
