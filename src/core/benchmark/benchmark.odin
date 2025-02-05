@@ -27,16 +27,31 @@ main :: proc() {
 	b_results := make([dynamic]types.Benchmark_Result, 0)
 	failCounter := 0
 
+
+	//Change our values at any time :)
+	collectionIterations := 1
+	clusterIterations := 1
+	recordIterations := 1
+
+
+	//Note to developers: Each benchmark operation i.e create,fetch, and erase must match the same number of iterations on the same data structure.
+	//For example, if you create 10 collections, you must fetch 10 collections and erase 10 collections. The same applies to clusters and records.
+	// - Marshall
+
 	//Creation Benchmarks
-	benchmark1, colNames := B_CREATE_COLLECTION_OP(1)
-	benchmark2, cluNames := B_CREATE_CLUSTER_OP(10, colNames)
-	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, 10)
+	benchmark1, colNames := B_CREATE_COLLECTION_OP(collectionIterations)
+	benchmark2, cluNames := B_CREATE_CLUSTER_OP(clusterIterations, colNames)
+	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, recordIterations)
 
 	//Fetching Benchmarks
-	benchmark4 := B_FETCH_COLLECTION_OP(1) //IMPORTANT: The num of iterations is reliant on the num of collections created in benchmark1. KEEP THEM THE SAME!
-	benchmark5 := B_FETCH_CLUSTER_OP(colNames, 10) //IMPORTANT: The num of iterations is reliant on the num of clusters created in benchmark2. KEEP THEM THE SAME!
-	benchmark6 := B_FETCH_RECORD_OP(colNames, cluNames, 10) //IMPORTANT: The num of iterations is reliant on the num of records created in benchmark3. KEEP THEM THE SAME!
+	benchmark4 := B_FETCH_COLLECTION_OP(collectionIterations)
+	benchmark5 := B_FETCH_CLUSTER_OP(colNames, clusterIterations)
+	benchmark6 := B_FETCH_RECORD_OP(colNames, cluNames, recordIterations)
 
+	//Erase Benchmarks
+	benchmark7 := B_ERASE_RECORD_OP(colNames, cluNames, recordIterations)
+	benchmark8 := B_ERASE_CLUSTER_OP(colNames, recordIterations)
+	benchmark9 := B_ERASE_COLLECTION_OP(collectionIterations) //Erasing collections last since all other operations depend on them
 
 	append(&b_results, benchmark1)
 	append(&b_results, benchmark2)
@@ -44,6 +59,9 @@ main :: proc() {
 	append(&b_results, benchmark4)
 	append(&b_results, benchmark5)
 	append(&b_results, benchmark6)
+	append(&b_results, benchmark7)
+	append(&b_results, benchmark8)
+	append(&b_results, benchmark9)
 
 	for result in b_results {
 		if result.success == false {
@@ -58,7 +76,10 @@ main :: proc() {
 		benchmark3.total_ops +
 		benchmark4.total_ops +
 		benchmark5.total_ops +
-		benchmark6.total_ops
+		benchmark6.total_ops +
+		benchmark7.total_ops +
+		benchmark8.total_ops +
+		benchmark9.total_ops
 
 
 	totalTime :=
@@ -67,17 +88,15 @@ main :: proc() {
 		benchmark3.op_time +
 		benchmark4.op_time +
 		benchmark5.op_time +
-		benchmark6.op_time
+		benchmark6.op_time +
+		benchmark7.op_time +
+		benchmark8.op_time +
+		benchmark9.op_time
 
 	totalOpsPerSecond := f64(totalOperations) / time.duration_seconds(totalTime)
 
 	show_all_benchmark_results(b_results) //for individual results use show_benchmark_result(<benchmark_name>)
 	show_grand_totals(totalTime, totalOpsPerSecond, totalOperations, failCounter)
-
-
-	//Delete the records
-	//Delete the clusters
-	//Delete the collections
 
 
 	//Can't forget to free the memory :)
@@ -89,8 +108,11 @@ main :: proc() {
 }
 
 
-//BENCHMARKING OPERATION PROCEDURES START HERE
-//All "B_<name>_OP" procedures perform the actual benchmarking operations
+//============================================CORE BENCMARKING PROCEDURES============================================//
+//============================================CORE BENCMARKING PROCEDURES============================================//
+//============================================CORE BENCMARKING PROCEDURES============================================//
+
+//All "B_<name>_OP" procedures perform the actual benchmarking operational logic
 B_CREATE_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dynamic]string) {
 	startTime := time.now()
 	names: [dynamic]string
@@ -329,6 +351,107 @@ B_FETCH_RECORD_OP :: proc(
 	}
 }
 
+B_ERASE_COLLECTION_OP :: proc(iterations: int) -> types.Benchmark_Result {
+	startTime := time.now()
+	for i := 0; i < iterations; i += 1 {
+		if B_ERASE_COLLECTION(fmt.tprintf("benchmark_collection_%d", i)) == 0 {
+			continue
+		} else {
+			return types.Benchmark_Result {
+				op_name = "Erase Collection",
+				total_ops = i,
+				op_time = time.since(startTime),
+				ops_per_second = 0,
+				success = false,
+			}
+		}
+	}
+	duration := time.since(startTime)
+	ops_per_second := f64(iterations) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+		op_name = "Erase Collection",
+		total_ops = iterations,
+		op_time = duration,
+		ops_per_second = ops_per_second,
+		success = true,
+	}
+}
+
+B_ERASE_CLUSTER_OP :: proc(fn: [dynamic]string, iterations: int) -> types.Benchmark_Result {
+	startTime := time.now()
+	for colName in fn {
+		for i := 0; i < iterations; i += 1 {
+			if B_ERASE_CLUSTER(colName, fmt.tprintf("benchmark_cluster_%d", i)) == 0 {
+				continue
+			} else {
+				return types.Benchmark_Result {
+					op_name = "Erase Cluster",
+					total_ops = len(fn) * i,
+					op_time = time.since(startTime),
+					ops_per_second = 0,
+					success = false,
+				}
+			}
+		}
+	}
+	duration := time.since(startTime)
+	ops_per_second := f64(len(fn) * iterations) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+		op_name = "Erase Cluster",
+		total_ops = len(fn) * iterations,
+		op_time = duration,
+		ops_per_second = ops_per_second,
+		success = true,
+	}
+}
+
+B_ERASE_RECORD_OP :: proc(fn, cn: [dynamic]string, iterations: int) -> types.Benchmark_Result {
+	startTime := time.now()
+	recordCounter := 0
+
+	for colName in fn {
+		for cluName in cn {
+			for i := 0; i < iterations; i += 1 {
+				if B_ERASE_RECORD(
+					   colName,
+					   cluName,
+					   fmt.tprintf("benchmark_record_%d", recordCounter),
+				   ) ==
+				   0 {
+					recordCounter += 1
+					continue
+				} else {
+					return types.Benchmark_Result {
+						op_name = "Erase Record",
+						total_ops = recordCounter,
+						op_time = time.since(startTime),
+						ops_per_second = 0,
+						success = false,
+					}
+				}
+			}
+		}
+	}
+	duration := time.since(startTime)
+	total_ops := len(fn) * len(cn) * iterations
+	ops_per_second := f64(total_ops) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+		op_name = "Erase Record",
+		total_ops = total_ops,
+		op_time = duration,
+		ops_per_second = ops_per_second,
+		success = true,
+	}
+
+}
+
+//============================================DATA MANIPULATION PROCEDURES============================================//
+//============================================DATA MANIPULATION PROCEDURES============================================//
+//============================================DATA MANIPULATION PROCEDURES============================================//
+
 //CREATION PROCEDURES START
 B_CREATE_COLLECTION :: proc(fn: string) -> int {
 	file := concat_benchmark_collection(fn)
@@ -547,7 +670,6 @@ B_FETCH_CLUSTER :: proc(fn, cn: string) -> int {
 }
 
 B_FETCH_RECORD :: proc(fn, cn, rn: string) -> int {
-
 	clusterContent: string
 	recordContent: string
 	collectionPath := concat_benchmark_collection(fn)
@@ -587,7 +709,175 @@ B_FETCH_RECORD :: proc(fn, cn, rn: string) -> int {
 }
 //FETCHING PROCEDURES END
 
-//COMMON BENCHMARKING UTILS
+//ERASE PROCEDURES START
+B_ERASE_COLLECTION :: proc(fn: string) -> int {
+	file := concat_benchmark_collection(fn)
+	deleteSuccess := os.remove(file)
+	if deleteSuccess != 0 {
+		return -1
+	}
+	return 0
+}
+
+B_ERASE_CLUSTER :: proc(fn, cn: string) -> int {
+	using utils
+
+	success: int
+	buf: [64]byte
+	file: string
+	collectionPath := concat_benchmark_collection(fn)
+
+	data, readSuccess := read_file(collectionPath, #procedure)
+	defer delete(data)
+
+	content := string(data)
+
+	// Find the end of the metadata header
+	headerEnd := strings.index(content, const.METADATA_END)
+	// Move past the metadata header
+	headerEnd += len(const.METADATA_END) + 1
+
+	//split content into metadata header and body
+	metaDataHeader := content[:headerEnd]
+	body := content[headerEnd:]
+
+
+	clusters := strings.split(content, "},")
+	newContent := make([dynamic]u8)
+	defer delete(newContent)
+	clusterFound := false
+	append(&newContent, ..transmute([]u8)metaDataHeader)
+
+
+	for cluster in clusters {
+		// Find the cluster name in the current cluster
+		nameStart := strings.index(cluster, "cluster_name :identifier:")
+		if nameStart != -1 {
+			// Move past the identifier prefix
+			nameStart += len("cluster_name :identifier:")
+			// Find the end of the line
+			nameEnd := strings.index(cluster[nameStart:], "\n")
+			if nameEnd != -1 {
+				// Extract the actual cluster name and remove leading/trailing whitespace
+				cluster_name := strings.trim_space(cluster[nameStart:][:nameEnd])
+
+				// Skip this cluster if it matches the one we want to delete
+				if cluster_name == cn {
+					clusterFound = true
+					continue
+				}
+			}
+		}
+		//perseve non-empty clusters
+		if len(strings.trim_space(cluster)) > 0 {
+			append(&newContent, ..transmute([]u8)cluster)
+			append(&newContent, "},")
+		}
+	}
+
+	if !clusterFound {
+		return -1
+	}
+
+	writeSuccess := write_to_file(collectionPath, newContent[:], #procedure)
+	if !writeSuccess {
+		return -2
+	} else {
+		refresh_metadata(fn)
+		return 0
+	}
+}
+
+B_ERASE_RECORD :: proc(fn, cn, rn: string) -> int {
+	using utils
+
+	collectionPath := concat_benchmark_collection(fn)
+
+	data, readSuccess := utils.read_file(collectionPath, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return -1
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	newLines := make([dynamic]string)
+	defer delete(newLines)
+
+	inTargetCluster := false
+	recordFound := false
+	isLastRecord := false
+	recordCount := 0
+
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+			continue
+		}
+		if inTargetCluster {
+			if trimmedLine == "}," {
+				inTargetCluster = false
+				continue
+			}
+			if len(trimmedLine) > 0 &&
+			   !strings.has_prefix(trimmedLine, "cluster_name") &&
+			   !strings.has_prefix(trimmedLine, "cluster_id") {
+				recordCount += 1
+			}
+		}
+	}
+
+	inTargetCluster = false
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+			append(&newLines, line)
+			continue
+		}
+
+		if inTargetCluster {
+			if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+				recordFound = true
+				if recordCount == 1 {
+					isLastRecord = true
+				}
+				continue
+			}
+
+			if trimmedLine == "}," {
+				if !isLastRecord {
+					append(&newLines, line)
+				} else {
+					append(&newLines, "}")
+				}
+				inTargetCluster = false
+				continue
+			}
+		}
+
+		if !inTargetCluster || !strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+			append(&newLines, line)
+		}
+	}
+
+	if !recordFound {
+		return -2
+	}
+
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := utils.write_to_file(collectionPath, transmute([]byte)newContent, #procedure)
+	return 0
+}
+//ERASE PROCEDURES END
+
+
+//============================================COMMON UTILS============================================//
+//============================================COMMON UTILS============================================//
+//============================================COMMON UTILS============================================//
+
 //Might move them to their own file in the package at some point - Marshall
 concat_benchmark_collection :: proc(name: string) -> string {
 	using const
