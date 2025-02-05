@@ -4,7 +4,6 @@ import "../const"
 import "../engine/data"
 import "../engine/data/metadata"
 import "../types"
-import "core:c/libc"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
@@ -75,11 +74,6 @@ main :: proc() {
 	show_all_benchmark_results(b_results) //for individual results use show_benchmark_result(<benchmark_name>)
 	show_grand_totals(totalTime, totalOpsPerSecond, totalOperations, failCounter)
 
-	//Old way of printing the results, will delete later
-	// fmt.printfln("Total Operations: %d", totalOperations)
-	// fmt.printfln("Total Time: %d", totalTime)
-	// fmt.printfln("Operations Per Second: %f", totalOpsPerSecond)
-
 
 	//Delete the records
 	//Delete the clusters
@@ -101,21 +95,32 @@ B_CREATE_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dyn
 	startTime := time.now()
 	names: [dynamic]string
 
-	for i := 0; i < iterations; i += 1 {
-		benchmarkColName := fmt.tprintf("benchmark_collection_%d", i)
-		if B_CREATE_COLLECTION(benchmarkColName) == 0 {
-			append(&names, benchmarkColName)
-		} else {
-			return types.Benchmark_Result {
-					op_name = "Create Collection",
-					total_ops = i,
-					op_time = time.since(startTime),
-					ops_per_second = 0,
-					success = false,
-				},
-				names
+	// Get current collection count
+	if dir_handle, err := os.open(const.OST_BENCHMARK_PATH); err == 0 {
+		defer os.close(dir_handle)
+		if files, read_err := os.read_dir(dir_handle, 0); read_err == 0 {
+			defer delete(files)
+			start_index := len(files)
+
+			// Create new collections starting from existing count
+			for i := 0; i < iterations; i += 1 {
+				benchmarkColName := fmt.tprintf("benchmark_collection_%d", start_index + i)
+				if B_CREATE_COLLECTION(benchmarkColName) == 0 {
+					append(&names, benchmarkColName)
+				} else {
+					return types.Benchmark_Result {
+							op_name = "Create Collection",
+							total_ops = i,
+							op_time = time.since(startTime),
+							ops_per_second = 0,
+							success = false,
+						},
+						names
+				}
+			}
 		}
 	}
+
 
 	duration := time.since(startTime)
 	ops_per_second := f64(iterations) / time.duration_seconds(duration)
@@ -284,21 +289,28 @@ B_FETCH_RECORD_OP :: proc(
 	colNames, cluNames: [dynamic]string,
 	iterations: int,
 ) -> types.Benchmark_Result {
-
-
 	startTime := time.now()
+	recordCounter := 0 // Add a record counter to match creation pattern
+
 	for colName in colNames {
 		for cluName in cluNames {
 			for i := 0; i < iterations; i += 1 {
-				if B_FETCH_RECORD(colName, cluName, fmt.tprintf("benchmark_record_%d", i)) == 0 {
+				// Use recordCounter instead of i to match creation pattern
+				if B_FETCH_RECORD(
+					   colName,
+					   cluName,
+					   fmt.tprintf("benchmark_record_%d", recordCounter),
+				   ) ==
+				   0 {
+					recordCounter += 1
 					continue
 				} else {
 					return types.Benchmark_Result {
-						op_name = "Fetch Record",
-						total_ops = len(colNames) * len(cluNames) * i,
-						op_time = time.since(startTime),
+						op_name        = "Fetch Record",
+						total_ops      = recordCounter, // Use recordCounter instead of calculation
+						op_time        = time.since(startTime),
 						ops_per_second = 0,
-						success = false,
+						success        = false,
 					}
 				}
 			}
@@ -316,7 +328,6 @@ B_FETCH_RECORD_OP :: proc(
 		success = true,
 	}
 }
-
 
 //CREATION PROCEDURES START
 B_CREATE_COLLECTION :: proc(fn: string) -> int {
@@ -462,7 +473,6 @@ B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 	}
 
 	new_content := strings.join(new_lines[:], "\n")
-	// fmt.println("debugging-- new_content: ", new_content) //debugging
 	writeSuccess := utils.write_to_file(file, transmute([]byte)new_content, #procedure)
 	if !writeSuccess {
 		return -3
@@ -573,6 +583,7 @@ B_FETCH_RECORD :: proc(fn, cn, rn: string) -> int {
 	}
 
 	return -2 //fail to fetch record
+
 }
 //FETCHING PROCEDURES END
 
