@@ -302,7 +302,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	using const
 	using utils
 
-	file := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
+	file := concat_collection_name(fn)
 
 	data, readSuccess := read_file(file, #procedure)
 	if !readSuccess {

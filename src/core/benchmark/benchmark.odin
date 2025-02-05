@@ -24,7 +24,9 @@ main :: proc() {
 
 	//Create the benchmark directory
 	os.make_directory(const.OST_BENCHMARK_PATH, 0o777)
-
+	//Create a benchmark result array to keep everything tidy
+	b_results := make([dynamic]types.Benchmark_Result, 0)
+	failCounter := 0
 
 	//Creation Benchmarks
 	benchmark1, colNames := B_CREATE_COLLECTION_OP(1)
@@ -33,30 +35,63 @@ main :: proc() {
 
 	//Fetching Benchmarks
 	benchmark4 := B_FETCH_COLLECTION_OP(1) //IMPORTANT: The num of iterations is reliant on the num of collections created in benchmark1. KEEP THEM THE SAME!
+	benchmark5 := B_FETCH_CLUSTER_OP(colNames, 10) //IMPORTANT: The num of iterations is reliant on the num of clusters created in benchmark2. KEEP THEM THE SAME!
+	benchmark6 := B_FETCH_RECORD_OP(colNames, cluNames, 10) //IMPORTANT: The num of iterations is reliant on the num of records created in benchmark3. KEEP THEM THE SAME!
 
+
+	append(&b_results, benchmark1)
+	append(&b_results, benchmark2)
+	append(&b_results, benchmark3)
+	append(&b_results, benchmark4)
+	append(&b_results, benchmark5)
+	append(&b_results, benchmark6)
+
+	for result in b_results {
+		if result.success == false {
+			failCounter += 1
+		}
+	}
 
 	//get grand totals
 	totalOperations :=
-		benchmark1.total_ops + benchmark2.total_ops + benchmark3.total_ops + benchmark4.total_ops
-	totalTime := benchmark1.op_time + benchmark2.op_time + benchmark3.op_time + benchmark4.op_time
+		benchmark1.total_ops +
+		benchmark2.total_ops +
+		benchmark3.total_ops +
+		benchmark4.total_ops +
+		benchmark5.total_ops +
+		benchmark6.total_ops
+
+
+	totalTime :=
+		benchmark1.op_time +
+		benchmark2.op_time +
+		benchmark3.op_time +
+		benchmark4.op_time +
+		benchmark5.op_time +
+		benchmark6.op_time
+
 	totalOpsPerSecond := f64(totalOperations) / time.duration_seconds(totalTime)
 
-	show_benchmark_results(benchmark1)
-	show_benchmark_results(benchmark2)
-	show_benchmark_results(benchmark3)
-	show_benchmark_results(benchmark4)
-	fmt.printfln("----------------------------------")
-	fmt.println("OstrichDB Benchmark Grand Totals")
-	fmt.printfln("Time: %s%d%s", GREEN, totalTime, RESET)
-	fmt.printfln("Operations Per Second: %s%f%s ", GREEN, totalOpsPerSecond, RESET)
-	fmt.printfln("Operations: %s%d%s ", GREEN, totalOperations, RESET)
+	show_all_benchmark_results(b_results) //for individual results use show_benchmark_result(<benchmark_name>)
+	show_grand_totals(totalTime, totalOpsPerSecond, totalOperations, failCounter)
 
-	//Fetch the collections
-	//Fetch the clusters
-	//Fetch the records
+	//Old way of printing the results, will delete later
+	// fmt.printfln("Total Operations: %d", totalOperations)
+	// fmt.printfln("Total Time: %d", totalTime)
+	// fmt.printfln("Operations Per Second: %f", totalOpsPerSecond)
+
+
 	//Delete the records
 	//Delete the clusters
 	//Delete the collections
+
+
+	//Can't forget to free the memory :)
+	delete(b_results)
+	delete(colNames)
+	delete(cluNames)
+	delete(recNames)
+
 }
 
 
@@ -68,8 +103,18 @@ B_CREATE_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dyn
 
 	for i := 0; i < iterations; i += 1 {
 		benchmarkColName := fmt.tprintf("benchmark_collection_%d", i)
-		B_CREATE_COLLECTION(benchmarkColName)
-		append(&names, benchmarkColName)
+		if B_CREATE_COLLECTION(benchmarkColName) == 0 {
+			append(&names, benchmarkColName)
+		} else {
+			return types.Benchmark_Result {
+					op_name = "Create Collection",
+					total_ops = i,
+					op_time = time.since(startTime),
+					ops_per_second = 0,
+					success = false,
+				},
+				names
+		}
 	}
 
 	duration := time.since(startTime)
@@ -80,6 +125,7 @@ B_CREATE_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dyn
 			total_ops = iterations,
 			op_time = duration,
 			ops_per_second = ops_per_second,
+			success = true,
 		},
 		names
 }
@@ -99,8 +145,18 @@ B_CREATE_CLUSTER_OP :: proc(
 	for colName in colNames {
 		for i := 0; i < iterations; i += 1 {
 			benchmarkCluName := fmt.tprintf("benchmark_cluster_%d", i)
-			B_CREATE_CLUSTER(colName, benchmarkCluName)
-			append(&names, benchmarkCluName)
+			if B_CREATE_CLUSTER(colName, benchmarkCluName) == 0 {
+				append(&names, benchmarkCluName)
+			} else {
+				return types.Benchmark_Result {
+						op_name = "Create Cluster",
+						total_ops = i,
+						op_time = time.since(startTime),
+						ops_per_second = 0,
+						success = false,
+					},
+					names
+			}
 		}
 	}
 
@@ -113,6 +169,7 @@ B_CREATE_CLUSTER_OP :: proc(
 			total_ops = iterations,
 			op_time = duration,
 			ops_per_second = ops_per_second,
+			success = true,
 		},
 		names
 }
@@ -135,9 +192,19 @@ B_CREATE_RECORD_OP :: proc(
 				benchmarkRecName := fmt.tprintf("benchmark_record_%d", recordCounter)
 				rType := B_GENERATE_RECORD_TYPE()
 				rValue := B_GENERATE_RECORD_VALUES(rType)
-				res := B_CREATE_RECORD(colName, cluName, benchmarkRecName, rType, rValue)
-				append(&names, benchmarkRecName)
-				recordCounter += 1
+				if B_CREATE_RECORD(colName, cluName, benchmarkRecName, rType, rValue) == 0 {
+					append(&names, benchmarkRecName)
+					recordCounter += 1
+				} else {
+					return types.Benchmark_Result {
+							op_name = "Create Records",
+							total_ops = recordCounter,
+							op_time = time.since(startTime),
+							ops_per_second = 0,
+							success = false,
+						},
+						names
+				}
 			}
 		}
 	}
@@ -151,6 +218,7 @@ B_CREATE_RECORD_OP :: proc(
 			total_ops = total_ops,
 			op_time = duration,
 			ops_per_second = ops_per_second,
+			success = true,
 		},
 		names
 }
@@ -158,7 +226,17 @@ B_CREATE_RECORD_OP :: proc(
 B_FETCH_COLLECTION_OP :: proc(iterations: int) -> types.Benchmark_Result {
 	startTime := time.now()
 	for i := 0; i < iterations; i += 1 {
-		B_FETCH_COLLECTION(fmt.tprintf("benchmark_collection_%d", i))
+		if B_FETCH_COLLECTION(fmt.tprintf("benchmark_collection_%d", i)) == 0 {
+			continue
+		} else {
+			return types.Benchmark_Result {
+				op_name = "Fetch Collection",
+				total_ops = i,
+				op_time = time.since(startTime),
+				ops_per_second = 0,
+				success = false,
+			}
+		}
 	}
 	duration := time.since(startTime)
 	ops_per_second := f64(iterations) / time.duration_seconds(duration)
@@ -168,8 +246,77 @@ B_FETCH_COLLECTION_OP :: proc(iterations: int) -> types.Benchmark_Result {
 		total_ops = iterations,
 		op_time = duration,
 		ops_per_second = ops_per_second,
+		success = true,
 	}
 }
+
+B_FETCH_CLUSTER_OP :: proc(colNames: [dynamic]string, iterations: int) -> types.Benchmark_Result {
+	startTime := time.now()
+	for colName in colNames {
+		for i := 0; i < iterations; i += 1 {
+			if B_FETCH_CLUSTER(colName, fmt.tprintf("benchmark_cluster_%d", i)) == 0 {
+				continue
+			} else {
+				return types.Benchmark_Result {
+					op_name = "Fetch Cluster",
+					total_ops = len(colNames) * i,
+					op_time = time.since(startTime),
+					ops_per_second = 0,
+				}
+			}
+		}
+	}
+	duration := time.since(startTime)
+	ops_per_second := f64(len(colNames) * iterations) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+		op_name = "Fetch Cluster",
+		total_ops = len(colNames) * iterations,
+		op_time = duration,
+		ops_per_second = ops_per_second,
+		success = true,
+	}
+
+}
+
+
+B_FETCH_RECORD_OP :: proc(
+	colNames, cluNames: [dynamic]string,
+	iterations: int,
+) -> types.Benchmark_Result {
+
+
+	startTime := time.now()
+	for colName in colNames {
+		for cluName in cluNames {
+			for i := 0; i < iterations; i += 1 {
+				if B_FETCH_RECORD(colName, cluName, fmt.tprintf("benchmark_record_%d", i)) == 0 {
+					continue
+				} else {
+					return types.Benchmark_Result {
+						op_name = "Fetch Record",
+						total_ops = len(colNames) * len(cluNames) * i,
+						op_time = time.since(startTime),
+						ops_per_second = 0,
+						success = false,
+					}
+				}
+			}
+		}
+	}
+	duration := time.since(startTime)
+	total_ops := len(colNames) * len(cluNames) * iterations
+	ops_per_second := f64(total_ops) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+		op_name = "Fetch Record",
+		total_ops = total_ops,
+		op_time = duration,
+		ops_per_second = ops_per_second,
+		success = true,
+	}
+}
+
 
 //CREATION PROCEDURES START
 B_CREATE_COLLECTION :: proc(fn: string) -> int {
@@ -179,18 +326,10 @@ B_CREATE_COLLECTION :: proc(fn: string) -> int {
 	defer os.close(createFile)
 	mDataAppended := metadata.OST_APPEND_METADATA_HEADER(file)
 	if !mDataAppended {
-		utils.log_err("Error appending metadata to collection file", #procedure)
 		return -1
 	}
 	if createSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_CREATE_FILE,
-			utils.get_err_msg(.CANNOT_CREATE_FILE),
-			#procedure,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error creating new collection file", #procedure)
-		return -1
+		return -2
 	} else {
 		metadata.OST_UPDATE_METADATA_ON_CREATE(file)
 	}
@@ -203,7 +342,7 @@ B_GENERATE_ID :: proc() -> i64 {
 	return ID
 }
 
-B_CREATE_CLUSTER :: proc(fn, cn: string) -> bool {
+B_CREATE_CLUSTER :: proc(fn, cn: string) -> int {
 	using utils
 
 	id := B_GENERATE_ID()
@@ -215,10 +354,7 @@ B_CREATE_CLUSTER :: proc(fn, cn: string) -> bool {
 	colFile, openSuccess := os.open(path, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(colFile)
 	if openSuccess != 0 {
-		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
-		throw_err(error1)
-		log_err("Error opening collection file", #procedure)
-		return false
+		return -1
 	}
 
 
@@ -237,31 +373,18 @@ B_CREATE_CLUSTER :: proc(fn, cn: string) -> bool {
 				-1,
 			)
 			if replaceSuccess == false {
-				error2 := new_err(
-					.CANNOT_UPDATE_CLUSTER,
-					get_err_msg(.CANNOT_UPDATE_CLUSTER),
-					#procedure,
-				)
-				throw_err(error2)
-				log_err("Error placing id into cluster template", #procedure)
-				return false
+				return -2
 			}
 			writeClusterID, writeSuccess := os.write(colFile, transmute([]u8)newClusterID)
 			if writeSuccess != 0 {
-				error2 := new_err(
-					.CANNOT_WRITE_TO_FILE,
-					get_err_msg(.CANNOT_WRITE_TO_FILE),
-					#procedure,
-				)
-				log_err("Error writing cluster block to file", #procedure)
-				return false
+				return -3
 			}
 		}
 	}
 
 	//update metadata
 	refresh_metadata(fn)
-	return true
+	return 0
 }
 
 B_GENERATE_RECORD_TYPE :: proc() -> string {
@@ -302,11 +425,7 @@ B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 	if !readSuccess {
 		return -1
 	}
-	// fmt.println("debugging-- passing fn:, ", fn) //debugging
-	// fmt.println("debugging-- passing cn:, ", cn) //debugging
-	// fmt.println("debugging-- passing rn:, ", rn) //debugging
-	// fmt.println("debugging-- passing rValue:, ", rValue) //debugging
-	// fmt.println("debugging-- passing rType:, ", rType) //debugging
+
 	content := string(data)
 	lines := strings.split(content, "\n")
 	defer delete(lines)
@@ -327,14 +446,7 @@ B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 
 	//if the cluster is not found or the structure is invalid, return
 	if clusterStart == -1 || closingBrace == -1 {
-		error2 := utils.new_err(
-			.CANNOT_FIND_CLUSTER,
-			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#procedure,
-		)
-		utils.throw_err(error2)
-		utils.log_err("Unable to find cluster/valid structure", #procedure)
-		return -1
+		return -2
 	}
 
 	// Create the new line
@@ -353,7 +465,7 @@ B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 	// fmt.println("debugging-- new_content: ", new_content) //debugging
 	writeSuccess := utils.write_to_file(file, transmute([]byte)new_content, #procedure)
 	if !writeSuccess {
-		return -1
+		return -3
 	}
 
 	//update metadata
@@ -365,8 +477,6 @@ B_CREATE_RECORD :: proc(fn, cn, rn, rType, rValue: string) -> int {
 
 //FETCHING PROCEDURES START
 //All FETCH procs only ensure that the file is read and the starting point is found nothing more
-
-
 B_FETCH_COLLECTION :: proc(fn: string) -> int {
 	fileStart := -1
 	startingPoint := "BTM@@@@@@@@@@@@@@@"
@@ -392,28 +502,131 @@ B_FETCH_COLLECTION :: proc(fn: string) -> int {
 	return 0
 }
 
+B_FETCH_CLUSTER :: proc(fn, cn: string) -> int {
+	using const
+	using utils
+
+	clusterContent: string
+	collectionPath := concat_benchmark_collection(fn)
+
+	data, readSuccess := os.read_entire_file(collectionPath)
+	if !readSuccess {
+		return -1
+	}
+
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "}")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			// Find the start of the cluster (opening brace)
+			start_index := strings.index(cluster, "{")
+			if start_index != -1 {
+				// Extract the content between braces
+				clusterContent = cluster[start_index + 1:]
+				// Trim any leading or trailing whitespace
+				clusterContent = strings.trim_space(clusterContent)
+				return 0
+			}
+		}
+	}
+
+	return -2
+}
+
+B_FETCH_RECORD :: proc(fn, cn, rn: string) -> int {
+
+	clusterContent: string
+	recordContent: string
+	collectionPath := concat_benchmark_collection(fn)
+
+	data, readSuccess := os.read_entire_file(collectionPath)
+	if !readSuccess {
+		return -1
+	}
+
+	defer delete(data)
+
+	content := string(data)
+	clusters := strings.split(content, "}")
+
+	for cluster in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			// Find the start of the cluster (opening brace)
+			start_index := strings.index(cluster, "{")
+			if start_index != -1 {
+				// Extract the content between braces
+				clusterContent = cluster[start_index + 1:]
+				// Trim any leading or trailing whitespace
+				clusterContent = strings.trim_space(clusterContent)
+				// return strings.clone(clusterContent)
+			}
+		}
+	}
+
+	for line in strings.split_lines(clusterContent) {
+		if strings.contains(line, rn) {
+			return 0
+		}
+	}
+
+	return -2 //fail to fetch record
+}
+//FETCHING PROCEDURES END
+
 //COMMON BENCHMARKING UTILS
 //Might move them to their own file in the package at some point - Marshall
 concat_benchmark_collection :: proc(name: string) -> string {
 	using const
+
 	return strings.clone(fmt.tprintf("%s%s%s", OST_BENCHMARK_PATH, name, OST_FILE_EXTENSION))
-
 }
-
 
 refresh_metadata :: proc(fn: string) {
 	using metadata
+
 	file := concat_benchmark_collection(fn)
 	OST_UPDATE_METADATA_VALUE(file, 2)
 	OST_UPDATE_METADATA_VALUE(file, 3)
 	OST_UPDATE_METADATA_VALUE(file, 5)
 }
 
-
-show_benchmark_results :: proc(res: types.Benchmark_Result) {
+show_benchmark_result :: proc(res: types.Benchmark_Result) {
 	using utils
-	fmt.printfln("Benchmark: %s%s%s Complete", BOLD_UNDERLINE, res.op_name, RESET)
-	fmt.printfln("Total Operations: %s%d%s", GREEN, res.total_ops, RESET)
-	fmt.printfln("Total Time: %s%d%s", GREEN, res.op_time, RESET)
-	fmt.printfln("Operations Per Second: %s%f%s\n", GREEN, res.ops_per_second, RESET)
+	if res.success {
+		fmt.printfln("Benchmark: %s%s%s Complete", BOLD_UNDERLINE, res.op_name, RESET)
+		fmt.printfln("Total Operations: %s%d%s", GREEN, res.total_ops, RESET)
+		fmt.printfln("Total Time: %s%d%s", GREEN, res.op_time, RESET)
+		fmt.printfln("Operations Per Second: %s%f%s\n", GREEN, res.ops_per_second, RESET)
+	} else if !res.success {
+		fmt.printfln(
+			"%sBenchmark: %s%s%s %sFailed%s",
+			RED,
+			BOLD_UNDERLINE,
+			res.op_name,
+			RESET,
+			RED,
+			RESET,
+		)
+		fmt.printfln("Finished %d operations before failing", res.total_ops)
+	}
+}
+
+show_all_benchmark_results :: proc(results: [dynamic]types.Benchmark_Result) {
+	for res in results {
+		show_benchmark_result(res)
+	}
+}
+
+show_grand_totals :: proc(t1: time.Duration, t2: f64, t3, t4: int) {
+	using utils
+
+	fmt.printfln("----------------------------------")
+	fmt.println("OstrichDB Benchmark Grand Totals")
+	fmt.printfln("Time: %s%d%s", GREEN, t1, RESET)
+	fmt.printfln("Operations Per Second: %s%f%s ", GREEN, t2, RESET)
+	fmt.printfln("Operations: %s%d%s ", GREEN, t3, RESET)
+	fmt.printfln("Failed Operations: %s%d%s ", RED, t4, RESET)
 }

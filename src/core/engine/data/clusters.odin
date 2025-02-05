@@ -547,7 +547,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	using utils
 
 	clusterContent: string
-	collectionPath := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
+	collectionPath := utils.concat_collection_name(fn)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
 	switch clusterExists 
@@ -614,7 +614,7 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 
 	buf := make([]byte, 64)
 	defer delete(buf)
-	filePath := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
+	filePath := utils.concat_collection_name(fn)
 	data, readSuccess := os.read_entire_file(filePath)
 	if !readSuccess {
 		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
@@ -670,7 +670,7 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 	using const
 	using utils
 
-	file := fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
+	file := concat_collection_name(fn)
 
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {

@@ -40,12 +40,11 @@ OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 	using const
 	using types
+	using utils
 
 	Severity_Code = 0
 	data_integrity_checks.File_Size.Compliant = true
-	fileInfo := metadata.OST_GET_FS(
-		fmt.tprintf("%s%s%s", OST_COLLECTION_PATH, fn, OST_FILE_EXTENSION),
-	)
+	fileInfo := metadata.OST_GET_FS(concat_collection_name(fn))
 	fileSize := fileInfo.size
 	// fmt.println("File size: ", fileSize) //debugging
 
