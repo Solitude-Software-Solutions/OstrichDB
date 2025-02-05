@@ -18,6 +18,7 @@ import "core:time"
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
+//Note to developers: In the main() procedure, the number of iterations passed for each benchmarking operation can be adjusted unless a comment states otherwise. - Marshall
 main :: proc() {
 	using utils
 
@@ -26,12 +27,13 @@ main :: proc() {
 
 
 	//Creation Benchmarks
-	benchmark1, colNames := B_CREATE_COLLECTION_OP(1) //pass num of iterations
-	benchmark2, cluNames := B_CREATE_CLUSTER_OP(10, colNames) //pass num of iterations and collection names
-	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, 10) //pass collection names, cluster names, and num of iterations
+	benchmark1, colNames := B_CREATE_COLLECTION_OP(1)
+	benchmark2, cluNames := B_CREATE_CLUSTER_OP(10, colNames)
+	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, 10)
 
 	//Fetching Benchmarks
-	benchmark4 := B_FETCH_COLLECTION_OP(1) //pass num of iterations
+	benchmark4 := B_FETCH_COLLECTION_OP(1) //IMPORTANT: The num of iterations is reliant on the num of collections created in benchmark1. KEEP THEM THE SAME!
+
 
 	//get grand totals
 	totalOperations :=
