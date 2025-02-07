@@ -9,6 +9,15 @@ cd "$DIR/.."
 # Change to the src directory
 cd src
 
+# Determine the executable extension based on the operating system
+if [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "win"* ]]; then
+    # Windows (Git Bash or Windows Subsystem)
+    EXECUTABLE_EXT=".exe"
+else
+    # Mac or Linux
+    EXECUTABLE_EXT=".bin"
+fi
+
 # Build the project in the src directory
 odin build main
 
@@ -17,14 +26,14 @@ if [ $? -eq 0 ]; then
     echo "$(tput setaf 2)Build successful$(tput sgr0)"
     
     # Try to create bin directory and move the executable
-    if mkdir -p ../bin 2>/dev/null && mv main.bin ../bin/ 2>/dev/null; then
+    if mkdir -p ../bin 2>/dev/null && mv "main$EXECUTABLE_EXT" ../bin/ 2>/dev/null; then
         cd ../bin
     else
         echo "$(tput setaf 1)Could not move executable to bin directory. Running from src.$(tput sgr0)"
     fi
     
     # Run the program
-    ./main.bin
+    ./main$EXECUTABLE_EXT
 
     # Capture the exit code
     exit_code=$?
