@@ -118,7 +118,16 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		return false
 	}
 	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
-	libc.system("stty echo")
+	when ODIN_OS == .Windows{
+		libc.system("@echo off")
+	}
+	when ODIN_OS == .Linux{
+		libc.system("stty echo")
+	}
+	when ODIN_OS == .Darwin{
+		libc.system("stty echo")
+	}
+	// libc.system("stty echo")
 
 	if len(enteredPassword) == 0 {
 		fmt.printfln("Password cannot be empty. Please try again.")

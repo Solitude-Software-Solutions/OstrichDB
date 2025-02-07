@@ -47,7 +47,9 @@ get_ost_version :: proc() -> []u8 {
 
 //n- name of step, c- current step, t- total steps of current process
 show_current_step :: proc(n: string, c: string, t: string) {
-	fmt.printfln("Step %s/%s:\n%s%s%s\n", c, t, BOLD, n, RESET)
+	fmt.println("\n--------------------------------------------------")
+	fmt.printfln("Step %s/%s:\n%s%s%s", c, t, BOLD, n, RESET)
+	fmt.println("--------------------------------------------------\n")
 }
 
 

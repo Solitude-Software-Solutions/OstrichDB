@@ -58,13 +58,18 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	fmt.printfln("Welcome to the OstrichDB Database Management System")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
-
+	utils.show_current_step("Set Up Username", "1", "3")
 	inituserName := OST_GET_USERNAME(true)
+	utils.show_current_step("Set Up Password", "2", "3")
 	fmt.printfln("Please enter a password for the admin account")
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
-	libc.system("stty -echo")
+	// libc.system("stty -echo")
+	// when ODIN_OS == .Windows{
+		libc.system("echo off ")
+		// libc.system("echo.")
+	// }
 	initpassword := OST_GET_PASSWORD(true)
 	saltAsString := string(user.salt)
 	hashAsString := string(user.hashedPassword)
@@ -147,7 +152,6 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 	using types
 	using utils
 
-	show_current_step("Set Up Username", "1", "3")
 	buf: [256]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
@@ -207,7 +211,6 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 	using types
 	using utils
 
-	utils.show_current_step("Set Up Password", "2", "3")
 	buf: [256]byte
 	n, inputSuccess := os.read(os.stdin, buf[:])
 	enteredStr: string
@@ -255,7 +258,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 	using types
 	using utils
 
-	utils.show_current_step("Confirm Password", "3", "3")
+	show_current_step("Confirm Password", "3", "3")
 	buf: [256]byte
 
 	fmt.printfln("Re-enter the password:")

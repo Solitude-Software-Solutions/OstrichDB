@@ -105,15 +105,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		// convert string to index
 		commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
 		// check boundaries
-		if commandIndex >= i64(len(commandHistory)) || commandIndex < 0 {
+
+		
+		//When adding Windows support this went from being casted as a i64 to i32. See issue #183
+		//If this causes problems on macOS or Linux then add a 'when' condition to check the OS - Marshall
+		if commandIndex >= i32(len(commandHistory)) || commandIndex < 0 {
 			fmt.printfln("Command number %d not found", commandIndex + 1) // add one to make it reflect what the user sees
 			break
-		}
+		}	
+
+	
 		// parses the command that has been stored in the most recent command history index. Crucial for the HISTORY command
 		cmd := OST_PARSE_COMMAND(commandHistory[commandIndex])
 		OST_EXECUTE_COMMAND(&cmd)
 		break
-	//HISTORY CLUSTER FUCK END :)
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
 	case HELP:
 		log_runtime_event("Used HELP command", "User requested help information.")
