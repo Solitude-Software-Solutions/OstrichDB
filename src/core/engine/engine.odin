@@ -124,12 +124,25 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 //Used to restart the engine
 OST_RESTART :: proc() {
+when ODIN_OS == .Windows{
+	fmt.println("The 'RESTART' command is not supported on Windows")
+	fmt.println("Please restart OstrichDB manually or run the 'REBUILD' command")
+}
+when ODIN_OS == .Linux || ODIN_OS == .Darwin{
 	libc.system("../scripts/restart.sh")
 	os.exit(0)
 }
 
+}
+
 //Used to rebuild and restart the engine
 OST_REBUILD :: proc() {
-	libc.system("../scripts/build.sh")
+	when ODIN_OS == .Windows{
+		libc.system("cd .. &&  cd scripts && build.bat")	
+	}
+	when ODIN_OS == .Linux || ODIN_OS == .Darwin{
+		
+		libc.system("../scripts/build.sh")
+	}
 	os.exit(0)
 }
