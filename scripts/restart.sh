@@ -23,7 +23,7 @@ if [ -f "main.bin" ]; then
 
     # Check the exit code
     if [ $exit_code -ne 0 ]; then
-        echo "$(tput setaf 1)Program exited with code $exit_code$(tput sgr0)"
+        echo "$(tput setaf 1)OstrichDB exited with code $exit_code$(tput sgr0)"
     fi
 
     # Return to the project root directory
