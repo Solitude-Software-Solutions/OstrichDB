@@ -8,7 +8,7 @@ ols.json
 .vscode
 .vs
 .DS_Store
-.exe
+*.exe
 
 # Uncomment these two when actually implementing zig
 #.zig-cache/
