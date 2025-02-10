@@ -44,7 +44,6 @@ validCommands := []string {
 	"ISOLATE", //formerly known as "QUARANTINE"
 	"TREE",
 	"HISTORY",
-	"TEST",
 	"WHERE",
 	"VALIDATE",
 	"BENCHMARK",
@@ -58,7 +57,7 @@ OST_SET_HELP_MODE :: proc() -> bool {
 
 	value := data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, STRING, CONFIG_FOUR)
 
-	switch (value) 
+	switch (value)
 	{
 	case "VERBOSE":
 		helpMode.verbose = true
@@ -106,7 +105,7 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 		)
 		return ""
 	}
-	switch (helpMode) 
+	switch (helpMode)
 	{
 	case true:
 		data, ok = os.read_entire_file(VERBOSE_HELP_FILE)
@@ -158,16 +157,16 @@ OST_GET_GENERAL_HELP :: proc() -> string {
 }
 
 //shows a table of explaining atoms
-OST_GET_ATOMS_HELP :: proc() -> string {
+OST_GET_CLPS_HELP :: proc() -> string {
 	using const
 
-	data, ok := os.read_entire_file(ATOMS_HELP_FILE)
+	data, ok := os.read_entire_file(CLPS_HELP_FILE)
 	if !ok {
 		return ""
 	}
 	defer delete(data)
 	content := string(data)
-	fmt.printfln("\nHere is a helpful table containing information about ATOMs in OstrichDB:")
+	fmt.printfln("\nHere is a helpful table containing information about CLPs in OstrichDB:")
 	fmt.printfln(
 		"--------------------------------------------------------------------------------------------------------------------",
 	)

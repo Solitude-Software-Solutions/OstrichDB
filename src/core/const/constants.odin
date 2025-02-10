@@ -26,7 +26,7 @@ OST_FILE_EXTENSION :: ".ost"
 VERBOSE_HELP_FILE :: "../src/core/help/docs/verbose/verbose.md"
 SIMPLE_HELP_FILE :: "../src/core/help/docs/simple/simple.md"
 GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
-ATOMS_HELP_FILE :: "../src/core/help/docs/atoms/atoms.txt"
+CLPS_HELP_FILE :: "../src/core/help/docs/clps/clps.txt"
 OST_QUARANTINE_PATH :: "./quarantine/"
 //CONFIG FILE CONSTANTS
 CONFIG_ONE :: "OST_ENGINE_INIT"
@@ -109,8 +109,8 @@ DATE :: "DATE" //YYYY-MM-DD
 TIME :: "TIME" //HH:MM:SS
 DATETIME :: "DATETIME" //YYYY-MM-DDTHH:MM:SS
 //SPECIAL HELP TOKENS
-ATOMS :: "ATOMS"
-ATOM :: "ATOM"
+CLPS :: "CLPS"
+CLP :: "CLP"
 //INPUT CONFIRMATION CONSTANTS
 YES :: "YES"
 NO :: "NO"

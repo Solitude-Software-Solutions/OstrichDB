@@ -44,7 +44,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	defer delete(cmd.l_token)
 
 
-	switch (cmd.c_token) 
+	switch (cmd.c_token)
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
@@ -116,9 +116,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		if len(cmd.t_token) == 0 {
 			log_runtime_event("Used HELP command", "User requested general help information.")
 			help.OST_GET_GENERAL_HELP()
-		} else if cmd.t_token == ATOM || cmd.t_token == ATOMS {
+		} else if cmd.t_token == CLP || cmd.t_token == CLPS {
 			log_runtime_event("Used HELP command", "User requested atom help information.")
-			help.OST_GET_ATOMS_HELP()
+			help.OST_GET_CLPS_HELP()
 		} else {
 			log_runtime_event("Used HELP command", "User requested specific help information.")
 			help.OST_GET_SPECIFIC_HELP(cmd.t_token)
@@ -154,7 +154,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			name := data.OST_CHOOSE_BACKUP_NAME()
 			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(cmd.l_token[0])
-			switch (checks) 
+			switch (checks)
 			{
 			case -1:
 				return -1
@@ -255,7 +255,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				result := data.OST_CREATE_CLUSTER(collection_name, cluster_name, id)
 				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 
-				switch (result) 
+				switch (result)
 				{
 				case -1:
 					fmt.printfln(
@@ -337,7 +337,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"",
 						rType,
 					)
-					switch (appendSuccess) 
+					switch (appendSuccess)
 					{
 					case 0:
 						fmt.printfln(
@@ -422,7 +422,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case RENAME:
 		log_runtime_event("Used RENAME command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			if TO in cmd.p_token {
@@ -439,7 +439,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 				success := data.OST_RENAME_COLLECTION(oldName, newName)
-				switch (success) 
+				switch (success)
 				{
 				case true:
 					fmt.printf(
@@ -552,7 +552,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					oldRName,
 					newRName,
 				)
-				switch (result) 
+				switch (result)
 				{
 				case 0:
 					fmt.printfln(
@@ -603,7 +603,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// // ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case ERASE:
 		log_runtime_event("Used ERASE command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			if data.OST_ERASE_COLLECTION(cmd.l_token[0]) == true {
@@ -631,7 +631,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cluster := cmd.l_token[1]
 				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
 				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
-				switch (checks) 
+				switch (checks)
 				{
 				case -1:
 					return -1
@@ -685,7 +685,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				clusterID := data.OST_GET_CLUSTER_ID(collectionName, clusterName)
 				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				switch (checks) 
+				switch (checks)
 				{
 				case -1:
 					return -1
@@ -780,7 +780,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// // FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case FETCH:
 		log_runtime_event("Used FETCH command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
@@ -822,7 +822,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				recordName := cmd.l_token[2]
 
 				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				switch (checks) 
+				switch (checks)
 				{
 				case -1:
 					return -1
@@ -862,7 +862,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	case SET:
 		//set can only be used on RECORDS and CONFIGS
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 3:
 			if TO in cmd.p_token && cmd.isUsingDotNotation {
@@ -911,7 +911,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					for key, val in cmd.p_token {
 						value = val
 					}
-					switch (configName) 
+					switch (configName)
 					{
 					case "HELP":
 						if value != "VERBOSE" || value != "SIMPLE" {
@@ -1000,7 +1000,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 	case COUNT:
 		log_runtime_event("Used COUNT command", "")
-		switch (cmd.t_token) 
+		switch (cmd.t_token)
 		{
 		case COLLECTIONS:
 			result := data.OST_COUNT_COLLECTIONS()
@@ -1023,7 +1023,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.l_token) == 1 {
 				collection_name := cmd.l_token[0]
 				result := data.OST_COUNT_CLUSTERS(collection_name)
-				switch (result) 
+				switch (result)
 				{
 				case -1:
 					fmt.printfln(
@@ -1133,7 +1133,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collection_name := cmd.l_token[0]
 				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collection_name)
 
-				switch result 
+				switch result
 				{
 				case -1:
 					fmt.printfln(
@@ -1185,16 +1185,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// //PURGE command
 	case PURGE:
 		log_runtime_event("Used PURGE command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			collection_name := cmd.l_token[0]
 			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collection_name, 0)
-			switch exists 
+			switch exists
 			{
 			case true:
 				result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
-				switch result 
+				switch result
 				{
 				case true:
 					fmt.printfln(
