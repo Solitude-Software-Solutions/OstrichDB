@@ -110,7 +110,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
 	engineInit := config.OST_UPDATE_CONFIG_VALUE(CONFIG_ONE, "true")
 
-	switch (engineInit) 
+	switch (engineInit)
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -234,7 +234,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword 
+	switch strongPassword
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
@@ -403,7 +403,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p)) 
+	switch (len(p))
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -440,7 +440,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true) 
+	switch (true)
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -469,31 +469,6 @@ OST_CREATE_NEW_USER :: proc(
 	using types
 
 	buf: [1024]byte
-
-
-	if types.TESTING {
-		// In testing mode, use provided test values
-		if role == "" || username == "" || password == "" {
-			fmt.println("Error: Required test parameters are missing")
-			return 1
-		}
-
-		// Set role based on test input
-		switch strings.to_upper(role) {
-		case "ADMIN":
-			new_user.role.Value = "admin"
-		case "USER":
-			new_user.role.Value = "user"
-		case "GUEST":
-			new_user.role.Value = "guest"
-		case:
-			return 1
-		}
-
-		new_user.username.Value = username
-		new_user.password.Value = password
-
-	} else {
 		if user.role.Value == "admin" {
 			fmt.println("Please enter role you would like to assign the new account")
 			fmt.printf("1. Admin\n2. User\n3. Guest\n")
@@ -526,7 +501,7 @@ OST_CREATE_NEW_USER :: proc(
 
 		newUserName := OST_GET_USERNAME(false)
 		new_user.username.Value = newUserName
-	}
+
 
 	// Common validation logic for both test and interactive modes
 	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(new_user.username.Value)
@@ -550,7 +525,6 @@ OST_CREATE_NEW_USER :: proc(
 	}
 
 	result := data.OST_CREATE_COLLECTION(newColName, 1)
-	if !types.TESTING {
 		fmt.printf(
 			"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 		)
@@ -558,7 +532,7 @@ OST_CREATE_NEW_USER :: proc(
 		initpassword := OST_GET_PASSWORD(false)
 		libc.system("stty echo")
 		new_user.password.Value = initpassword
-	}
+
 
 	saltAsString := string(new_user.salt)
 	hashAsString := string(new_user.hashedPassword)

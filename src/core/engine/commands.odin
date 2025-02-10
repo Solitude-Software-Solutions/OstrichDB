@@ -1,6 +1,5 @@
 package engine
 
-import "../../tests"
 import "../../utils"
 import "../benchmark"
 import "../config"
@@ -72,9 +71,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case DESTROY:
 		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
 		OST_DESTROY()
-	case TEST:
-		log_runtime_event("Used TEST command", "User requested to run tests.")
-		tests.main()
 	case CLEAR:
 		log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")

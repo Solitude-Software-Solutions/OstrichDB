@@ -308,8 +308,6 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 								recordData,
 							)
 							append(&allRecords, recordInfo)
-
-							if !types.TESTING {
 								fmt.printfln(
 									"Collection: %s%s%s | Cluster Name: %s%s%s",
 									utils.BOLD_UNDERLINE,
@@ -328,7 +326,6 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 									recordData,
 									utils.RESET,
 								)
-							}
 						}
 						break
 					}
@@ -360,7 +357,7 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 
 	rExists := OST_CHECK_IF_RECORD_EXISTS(collectionPath, cn, new)
 
-	switch rExists 
+	switch rExists
 	{
 	case true:
 		fmt.printfln(
@@ -486,7 +483,7 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 	for type in const.VALID_RECORD_TYPES {
 		if rType == type {
 			//evaluate the shorthand type name and assign the full type name to the record
-			switch (rType) 
+			switch (rType)
 			{
 			case const.STR:
 				record.type = const.STRING
@@ -1209,10 +1206,6 @@ OST_PARSE_RECORD :: proc(record: string) -> types.Record {
 OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 	using utils
 	collection_path := concat_collection_name(fn)
-
-
-	// Skip confirmation if in testing mode
-	if !types.TESTING {
 		fmt.printfln(
 			"Are you sure that you want to delete Record: %s%s%s?\nThis action can not be undone.",
 			utils.BOLD_UNDERLINE,
@@ -1251,7 +1244,7 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false
 		}
-	}
+
 
 	data, readSuccess := utils.read_file(collection_path, #procedure)
 	defer delete(data)
@@ -1425,7 +1418,6 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 			return recordCount
 		}
 	}
-	if !types.TESTING {
 		fmt.printfln(
 			"Cluster %s%s%s not found in collection %s%s%s",
 			utils.BOLD_UNDERLINE,
@@ -1435,7 +1427,6 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 			fn,
 			utils.RESET,
 		)
-	}
 	return -1
 }
 

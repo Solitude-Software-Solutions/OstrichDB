@@ -47,7 +47,7 @@ Creates a new collection file with metadata within the DB
 OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType) 
+	switch (collectionType)
 	{
 	case 0:
 		//standard cluster file
@@ -127,8 +127,6 @@ OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
 		return false
 	}
 
-	// Skip confirmation if in testing mode
-	if !types.TESTING {
 		fmt.printfln(
 			"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
 			BOLD_UNDERLINE,
@@ -161,7 +159,6 @@ OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
 			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false
 		}
-	}
 
 	collectionPath := concat_collection_name(fn)
 

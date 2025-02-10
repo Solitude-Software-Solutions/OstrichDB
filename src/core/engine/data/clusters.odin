@@ -426,8 +426,6 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	file: string
 	collectionPath := concat_collection_name(fn)
 
-	// Skip confirmation if in testing mode
-	if !types.TESTING {
 		fmt.printfln(
 			"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
 			utils.BOLD,
@@ -463,7 +461,6 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false
 		}
-	}
 
 	data, readSuccess := read_file(collectionPath, #procedure)
 	defer delete(data)
@@ -550,7 +547,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	collectionPath := concat_collection_name(fn)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
-	switch clusterExists 
+	switch clusterExists
 	{
 	case false:
 		fmt.printfln(
