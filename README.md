@@ -19,6 +19,38 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 - macOS & Linux Support
 ---
 
+## **Installation**
+
+### **Prerequisites:**
+- A Unix-based system (macOS, Linux).
+- Clang & LLVM installed on your system.
+- The Odin programming language installed, built, and properly set in the system's PATH.
+
+
+### **Steps:**
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
+   ```
+
+2. **Navigate to the OstrichDB Directory**:
+   ```bash
+   cd path/to/OstrichDB
+   ```
+
+3. **Make the Build & Restart Scripts Executable**:
+   ```bash
+   chmod +x scripts/build.sh scripts/restart.sh
+   ```
+
+4. **Run The Build Script**:
+   ```bash
+   ./scripts/build.sh
+   ```
+---
+
+
 ## **Data Structure Overview**
 
 OstrichDB organizes data into three levels:
@@ -72,7 +104,7 @@ These operations perform simple tasks without needing additional arguments.
 - **`CLEAR`**: Clears the console screen.
 - **`HISTORY`**: Shows the current users command history.
 - **`DESTROY`**: Completley destorys the entire DBMS. Including all databases, users, configs, and logs.
-- **`TEST`**: A temporary command to run the built-in test suite. (Will be removed in future versions)
+- **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
 
 ---
 
@@ -92,7 +124,9 @@ These operations allow you to perform more complex operations.
 - **`CHANGE_TYPE`**: Allows you to change the type of a record.
 - **`HELP`**: Displays help information for a specific token.
 - **`ISOLATE`**: Quarentines a collection file. Preventing any further changes to the file
-- **`WHERE`**: Searches for a record or cluster by name. DOES NOT WORK WITH COLLECTIONS.
+- **`WHERE`**: Searches for the location of a single or several record(s) or cluster(s). DOES NOT WORK WITH COLLECTIONS.
+- **`VALIDATE`**: Validates a collection file for any errors or corruption.
+- **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
 ---
 
 ### **Parameters**
@@ -124,38 +158,6 @@ Other supported data types include:
   - **`DATETIME`**: Date and time values in the format `YYYY-MM-DDTHH:MM:SS`
 
 ---
-
-## **Installation**
-
-### **Prerequisites:**
-- A Unix-based system (macOS, Linux).
-- Clang & LLVM installed on your system.
-- The Odin programming language installed, built, and properly set in the system's PATH.
-
-
-### **Steps:**
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
-   ```
-
-2. **Navigate to the OstrichDB Directory**:
-   ```bash
-   cd path/to/OstrichDB
-   ```
-
-3. **Make the Build & Restart Scripts Executable**:
-   ```bash
-   chmod +x scripts/build.sh scripts/restart.sh
-   ```
-
-4. **Run The Build Script**:
-   ```bash
-   ./scripts/build.sh
-   ```
----
-
 
 ## **Usage Examples**
    ```bash
