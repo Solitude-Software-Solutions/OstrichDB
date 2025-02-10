@@ -1,7 +1,7 @@
 package help
 
 import "../../utils"
-import "../config"
+import "../engine/config"
 import "../const"
 import "../engine/data"
 import "../types"

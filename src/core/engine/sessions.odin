@@ -1,7 +1,7 @@
 package engine
 
 import "../../utils"
-import "../config"
+import "./config"
 import "../const"
 import "../types"
 import "core:fmt"

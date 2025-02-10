@@ -2,7 +2,7 @@ package engine
 
 import "../../utils"
 import "../benchmark"
-import "../config"
+import "./config"
 import "../const"
 import "../help"
 import "../server"

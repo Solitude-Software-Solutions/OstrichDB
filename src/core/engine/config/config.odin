@@ -1,10 +1,10 @@
 package config
 
-import "../../utils"
-import "../const"
-import "../engine/data"
-import "../engine/data/metadata"
-import "../types"
+import "../../../utils"
+import "../../const"
+import "../data/metadata"
+import "../data"
+import "../../types"
 import "core:fmt"
 import "core:os"
 import "core:strings"

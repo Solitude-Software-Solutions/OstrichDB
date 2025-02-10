@@ -1,7 +1,7 @@
 package engine
 
 import "../../utils"
-import "../config"
+import "./config"
 import "../const"
 import "../types"
 import "./data"
@@ -188,7 +188,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param) 
+		switch (param)
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false
