@@ -13,12 +13,12 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+*********************************************************/
 
 
 //initialize the data integrity system

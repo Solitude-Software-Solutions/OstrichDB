@@ -5,12 +5,12 @@ import "../data"
 import "core:fmt"
 import "core:strconv"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+*********************************************************/
 //This file is used to define the structure of the complex data types and how OstrichDB will handle them
 
 

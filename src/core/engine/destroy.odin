@@ -1,4 +1,5 @@
 package engine
+
 import "../../utils"
 import "../const"
 import "../types"
@@ -6,12 +7,12 @@ import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+*********************************************************/
 
 //Deletes the entire executiable, databases, history files, user files, and cache files.
 OST_DESTROY :: proc() {
