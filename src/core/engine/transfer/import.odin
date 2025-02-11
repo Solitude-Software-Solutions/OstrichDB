@@ -18,7 +18,12 @@ _import_ :: proc(fn: string) {
 		fmt.printfln("Failed to infer record types")
 		return
 	}
-	fmt.printfln(".csv file contains the following types: %v", types)
+	// fmt.printfln(".csv file contains the following types: %v", types) //debugging
+	fmt.printfln("Head: %v", head) //debugging
+	fmt.println("body: ", body) //debugging
+	fmt.printfln("Record Count: %v", recordCount) //debugging
+	delete(head)
+	delete(body)
 }
 
 // Gets all data from a .csv file and returns the "head"(first row) and "body"(everything else) respectively
@@ -52,7 +57,7 @@ OST_GET_CSV_DATA :: proc(fn: string) -> ([dynamic]string, [dynamic]string, int) 
 				append(&body, strings.clone(f))
 			}
 		}
-		csvRecordCount = GET_CSV_RECORD_COUNT(&reader, csvRecordCount)
+		csvRecordCount += 1
 	}
 	// fmt.printfln("Head: %v", head) //debugging
 	// fmt.printfln("Body: %v", body) //debugging
@@ -60,13 +65,4 @@ OST_GET_CSV_DATA :: proc(fn: string) -> ([dynamic]string, [dynamic]string, int) 
 	return head, body, csvRecordCount
 }
 
-GET_CSV_RECORD_COUNT :: proc(reader: ^csv.Reader, count: int) -> int {
-	num: int
-	for _, _, err in csv.iterator_next(reader) {
-		if err != nil {
-			fmt.printfln("Error reading csv file: %v", err)
-		}
-		num += 1
-	}
-	return num
-}
+//todo: add a check to make sure that all rows have the same number of fields???

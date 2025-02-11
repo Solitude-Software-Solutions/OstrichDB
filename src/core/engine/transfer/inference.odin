@@ -331,15 +331,16 @@ check_if_common__ :: proc(
 	isCommon := false
 	retNames: [dynamic]string
 	for name in csvRecordNames {
+		conversionArr := convert_case(name)
+		defer delete(conversionArr)
 		for i in arr {
-			for j in convert_case(name) {
-				if fmt.tprintf("%s", j) == fmt.tprintf("%s", i) {
+			for c in conversionArr {
+				if fmt.tprintf("%s", c) == fmt.tprintf("%s", i) {
 					isCommon = true
 					append(&retNames, name)
 				}
 			}
 		}
-
 	}
 	return isCommon, retNames
 }
