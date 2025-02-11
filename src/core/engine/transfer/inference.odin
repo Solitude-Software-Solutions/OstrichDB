@@ -191,6 +191,7 @@ commonBools := []string {
 // NOTE: Only used on the first row of a .csv file
 OST_INFER_CSV_RECORD_TYPES :: proc(
 	csvRecordNames: [dynamic]string,
+	recCount: int,
 ) -> (
 	success: bool,
 	typeMap: map[string]string,
@@ -201,32 +202,61 @@ OST_INFER_CSV_RECORD_TYPES :: proc(
 	intRes, intNames := check_if_common__(csvRecordNames, commonInts)
 	if intRes {
 		for name in intNames {
-			typeMap[name] = INTEGER
-			success = true
+			switch (recCount) {
+			case 0, 1:
+				typeMap[name] = INTEGER
+				success = true
+				break
+			case:
+				typeMap[name] = INTEGER_ARRAY
+				success = true
+			}
 		}
 	}
 
 	floatRes, floatNames := check_if_common__(csvRecordNames, commonFloats)
 	if floatRes {
 		for name in floatNames {
-			typeMap[name] = FLOAT
-			success = true
+			switch (recCount) {
+			case 0, 1:
+				typeMap[name] = FLOAT
+				success = true
+				break
+			case:
+				typeMap[name] = FLOAT_ARRAY
+				success = true
+			}
 		}
 	}
 
 	boolRes, boolNames := check_if_common__(csvRecordNames, commonBools)
 	if boolRes {
 		for name in boolNames {
-			typeMap[name] = BOOLEAN
-			success = true
+			switch (recCount) {
+			case 0, 1:
+				typeMap[name] = BOOLEAN
+				success = true
+				break
+			case:
+				typeMap[name] = BOOLEAN_ARRAY
+				success = true
+			}
 		}
 	}
 
 	//Anything else is defaulted to a string data type
 	for name in csvRecordNames {
 		if _, ok := typeMap[name]; !ok {
-			typeMap[name] = STRING
-			success = true
+
+			switch (recCount) {
+			case 0, 1:
+				typeMap[name] = STRING
+				success = true
+				break
+			case:
+				typeMap[name] = STRING_ARRAY
+				success = true
+			}
 		}
 	}
 
@@ -236,7 +266,6 @@ OST_INFER_CSV_RECORD_TYPES :: proc(
 
 
 //UTILS
-
 //takes in the passed in string and converts it to:
 //Capital, Uppercase, lowercase, camelCase, snake_case, kebab-case, UpperCamelCase, UPPER_SNAKE_CASE, UPPER_KEBAB_CASE
 convert_case :: proc(str: string) -> [dynamic]string {
