@@ -203,3 +203,8 @@ BannedUserNames := []string {
 	"administrator",
 	"superuser",
 }
+
+
+//IMPORT CONSTANTS
+
+CSV_CLU :: "_CSV_IMPORT"
