@@ -25,26 +25,35 @@ _import_ :: proc(fn: string) {
 		fmt.printfln("Failed to infer record types")
 		return
 	}
-	fmt.println("Types:", types)
-	// // fmt.printfln(".csv file contains the following types: %v", types) //debugging
-	fmt.printfln("Head: %v", head) //debugging
-	fmt.println("body: ", body) //debugging
-	// // fmt.printfln("Record Count: %v", recordCount) //debugging
-	// delete(head)
-	// delete(body)
-
-
-	///extract the contents of the .csv head
-
-
 	data.OST_CREATE_COLLECTION(fn, 0) //create a collection with the name of the .csv file
 	id := data.OST_GENERATE_ID(true)
 	data.OST_CREATE_CLUSTER(fn, csvClusterName, id)
 
-	for h in head {
-		typeName := types[h]
-		OST_APPEND_CSV_RECORD_INTO_OSTRICH(collectionPath, csvClusterName, h, typeName, "null")
+
+	cols := OST_ORGANIZE_CSV_INTO_COLUMNS(body, recordCount)
+	fmt.printfln("Cols: %v", cols) //debugging
+	// Add bounds checking for the header access
+	for colIndex := 0; colIndex < len(cols) && colIndex < len(head); colIndex += 1 {
+		columnName := head[colIndex]
+		columnType := types[columnName]
+
+		// Convert column values to a single string representation
+		columnValues := fmt.tprintf("%v", cols[colIndex])
+		fmt.printfln("Column Values: %v", columnValues) //debugging
+		OST_APPEND_CSV_RECORD_INTO_OSTRICH(
+			collectionPath,
+			csvClusterName,
+			columnName,
+			columnType,
+			columnValues,
+		)
 	}
+
+
+	// delete(head)
+	// delete(body)
+	// delete(types)
+	// delete(cols)
 
 }
 
@@ -52,7 +61,7 @@ _import_ :: proc(fn: string) {
 // as well as the number of records in the .csv file
 OST_GET_CSV_DATA :: proc(fn: string) -> ([dynamic]string, [dynamic]string, int) {
 	csvRecordCount := 0
-	head, body, arr: [dynamic]string
+	head, body: [dynamic]string
 	reader: csv.Reader
 	reader.trim_leading_space = true
 	reader.reuse_record = true
@@ -60,45 +69,28 @@ OST_GET_CSV_DATA :: proc(fn: string) -> ([dynamic]string, [dynamic]string, int) 
 	defer csv.reader_destroy(&reader)
 
 	data, ok := utils.read_file(fn, #procedure)
-	if ok {
-		csv.reader_init_with_string(&reader, string(data))
-	} else {
-
-	}
 	defer delete(data)
+	if ok {
+		// Split the data into lines and process each line
+		lines := strings.split_lines(string(data))
+		for line, i in lines {
+			if len(line) == 0 {continue}
+			fields := strings.split(line, ",")
 
-	content := string(data)
-
-
-	lines := strings.split(content, "\n")
-
-
-	//r- record, i- record number, f- field, j- field number
-	for r, i, err in csv.iterator_next(&reader) {
-		recLen := OST_GET_CSV_RECORD_LENGTH(r)
-		fmt.printfln("Record Length: %v", recLen) //debugging
-		// field := OST_EXTRACT_CSV_FIELD(r, recLen - 1)
-		// fmt.println("Field: ", field) //debugging
-
-		// fmt.printfln("r: %v", r) //debugging
-		// fmt.printfln("i: %v", i) //debugging
-		if err != nil { /*TODO: Do something with error */}
-		for f, j in r {
 			if i == 0 {
-				//Get the .csv head(first row) and append it
-				append(&head, strings.clone(f))
-
-				//store the heads data as an record OstrichDB record name
+				//append appropriate fields to head
+				for field in fields {
+					append(&head, strings.clone(strings.trim_space(field)))
+				}
 			} else {
-				//if not the first row, append the rest of the rows as the body
-
-				// append(&body, strings.clone(f))
-				fmt.println("f: ", f)
+				//append appropriate fields to body
+				for field in fields {
+					append(&body, strings.clone(strings.trim_space(field)))
+				}
 			}
+			csvRecordCount += 1
 		}
-		csvRecordCount += 1
 	}
-	fmt.printfln("Arr: %v", arr) //debugging
 
 	// fmt.printfln("Head: %v", head) //debugging
 	// fmt.printfln("Body: %v", body) //debugging
@@ -166,11 +158,7 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 		fmt.println("Failed to read file") //debugging
 		return -1
 	}
-	fmt.println("passing fn:, ", fn) //debugging
-	fmt.println("passing cn:, ", cn) //debugging
-	fmt.println("passing rn:, ", rn) //debugging
-	fmt.println("passing rd:, ", rd) //debugging
-	fmt.println("passing rType:, ", rType) //debugging
+
 	content := string(data)
 	lines := strings.split(content, "\n")
 	defer delete(lines)
@@ -226,4 +214,27 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 		return -1
 	}
 	return 0
+}
+
+OST_ORGANIZE_CSV_INTO_COLUMNS :: proc(
+	body: [dynamic]string,
+	index: int,
+) -> [dynamic][dynamic]string {
+	result := make([dynamic][dynamic]string, index)
+
+	// Initialize dynamic arrays for each column
+	for i := 0; i < index; i += 1 { 	// Changed from i := index to i := 0
+		result[i] = make([dynamic]string)
+	}
+
+	// Organize data into columns
+	for i := 0; i < len(body); i += index {
+		for j := 0; j < index && (i + j) < len(body); j += 1 {
+			append(&result[j], body[i + j])
+		}
+	}
+
+
+	return result
+
 }
