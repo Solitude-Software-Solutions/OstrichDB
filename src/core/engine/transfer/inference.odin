@@ -44,6 +44,7 @@ commonInts := []string {
 	"integer",
 	"index",
 	"position",
+	"unit",
 	"pos",
 	"size",
 	"length",
@@ -320,7 +321,6 @@ to_capital :: proc(str: string) -> string {
 	return newCapStr
 }
 
-
 check_if_common__ :: proc(
 	csvRecordNames: [dynamic]string,
 	arr: []string,
@@ -334,8 +334,19 @@ check_if_common__ :: proc(
 		conversionArr := convert_case(name)
 		defer delete(conversionArr)
 		for i in arr {
+			// Check original forms
 			for c in conversionArr {
 				if fmt.tprintf("%s", c) == fmt.tprintf("%s", i) {
+					isCommon = true
+					append(&retNames, name)
+				}
+			}
+
+			// Check plural forms
+			plural := fmt.tprintf("%s%s", i, "s")
+			plural_upper := fmt.tprintf("%s%s", i, "S")
+			for c in conversionArr {
+				if fmt.tprintf("%s", c) == plural || fmt.tprintf("%s", c) == plural_upper {
 					isCommon = true
 					append(&retNames, name)
 				}
