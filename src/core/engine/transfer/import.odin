@@ -15,31 +15,30 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 *********************************************************/
 _import_ :: proc(fn: string) {
+	using data
+
 	collectionPath := utils.concat_collection_name(fn)
 	csvClusterName := fmt.tprintf("%s_%s", fn, const.CSV_CLU)
 	csvFile := fmt.tprintf("./%s.csv", fn)
-	// OST_ENSURE_CSV_RECORD_LENGTH(fn)
+
 	head, body, recordCount := OST_GET_CSV_DATA(csvFile)
 	inferSucces, types := OST_INFER_CSV_RECORD_TYPES(head, recordCount)
 	if !inferSucces {
 		fmt.printfln("Failed to infer record types")
 		return
 	}
-	data.OST_CREATE_COLLECTION(fn, 0) //create a collection with the name of the .csv file
-	id := data.OST_GENERATE_ID(true)
-	data.OST_CREATE_CLUSTER(fn, csvClusterName, id)
+	OST_CREATE_COLLECTION(fn, 0) //create a collection with the name of the .csv file
+	id := OST_GENERATE_ID(true)
+	OST_CREATE_CLUSTER(fn, csvClusterName, id)
 
 
-	cols := OST_ORGANIZE_CSV_INTO_COLUMNS(body, recordCount)
-	fmt.printfln("Cols: %v", cols) //debugging
-	// Add bounds checking for the header access
+	cols := OST_ORGANIZE_CSV_INTO_COLUMNS(body, len(head))
+
 	for colIndex := 0; colIndex < len(cols) && colIndex < len(head); colIndex += 1 {
 		columnName := head[colIndex]
 		columnType := types[columnName]
 
-		// Convert column values to a single string representation
 		columnValues := fmt.tprintf("%v", cols[colIndex])
-		fmt.printfln("Column Values: %v", columnValues) //debugging
 		OST_APPEND_CSV_RECORD_INTO_OSTRICH(
 			collectionPath,
 			csvClusterName,
@@ -50,10 +49,10 @@ _import_ :: proc(fn: string) {
 	}
 
 
-	// delete(head)
-	// delete(body)
-	// delete(types)
-	// delete(cols)
+	delete(head)
+	delete(body)
+	delete(types)
+	delete(cols)
 
 }
 
@@ -62,92 +61,38 @@ _import_ :: proc(fn: string) {
 OST_GET_CSV_DATA :: proc(fn: string) -> ([dynamic]string, [dynamic]string, int) {
 	csvRecordCount := 0
 	head, body: [dynamic]string
-	reader: csv.Reader
-	reader.trim_leading_space = true
-	reader.reuse_record = true
-	reader.reuse_record_buffer = true
-	defer csv.reader_destroy(&reader)
 
 	data, ok := utils.read_file(fn, #procedure)
 	defer delete(data)
 	if ok {
-		// Split the data into lines and process each line
 		lines := strings.split_lines(string(data))
 		for line, i in lines {
 			if len(line) == 0 {continue}
-			fields := strings.split(line, ",")
 
+			// Process each line as a complete record
 			if i == 0 {
-				//append appropriate fields to head
+				// Handle head line
+				fields := strings.split(line, ",")
 				for field in fields {
 					append(&head, strings.clone(strings.trim_space(field)))
 				}
+				csvRecordCount = len(fields)
 			} else {
-				//append appropriate fields to body
-				for field in fields {
-					append(&body, strings.clone(strings.trim_space(field)))
+				// Handle body lines
+				fields := strings.split(line, ",")
+				// Ensure each line has the same number of fields as header
+				for j := 0; j < len(head); j += 1 {
+					if j < len(fields) {
+						append(&body, strings.clone(strings.trim_space(fields[j])))
+					} else {
+						append(&body, "")
+					}
 				}
 			}
-			csvRecordCount += 1
 		}
 	}
-
-	// fmt.printfln("Head: %v", head) //debugging
-	// fmt.printfln("Body: %v", body) //debugging
-	// fmt.printfln("CSV Record Count: %v", csvRecordCount) //debugging
 	return head, body, csvRecordCount
 }
-
-//enusre that that each line(record) of the passed in .csv file has the same number of fields
-OST_ENSURE_CSV_RECORD_LENGTH :: proc(fn: string, reader: ^csv.Reader) -> (bool, int) {
-	recordLen: int
-	lenIsSame := true
-
-	data, ok := os.read_entire_file(fn)
-	if ok {
-		csv.reader_init_with_string(reader, string(data))
-	} else {
-
-	}
-	defer delete(data)
-
-	for r, i, err in csv.iterator_next(reader) {
-		if err != nil { /*TODO: Do something with error */}
-		recordLen = len(r)
-		for r in r {
-			if len(r) != recordLen {
-				fmt.printfln("Record Lengths do not match")
-				return false, recordLen
-			} else {
-				continue
-			}
-		}
-	}
-	return true, recordLen
-}
-
-//almost the same as above but doesnt do anything but return the length of the record
-OST_GET_CSV_RECORD_LENGTH :: proc(csvRecord: []string) -> int {
-	recordLen := len(csvRecord)
-	return recordLen
-}
-
-//extracts a single field from a .csv file
-OST_EXTRACT_CSV_FIELD :: proc(csvRecords: [dynamic]string, iterations: int) -> [dynamic]string {
-	field: []string
-	arr: [dynamic]string
-	for rec in csvRecords {
-		field = strings.split_n(rec, ",", iterations)
-		// fmt.printfln("Field: %v", sfield) //debugging
-		for f in field {
-			append(&arr, strings.clone(f))
-		}
-	}
-	// fmt.printfln("arr: %v", arr) //debugging
-
-	return arr
-}
-
 
 //handles the actual logic for moving csv data into the OstrichDB collection file
 OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int {
@@ -177,8 +122,7 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 		}
 	}
 
-
-	//remove the check for if the record exists, since this procedure is called automatically for
+	//removed the check for if the record exists, since this procedure is called automatically for
 	// each record in the .csv file i'd rather it not bug out if there is duplicate data while storing into
 	// a cluster, will justt add a scan or something to check for duplicates later
 
@@ -191,7 +135,6 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structure", #procedure)
-		fmt.println("Unable to find cluster/valid structure") //debugging
 		return -1
 	}
 
@@ -218,23 +161,78 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 
 OST_ORGANIZE_CSV_INTO_COLUMNS :: proc(
 	body: [dynamic]string,
-	index: int,
+	num_fields: int,
 ) -> [dynamic][dynamic]string {
-	result := make([dynamic][dynamic]string, index)
+	if num_fields <= 0 {
+		return make([dynamic][dynamic]string)
+	}
 
-	// Initialize dynamic arrays for each column
-	for i := 0; i < index; i += 1 { 	// Changed from i := index to i := 0
+	result := make([dynamic][dynamic]string, num_fields)
+	for i := 0; i < num_fields; i += 1 {
 		result[i] = make([dynamic]string)
 	}
 
-	// Organize data into columns
-	for i := 0; i < len(body); i += index {
-		for j := 0; j < index && (i + j) < len(body); j += 1 {
-			append(&result[j], body[i + j])
+	// Process one row at a time
+	num_rows := len(body) / num_fields
+	for row := 0; row < num_rows; row += 1 {
+		for col := 0; col < num_fields; col += 1 {
+			value_index := row * num_fields + col
+			if value_index < len(body) {
+				append(&result[col], body[value_index])
+			}
 		}
 	}
 
-
 	return result
+}
 
+
+//Unused but helpful UTILS
+//enusre that that each line(record) of the passed in .csv file has the same number of fields
+ensure_csv_record_length :: proc(fn: string, reader: ^csv.Reader) -> (bool, int) {
+	recordLen: int
+	lenIsSame := true
+
+	data, ok := os.read_entire_file(fn)
+	if ok {
+		csv.reader_init_with_string(reader, string(data))
+	} else {
+
+	}
+	defer delete(data)
+
+	for r, i, err in csv.iterator_next(reader) {
+		if err != nil { /*TODO: Do something with error */}
+		recordLen = len(r)
+		for r in r {
+			if len(r) != recordLen {
+				fmt.printfln("Record Lengths do not match")
+				return false, recordLen
+			} else {
+				continue
+			}
+		}
+	}
+	return true, recordLen
+}
+
+//almost the same as above but doesnt do anything but return the length of the record
+get_csv_record_length :: proc(csvRecord: []string) -> int {
+	recordLen := len(csvRecord)
+	return recordLen
+}
+
+//extracts a single field from a .csv file
+extract_csv_field :: proc(csvRecords: [dynamic]string, iterations: int) -> [dynamic]string {
+	field: []string
+	arr: [dynamic]string
+	for rec in csvRecords {
+		field = strings.split_n(rec, ",", iterations)
+		// fmt.printfln("Field: %v", sfield) //debugging
+		for f in field {
+			append(&arr, strings.clone(f))
+		}
+	}
+
+	return arr
 }
