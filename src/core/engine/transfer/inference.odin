@@ -100,6 +100,7 @@ commonFloats := []string {
 	"half",
 	"fixed",
 	"numeric",
+	"purchase_amount",
 	"currency",
 	"price",
 	"amount",

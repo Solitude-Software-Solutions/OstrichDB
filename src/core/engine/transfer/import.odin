@@ -27,6 +27,7 @@ _import_ :: proc(fn: string) {
 		fmt.printfln("Failed to infer record types")
 		return
 	}
+
 	OST_CREATE_COLLECTION(fn, 0) //create a collection with the name of the .csv file
 	id := OST_GENERATE_ID(true)
 	OST_CREATE_CLUSTER(fn, csvClusterName, id)
@@ -38,7 +39,8 @@ _import_ :: proc(fn: string) {
 		columnName := head[colIndex]
 		columnType := types[columnName]
 
-		columnValues := fmt.tprintf("%v", cols[colIndex])
+		columnValues := (fmt.tprintf("%v", cols[colIndex]))
+
 		OST_APPEND_CSV_RECORD_INTO_OSTRICH(
 			collectionPath,
 			csvClusterName,
@@ -48,6 +50,7 @@ _import_ :: proc(fn: string) {
 		)
 	}
 
+	metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 
 	delete(head)
 	delete(body)

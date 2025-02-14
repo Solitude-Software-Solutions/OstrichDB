@@ -1570,6 +1570,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	case IMPORT:
 		transfer._import_("csv_test_file") //TODO: chang this to user input
+
 		break
 	case EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")

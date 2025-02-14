@@ -175,3 +175,10 @@ append_single_qoutations :: proc(value: string) -> string {
 	}
 	return strings.clone(fmt.tprintf("'%s'", value))
 }
+
+trim_qoutations :: proc(value: string) -> string {
+	if strings.contains(value, "\"") {
+		return strings.clone(strings.trim(value, "\""))
+	}
+	return strings.clone(value)
+}
