@@ -1569,7 +1569,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		benchmark.main()
 		break
 	case IMPORT:
-		transfer._import_("csv_test_file") //TODO: chang this to user input
+		// transfer._import_("csv_test_file") //TODO: chang this to user input
+		transfer.OST_CONVERT_DATE("13-14-2024")
 
 		break
 	case EXPORT:
