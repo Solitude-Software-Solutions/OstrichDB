@@ -165,7 +165,7 @@ When setting a record value, you must specify the records data type by using the
   - **`NULL`**: Null value. No short-hand.
 
     *Note: UUIDs can only have `0-9` and `a-f` characters and must be in the format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.*
-  - **`UUID`**: Universally unique identifier. No short-hand.
+  - **`UUID`**: Universally unique identifier. Must follow the above format. No short-hand.
   - **`[]UUID`**: UUID arrays. Each value must follow the above format. No short-hand.
 
 ---
