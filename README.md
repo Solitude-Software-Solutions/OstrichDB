@@ -138,14 +138,15 @@ Modifiers adjust the behavior of commands. The current supported modifiers are:
 
 ## **Supported Record Data Type Tokens**
 When setting a record value, you must specify the records data type by using the `OF_TYPE` modifier. Most types have a shorthand notation for convenience.
-Primary data types include:
+
+### Primary data types include:
   - **`INTEGER`**: Integer values. Short-hand: `INT`.
   - **`STRING`**: Any text value longer than 1 character. Short-hand: `STR`.
   - **`FLOAT`**: Floating-point numbers. Short-hand: `FLT`.
   - **`BOOLEAN`**: true or false values. Short-hand: `BOOL`.
   - **`CHAR`**: Single character values. No short-hand.
 
-Complex data types include:
+### Complex data types include:
 NOTE: When setting array values, separate each element with a comma WITHOUT spaces.
   - **`[]STRING`**: String arrays. Short-hand: `[]STR`.
   - **`[]INTEGER`**: Integer arrays. Short-hand: `[]INT`.
@@ -154,7 +155,7 @@ NOTE: When setting array values, separate each element with a comma WITHOUT spac
   - **`[]CHAR`**: Character arrays. No short-hand.
 
 
-Other supported data types include:
+### Other supported data types include:
   - **`DATE`**: Must be in `YYYY-MM-DD` format.
   - **`TIME`**: Must be in `HH:MM:SS` format.
   - **`DATETIME`**: Must be in `YYYY-MM-DDTHH:MM:SS` format.
