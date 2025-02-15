@@ -339,6 +339,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			if OF_TYPE in cmd.p_token && cmd.isUsingDotNotation == true {
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[OF_TYPE])
+
 				if typeSuccess == 0 {
 					fmt.printfln(
 						"Creating record: %s%s%s of type: %s%s%s",
@@ -369,6 +370,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							rType,
 							RESET,
 						)
+
+						//IF a records type is NULL, technically it cant hold a value, the word NULL in the value slot
+						// of a record is mostly a placeholder
+						if rType == NULL {
+							data.OST_SET_RECORD_VALUE(filePath, clusterName, recordName, NULL)
+						}
+
 						fn := concat_collection_name(collectionName)
 						OST_UPDATE_METADATA_VALUE(fn, 2)
 						OST_UPDATE_METADATA_VALUE(fn, 3)
@@ -910,10 +918,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 
 
-				//then if that records type is one of the following arrays:
+				//if that records type is one of the following 'special' arrays:
 				// []CHAR, []DATE, []TIME, []DATETIME,etc scan for that type and remove the "" that
 				// each value will have(THANKS ODIN...)
 				rType, _ := data.OST_GET_RECORD_TYPE(file, clusterName, recordName)
+
+				if rType == NULL {
+					fmt.printfln(
+						"Cannot a value ssign to record: %s%s%s of type %sNULL%s",
+						BOLD_UNDERLINE,
+						recordName,
+						RESET,
+						BOLD_UNDERLINE,
+						RESET,
+					)
+
+					return 0
+				}
 
 				if rType == CHAR_ARRAY ||
 				   rType == DATE_ARRAY ||

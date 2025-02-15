@@ -205,8 +205,18 @@ OST_CONVERT_RECORD_TO_UUID_ARRAY :: proc(rValue: string) -> ([dynamic]string, bo
 		}
 	}
 	return newArray, true
-
 }
+
+//Cannot be a null array
+OST_CONVERT_RECORD_TO_NULL :: proc(rValue: string) -> (string, bool) {
+	if rValue == const.NULL {
+		return rValue, true
+	} else {
+		fmt.printfln("Failed to parse null")
+		return "", false
+	}
+}
+
 
 //Handles the conversion of a record value from an old type to a new type
 //this could also go into the records.odin file but will leave it here for now

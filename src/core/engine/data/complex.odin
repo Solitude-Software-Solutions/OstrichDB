@@ -73,6 +73,12 @@ OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 	case STRING_ARRAY, CHAR_ARRAY:
 		verified = true
 		return verified
+	case UUID_ARRAY:
+		for i in arrayValues {
+			_, parseSuccess := OST_PARSE_UUID(i)
+			verified = parseSuccess
+		}
+		return verified
 	}
 
 	return verified
@@ -289,6 +295,10 @@ OST_PARSE_UUID :: proc(uuid: string) -> (string, bool) {
 	)
 	return strings.to_lower(uuidStr), true
 }
+
+//No need to parse NULL data type but if there was it would have been here :)
+
+
 //TODO DONT DELETE THESE..THEY CAN BE USEDFUL IN THE TRANSFER package
 // OST_FORMAT_DATE :: proc(date: types.__Date) -> string {
 // 	return fmt.tprintf("%04d-%02d-%02d", date.year, date.month, date.day)

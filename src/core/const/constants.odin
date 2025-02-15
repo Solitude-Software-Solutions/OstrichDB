@@ -118,6 +118,7 @@ DATETIME_ARRAY :: "[]DATETIME"
 //MISC TYPES
 UUID :: "UUID"
 UUID_ARRAY :: "[]UUID"
+NULL :: "NULL"
 
 //SPECIAL HELP TOKENS
 CLPS :: "CLPS"
@@ -159,6 +160,7 @@ VALID_RECORD_TYPES: []string : {
 	DATETIME_ARRAY,
 	UUID,
 	UUID_ARRAY,
+	NULL,
 }
 
 METADATA_START :: "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@\n"

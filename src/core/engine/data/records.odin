@@ -1023,6 +1023,11 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		valueAny = uuidArrayValue
 		setValueOk = ok
 		break
+	case NULL:
+		record.type = NULL
+		valueAny = NULL
+		setValueOk = true
+		break
 	}
 
 	if setValueOk != true {
