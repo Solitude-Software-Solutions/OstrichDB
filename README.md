@@ -55,9 +55,9 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 OstrichDB organizes data into three levels:
 
-- **Records**: The smallest unit of data (e.g., user name, age, or product details).
-- **Clusters**: Groups of related records (e.g., related information about a person or product).
 - **Collections**: Files that hold multiple clusters (e.g., a database holding multiple product categories).
+- **Clusters**: Groups of related records (e.g., related information about a person or product). Found within collections.
+- **Records**: The smallest unit of data (e.g., user name, age, or product details). Found within clusters.
 
 ---
 
