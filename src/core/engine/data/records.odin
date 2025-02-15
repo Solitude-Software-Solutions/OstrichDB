@@ -308,24 +308,24 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 								recordData,
 							)
 							append(&allRecords, recordInfo)
-								fmt.printfln(
-									"Collection: %s%s%s | Cluster Name: %s%s%s",
-									utils.BOLD_UNDERLINE,
-									colNameNoExt,
-									utils.RESET,
-									utils.BOLD_UNDERLINE,
-									clusterName,
-									utils.RESET,
-								)
-								fmt.printfln(
-									"Record Type: %s%s%s | Record Data: %s%s%s",
-									utils.BOLD_UNDERLINE,
-									recordType,
-									utils.RESET,
-									utils.BOLD_UNDERLINE,
-									recordData,
-									utils.RESET,
-								)
+							fmt.printfln(
+								"Collection: %s%s%s | Cluster Name: %s%s%s",
+								utils.BOLD_UNDERLINE,
+								colNameNoExt,
+								utils.RESET,
+								utils.BOLD_UNDERLINE,
+								clusterName,
+								utils.RESET,
+							)
+							fmt.printfln(
+								"Record Type: %s%s%s | Record Data: %s%s%s",
+								utils.BOLD_UNDERLINE,
+								recordType,
+								utils.RESET,
+								utils.BOLD_UNDERLINE,
+								recordData,
+								utils.RESET,
+							)
 						}
 						break
 					}
@@ -357,7 +357,7 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 
 	rExists := OST_CHECK_IF_RECORD_EXISTS(collectionPath, cn, new)
 
-	switch rExists
+	switch rExists 
 	{
 	case true:
 		fmt.printfln(
@@ -483,7 +483,7 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 	for type in const.VALID_RECORD_TYPES {
 		if rType == type {
 			//evaluate the shorthand type name and assign the full type name to the record
-			switch (rType)
+			switch (rType) 
 			{
 			case const.STR:
 				record.type = const.STRING
@@ -865,27 +865,37 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 	intArrayValue: [dynamic]int
 	fltArrayValue: [dynamic]f64
 	boolArrayValue: [dynamic]bool
-	stringArrayValue: [dynamic]string
+	stringArrayValue, timeArrayValue, dateTimeArrayValue, charArrayValue, dateArrayValue: [dynamic]string
+
+
 	//Standard value allocation
 	valueAny: any = 0
-	ok: bool
+	setValueOk := false
 	switch (recordType) {
 	case const.INTEGER:
-		valueAny, ok = OST_CONVERT_RECORD_TO_INT(rValue)
+		record.type = const.INTEGER
+		valueAny, ok := OST_CONVERT_RECORD_TO_INT(rValue)
+		setValueOk = ok
 		break
 	case const.FLOAT:
-		valueAny, ok = OST_CONVERT_RECORD_TO_FLOAT(rValue)
+		record.type = const.FLOAT
+		valueAny, ok := OST_CONVERT_RECORD_TO_FLOAT(rValue)
+		setValueOk = ok
 		break
 	case const.BOOLEAN:
-		valueAny, ok = OST_CONVERT_RECORD_TO_BOOL(rValue)
+		record.type = const.BOOLEAN
+		valueAny, ok := OST_CONVERT_RECORD_TO_BOOL(rValue)
+		setValueOk = ok
 		break
 	case const.STRING:
+		record.type = const.STRING
 		valueAny = utils.append_qoutations(rValue)
-		ok = true
+		setValueOk = true
 		break
 	case const.CHAR:
+		record.type = const.CHAR
 		if len(rValue) != 1 {
-			ok = false
+			setValueOk = false
 			fmt.println("Failed to set record value")
 			fmt.printfln(
 				"Value of type %s%s%s must be a single character",
@@ -893,13 +903,13 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 				recordType,
 				utils.RESET,
 			)
-			return ok
 		} else {
-			valueAny = utils.append_single_qoutations(rValue)
-			ok = true
+			valueAny = utils.append_single_qoutations__string(rValue)
+			setValueOk = true
 		}
 		break
 	case const.INTEGER_ARRAY:
+		record.type = const.INTEGER_ARRAY
 		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.INTEGER_ARRAY, rValue)
 		if !verifiedValue {
 			fmt.printfln(
@@ -909,11 +919,12 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 			)
 			return false
 		}
-		intArrayValue, ok = OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
+		intArrayValue, ok := OST_CONVERT_RECORD_TO_INT_ARRAY(rValue)
 		valueAny = intArrayValue
-		ok = true
+		setValueOk = ok
 		break
 	case const.FLOAT_ARRAY:
+		record.type = const.FLOAT_ARRAY
 		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.FLOAT, rValue)
 		if !verifiedValue {
 			fmt.printfln(
@@ -923,11 +934,12 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 			)
 			return false
 		}
-		fltArrayValue, ok = OST_CONVERT_RECORD_TO_FLT_ARRAY(rValue)
+		fltArrayValue, ok := OST_CONVERT_RECORD_TO_FLT_ARRAY(rValue)
 		valueAny = fltArrayValue
-		ok = true
+		setValueOk = ok
 		break
 	case const.BOOLEAN_ARRAY:
+		record.type = const.BOOLEAN_ARRAY
 		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.BOOLEAN_ARRAY, rValue)
 		if !verifiedValue {
 			fmt.printfln(
@@ -937,39 +949,67 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 			)
 			return false
 		}
-		boolArrayValue, ok = OST_CONVERT_RECORD_TO_BOOL_ARRAY(rValue)
+		boolArrayValue, ok := OST_CONVERT_RECORD_TO_BOOL_ARRAY(rValue)
 		valueAny = boolArrayValue
-		ok = true
+		setValueOk = ok
 		break
 	case const.STRING_ARRAY:
-		stringArrayValue, ok = OST_CONVERT_RECORD_TO_STRING_ARRAY(rValue)
+		record.type = const.STRING_ARRAY
+		stringArrayValue, ok := OST_CONVERT_RECORD_TO_STRING_ARRAY(rValue)
 		valueAny = stringArrayValue
-		ok = true
+		setValueOk = ok
+		break
+	case const.CHAR_ARRAY:
+		record.type = const.CHAR_ARRAY
+		charArrayValue, ok := OST_CONVERT_RECORD_TO_CHAR_ARRAY(rValue)
+		valueAny = charArrayValue
+		setValueOk = ok
+		break
+	case const.DATE_ARRAY:
+		record.type = const.DATE_ARRAY
+		dateArrayValue, ok := OST_CONVERT_RECORD_TO_DATE_ARRAY(rValue)
+		valueAny = dateArrayValue
+		setValueOk = ok
+		break
+	case const.TIME_ARRAY:
+		record.type = const.TIME_ARRAY
+		timeArrayValue, ok := OST_CONVERT_RECORD_TO_TIME_ARRAY(rValue)
+		valueAny = timeArrayValue
+		setValueOk = ok
+		break
+	case const.DATETIME_ARRAY:
+		record.type = const.DATETIME_ARRAY
+		dateTimeArrayValue, ok := OST_CONVERT_RECORD_TO_DATETIME_ARRAY(rValue)
+		valueAny = dateTimeArrayValue
+		setValueOk = ok
 		break
 	case const.DATE:
-		date, err := OST_CONVERT_RECORD_TO_DATE(rValue)
-		if err {
+		record.type = const.DATE
+		date, ok := OST_CONVERT_RECORD_TO_DATE(rValue)
+		if ok {
 			valueAny = date
-			ok = true
+			setValueOk = ok
 		}
 		break
 	case const.TIME:
-		time, err := OST_CONVERT_RECORD_TO_TIME(rValue)
-		if err {
+		record.type = const.TIME
+		time, ok := OST_CONVERT_RECORD_TO_TIME(rValue)
+		if ok {
 			valueAny = time
-			ok = true
+			setValueOk = ok
 		}
 		break
 	case const.DATETIME:
-		dateTime, err := OST_CONVERT_RECORD_TO_DATETIME(rValue)
-		if err {
+		record.type = const.DATETIME
+		dateTime, ok := OST_CONVERT_RECORD_TO_DATETIME(rValue)
+		if ok {
 			valueAny = dateTime
-			ok = true
+			setValueOk = ok
 		}
 		break
 	}
 
-	if ok != true {
+	if setValueOk != true {
 		valueTypeError := utils.new_err(
 			.INVALID_VALUE_FOR_EXPECTED_TYPE,
 			utils.get_err_msg(.INVALID_VALUE_FOR_EXPECTED_TYPE),
@@ -978,7 +1018,7 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		utils.throw_custom_err(
 			valueTypeError,
 			fmt.tprintf(
-				"%sInvalid value given. Expected a value of type: %s%s%s",
+				"%sInvalid value given. Expected a value of type: %s%s",
 				utils.BOLD_UNDERLINE,
 				record.type,
 				utils.RESET,
@@ -995,30 +1035,16 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 	// Update the record in the file
 	success := OST_UPDATE_RECORD_IN_FILE(file, cn, rn, valueAny)
 
-	if success {
-		fmt.printfln(
-			"Successfully set %s%s%s to %s%v%s",
-			utils.BOLD_UNDERLINE,
-			rn,
-			utils.RESET,
-			utils.BOLD_UNDERLINE,
-			valueAny,
-			utils.RESET,
-		)
-	} else {
-		fmt.printfln(
-			"Failed to update record %s%s%s in file",
-			utils.BOLD_UNDERLINE,
-			rn,
-			utils.RESET,
-		)
-	}
 
 	//Don't forget to free memory :) - Marshall Burns aka @SchoolyB
 	delete(intArrayValue)
 	delete(fltArrayValue)
 	delete(boolArrayValue)
 	delete(stringArrayValue)
+	delete(charArrayValue)
+	delete(dateArrayValue)
+	delete(timeArrayValue)
+	delete(dateTimeArrayValue)
 	return success
 
 }
@@ -1206,44 +1232,44 @@ OST_PARSE_RECORD :: proc(record: string) -> types.Record {
 OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 	using utils
 	collection_path := concat_collection_name(fn)
-		fmt.printfln(
-			"Are you sure that you want to delete Record: %s%s%s?\nThis action can not be undone.",
-			utils.BOLD_UNDERLINE,
-			rn,
-			utils.RESET,
+	fmt.printfln(
+		"Are you sure that you want to delete Record: %s%s%s?\nThis action can not be undone.",
+		utils.BOLD_UNDERLINE,
+		rn,
+		utils.RESET,
+	)
+	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+	buf: [64]byte
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#procedure,
 		)
-		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-		buf: [64]byte
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Error reading user input", #procedure)
-			return false
-		}
+		utils.throw_err(error1)
+		utils.log_err("Error reading user input", #procedure)
+		return false
+	}
 
-		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-		cap := strings.to_upper(confirmation)
+	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+	cap := strings.to_upper(confirmation)
 
-		switch cap {
-		case const.NO:
-			utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
-			return false
-		case const.YES:
-		// Continue with deletion
-		case:
-			utils.log_runtime_event(
-				"User entered invalid input",
-				"User entered invalid input when trying to delete record",
-			)
-			error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
-			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-			return false
-		}
+	switch cap {
+	case const.NO:
+		utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
+		return false
+	case const.YES:
+	// Continue with deletion
+	case:
+		utils.log_runtime_event(
+			"User entered invalid input",
+			"User entered invalid input when trying to delete record",
+		)
+		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		return false
+	}
 
 
 	data, readSuccess := utils.read_file(collection_path, #procedure)
@@ -1418,15 +1444,15 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 			return recordCount
 		}
 	}
-		fmt.printfln(
-			"Cluster %s%s%s not found in collection %s%s%s",
-			utils.BOLD_UNDERLINE,
-			cn,
-			utils.RESET,
-			utils.BOLD_UNDERLINE,
-			fn,
-			utils.RESET,
-		)
+	fmt.printfln(
+		"Cluster %s%s%s not found in collection %s%s%s",
+		utils.BOLD_UNDERLINE,
+		cn,
+		utils.RESET,
+		utils.BOLD_UNDERLINE,
+		fn,
+		utils.RESET,
+	)
 	return -1
 }
 
@@ -1593,7 +1619,6 @@ OST_GET_RECORD_SIZE :: proc(
 
 
 OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
-
 	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
 	if !readSuccess {
 		return -1
@@ -1626,3 +1651,64 @@ OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
 
 //todo: finish this for normal collection records after done with user records
 // OST_SCAN_FOR_RECORD_VALUE :: proc(rv: string) -> (string, bool) {}
+
+// See issue #https://github.com/Solitude-Software-Solutions/OstrichDB/issues/214
+// To store user input values into OstrichDB, the values need to be formatted as its string representation.
+// So when trying to work on adding []DATE, []TIME, []DATETIME, etc; to OstrichDB, I ran into
+// a problem where I could not store the values of those types in a [dynamic]string array. Because those values
+// //will always be within qoutations thus the stored value in a record would look like this:
+// Student_DOB :[]DATE: ["2022-01-01", "2022-01-02", "2022-01-03"]
+// es no bueno
+
+//This proc looks for the passed in records array value and depending on the record type will format that value
+//If the type is a []CHAR then remove the double qoutes and replace them with single qoutes
+//if []DATE, []TIME, []DATETIME then remove the qoutes and replace them with nothing
+OST_MODIFY_ARRAY_VALUES :: proc(fn, cn, rn, rType: string) -> (string, bool) {
+	// Get the current record value
+	recordValue := OST_READ_RECORD_VALUE(fn, cn, rType, rn)
+	if recordValue == "" {
+		return "", false
+	}
+
+	// Remove the outer brackets
+	value := strings.trim_space(recordValue)
+	if !strings.has_prefix(value, "[") || !strings.has_suffix(value, "]") {
+		return "", false
+	}
+	value = value[1:len(value) - 1]
+
+	// Split the array elements
+	elements := strings.split(value, ",")
+	defer delete(elements)
+
+	// Create a new array to store modified values
+	modifiedElements := make([dynamic]string)
+	defer delete(modifiedElements)
+
+	// Process each element based on type
+	for element in elements {
+		element := strings.trim_space(element)
+
+		switch rType {
+		case const.CHAR_ARRAY:
+			// Replace double quotes with single quotes
+			if strings.has_prefix(element, "\"") && strings.has_suffix(element, "\"") {
+				element = fmt.tprintf("'%s'", element[1:len(element) - 1])
+			}
+		case const.DATE_ARRAY, const.TIME_ARRAY, const.DATETIME_ARRAY:
+			// Remove quotes entirely
+			if strings.has_prefix(element, "\"") && strings.has_suffix(element, "\"") {
+				element = element[1:len(element) - 1]
+			}
+		}
+		append(&modifiedElements, element)
+	}
+
+	// Join the modified elements back into an array string
+	result := fmt.tprintf("[%s]", strings.join(modifiedElements[:], ", "))
+
+	// Update the record with the modified value
+	success := OST_UPDATE_RECORD_IN_FILE(fn, cn, rn, result)
+
+	return result, success
+}

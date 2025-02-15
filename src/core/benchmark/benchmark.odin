@@ -30,8 +30,8 @@ main :: proc() {
 
 	//Change our values at any time :)
 	collectionIterations := 1
-	clusterIterations := 1
-	recordIterations := 1
+	clusterIterations := 10
+	recordIterations := 50
 
 
 	//Note to developers: Each benchmark operation i.e create,fetch, and erase must match the same number of iterations on the same data structure.

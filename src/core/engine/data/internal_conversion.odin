@@ -2,6 +2,7 @@ package data
 
 import "../../../utils"
 import "../../const"
+import "../../types"
 import "../data"
 import "core:fmt"
 import "core:strconv"
@@ -90,6 +91,7 @@ OST_CONVERT_RECORD_TO_BOOL_ARRAY :: proc(rValue: string) -> ([dynamic]bool, bool
 	return newArray, true
 }
 
+
 OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
 	newArray := make([dynamic]string)
 	strValue := OST_PARSE_ARRAY(rValue)
@@ -99,10 +101,64 @@ OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, 
 	return newArray, true
 }
 
+OST_CONVERT_RECORD_TO_CHAR_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for str in strValue {
+		// for char, index in str {
+		append(&newArray, str)
+		// }
+	}
+	return newArray, true
+}
+
+OST_CONVERT_RECORD_TO_DATE_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		date, ok := OST_PARSE_DATE(i)
+		if ok {
+			append(&newArray, date)
+		} else {
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
+
+OST_CONVERT_RECORD_TO_TIME_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		time, ok := OST_PARSE_TIME(i)
+		if ok {
+			append(&newArray, time)
+		} else {
+			fmt.printfln("Failed to parse time array")
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
+
+OST_CONVERT_RECORD_TO_DATETIME_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		dateTime, ok := OST_PARSE_DATETIME(i)
+		if ok {
+			append(&newArray, dateTime)
+		} else {
+			fmt.printfln("Failed to parse datetime array")
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
 //Dont really need the following 3 procs, could just call the parse procs where needed but fuck it - Marshall Burns
 OST_CONVERT_RECORD_TO_DATE :: proc(rValue: string) -> (string, bool) {
-	date, err := OST_PARSE_DATE(rValue)
-	if err == 0 {
+	date, success := OST_PARSE_DATE(rValue)
+	if success == true {
 		return date, true
 	} else {
 		return "", false
@@ -110,8 +166,8 @@ OST_CONVERT_RECORD_TO_DATE :: proc(rValue: string) -> (string, bool) {
 }
 
 OST_CONVERT_RECORD_TO_TIME :: proc(rValue: string) -> (string, bool) {
-	time, err := OST_PARSE_TIME(rValue)
-	if err == 0 {
+	time, success := OST_PARSE_TIME(rValue)
+	if success == true {
 		return time, true
 	} else {
 		return "", false
@@ -119,8 +175,8 @@ OST_CONVERT_RECORD_TO_TIME :: proc(rValue: string) -> (string, bool) {
 }
 
 OST_CONVERT_RECORD_TO_DATETIME :: proc(rValue: string) -> (string, bool) {
-	dateTime, err := OST_PARSE_DATETIME(rValue)
-	if err == 0 {
+	dateTime, success := OST_PARSE_DATETIME(rValue)
+	if success == true {
 		return dateTime, true
 	} else {
 		return "", false

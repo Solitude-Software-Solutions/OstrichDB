@@ -169,11 +169,15 @@ append_qoutations :: proc(value: string) -> string {
 }
 
 //helper used to append single qoutation marks to the beginning and end of CHAR record values
-append_single_qoutations :: proc(value: string) -> string {
+append_single_qoutations__string :: proc(value: string) -> string {
 	if strings.contains(value, "'") {
 		return strings.clone(value)
 	}
 	return strings.clone(fmt.tprintf("'%s'", value))
+}
+
+append_single_qoutations__rune :: proc(value: rune) -> string {
+	return strings.clone(fmt.tprintf("'%c'", value))
 }
 
 trim_qoutations :: proc(value: string) -> string {

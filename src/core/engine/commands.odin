@@ -889,12 +889,47 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					OST_FILE_EXTENSION,
 				)
 
-				ok := data.OST_SET_RECORD_VALUE(
+				setValueSuccess := data.OST_SET_RECORD_VALUE(
 					file,
 					clusterName,
 					recordName,
 					strings.clone(value),
 				)
+
+
+				//then if that records type is one of the following arrays:
+				// []CHAR, []DATE, []TIME, []DATETIME,etc scan for that type and remove the "" that
+				// each value will have(THANKS ODIN...)
+				rType, _ := data.OST_GET_RECORD_TYPE(file, clusterName, recordName)
+
+				if rType == CHAR_ARRAY ||
+				   rType == DATE_ARRAY ||
+				   rType == TIME_ARRAY ||
+				   rType == DATETIME_ARRAY {
+					data.OST_MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
+				}
+
+				if setValueSuccess {
+					fmt.printfln(
+						"Successfully set record: %s%s%s to %s%s%s",
+						BOLD_UNDERLINE,
+						recordName,
+						RESET,
+						BOLD_UNDERLINE,
+						value,
+						RESET,
+					)
+				} else {
+					fmt.printfln(
+						"Failed to set record: %s%s%s to %s%s%s",
+						BOLD_UNDERLINE,
+						recordName,
+						RESET,
+						BOLD_UNDERLINE,
+						value,
+						RESET,
+					)
+				}
 
 				fn := concat_collection_name(collectionName)
 				OST_UPDATE_METADATA_VALUE(fn, 2)
@@ -1437,7 +1472,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 
 				type_is_valid := false
-				for type in VALID_TYPES {
+				for type in VALID_RECORD_TYPES {
 					if strings.to_upper(newType) == type {
 						type_is_valid = true
 						break
@@ -1569,8 +1604,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		benchmark.main()
 		break
 	case IMPORT:
-		// transfer._import_("csv_test_file") //TODO: chang this to user input
-		transfer.OST_CONVERT_DATE("13-14-2024")
+		transfer._import_("csv_test_file") //TODO: chang this to user input
+		// transfer.OST_CONVERT_DATE("13-14-2024")
 
 		break
 	case EXPORT:

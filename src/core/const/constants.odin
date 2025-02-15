@@ -82,6 +82,7 @@ OF_TYPE :: "OF_TYPE"
 TYPE :: "TYPE"
 ALL_OF :: "ALL_OF"
 TO :: "TO"
+
 //Type Tokens
 STRING :: "STRING"
 STR :: "STR"
@@ -106,10 +107,16 @@ FLOAT_ARRAY :: "[]FLOAT"
 FLT_ARRAY :: "[]FLT"
 BOOLEAN_ARRAY :: "[]BOOLEAN"
 BOOL_ARRAY :: "[]BOOL"
+CHAR_ARRAY :: "[]CHAR"
 //These follow ISO 8601 format
 DATE :: "DATE" //YYYY-MM-DD
 TIME :: "TIME" //HH:MM:SS
 DATETIME :: "DATETIME" //YYYY-MM-DDTHH:MM:SS
+DATE_ARRAY :: "[]DATE"
+TIME_ARRAY :: "[]TIME"
+DATETIME_ARRAY :: "[]DATETIME"
+
+
 //SPECIAL HELP TOKENS
 CLPS :: "CLPS"
 CLP :: "CLP"
@@ -121,28 +128,6 @@ CANCEL :: "CANCEL"
 //FOR DOT NOTATION
 DOT :: "."
 
-VALID_TYPES: []string : {
-	STRING,
-	INTEGER,
-	FLOAT,
-	BOOLEAN,
-	STR,
-	INT,
-	FLT,
-	BOOL,
-	CHAR,
-	STRING_ARRAY,
-	STR_ARRAY,
-	INTEGER_ARRAY,
-	INT_ARRAY,
-	FLOAT_ARRAY,
-	FLT_ARRAY,
-	BOOLEAN_ARRAY,
-	BOOL_ARRAY,
-	DATE,
-	TIME,
-	DATETIME,
-}
 //MISC CONSTANTS
 ost_carrot :: "OST>>>"
 VALID_RECORD_TYPES: []string : {
@@ -163,9 +148,13 @@ VALID_RECORD_TYPES: []string : {
 	FLT_ARRAY,
 	BOOLEAN_ARRAY,
 	BOOL_ARRAY,
+	CHAR_ARRAY,
 	DATE,
 	TIME,
 	DATETIME,
+	DATE_ARRAY,
+	TIME_ARRAY,
+	DATETIME_ARRAY,
 }
 
 METADATA_START :: "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@\n"
@@ -206,5 +195,5 @@ BannedUserNames := []string {
 
 
 //IMPORT CONSTANTS
-
+//suffix that is added to the cluster name when a .csv file is imported
 CSV_CLU :: "_CSV_IMPORT"

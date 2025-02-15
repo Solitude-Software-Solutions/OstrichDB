@@ -1,6 +1,7 @@
 package data
 import "../../../utils"
 import "../../const"
+import "../../types"
 import "../data"
 import "core:fmt"
 import "core:strconv"
@@ -18,7 +19,7 @@ Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 	result := strings.split(strArr, ",")
 	// for i in result { 	//debugging
-	// 	fmt.println(i)
+	// 	fmt.println("Parsing Array value: ", i)
 	// }
 	return result
 }
@@ -48,8 +49,28 @@ OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_bool(i)
 			verified = parseSuccess
-
 		}
+		return verified
+	case DATE_ARRAY:
+		for i in arrayValues {
+			_, parseSuccess := OST_PARSE_DATE(i)
+			verified = parseSuccess
+		}
+		return verified
+	case TIME_ARRAY:
+		for i in arrayValues {
+			_, parseSuccess := OST_PARSE_TIME(i)
+			verified = parseSuccess
+		}
+		return verified
+	case DATETIME_ARRAY:
+		for i in arrayValues {
+			_, parseSuccess := OST_PARSE_DATETIME(i)
+			verified = parseSuccess
+		}
+		return verified
+	case STRING_ARRAY, CHAR_ARRAY:
+		verified = true
 		return verified
 	}
 
@@ -58,37 +79,29 @@ OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 
 
 //makes sure the date is in the correct format & length. then returns the date as a string
-OST_PARSE_DATE :: proc(date: string) -> (string, int) {
+OST_PARSE_DATE :: proc(date: string) -> (string, bool) {
 	dateStr := ""
-	dateArr, err := strings.split(date, "-")
-
-	#partial switch (err) {
-	case .None:
-		break
-	case:
-		fmt.println("Incorrect date format detected. Please use YYYY-MM-DD")
-		return dateStr, -1
-	}
+	parts, err := strings.split(date, "-")
 
 	//check length reqs
-	if len(dateArr[0]) != 4 || len(dateArr[1]) != 2 || len(dateArr[2]) != 2 {
+	if len(parts[0]) != 4 || len(parts[1]) != 2 || len(parts[2]) != 2 {
 		fmt.println("Invalid date format. Use: YYYY-MM-DD (example: 2024-03-14)")
-		return dateStr, -1
+		return dateStr, false
 	}
 
-	year, yearOk := strconv.parse_int(dateArr[0])
-	month, monthOk := strconv.parse_int(dateArr[1])
-	day, dayOk := strconv.parse_int(dateArr[2])
+	year, yearOk := strconv.parse_int(parts[0])
+	month, monthOk := strconv.parse_int(parts[1])
+	day, dayOk := strconv.parse_int(parts[2])
 
 	if !yearOk || !monthOk || !dayOk {
 		fmt.println("Invalid date: contains non-numeric characters")
-		return dateStr, -1
+		return dateStr, false
 	}
 
 	//validate month range
 	if month < 1 || month > 12 {
 		fmt.println("Invalid month: must be between 01-12")
-		return dateStr, -1
+		return dateStr, false
 	}
 
 	//Calculate days in month
@@ -105,7 +118,7 @@ OST_PARSE_DATE :: proc(date: string) -> (string, int) {
 	// Validate day range
 	if day < 1 || day > daysInMonth {
 		fmt.println("Invalid day for the specified month")
-		return dateStr, -1
+		return dateStr, false
 	}
 
 	// Format with leading zeros
@@ -114,10 +127,10 @@ OST_PARSE_DATE :: proc(date: string) -> (string, int) {
 	yearStr := fmt.tprintf("%04d", year)
 
 	dateStr = fmt.tprintf("%s-%s-%s", yearStr, monthStr, dayStr)
-	return dateStr, 0
+	return dateStr, true
 }
 
-OST_PARSE_TIME :: proc(time: string) -> (string, int) {
+OST_PARSE_TIME :: proc(time: string) -> (string, bool) {
 	timeStr := ""
 	timeArr, err := strings.split(time, ":")
 
@@ -126,12 +139,12 @@ OST_PARSE_TIME :: proc(time: string) -> (string, int) {
 		break
 	case:
 		fmt.println("Incorrect time format detected. Please use HH:MM:SS")
-		return timeStr, -1
+		return timeStr, false
 	}
 
 	if len(timeArr[0]) != 2 || len(timeArr[1]) != 2 || len(timeArr[2]) != 2 {
 		fmt.println("Invalid time format. Use: HH:MM:SS (example: 13:45:30)")
-		return timeStr, -1
+		return timeStr, false
 	}
 
 	// Convert strings to integers for validation
@@ -141,31 +154,31 @@ OST_PARSE_TIME :: proc(time: string) -> (string, int) {
 
 	if !hourOk || !minuteOk || !secondOk {
 		fmt.println("Invalid time: contains non-numeric characters")
-		return timeStr, -1
+		return timeStr, false
 	}
 
 	// Validate ranges
 	if hour < 0 || hour > 23 {
 		fmt.println("Invalid hour: must be between 00-23")
-		return timeStr, -1
+		return timeStr, false
 	}
 	if minute < 0 || minute > 59 {
 		fmt.println("Invalid minute: must be between 00-59")
-		return timeStr, -1
+		return timeStr, false
 	}
 	if second < 0 || second > 59 {
 		fmt.println("Invalid second: must be between 00-59")
-		return timeStr, -1
+		return timeStr, false
 	}
 
 	// Format with leading zeros
 	timeStr = fmt.tprintf("%02d:%02d:%02d", hour, minute, second)
-	return timeStr, 0
+	return timeStr, true
 }
 
 //parses the passed in string ensuring proper format and length
 //Example datetime: 2024-03-14T09:30:00
-OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, int) {
+OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, bool) {
 	dateTimeStr := ""
 	dateTimeArr, err := strings.split(dateTime, "T")
 
@@ -174,19 +187,40 @@ OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, int) {
 		break
 	case:
 		fmt.println("Incorrect datetime format detected. Please use YYYY-MM-DDTHH:MM:SS")
-		return dateTimeStr, -1
+		return dateTimeStr, false
 	}
 
 	dateStr, dateErr := OST_PARSE_DATE(dateTimeArr[0])
-	if dateErr != 0 {
-		return dateTimeStr, -1
+	if dateErr != true {
+		return dateTimeStr, false
 	}
 
 	timeStr, timeErr := OST_PARSE_TIME(dateTimeArr[1])
-	if timeErr != 0 {
-		return dateTimeStr, -1
+	if timeErr != true {
+		return dateTimeStr, false
 	}
 
 	dateTimeStr = fmt.tprintf("%sT%s", dateStr, timeStr)
-	return dateTimeStr, 0
+	return dateTimeStr, true
 }
+
+//TODO DONT DELETE THESE..THEY CAN BE USEDFUL IN THE TRANSFER package
+// OST_FORMAT_DATE :: proc(date: types.__Date) -> string {
+// 	return fmt.tprintf("%04d-%02d-%02d", date.year, date.month, date.day)
+// }
+
+// OST_FORMAT_TIME :: proc(time: types.__Time) -> string {
+// 	return fmt.tprintf("%02d:%02d:%02d", time.hour, time.minute, time.second)
+// }
+
+// OST_FORMAT_DATETIME :: proc(dateTime: types.__DateTime) -> string {
+// 	return fmt.tprintf("%sT%s", OST_FORMAT_DATE(dateTime.date), OST_FORMAT_TIME(dateTime.time))
+// }
+
+// OST_APPEND_DATE_TO_ARRAY :: proc(arr: ^types.Date_Array, date: types.__Date) {
+// 	value := types.Date_Value {
+// 		raw       = date,
+// 		formatted = OST_FORMAT_DATE(date),
+// 	}
+// 	append(&arr.values, value)
+// }
