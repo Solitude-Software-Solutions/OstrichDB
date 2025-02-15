@@ -132,12 +132,31 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
 		switch (cmd.t_token) {
 		case CLUSTER, RECORD:
-			data.OST_WHERE_OBJECT(cmd.t_token, cmd.l_token[0])
+			found := data.OST_WHERE_OBJECT(cmd.t_token, cmd.l_token[0])
+			if !found {
+				fmt.printfln(
+					"No %s%s%s with name: %s%s%s found within OstrichDB.",
+					BOLD_UNDERLINE,
+					cmd.t_token,
+					RESET,
+					BOLD,
+					cmd.l_token[0],
+					RESET,
+				)
+			}
 		case:
 			break
 		}
 		if len(cmd.l_token) == 0 {
-			data.OST_WHERE_ANY(cmd.t_token)
+			found := data.OST_WHERE_ANY(cmd.t_token)
+			if !found {
+				fmt.printfln(
+					"No data with name: %s%s%s found within OstrichDB.",
+					BOLD_UNDERLINE,
+					cmd.t_token,
+					RESET,
+				)
+			}
 		} else {
 			fmt.println(
 				"Incomplete command. Correct Usage: WHERE <target> <target_name> or WHERE <target_name>",
@@ -871,7 +890,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
 				value := cmd.p_token[TO] // Get the full string value that was collected by the parser
-
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
 					BOLD_UNDERLINE,
@@ -882,12 +900,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 
-				file := fmt.tprintf(
-					"%s%s%s",
-					OST_COLLECTION_PATH,
-					collectionName,
-					OST_FILE_EXTENSION,
-				)
+				file := utils.concat_collection_name(collectionName)
 
 				setValueSuccess := data.OST_SET_RECORD_VALUE(
 					file,

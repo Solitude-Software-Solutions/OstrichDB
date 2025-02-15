@@ -20,13 +20,13 @@ Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 //`WHERE foo` would show the location of every 2nd or 3rd layer data object with the name foo
 
 //handles WHERE {target} {target name}
-OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
+OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 	using const
 	using utils
 
 	// Early return for invalid target
 	if target == COLLECTION {
-		return 1, false
+		return false
 	}
 
 	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
@@ -77,17 +77,16 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
 					RESET,
 				)
 				found = true
-				// Remove the return here to continue searching
+
 			}
 		}
 	}
 
-	// Return true if we found any matches
-	return 0, found
+	return found
 }
 
 //handles WHERE {target name}
-OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
+OST_WHERE_ANY :: proc(targetName: string) -> bool {
 	using utils
 	using const
 
@@ -143,5 +142,5 @@ OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
 		}
 	}
 
-	return 0, found
+	return found
 }

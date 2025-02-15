@@ -1140,13 +1140,7 @@ OST_UPDATE_RECORD_IN_FILE :: proc(
 OST_FETCH_RECORD :: proc(fn: string, cn: string, rn: string) -> (types.Record, bool) {
 	clusterContent: string
 	recordContent: string
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
-
+	collectionPath := utils.concat_collection_name(fn)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
 	if !clusterExists {
@@ -1458,12 +1452,7 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 
 //reads over the passed in collection file and returns the number of records in that collection
 OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
-	collectionPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
+	collectionPath := utils.concat_collection_name(fn)
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
 		return -1
@@ -1496,13 +1485,7 @@ OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
 
 //deletes the data value of the passed in record but keeps the name and type
 OST_PURGE_RECORD :: proc(fn, cn, rn: string) -> bool {
-	collection_path := fmt.tprintf(
-		"%s%s%s",
-		const.OST_COLLECTION_PATH,
-		fn,
-		const.OST_FILE_EXTENSION,
-	)
-
+	collection_path := utils.concat_collection_name(fn)
 	// Read the entire file
 	data, readSuccess := utils.read_file(collection_path, #procedure)
 	if !readSuccess {
