@@ -137,7 +137,7 @@ Modifiers adjust the behavior of commands. The current supported modifiers are:
 
 
 ## **Supported Record Data Type Tokens**
-When setting a record value, you must specify the records data type by using the `OF_TYPE` modifier. Most types have a shorthand notation for convenience.
+When setting a record value, you must specify the records data type by using the `OF_TYPE` modifier. Some types have a shorthand notation for convenience.
 
 ### Primary data types include:
   - **`INTEGER`**: Integer values. Short-hand: `INT`.
@@ -156,12 +156,12 @@ When setting a record value, you must specify the records data type by using the
 
 
 ### Other supported data types include:
-  - **`DATE`**: Must be in `YYYY-MM-DD` format.
-  - **`TIME`**: Must be in `HH:MM:SS` format.
-  - **`DATETIME`**: Must be in `YYYY-MM-DDTHH:MM:SS` format.
-  - **`[]DATE`**: Date arrays. Each value must follow the above format. Short-hand: `[]DATE`.
-  - **`[]TIME`**: Time arrays. Each value must follow the above format. Short-hand: `[]TIME`.
-  - **`[]DATETIME`**: Date and time arrays. Each value must follow the above format. Short-hand: `[]DATETIME`.
+  - **`DATE`**: Must be in `YYYY-MM-DD` format. No short-hand.
+  - **`TIME`**: Must be in `HH:MM:SS` format. No short-hand.
+  - **`DATETIME`**: Must be in `YYYY-MM-DDTHH:MM:SS` format. No short-hand.
+  - **`[]DATE`**: Date arrays. Each value must follow the above format. No short-hand.
+  - **`[]TIME`**: Time arrays. Each value must follow the above format. No short-hand.
+  - **`[]DATETIME`**: Date and time arrays. Each value must follow the above format. No short-hand.
   - **`NULL`**: Null value. No short-hand.
 
     *Note: UUIDs can only have `0-9` and `a-f` characters and must be in the format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.*
