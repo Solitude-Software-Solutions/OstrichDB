@@ -23,8 +23,8 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 ### **Prerequisites:**
 - A Unix-based system (macOS, Linux).
-- Clang & LLVM installed on your system.
 - The Odin programming language installed, built, and properly set in the system's PATH.
+*Note: You can achieve the previous steps by follwing the [Odin Installation Guide](https://odin-lang.org/docs/install/)
 
 
 ### **Steps:**
@@ -204,7 +204,7 @@ When setting a record value, you must specify the records data type by using the
 - More configuration options
 - Database file compression and zipping
 - Several new command tokens:
-  - `IMPORT`: Load data from external sources(JSON, CSV, etc.)
+  - `IMPORT`: Load data from external sources(CSV, etc.)
   - `EXPORT`: Export data to various formats
   - `LOCK`: Prevent data modification
   - `UNLOCK`: Allow data modification
