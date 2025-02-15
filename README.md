@@ -161,6 +161,11 @@ Other supported data types include:
   - **`[]DATE`**: Date arrays. Each value must follow the above format. Short-hand: `[]DATE`.
   - **`[]TIME`**: Time arrays. Each value must follow the above format. Short-hand: `[]TIME`.
   - **`[]DATETIME`**: Date and time arrays. Each value must follow the above format. Short-hand: `[]DATETIME`.
+  - **`NULL`**: Null value. No short-hand.
+
+    *Note: UUIDs can only have 0-9 and a-f characters and must be in the format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.*
+  - **`UUID`**: Universally unique identifier. No short-hand.
+  - **`[]UUID`**: UUID arrays. Each value must follow the above format. No short-hand.
 
 ---
 
