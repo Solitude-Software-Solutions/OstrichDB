@@ -918,7 +918,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if rType == CHAR_ARRAY ||
 				   rType == DATE_ARRAY ||
 				   rType == TIME_ARRAY ||
-				   rType == DATETIME_ARRAY {
+				   rType == DATETIME_ARRAY ||
+				   rType == UUID_ARRAY {
 					data.OST_MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
 				}
 

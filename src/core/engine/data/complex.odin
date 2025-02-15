@@ -6,6 +6,7 @@ import "../data"
 import "core:fmt"
 import "core:strconv"
 import "core:strings"
+import "core:unicode/utf8"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -204,6 +205,90 @@ OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, bool) {
 	return dateTimeStr, true
 }
 
+
+//parses the passed in string ensuring proper format and length
+//Must be in the format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+//Only allows 0-9 and a-f
+OST_PARSE_UUID :: proc(uuid: string) -> (string, bool) {
+	uuidStr := ""
+	isValidChar := false
+
+	possibleChars: []string = {
+		"0",
+		"1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"a",
+		"b",
+		"c",
+		"d",
+		"e",
+		"f",
+	}
+	uuidArr, err := strings.split(uuid, "-")
+
+	#partial switch (err) {
+	case .None:
+		break
+	case:
+		fmt.println(
+			"Incorrect UUID format detected. Please use XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+		)
+		return uuidStr, false
+	}
+
+	if len(uuidArr[0]) != 8 ||
+	   len(uuidArr[1]) != 4 ||
+	   len(uuidArr[2]) != 4 ||
+	   len(uuidArr[3]) != 4 ||
+	   len(uuidArr[4]) != 12 {
+		fmt.println("Invalid UUID format. Please use XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+		return uuidStr, false
+	}
+
+	// Validate each section of the UUID
+	for section in uuidArr {
+		for value in section {
+			// Convert the rune to a lowercase string
+			runeArr := make([]rune, 1)
+			runeArr[0] = value
+			charLower := strings.to_lower(utf8.runes_to_string(runeArr))
+			isValidChar = false
+
+			// Check if the character is in the allowed set
+			for c in possibleChars {
+				if charLower == c {
+					isValidChar = true
+					break
+				}
+			}
+
+			if !isValidChar {
+				fmt.println("Char is not a valid char: ", charLower)
+				fmt.println(
+					"Invalid UUID: contains invalid characters. Only 0-9 and a-f are allowed",
+				)
+				return uuidStr, false
+			}
+		}
+	}
+
+	uuidStr = fmt.tprintf(
+		"%s-%s-%s-%s-%s",
+		uuidArr[0],
+		uuidArr[1],
+		uuidArr[2],
+		uuidArr[3],
+		uuidArr[4],
+	)
+	return strings.to_lower(uuidStr), true
+}
 //TODO DONT DELETE THESE..THEY CAN BE USEDFUL IN THE TRANSFER package
 // OST_FORMAT_DATE :: proc(date: types.__Date) -> string {
 // 	return fmt.tprintf("%04d-%02d-%02d", date.year, date.month, date.day)

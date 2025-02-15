@@ -846,6 +846,8 @@ OST_FIND_RECORD_MATCHES_IN_CLUSTERS :: proc(content: string, rName: string) -> [
 
 //Reworked for dot notation - Marshall Burns aka @SchoolyB
 OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
+	using const
+
 	result := OST_CHECK_IF_RECORD_EXISTS(file, cn, rn)
 
 	if !result {
@@ -865,35 +867,35 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 	intArrayValue: [dynamic]int
 	fltArrayValue: [dynamic]f64
 	boolArrayValue: [dynamic]bool
-	stringArrayValue, timeArrayValue, dateTimeArrayValue, charArrayValue, dateArrayValue: [dynamic]string
+	stringArrayValue, timeArrayValue, dateTimeArrayValue, charArrayValue, dateArrayValue, uuidArrayValue: [dynamic]string
 
 
 	//Standard value allocation
 	valueAny: any = 0
 	setValueOk := false
 	switch (recordType) {
-	case const.INTEGER:
-		record.type = const.INTEGER
+	case INTEGER:
+		record.type = INTEGER
 		valueAny, ok := OST_CONVERT_RECORD_TO_INT(rValue)
 		setValueOk = ok
 		break
-	case const.FLOAT:
-		record.type = const.FLOAT
+	case FLOAT:
+		record.type = FLOAT
 		valueAny, ok := OST_CONVERT_RECORD_TO_FLOAT(rValue)
 		setValueOk = ok
 		break
-	case const.BOOLEAN:
-		record.type = const.BOOLEAN
+	case BOOLEAN:
+		record.type = BOOLEAN
 		valueAny, ok := OST_CONVERT_RECORD_TO_BOOL(rValue)
 		setValueOk = ok
 		break
-	case const.STRING:
-		record.type = const.STRING
+	case STRING:
+		record.type = STRING
 		valueAny = utils.append_qoutations(rValue)
 		setValueOk = true
 		break
-	case const.CHAR:
-		record.type = const.CHAR
+	case CHAR:
+		record.type = CHAR
 		if len(rValue) != 1 {
 			setValueOk = false
 			fmt.println("Failed to set record value")
@@ -908,9 +910,9 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 			setValueOk = true
 		}
 		break
-	case const.INTEGER_ARRAY:
-		record.type = const.INTEGER_ARRAY
-		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.INTEGER_ARRAY, rValue)
+	case INTEGER_ARRAY:
+		record.type = INTEGER_ARRAY
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(INTEGER_ARRAY, rValue)
 		if !verifiedValue {
 			fmt.printfln(
 				"Invalid value given. Must be an array of Type: %sINTEGER%s",
@@ -923,9 +925,9 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		valueAny = intArrayValue
 		setValueOk = ok
 		break
-	case const.FLOAT_ARRAY:
-		record.type = const.FLOAT_ARRAY
-		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.FLOAT, rValue)
+	case FLOAT_ARRAY:
+		record.type = FLOAT_ARRAY
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(FLOAT, rValue)
 		if !verifiedValue {
 			fmt.printfln(
 				"Invalid value given. Must be an array of Type: %sFLOAT%s",
@@ -938,9 +940,9 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		valueAny = fltArrayValue
 		setValueOk = ok
 		break
-	case const.BOOLEAN_ARRAY:
-		record.type = const.BOOLEAN_ARRAY
-		verifiedValue := OST_VERIFY_ARRAY_VALUES(const.BOOLEAN_ARRAY, rValue)
+	case BOOLEAN_ARRAY:
+		record.type = BOOLEAN_ARRAY
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(BOOLEAN_ARRAY, rValue)
 		if !verifiedValue {
 			fmt.printfln(
 				"Invalid value given. Must be an array of Type: %BOOLEAN%s",
@@ -953,59 +955,73 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		valueAny = boolArrayValue
 		setValueOk = ok
 		break
-	case const.STRING_ARRAY:
-		record.type = const.STRING_ARRAY
+	case STRING_ARRAY:
+		record.type = STRING_ARRAY
 		stringArrayValue, ok := OST_CONVERT_RECORD_TO_STRING_ARRAY(rValue)
 		valueAny = stringArrayValue
 		setValueOk = ok
 		break
-	case const.CHAR_ARRAY:
-		record.type = const.CHAR_ARRAY
+	case CHAR_ARRAY:
+		record.type = CHAR_ARRAY
 		charArrayValue, ok := OST_CONVERT_RECORD_TO_CHAR_ARRAY(rValue)
 		valueAny = charArrayValue
 		setValueOk = ok
 		break
-	case const.DATE_ARRAY:
-		record.type = const.DATE_ARRAY
+	case DATE_ARRAY:
+		record.type = DATE_ARRAY
 		dateArrayValue, ok := OST_CONVERT_RECORD_TO_DATE_ARRAY(rValue)
 		valueAny = dateArrayValue
 		setValueOk = ok
 		break
-	case const.TIME_ARRAY:
-		record.type = const.TIME_ARRAY
+	case TIME_ARRAY:
+		record.type = TIME_ARRAY
 		timeArrayValue, ok := OST_CONVERT_RECORD_TO_TIME_ARRAY(rValue)
 		valueAny = timeArrayValue
 		setValueOk = ok
 		break
-	case const.DATETIME_ARRAY:
-		record.type = const.DATETIME_ARRAY
+	case DATETIME_ARRAY:
+		record.type = DATETIME_ARRAY
 		dateTimeArrayValue, ok := OST_CONVERT_RECORD_TO_DATETIME_ARRAY(rValue)
 		valueAny = dateTimeArrayValue
 		setValueOk = ok
 		break
-	case const.DATE:
-		record.type = const.DATE
+	case DATE:
+		record.type = DATE
 		date, ok := OST_CONVERT_RECORD_TO_DATE(rValue)
 		if ok {
 			valueAny = date
 			setValueOk = ok
 		}
 		break
-	case const.TIME:
-		record.type = const.TIME
+	case TIME:
+		record.type = TIME
 		time, ok := OST_CONVERT_RECORD_TO_TIME(rValue)
 		if ok {
 			valueAny = time
 			setValueOk = ok
 		}
 		break
-	case const.DATETIME:
-		record.type = const.DATETIME
+	case DATETIME:
+		record.type = DATETIME
 		dateTime, ok := OST_CONVERT_RECORD_TO_DATETIME(rValue)
 		if ok {
 			valueAny = dateTime
 			setValueOk = ok
 		}
+		break
+	case UUID:
+		record.type = UUID
+		uuid, ok := OST_CONVERT_RECORD_TO_UUID(rValue)
+		if ok {
+			valueAny = uuid
+			setValueOk = ok
+		}
+		break
+	case UUID_ARRAY:
+		record.type = UUID_ARRAY
+		uuidArrayValue, ok := OST_CONVERT_RECORD_TO_UUID_ARRAY(rValue)
+		valueAny = uuidArrayValue
+		setValueOk = ok
 		break
 	}
 
@@ -1045,6 +1061,7 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 	delete(dateArrayValue)
 	delete(timeArrayValue)
 	delete(dateTimeArrayValue)
+	delete(uuidArrayValue)
 	return success
 
 }

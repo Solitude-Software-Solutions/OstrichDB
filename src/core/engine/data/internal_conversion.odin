@@ -183,6 +183,31 @@ OST_CONVERT_RECORD_TO_DATETIME :: proc(rValue: string) -> (string, bool) {
 	}
 }
 
+OST_CONVERT_RECORD_TO_UUID :: proc(rValue: string) -> (string, bool) {
+	uuid, success := OST_PARSE_UUID(rValue)
+	if success == true {
+		return uuid, true
+	} else {
+		return "", false
+	}
+}
+
+OST_CONVERT_RECORD_TO_UUID_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		uuid, ok := OST_PARSE_UUID(i)
+		if ok {
+			append(&newArray, uuid)
+		} else {
+			fmt.printfln("Failed to parse time array")
+			return newArray, false
+		}
+	}
+	return newArray, true
+
+}
+
 //Handles the conversion of a record value from an old type to a new type
 //this could also go into the records.odin file but will leave it here for now
 OST_CONVERT_VALUE_TO_NEW_TYPE :: proc(value, oldT, newT: string) -> (string, bool) {
