@@ -147,7 +147,7 @@ When setting a record value, you must specify the records data type by using the
   - **`CHAR`**: Single character values. No short-hand.
 
 ### Complex data types include:
-NOTE: When setting array values, separate each element with a comma WITHOUT spaces.
+*NOTE: When setting array values, separate each element with a comma WITHOUT spaces.*
   - **`[]STRING`**: String arrays. Short-hand: `[]STR`.
   - **`[]INTEGER`**: Integer arrays. Short-hand: `[]INT`.
   - **`[]FLOAT`**: Float arrays. Short-hand: `[]FLT`.
@@ -164,7 +164,7 @@ NOTE: When setting array values, separate each element with a comma WITHOUT spac
   - **`[]DATETIME`**: Date and time arrays. Each value must follow the above format. Short-hand: `[]DATETIME`.
   - **`NULL`**: Null value. No short-hand.
 
-    *Note: UUIDs can only have 0-9 and a-f characters and must be in the format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.*
+    *Note: UUIDs can only have `0-9` and `a-f` characters and must be in the format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.*
   - **`UUID`**: Universally unique identifier. No short-hand.
   - **`[]UUID`**: UUID arrays. Each value must follow the above format. No short-hand.
 
