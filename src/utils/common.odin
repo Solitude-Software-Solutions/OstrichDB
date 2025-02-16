@@ -186,3 +186,11 @@ trim_qoutations :: proc(value: string) -> string {
 	}
 	return strings.clone(value)
 }
+
+
+//helper used for the BENCHMARK command to make sure users input is an integer
+string_is_int :: proc(value: string) -> bool {
+	val, ok := strconv.parse_int(value)
+	return ok
+
+}

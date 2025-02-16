@@ -102,6 +102,17 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 					break
 				}
 				state = 1
+				break
+			case BENCHMARK:
+				if strings.contains(token, ".") {
+					cmd.isUsingDotNotation = true
+					iterations := strings.split(strings.trim_space(token), ".")
+					for i in iterations {
+						append(&cmd.l_token, i)
+					}
+				} else {
+					append(&cmd.l_token, token)
+				}
 			case:
 				cmd.t_token = cmd.t_token
 				if strings.contains(token, ".") {

@@ -14,6 +14,7 @@ import "./security"
 import "core:c/libc"
 import "core:fmt"
 import "core:os"
+import "core:strconv"
 import "core:strings"
 /********************************************************
 Author: Marshall A Burns
@@ -1633,9 +1634,33 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 		}
-
 	case BENCHMARK:
-		benchmark.main()
+		switch (len(cmd.l_token)) {
+		case 0:
+			benchmark.OST_RUN_BENCHMARK([]int{0, 0, 0}, true)
+			break
+		case 3:
+			for token, i in cmd.l_token {
+				if !utils.string_is_int(token) {
+					fmt.printfln(
+						"Error: When passing parameters to the BENCHMARK command, all values must be integers. Example: BENCHMARK 10.10.10",
+					)
+					return 1
+				}
+			}
+			colIteration := strconv.atoi(cmd.l_token[0])
+			clusterIteration := strconv.atoi(cmd.l_token[1])
+			recordIteration := strconv.atoi(cmd.l_token[2])
+			benchmark.OST_RUN_BENCHMARK(
+				[]int{colIteration, clusterIteration, recordIteration},
+				false,
+			)
+			break
+		case:
+			fmt.printfln(
+				"Incomplete command. Correct Usage: BENCHMARK or BENCHMARK <#of_collections>.<#of_clusters>.<#of_records>",
+			)
+		}
 		break
 	case IMPORT:
 		transfer._import_("csv_test_file") //TODO: chang this to user input
