@@ -923,6 +923,33 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// each value will have(THANKS ODIN...)
 				rType, _ := data.OST_GET_RECORD_TYPE(file, clusterName, recordName)
 
+
+				/*
+			    Added this because of: https://github.com/Solitude-Software-Solutions/OstrichDB/issues/203
+				I guess its not neeeded, if a user wants to have a single character string record who am I to stop them?
+				Remove at any time if needed - Marshall
+				*/
+				if rType == STRING && len(value) == 1 {
+					conversionSuccess := data.OST_CHANGE_RECORD_TYPE(
+						file,
+						clusterName,
+						recordName,
+						value,
+						CHAR,
+					)
+					if conversionSuccess {
+						fmt.printfln(
+							"Record with name: %s%s%s converted to type: %sCHAR%s",
+							BOLD_UNDERLINE,
+							recordName,
+							RESET,
+							BOLD_UNDERLINE,
+							RESET,
+						)
+					}
+				}
+
+
 				if rType == NULL {
 					fmt.printfln(
 						"Cannot a value ssign to record: %s%s%s of type %sNULL%s",
