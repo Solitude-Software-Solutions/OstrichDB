@@ -872,21 +872,22 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 
 	//Standard value allocation
 	valueAny: any = 0
+	ok: bool = false
 	setValueOk := false
 	switch (recordType) {
 	case INTEGER:
 		record.type = INTEGER
-		valueAny, ok := OST_CONVERT_RECORD_TO_INT(rValue)
+		valueAny, ok = OST_CONVERT_RECORD_TO_INT(rValue)
 		setValueOk = ok
 		break
 	case FLOAT:
 		record.type = FLOAT
-		valueAny, ok := OST_CONVERT_RECORD_TO_FLOAT(rValue)
+		valueAny, ok = OST_CONVERT_RECORD_TO_FLOAT(rValue)
 		setValueOk = ok
 		break
 	case BOOLEAN:
 		record.type = BOOLEAN
-		valueAny, ok := OST_CONVERT_RECORD_TO_BOOL(rValue)
+		valueAny, ok = OST_CONVERT_RECORD_TO_BOOL(rValue)
 		setValueOk = ok
 		break
 	case STRING:

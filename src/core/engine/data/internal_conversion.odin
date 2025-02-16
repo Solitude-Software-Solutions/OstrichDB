@@ -38,10 +38,10 @@ OST_CONVERT_RECORD_TO_FLOAT :: proc(rValue: string) -> (f64, bool) {
 }
 
 OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
-	lower_str := strings.to_lower(strings.trim_space(rValue))
-	if lower_str == "true" {
+	lowerStr := strings.to_lower(strings.trim_space(rValue))
+	if lowerStr == "true" || lowerStr == "t" {
 		return true, true
-	} else if lower_str == "false" {
+	} else if lowerStr == "false" || lowerStr == "f" {
 		return false, true
 	} else {
 		//no need to do anything other than return here. Once false is returned error handling system will do its thing
@@ -78,10 +78,10 @@ OST_CONVERT_RECORD_TO_BOOL_ARRAY :: proc(rValue: string) -> ([dynamic]bool, bool
 	newArray := make([dynamic]bool)
 	strValue := OST_PARSE_ARRAY(rValue)
 	for i in strValue {
-		lower_str := strings.to_lower(strings.trim_space(i))
-		if lower_str == "true" {
+		lowerStr := strings.to_lower(strings.trim_space(i))
+		if lowerStr == "true" || lowerStr == "t" {
 			append(&newArray, true)
-		} else if lower_str == "false" {
+		} else if lowerStr == "false" || lowerStr == "f" {
 			append(&newArray, false)
 		} else {
 			fmt.printfln("Failed to parse bool array")
@@ -333,9 +333,9 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		switch (oldType) {
 		case STRING:
 			//Old type is STRING
-			lower_str := strings.to_lower(strings.trim_space(value))
-			if lower_str == "true" || lower_str == "false" {
-				return lower_str, true
+			lowerStr := strings.to_lower(strings.trim_space(value))
+			if lowerStr == "true" || lowerStr == "false" {
+				return lowerStr, true
 			}
 			return "", false
 		case:

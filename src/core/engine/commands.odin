@@ -917,7 +917,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					strings.clone(value),
 				)
 
-
 				//if that records type is one of the following 'special' arrays:
 				// []CHAR, []DATE, []TIME, []DATETIME,etc scan for that type and remove the "" that
 				// each value will have(THANKS ODIN...)
