@@ -47,7 +47,7 @@ Creates a new collection file with metadata within the DB
 OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType)
+	switch (collectionType) 
 	{
 	case 0:
 		//standard cluster file
@@ -127,38 +127,38 @@ OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
 		return false
 	}
 
-		fmt.printfln(
-			"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
-			BOLD_UNDERLINE,
-			fn,
-			RESET,
+	fmt.printfln(
+		"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
+		BOLD_UNDERLINE,
+		fn,
+		RESET,
+	)
+	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		throw_err(error1)
+		log_err("Error reading user input", #procedure)
+	}
+
+	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+	cap := strings.to_upper(confirmation)
+
+	switch (cap) {
+	case const.NO:
+		log_runtime_event("User canceled deletion", "User canceled deletion of collection")
+		return false
+	case const.YES:
+	// Continue with deletion
+	case:
+		log_runtime_event(
+			"User entered invalid input",
+			"User entered invalid input when trying to delete collection",
 		)
-		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
-			throw_err(error1)
-			log_err("Error reading user input", #procedure)
-		}
-
-		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-		cap := strings.to_upper(confirmation)
-
-		switch (cap) {
-		case const.NO:
-			log_runtime_event("User canceled deletion", "User canceled deletion of collection")
-			return false
-		case const.YES:
-		// Continue with deletion
-		case:
-			log_runtime_event(
-				"User entered invalid input",
-				"User entered invalid input when trying to delete collection",
-			)
-			error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
-			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-			return false
-		}
+		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
+		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		return false
+	}
 
 	collectionPath := concat_collection_name(fn)
 
@@ -414,18 +414,20 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 
 	// Find the end of the metadata header
 	content := string(data)
-	headerEndIndex := strings.index(content, "}")
+	headerEndIndex := strings.index(content, const.METADATA_END)
 	if headerEndIndex == -1 {
 		throw_err(new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #procedure))
 		log_err("Invalid collection file format", #procedure)
 		return false
 	}
 
-	// Extract the metadata header
-	header := content[:headerEndIndex + 1]
+	// Get the metadata header
+	headerEndIndex += len(const.METADATA_END) + 1
+	metaDataHeader := content[:headerEndIndex]
+
 
 	// Write back only the header
-	writeSuccess := os.write_entire_file(collectionPath, transmute([]byte)header)
+	writeSuccess := os.write_entire_file(collectionPath, transmute([]byte)metaDataHeader)
 	if !writeSuccess {
 		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
 		log_err("Error writing purged collection file", #procedure)
