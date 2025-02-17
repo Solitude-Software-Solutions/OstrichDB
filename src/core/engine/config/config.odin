@@ -2,9 +2,9 @@ package config
 
 import "../../../utils"
 import "../../const"
-import "../data/metadata"
-import "../data"
 import "../../types"
+import "../data"
+import "../data/metadata"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -126,7 +126,7 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	if OST_APPEND_CONFIG_RECORD(CONFIG_THREE, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, append_qoutations("SIMPLE"), STRING) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
 	if OST_APPEND_CONFIG_RECORD(CONFIG_FIVE, "false", BOOLEAN) == 0 {

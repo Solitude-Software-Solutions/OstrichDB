@@ -999,7 +999,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				OST_UPDATE_METADATA_VALUE(fn, 5)
 			}
 			break
-		case 0:
+		case 1:
 			switch (cmd.t_token) {
 			case CONFIG:
 				log_runtime_event("Used SET command", "")
@@ -1007,80 +1007,111 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					configName := cmd.l_token[0]
 					value: string
 					for key, val in cmd.p_token {
-						value = val
+						value = strings.to_lower(val)
 					}
+					fmt.printfln(
+						"Setting config: %s%s%s to %s%s%s",
+						BOLD_UNDERLINE,
+						configName,
+						RESET,
+						BOLD_UNDERLINE,
+						value,
+						RESET,
+					)
 					switch (configName) 
 					{
-					case "HELP":
-						if value != "VERBOSE" || value != "SIMPLE" {
+					case "HELP_VERBOSE":
+						fmt.println("Value: ", value)
+						if value == "true" || value == "false" {
+							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FOUR, value)
+							if success == false {
+								fmt.printfln("Failed to set HELP config to %s", value)
+							} else {
+								OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
+								OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
+								fmt.printfln("Successfully set HELP config to %s", value)
+							}
+							help.OST_SET_HELP_MODE()
+						} else {
 							fmt.println(
-								"Invalid value. Valid values for config help are: 'verbose' or 'simple'",
+								"Invalid value. Valid values for config help_verbose are: 'true' or 'false'",
 							)
 							return 1
 						}
+						break
+					case "SUPPRESS_ERRORS":
+						fmt.println("Value: ", value)
+						if value == "true" || value == "false" {
 
-						fmt.printfln(
-							"Setting config: %s%s%s to %s%s%s",
-							BOLD_UNDERLINE,
-							configName,
-							RESET,
-							BOLD_UNDERLINE,
-							value,
-							RESET,
-						)
-						success := config.OST_UPDATE_CONFIG_VALUE(
-							CONFIG_FOUR,
-							append_qoutations(value),
-						)
-						if success == false {
-							fmt.printfln("Failed to set HELP config to %s", value)
+
+							fmt.printfln(
+								"Setting config: %s%s%s to %s%s%s",
+								BOLD_UNDERLINE,
+								configName,
+								RESET,
+								BOLD_UNDERLINE,
+								value,
+								RESET,
+							)
+							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_SIX, value)
+							if success == false {
+								fmt.printfln("Failed to set SUPPRESS_ERRORS config to %s", value)
+							} else {
+								fmt.printfln(
+									"Successfully set SUPPRESS_ERRORS config to %s",
+									value,
+								)
+							}
+							break
 						} else {
-							OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
-							OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
-							fmt.printfln("Successfully set HELP config to %s", value)
+							fmt.println(
+								"Invalid value. Valid values for config suppress_errors are: 'true' or 'false'",
+							)
+							return 1
 						}
-						help.OST_SET_HELP_MODE()
-					case "SERVER":
-						if value != "TRUE" || value != "FALSE" {
+					case "SERVER_ON":
+						if value == "true" || value == "false" {
+							fmt.printfln(
+								"Setting config: %s%s%s to %s%s%s",
+								BOLD_UNDERLINE,
+								configName,
+								RESET,
+								BOLD_UNDERLINE,
+								value,
+								RESET,
+							)
+
+							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FIVE, value)
+							if success == false {
+								fmt.printfln("Failed to set SERVER config to %s", value)
+							} else {
+								fmt.printfln("Successfully set SERVER config to %s", value)
+								OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
+								OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
+								if data.OST_READ_RECORD_VALUE(
+									   OST_CONFIG_PATH,
+									   CONFIG_CLUSTER,
+									   BOOLEAN,
+									   CONFIG_FIVE,
+								   ) ==
+								   "true" {
+									fmt.printfln("Server Mode is now ON")
+									server.OST_START_SERVER(ServerConfig)
+								} else {
+									fmt.printfln("Server is now OFF")
+								}
+							}
+						} else {
 							fmt.println(
 								"Invalid value. Valid values for config server are: 'true' or 'false'",
 							)
 							return 1
 						}
-
-						fmt.printfln(
-							"Setting config: %s%s%s to %s%s%s",
-							BOLD_UNDERLINE,
-							configName,
-							RESET,
-							BOLD_UNDERLINE,
-							value,
-							RESET,
-						)
-
-
-						success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FIVE, value)
-						if success == false {
-							fmt.printfln("Failed to set SERVER config to %s", value)
-						} else {
-							fmt.printfln("Successfully set SERVER config to %s", value)
-							OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
-							OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
-							if data.OST_READ_RECORD_VALUE(
-								   OST_CONFIG_PATH,
-								   CONFIG_CLUSTER,
-								   BOOLEAN,
-								   CONFIG_FIVE,
-							   ) ==
-							   "true" {
-								fmt.printfln("Server Mode is now ON")
-								server.OST_START_SERVER(ServerConfig)
-							} else {
-								fmt.printfln("Server is now OFF")
-							}
-						}
+						break
 					case:
-						fmt.printfln("Invalid config name. Valid config names are: 'HELP'")
+						fmt.printfln(
+							"Invalid config name provided. Valid config names are:\nHELP_VERBOSE\nSUPPRESS_ERRORS\nSERVER_ON\n",
+						)
 					}
 				} else {
 					fmt.printfln(
@@ -1090,11 +1121,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				break
 			}
 		case:
-			//if the length of the token is not 3 or 0
+			//if the length of the token is not 3 or 1, then the SET command is invalid
 			fmt.printfln(
-				"Invalid command structure. Correct Usage: SET <collection_name>.<cluster_name>.<record_name> TO <value>",
+				"Invalid command structure. Correct Usage: SET <collection_name>.<cluster_name>.<record_name> TO <value> or SET CONFIG <config_name> TO <value>",
 			)
-			fmt.printfln("The SET command can only be used on RECORDS and CONFIGS")
+			fmt.printfln("Note: The SET command can only be used on RECORDS and CONFIGS")
 		}
 	case COUNT:
 		log_runtime_event("Used COUNT command", "")

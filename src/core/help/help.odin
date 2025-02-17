@@ -1,8 +1,8 @@
 package help
 
 import "../../utils"
-import "../engine/config"
 import "../const"
+import "../engine/config"
 import "../engine/data"
 import "../types"
 import "core:fmt"
@@ -55,23 +55,23 @@ OST_SET_HELP_MODE :: proc() -> bool {
 	using types
 	using utils
 
-	value := data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, STRING, CONFIG_FOUR)
+	value := data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, BOOLEAN, CONFIG_FOUR)
 
-	switch (value)
+	switch (value) 
 	{
-	case "VERBOSE":
-		helpMode.verbose = true
+	case "true":
+		helpMode.isVerbose = true
 		break
-	case "SIMPLE":
-		helpMode.verbose = false
+	case "false":
+		helpMode.isVerbose = false
 		break
 	case:
 		fmt.println(
-			"Invalid value detected in config file.\n Please delete the config file and restart OstrichDB.",
+			"Invalid value detected in config file.\n Please delete the ./bin/core/config.ost file and rebuild OstrichDB.",
 		)
 	}
 
-	return helpMode.verbose
+	return helpMode.isVerbose
 }
 
 //checks if the token that the user wants help with is valid
@@ -90,7 +90,8 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 	using const
 	using utils
 
-	helpMode := OST_SET_HELP_MODE()
+	helpModeIsVerbose := OST_SET_HELP_MODE()
+	fmt.printfln("Help mode is verbose: %v", helpModeIsVerbose)
 	helpText: string
 	data: []byte
 	ok: bool
@@ -105,7 +106,7 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 		)
 		return ""
 	}
-	switch (helpMode)
+	switch (helpModeIsVerbose) 
 	{
 	case true:
 		data, ok = os.read_entire_file(VERBOSE_HELP_FILE)

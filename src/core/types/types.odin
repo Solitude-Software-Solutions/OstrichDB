@@ -73,7 +73,7 @@ Ids :: struct {
 
 helpMode: Help_Mode
 Help_Mode :: struct {
-	verbose: bool, //if its false then its simple
+	isVerbose: bool, //if its false then its simple
 }
 
 
