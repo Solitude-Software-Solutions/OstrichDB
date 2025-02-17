@@ -1,9 +1,9 @@
 package security
 
 import "../../../utils"
-import "../config"
 import "../../const"
 import "../../types"
+import "../config"
 import "../data"
 import "../data/metadata"
 import "core:c/libc"
@@ -110,7 +110,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
 	engineInit := config.OST_UPDATE_CONFIG_VALUE(CONFIG_ONE, "true")
 
-	switch (engineInit)
+	switch (engineInit) 
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -234,7 +234,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword
+	switch strongPassword 
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
@@ -403,7 +403,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p))
+	switch (len(p)) 
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -440,7 +440,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true)
+	switch (true) 
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -469,38 +469,36 @@ OST_CREATE_NEW_USER :: proc(
 	using types
 
 	buf: [1024]byte
-		if user.role.Value == "admin" {
-			fmt.println("Please enter role you would like to assign the new account")
-			fmt.printf("1. Admin\n2. User\n3. Guest\n")
-			n, inputSuccess := os.read(os.stdin, buf[:])
-			if inputSuccess != 0 {
-				fmt.printfln("Error reading input")
-				return 1
-			}
-
-			inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
-			if inputToCap == "1" || inputToCap == "ADMIN" {
-				new_user.role.Value = "admin"
-			} else if inputToCap == "2" || inputToCap == "USER" {
-				new_user.role.Value = "user"
-			} else if inputToCap == "3" || inputToCap == "GUEST" {
-				new_user.role.Value = "guest"
-			} else {
-				fmt.printfln("Invalid role entered")
-				return 1
-			}
-		} else if (user.role.Value == "user") {
-			new_user.role.Value = "guest"
-		} else {
-			fmt.println("You do not have the required permissions to create a new account")
-			fmt.printfln(
-				"To create a new account you must be logged in as an admin or user account",
-			)
+	if user.role.Value == "admin" {
+		fmt.println("Please enter role you would like to assign the new account")
+		fmt.printf("1. Admin\n2. User\n3. Guest\n")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			fmt.printfln("Error reading input")
 			return 1
 		}
 
-		newUserName := OST_GET_USERNAME(false)
-		new_user.username.Value = newUserName
+		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
+		if inputToCap == "1" || inputToCap == "ADMIN" {
+			new_user.role.Value = "admin"
+		} else if inputToCap == "2" || inputToCap == "USER" {
+			new_user.role.Value = "user"
+		} else if inputToCap == "3" || inputToCap == "GUEST" {
+			new_user.role.Value = "guest"
+		} else {
+			fmt.printfln("Invalid role entered")
+			return 1
+		}
+	} else if (user.role.Value == "user") {
+		new_user.role.Value = "guest"
+	} else {
+		fmt.println("You do not have the required permissions to create a new account")
+		fmt.printfln("To create a new account you must be logged in as an admin or user account")
+		return 1
+	}
+
+	newUserName := OST_GET_USERNAME(false)
+	new_user.username.Value = newUserName
 
 
 	// Common validation logic for both test and interactive modes
@@ -525,13 +523,13 @@ OST_CREATE_NEW_USER :: proc(
 	}
 
 	result := data.OST_CREATE_COLLECTION(newColName, 1)
-		fmt.printf(
-			"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
-		)
-		libc.system("stty -echo")
-		initpassword := OST_GET_PASSWORD(false)
-		libc.system("stty echo")
-		new_user.password.Value = initpassword
+	fmt.printf(
+		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
+	)
+	libc.system("stty -echo")
+	initpassword := OST_GET_PASSWORD(false)
+	libc.system("stty echo")
+	new_user.password.Value = initpassword
 
 
 	saltAsString := string(new_user.salt)
@@ -699,7 +697,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	}
 
 	// Remove the users histrory cluster
-	data.OST_ERASE_HISTORY_CLUSTER(username)
+	// OST_ERASE_HISTORY_CLUSTER(username) //TODO: Need to rewrite this proc due to moving the onld one to a different file
 	log_runtime_event(
 		"User deleted",
 		fmt.tprintf("Administrator %s deleted user %s", types.user.username.Value, username),

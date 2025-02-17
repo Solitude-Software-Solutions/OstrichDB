@@ -426,41 +426,41 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	file: string
 	collectionPath := concat_collection_name(fn)
 
-		fmt.printfln(
-			"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
-			utils.BOLD,
-			cn,
-			utils.RESET,
-			utils.BOLD,
-			fn,
-			utils.RESET,
+	fmt.printfln(
+		"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
+		utils.BOLD,
+		cn,
+		utils.RESET,
+		utils.BOLD,
+		fn,
+		utils.RESET,
+	)
+	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		throw_err(error1)
+		return false
+	}
+
+	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+	cap := strings.to_upper(confirmation)
+
+	switch cap {
+	case const.NO:
+		log_runtime_event("User canceled deletion", "User canceled deletion of database")
+		return false
+	case const.YES:
+	// Continue with deletion
+	case:
+		log_runtime_event(
+			"User entered invalid input",
+			"User entered invalid input when trying to delete cluster",
 		)
-		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
-			throw_err(error1)
-			return false
-		}
-
-		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-		cap := strings.to_upper(confirmation)
-
-		switch cap {
-		case const.NO:
-			log_runtime_event("User canceled deletion", "User canceled deletion of database")
-			return false
-		case const.YES:
-		// Continue with deletion
-		case:
-			log_runtime_event(
-				"User entered invalid input",
-				"User entered invalid input when trying to delete cluster",
-			)
-			error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
-			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-			return false
-		}
+		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
+		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		return false
+	}
 
 	data, readSuccess := read_file(collectionPath, #procedure)
 	defer delete(data)
@@ -547,7 +547,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	collectionPath := concat_collection_name(fn)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
-	switch clusterExists
+	switch clusterExists 
 	{
 	case false:
 		fmt.printfln(
@@ -872,65 +872,3 @@ OST_GET_CLUSTER_SIZE :: proc(fn: string, cn: string) -> (size: int, success: boo
 
 
 //removes a users history from the history collecion. Used when DELETING a user and tests
-OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
-	using const
-	using utils
-
-	data, readSuccess := os.read_entire_file(OST_HISTORY_PATH)
-	defer delete(data)
-	if !readSuccess {
-		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
-		log_err("Error reading collection file", #procedure)
-		return false
-	}
-	content := string(data)
-	clusterClosingBrace := strings.split(content, "}")
-	newContent := make([dynamic]u8)
-	defer delete(newContent)
-	clusterFound := false
-
-
-	for i := 0; i < len(clusterClosingBrace); i += 1 {
-		cluster := clusterClosingBrace[i] // everything in the file up to the first instance of "},"
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", userName)) {
-			clusterFound = true
-		} else if len(strings.trim_space(cluster)) > 0 {
-			append(&newContent, ..transmute([]u8)cluster) // Add closing brace
-			if i < len(clusterClosingBrace) - 1 {
-				append(&newContent, "}")
-			}
-		}
-	}
-
-	if !clusterFound {
-		throw_err(
-			new_err(
-				.CANNOT_FIND_CLUSTER,
-				fmt.tprintf(
-					"Cluster: %s%s%s not found in collection: %s%s%s",
-					BOLD_UNDERLINE,
-					userName,
-					RESET,
-					BOLD_UNDERLINE,
-					userName,
-					RESET,
-				),
-				#procedure,
-			),
-		)
-		log_err("Error finding cluster in collection", #procedure)
-		return false
-	}
-	writeSuccess := os.write_entire_file(OST_HISTORY_PATH, newContent[:])
-	if !writeSuccess {
-		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
-		log_err("Error writing to collection file", #procedure)
-		return false
-	}
-	log_runtime_event(
-		"Database Cluster",
-		"User confirmed deletion of cluster and it was successfully deleted.",
-	)
-	return true
-
-}

@@ -58,7 +58,7 @@ ErrorType :: enum {
 	INCOMPLETE_COMMAND,
 	INVALID_COMMAND,
 	COMMAND_TOO_LONG, //??? idk
-
+	CANNOT_PURGE_HISTORY,
 	//Data Integrity Errors
 	FILE_SIZE_TOO_LARGE,
 	FILE_FORMAT_NOT_VALID,
@@ -127,6 +127,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.INVALID_CHECKSUM                  = "Checksum mismatch. File may be corrupt",
 	.INVALID_DATA_TYPE_FOUND           = "Invalid Data Type(s) Found In Collection",
 	.INVALID_VALUE_FOR_EXPECTED_TYPE   = "An invalid value was given for the expected type",
+	.CANNOT_PURGE_HISTORY              = "Cannot Purge Users History Cluster",
 }
 
 new_err :: proc(type: ErrorType, message: string, procedure: string) -> Error {

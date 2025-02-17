@@ -135,6 +135,10 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	if OST_APPEND_CONFIG_RECORD(CONFIG_SIX, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
+	if OST_APPEND_CONFIG_RECORD(CONFIG_SEVEN, "true", BOOLEAN) == 0 {
+		successCount += 1
+	}
+
 
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
 

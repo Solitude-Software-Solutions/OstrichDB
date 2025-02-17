@@ -1021,7 +1021,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					switch (configName) 
 					{
 					case "HELP_VERBOSE":
-						fmt.println("Value: ", value)
 						if value == "true" || value == "false" {
 							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FOUR, value)
 							if success == false {
@@ -1040,7 +1039,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						}
 						break
 					case "SUPPRESS_ERRORS":
-						fmt.println("Value: ", value)
 						if value == "true" || value == "false" {
 
 
@@ -1069,6 +1067,32 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							)
 							return 1
 						}
+						break
+					case "LIMIT_HISTORY":
+						if value == "true" || value == "false" {
+							fmt.printfln(
+								"Setting config: %s%s%s to %s%s%s",
+								BOLD_UNDERLINE,
+								configName,
+								RESET,
+								BOLD_UNDERLINE,
+								value,
+								RESET,
+							)
+							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_SEVEN, value)
+							if success == false {
+								fmt.printfln("Failed to set LIMIT_HISTORY config to %s", value)
+							} else {
+								fmt.printfln("Successfully set LIMIT_HISTORY config to %s", value)
+							}
+							break
+						} else {
+							fmt.println(
+								"Invalid value. Valid values for config limit_history are: 'true' or 'false'",
+							)
+							return 1
+						}
+						break
 					case "SERVER_ON":
 						if value == "true" || value == "false" {
 							fmt.printfln(
@@ -1110,7 +1134,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						break
 					case:
 						fmt.printfln(
-							"Invalid config name provided. Valid config names are:\nHELP_VERBOSE\nSUPPRESS_ERRORS\nSERVER_ON\n",
+							"Invalid config name provided. Valid config names are:\nHELP_VERBOSE\nSUPPRESS_ERRORS\nLIMIT_HISTORY\nSERVER_ON\n",
 						)
 					}
 				} else {
