@@ -199,6 +199,21 @@ When setting a record value, you must specify the records data type by using the
    ```
 ---
 
+## **Configs**
+OstrichDB has a configuration file that allows the user to customize the DBMS to their liking.
+- **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is off)
+- **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is off)
+- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is on)
+- **`SERVER_ON`**: Enable of disable the server mode. (Defualt is off)
+
+**Note: ALL configs must be set using the following command:**
+Values are either `TRUE` or `FALSE`
+
+```
+SET CONFIG {CONFIG_NAME} TO {VALUE}
+```
+
+---
 ## **Future Plans**
 
 - More configuration options
