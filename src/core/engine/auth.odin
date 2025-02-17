@@ -1,9 +1,9 @@
 package engine
 
 import "../../utils"
-import "./config"
 import "../const"
 import "../types"
+import "./config"
 import "./data"
 import "./data/metadata"
 import "./security"
@@ -145,7 +145,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
 			OST_CONFIG_PATH,
 			CONFIG_CLUSTER,
-			CONFIG,
+			BOOLEAN,
 			CONFIG_THREE,
 		)
 		if userLoggedInValue == "false" {
@@ -188,7 +188,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param)
+		switch (param) 
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false
