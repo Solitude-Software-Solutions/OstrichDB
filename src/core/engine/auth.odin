@@ -1,9 +1,9 @@
 package engine
 
 import "../../utils"
-import "../config"
 import "../const"
 import "../types"
+import "./config"
 import "./data"
 import "./data/metadata"
 import "./security"
@@ -12,12 +12,12 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+*********************************************************/
 
 //This beffy S.O.B handles user authentication
 OST_RUN_SIGNIN :: proc() -> bool {
@@ -145,7 +145,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
 			OST_CONFIG_PATH,
 			CONFIG_CLUSTER,
-			CONFIG,
+			BOOLEAN,
 			CONFIG_THREE,
 		)
 		if userLoggedInValue == "false" {

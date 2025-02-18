@@ -9,7 +9,6 @@
 |CLEAR      |Action         |Single           |Clears the screen of clutter                                        |
 |RESTART    |Action         |Single           |Restarts OstrichDB                                                  |
 |REBUILD    |Action         |Single           |Rebuilds and restarts OstrichDB                                     |
-|TEST       |Action         |Single           |Runs the test suite for OstrichDB                                 |
 |WHERE      |Action         |Multi            |Searches for a specific object within the DBMS                  |
 |NEW        |Action         |Multi            |Creates a new collection, cluster, record or user                   |
 |ERASE      |Action         |Multi            |Deletes a collection, cluster, or record                            |
@@ -23,6 +22,9 @@
 |TYPE_OF    |Action         |Multi            |Displays the type of record                                         |
 |CHANGE_TYPE|Action         |Multi            |Changes the type of a record                                        |
 |ISOLATE    |Action         |Multi            |Isolates a collection from the rest of the DBMS         |
+|DESTROY    |Action         |Multi            |Destroys a collection, cluster, or record                           |
+|VALIDATE   |Action         |Multi            |Validates the structure of a collection, cluster, or record         |
+|BENCHMARK  |Action         |Multi            |Runs a benchmark test on the DBMS                                   |
 |TO         |Modifier       |                 |Used with RENAME to specify new name for DBMS objects              |
 |OF_TYPE    |Modifier       |                 |Specifies data type for DBMS records                              |
 |<Any Token> |Help Target   |                 |Paired with the HELP action to show information about the token     |

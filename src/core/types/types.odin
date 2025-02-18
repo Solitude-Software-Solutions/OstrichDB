@@ -1,11 +1,11 @@
 package types
 import "core:time"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+*********************************************************/
 
 
 Command :: struct {
@@ -21,6 +21,7 @@ Record :: struct {
 	type:  string,
 	value: string,
 }
+
 
 OstrichEngine: Engine
 Engine :: struct {
@@ -72,7 +73,7 @@ Ids :: struct {
 
 helpMode: Help_Mode
 Help_Mode :: struct {
-	verbose: bool, //if its false then its simple
+	isVerbose: bool, //if its false then its simple
 }
 
 
@@ -205,8 +206,6 @@ errSupression: ErrorSuppression
 ErrorSuppression :: struct {
 	enabled: bool, //uses the OST_READ_CONFIG_VALUE to get the value of the error suppression config then set true or false
 }
-
-TESTING: bool // Global flag to indicate if running in test mode
 
 benchmark_result: Benchmark_Result
 Benchmark_Result :: struct {

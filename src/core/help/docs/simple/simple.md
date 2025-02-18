@@ -45,15 +45,15 @@ Deletes all data, configurations, and users from the DBMS. Use: `DESTROY`.
 ### DESTROY END
 
 ### NEW START
-Creates new objects. Use: `NEW <collection_name>`.
+Creates new objects. Use: `NEW <col_name>`.
 ### NEW END
 
 ### FETCH START
-Retrieves data. Use: `FETCH <collectio_namen>.<cluster_name>.<record_name>`.
+Retrieves data. Use: `FETCH <col_name>.<clu_name>.<rec_name>`.
 ### FETCH END
 
 ### SET START
-Sets the value of a record or config. Use: `SET <collection_name>.<cluster_name>.<record_name> TO <value>` or `SET CONFIG <config_name> TO <value>`.
+Sets the value of a record or config. Use: `SET <col_name>.<clu_name>.<rec_name> TO <value>` or `SET CONFIG <config_name> TO <value>`.
 ### SET END
 
 ### RENAME START
@@ -69,7 +69,7 @@ Removes all data from an object while maintaining the object structure. Use: `PU
 ### PURGE END
 
 ### COUNT START
-Returns the number of objects within a scope. Use: `COUNT RECORDS <collection_name> `.
+Returns the number of objects within a scope. Use: `COUNT RECORDS <col_name> `.
 ### COUNT END
 
 ### SIZE_OF START
@@ -77,10 +77,10 @@ Returns the size in bytes of an object. Use: `SIZE_OF <object_name>`.
 ### SIZE_OF END
 
 ### TYPE_OF START
-Returns the type of a a record. Use: `TYPE_OF <collection_name>.<cluster_name>.<record_name>`.
+Returns the type of a a record. Use: `TYPE_OF <col_name>.<clu_name>.<rec_name>`.
 
 ### CHANGE_TYPE START
-Changes the type of a record. Use: `CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_type>`.
+Changes the type of a record. Use: `CHANGE_TYPE <col_name>.<clu_name>.<rec_name> TO <new_type>`.
 ### CHANGE_TYPE END
 
 ### WHERE START
@@ -92,7 +92,12 @@ Creates a backup of DBMS data and configurations. Use: `BACKUP COLLECTION <objec
 ### BACKUP END
 
 ### ISOLATE START
-Isolates a collection from the DBMS. Use: `ISOLATE <collection_name>`.
+Isolates a collection from the DBMS. Use: `ISOLATE <col_name>`.
+### ISOLATE END
+
+### BENCHMARK START
+Runs a benchmark test on the DBMS. Use: `BENCHMARK` or `BENCHMARK <num>`, `BENCHMARK <num>.<num>`, `BENCHMARK <num>.<num>.<num>`. Where num is the number of iterations.
+### BENCHMARK END
 
 ### COLLECTION START
 A database instance within the DBMS containing related clusters and records.
@@ -111,9 +116,9 @@ Modifier used with RENAME or SET.
 ### TO END
 
 ### OF_TYPE START
-Specifies the type of a new record. Use: `NEW <collection_name>.<cluster_name>.<record_name> OF_TYPE <type>`.
+Specifies the type of a new record. Use: `NEW <col_name>.<clu_name>.<rec_name> OF_TYPE <type>`.
 ### OF_TYPE END
 
-### ATOMS START
-Used with `HELP` to show information about atoms.
-### ATOMS END
+### CLPS START
+Used with `HELP` to show information about CLPS.
+### CLPS END

@@ -5,12 +5,12 @@ import "../types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+*********************************************************/
 
 //checks if a token is a valid modifier only used in the parser
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
@@ -60,8 +60,6 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			}
 			continue
 		}
-
-
 		switch state {
 		case 0:
 			// Expecting target
@@ -102,6 +100,17 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 					break
 				}
 				state = 1
+				break
+			case BENCHMARK:
+				if strings.contains(token, ".") {
+					cmd.isUsingDotNotation = true
+					iterations := strings.split(strings.trim_space(token), ".")
+					for i in iterations {
+						append(&cmd.l_token, i)
+					}
+				} else {
+					append(&cmd.l_token, token)
+				}
 			case:
 				cmd.t_token = cmd.t_token
 				if strings.contains(token, ".") {

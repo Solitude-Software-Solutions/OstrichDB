@@ -11,16 +11,20 @@ import "core:strconv"
 import "core:strings"
 import "core:time"
 //=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
+// Author: Marshall A Burns
 //
 // Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
 // Licensed under Apache License 2.0 (see LICENSE file for details)
 //=========================================================//
 
 //Note to developers: In the main() procedure, the number of iterations passed for each benchmarking operation can be adjusted unless a comment states otherwise. - Marshall
-main :: proc() {
+OST_RUN_BENCHMARK :: proc(iterations: []int, default: bool) {
 	using utils
 
+	collectionIterations, clusterIterations, recordIterations: int
+
+	fmt.println("---------------------------------------------------")
+	fmt.println("Running OstrichDB Benchmark Suite. Please wait...")
 	//Create the benchmark directory
 	os.make_directory(const.OST_BENCHMARK_PATH, 0o777)
 	//Create a benchmark result array to keep everything tidy
@@ -28,12 +32,25 @@ main :: proc() {
 	failCounter := 0
 
 
-	//Change our values at any time :)
-	collectionIterations := 1
-	clusterIterations := 1
-	recordIterations := 1
-
-
+	//default is set if a user passes a number of iterations per data object when using the BENCHMARK command
+	if default == true {
+		fmt.println("Using default iteration values:\nCollections: 2\nClusters: 10\nRecords: 50\n")
+		//Change our values at any time :)nch
+		collectionIterations = 2
+		clusterIterations = 10
+		recordIterations = 50
+	} else {
+		fmt.printfln(
+			"Using custom iteration values:\nCollections: %d\nClusters: %d\nRecords: %d",
+			iterations[0],
+			iterations[1],
+			iterations[2],
+		)
+		collectionIterations = iterations[0]
+		clusterIterations = iterations[1]
+		recordIterations = iterations[2]
+	}
+	fmt.println("---------------------------------------------------\n")
 	//Note to developers: Each benchmark operation i.e create,fetch, and erase must match the same number of iterations on the same data structure.
 	//For example, if you create 10 collections, you must fetch 10 collections and erase 10 collections. The same applies to clusters and records.
 	// - Marshall
@@ -105,6 +122,8 @@ main :: proc() {
 	delete(cluNames)
 	delete(recNames)
 
+
+	os.remove(const.OST_BENCHMARK_PATH)
 }
 
 
@@ -889,9 +908,9 @@ refresh_metadata :: proc(fn: string) {
 	using metadata
 
 	file := concat_benchmark_collection(fn)
-	OST_UPDATE_METADATA_VALUE(file, 2)
-	OST_UPDATE_METADATA_VALUE(file, 3)
-	OST_UPDATE_METADATA_VALUE(file, 5)
+	AUTO_OST_UPDATE_METADATA_VALUE(file, 2)
+	AUTO_OST_UPDATE_METADATA_VALUE(file, 3)
+	AUTO_OST_UPDATE_METADATA_VALUE(file, 5)
 }
 
 show_benchmark_result :: proc(res: types.Benchmark_Result) {
