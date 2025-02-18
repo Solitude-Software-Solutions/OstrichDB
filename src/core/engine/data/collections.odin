@@ -95,7 +95,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		// metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	case 2, 3, 4:
@@ -113,7 +113,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		// metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	}
@@ -443,7 +443,7 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 
 //LOCK foo -r makes the collection read only
 //LOCK foo -n makes the collection inaccessible
-OST_CHANGE_COLLECTION_PERMISSION :: proc(fn: string, flag: string) -> bool {
+OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm: string) {
 	val: string
 	if flag == "-R" {
 		val = "Read-Only"
@@ -451,8 +451,19 @@ OST_CHANGE_COLLECTION_PERMISSION :: proc(fn: string, flag: string) -> bool {
 		val = "Inaccessible"
 	} else {
 		fmt.printfln("Invalid flag provided")
-		return false
+		return false, ""
 	}
-	success := metadata.OST_CHANGE_METADATA_VALUE(fn, val, 1, 1)
+	success := metadata.OST_CHANGE_METADATA_VALUE(fn, val, 1, 0)
+	return success, val
+}
+
+//should this require a password?
+OST_UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
+	success := false
+	if currentPerm == "Inaccessible" {
+		//Require current users password
+	} else {
+		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
+	}
 	return success
 }

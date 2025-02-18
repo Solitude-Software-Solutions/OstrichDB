@@ -161,6 +161,7 @@ AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
 		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		throw_err(error1)
 		return
 	}
 	defer delete(data)
@@ -174,61 +175,61 @@ AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	fileInfo := OST_GET_FS(fn)
 	fileSize := fileInfo.size
 
-	updated := false
+	found := false
 	for line, i in lines {
 		switch param {
 		case 1:
-			if strings.has_prefix(line, "# Date of Creation:") {
-				lines[i] = fmt.tprintf("# Date of Creation: %s", currentDate)
-				updated = true
+			if strings.has_prefix(line, "# File Format Version:") {
+				lines[i] = fmt.tprintf("# File Format Version: %s", OST_SET_FFV())
+				found = true
 			}
 			break
 		case 2:
-			if strings.has_prefix(line, "# Date Last Modified:") {
-				lines[i] = fmt.tprintf("# Date Last Modified: %s", currentDate)
-				updated = true
+			if strings.has_prefix(line, "# Permission:") {
+				lines[i] = fmt.tprintf("# Permission: %s", "Read-Write")
+				found = true
 			}
 		case 3:
+			if strings.has_prefix(line, "# Date of Creation:") {
+				lines[i] = fmt.tprintf("# Date of Creation: %s", currentDate)
+				found = true
+			}
+			break
+		case 4:
+			if strings.has_prefix(line, "# Date Last Modified:") {
+				lines[i] = fmt.tprintf("# Date Last Modified: %s", currentDate)
+				found = true
+			}
+			break
+		case 5:
 			if strings.has_prefix(line, "# File Size:") {
 				actualSize, _ := OST_SUBTRACT_METADATA_SIZE(fn)
 				if actualSize != -1 {
 					lines[i] = fmt.tprintf("# File Size: %d Bytes", actualSize)
-					updated = true
+					found = true
 				} else {
 					fmt.printfln("Error calculating file size for file %s", fn)
 				}
 			}
 			break
-		case 4:
-			if strings.has_prefix(line, "# File Format Version:") {
-				lines[i] = fmt.tprintf("# File Format Version: %s", OST_SET_FFV())
-				updated = true
-			}
-			break
-		case 5:
+		case 6:
 			if strings.has_prefix(line, "# Checksum:") {
 				lines[i] = fmt.tprintf("# Checksum: %s", OST_GENERATE_CHECKSUM(fn))
-				updated = true
-			}
-			break
-		case 6:
-			if strings.has_prefix(line, "# Permission:") {
-				lines[i] = fmt.tprintf("# Permission: %s", "Read-Write")
-				updated = true
+				found = true
 			}
 		}
-		if updated {
+		if found {
 			break
 		}
 	}
 
-	if !updated {
-		fmt.println("Metadata field not found in file")
+	if !found {
+		fmt.printfln("Metadata field not found in file. Proc: %s", #procedure)
 		return
 	}
 
 	newContent := strings.join(lines, "\n")
-	err := os.write_entire_file(fn, transmute([]byte)newContent)
+	writeSuccess := os.write_entire_file(fn, transmute([]byte)newContent)
 }
 
 //used when creating a new collection file whether public or not
@@ -237,7 +238,9 @@ OST_UPDATE_METADATA_ON_CREATE :: proc(fn: string) {
 	AUTO_OST_UPDATE_METADATA_VALUE(fn, 3)
 	AUTO_OST_UPDATE_METADATA_VALUE(fn, 4)
 	AUTO_OST_UPDATE_METADATA_VALUE(fn, 5)
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 6)
 }
+
 
 //Creates the file format version file in the temp dir
 OST_CREATE_FFVF :: proc() {
@@ -524,11 +527,20 @@ OST_CHANGE_METADATA_VALUE :: proc(fn, newValue: string, member, colType: int) ->
 	}
 
 	if !fieldFound {
-		fmt.println("Metadata field not found in file")
+		fmt.printfln("Metadata field not found in file. Proc: ", #procedure)
 		return false
 	}
 
 	newContent := strings.join(lines, "\n")
 	success := os.write_entire_file(file, transmute([]byte)newContent)
 	return success
+}
+
+
+//Used after most operations on a collection file to update the metadata fields
+OST_UPDATE_METADATA_AFTER_OPERATION :: proc(fn: string) {
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 3) //updates the last time modified
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 4) //updates the file format version
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 5) //updates file size
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 6) //updates the checksum
 }
