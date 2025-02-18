@@ -908,9 +908,9 @@ refresh_metadata :: proc(fn: string) {
 	using metadata
 
 	file := concat_benchmark_collection(fn)
-	OST_UPDATE_METADATA_VALUE(file, 2)
-	OST_UPDATE_METADATA_VALUE(file, 3)
-	OST_UPDATE_METADATA_VALUE(file, 5)
+	AUTO_OST_UPDATE_METADATA_VALUE(file, 2)
+	AUTO_OST_UPDATE_METADATA_VALUE(file, 3)
+	AUTO_OST_UPDATE_METADATA_VALUE(file, 5)
 }
 
 show_benchmark_result :: proc(res: types.Benchmark_Result) {

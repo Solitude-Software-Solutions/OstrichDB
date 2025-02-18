@@ -68,6 +68,8 @@ VALIDATE :: "VALIDATE"
 BENCHMARK :: "BENCHMARK"
 IMPORT :: "IMPORT"
 EXPORT :: "EXPORT"
+LOCK :: "LOCK"
+UNLOCK :: "UNLOCK"
 //Target Tokens
 COLLECTION :: "COLLECTION"
 CLUSTER :: "CLUSTER"
@@ -133,7 +135,6 @@ CONFIRM :: "CONFIRM"
 CANCEL :: "CANCEL"
 //FOR DOT NOTATION
 DOT :: "."
-
 //MISC CONSTANTS
 ost_carrot :: "OST>>>"
 VALID_RECORD_TYPES: []string : {
@@ -173,6 +174,7 @@ METADATA_END :: "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@\n"
 METADATA_HEADER: []string : {
 	METADATA_START,
 	"# File Format Version: %ffv\n",
+	"# Permission: %perm\n", //Read-Only/Read-Write/Inaccessible
 	"# Date of Creation: %fdoc\n",
 	"# Date Last Modified: %fdlm\n",
 	"# File Size: %fs Bytes\n",

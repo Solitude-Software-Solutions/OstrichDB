@@ -142,7 +142,7 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
 
-	if successCount != 6 {
+	if successCount != 7 {
 		return false
 	}
 	return true

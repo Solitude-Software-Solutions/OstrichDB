@@ -328,9 +328,9 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
 	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, dn, d, "identifier", id)
 
-	OST_UPDATE_METADATA_VALUE(secureFilePath, 2)
-	OST_UPDATE_METADATA_VALUE(secureFilePath, 3)
-	OST_UPDATE_METADATA_VALUE(secureFilePath, 5)
+	AUTO_OST_UPDATE_METADATA_VALUE(secureFilePath, 2)
+	AUTO_OST_UPDATE_METADATA_VALUE(secureFilePath, 3)
+	AUTO_OST_UPDATE_METADATA_VALUE(secureFilePath, 5)
 	return 0
 }
 

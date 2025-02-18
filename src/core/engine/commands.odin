@@ -256,6 +256,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if cmd.isUsingDotNotation == true {
 				collection_name = cmd.l_token[0]
 				cluster_name = cmd.l_token[1]
+
+				permValue, err := metadata.OST_GET_METADATA_VALUE(
+					collection_name,
+					"# Permission",
+					1,
+				)
+				fmt.println(err)
+				// fmt.println(permValue)
+				if permValue == "Read-Only" {
+					fmt.println("YOU ARENT SUPPOSED TO BE HERE...")
+				}
+
+
 				fmt.printf(
 					"Creating cluster: %s%s%s within collection: %s%s%s\n",
 					BOLD_UNDERLINE,
@@ -303,9 +316,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					break
 				}
 				fn := concat_collection_name(collection_name)
-				OST_UPDATE_METADATA_VALUE(fn, 2)
-				OST_UPDATE_METADATA_VALUE(fn, 3)
-				OST_UPDATE_METADATA_VALUE(fn, 5)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 2)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 3)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 5)
 			} else {
 				fmt.printfln(
 					"Invalid command. Correct Usage: NEW <collection_name>.<cluster_name>",
@@ -379,9 +392,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						}
 
 						fn := concat_collection_name(collectionName)
-						OST_UPDATE_METADATA_VALUE(fn, 2)
-						OST_UPDATE_METADATA_VALUE(fn, 3)
-						OST_UPDATE_METADATA_VALUE(fn, 5)
+						AUTO_OST_UPDATE_METADATA_VALUE(fn, 2)
+						AUTO_OST_UPDATE_METADATA_VALUE(fn, 3)
+						AUTO_OST_UPDATE_METADATA_VALUE(fn, 5)
 
 						break
 					case -1, 1:
@@ -541,9 +554,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 					fn := concat_collection_name(collectionName)
-					OST_UPDATE_METADATA_VALUE(fn, 2)
-					OST_UPDATE_METADATA_VALUE(fn, 3)
-					OST_UPDATE_METADATA_VALUE(fn, 5)
+					AUTO_OST_UPDATE_METADATA_VALUE(fn, 2)
+					AUTO_OST_UPDATE_METADATA_VALUE(fn, 3)
+					AUTO_OST_UPDATE_METADATA_VALUE(fn, 5)
 				} else {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
@@ -689,9 +702,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 				}
 				fn := concat_collection_name(collection_name)
-				OST_UPDATE_METADATA_VALUE(fn, 2)
-				OST_UPDATE_METADATA_VALUE(fn, 3)
-				OST_UPDATE_METADATA_VALUE(fn, 5)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 2)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 3)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 5)
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
@@ -994,9 +1007,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 
 				fn := concat_collection_name(collectionName)
-				OST_UPDATE_METADATA_VALUE(fn, 2)
-				OST_UPDATE_METADATA_VALUE(fn, 3)
-				OST_UPDATE_METADATA_VALUE(fn, 5)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 2)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 3)
+				AUTO_OST_UPDATE_METADATA_VALUE(fn, 5)
 			}
 			break
 		case 1:
@@ -1026,8 +1039,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							if success == false {
 								fmt.printfln("Failed to set HELP config to %s", value)
 							} else {
-								OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
-								OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
+								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
+								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
 								fmt.printfln("Successfully set HELP config to %s", value)
 							}
 							help.OST_SET_HELP_MODE()
@@ -1110,8 +1123,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								fmt.printfln("Failed to set SERVER config to %s", value)
 							} else {
 								fmt.printfln("Successfully set SERVER config to %s", value)
-								OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
-								OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
+								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 2)
+								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 3)
 								if data.OST_READ_RECORD_VALUE(
 									   OST_CONFIG_PATH,
 									   CONFIG_CLUSTER,
@@ -1356,7 +1369,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						cmd.l_token[0],
 						RESET,
 					)
-					OST_UPDATE_METADATA_VALUE(collection_name, 3)
+					AUTO_OST_UPDATE_METADATA_VALUE(collection_name, 3)
 					break
 				case false:
 					fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
@@ -1746,13 +1759,42 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	case IMPORT:
 		transfer._import_("csv_test_file") //TODO: chang this to user input
-		// transfer.OST_CONVERT_DATE("13-14-2024")
-
 		break
 	case EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")
 		break
-
+	case LOCK:
+		flag: string
+		fmt.println(cmd.l_token)
+		switch len(cmd.l_token) {
+		case 1:
+			//locking a collection with no flag defaults to it being inaccessable unless unlocked
+			colName := cmd.l_token[0]
+			lockSuccess := data.OST_CHANGE_COLLECTION_PERMISSION(colName, "-N")
+			break
+		case 2:
+			colName := cmd.l_token[0]
+			flag := cmd.l_token[1]
+			fmt.printfln(
+				"Locking collection: %s%s%s with flag: %s%s%s",
+				BOLD_UNDERLINE,
+				colName,
+				RESET,
+				BOLD_UNDERLINE,
+				flag,
+				RESET,
+			)
+			lockSuccess := data.OST_CHANGE_COLLECTION_PERMISSION(colName, flag)
+			break
+		case:
+			fmt.printfln(
+				"Incomplete command. Correct Usage: LOCK <collection_name> or LOCK <collection_name> -{flag}",
+			)
+		}
+		break
+	case UNLOCK:
+		//unlock is the only way to re-enable Read-Write access to a collection unless user deletes then creates a new one
+		break
 	//END OF COMMAND TOKEN EVALUATION
 	case:
 		fmt.printfln(

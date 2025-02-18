@@ -57,6 +57,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		collectionPath := utils.concat_collection_name(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, collectionType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -83,6 +84,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, collectionType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -93,13 +95,14 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		// metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	case 2, 3, 4:
 		collectionPath := fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, collectionType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -110,7 +113,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		// metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
 	}
@@ -436,4 +439,20 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 	log_runtime_event("Collection purged", fmt.tprintf("User purged collection: %s", fn))
 
 	return true
+}
+
+//LOCK foo -r makes the collection read only
+//LOCK foo -n makes the collection inaccessible
+OST_CHANGE_COLLECTION_PERMISSION :: proc(fn: string, flag: string) -> bool {
+	val: string
+	if flag == "-R" {
+		val = "Read-Only"
+	} else if flag == "-N" {
+		val = "Inaccessible"
+	} else {
+		fmt.printfln("Invalid flag provided")
+		return false
+	}
+	success := metadata.OST_CHANGE_METADATA_VALUE(fn, val, 1, 1)
+	return success
 }

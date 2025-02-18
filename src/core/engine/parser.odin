@@ -60,8 +60,6 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			}
 			continue
 		}
-
-
 		switch state {
 		case 0:
 			// Expecting target
