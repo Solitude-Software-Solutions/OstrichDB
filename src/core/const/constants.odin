@@ -42,7 +42,8 @@ CONFIG_SIX :: "ERROR_SUPPRESSION" //whether errors are printed to the console or
 CONFIG_SEVEN :: "LIMIT_HISTORY" //whether or not to limit how the number of commands are stored in the users history cluster
 
 
-//ATOM TOKEN CONSTANTS
+//CLP TOKEN CONSTANTS
+//Todo: Just use an enum for this
 VERSION :: "VERSION"
 HELP :: "HELP" //help can also be a multi token command.
 WHERE :: "WHERE"
@@ -213,3 +214,29 @@ BannedUserNames := []string {
 //IMPORT CONSTANTS
 //suffix that is added to the cluster name when a .csv file is imported
 CSV_CLU :: "_CSV_IMPORT"
+
+
+//DELETE WHEN DONE IMPLEMENTING SECURITY UPDATE
+//The comment next to each command is the permission level that each command needs to perform the command on a collection
+//If a collection is locked with the 'Inaccessible' permission then  the only command that will work on that collection is 'UNLOCK'
+// "WHERE", //Read-Only or Read-Write
+// "COUNT", //Read-Only or Read-Write
+// "FETCH", //Read-Only or Read-Write
+// "SIZE_OF", //Read-Only or Read-Write
+// "TYPE_OF", //Read-Only or Read-Write
+// "VALIDATE", //Read-Write for now because validation system is stil broken and will quarantine the collection. Todo: set to Read-Only later
+// //---------------------
+// "ISOLATE", //Read-Write
+// "BACKUP", //Read-Write
+// "ERASE", //Read-Write
+// "RENAME", //Read-Write
+// "SET", //Read-Write
+// "PURGE", //Read-Write
+// "CHANGE_TYPE", //Read-Write
+// "LOCK", //Read-Write
+// //---------------------
+// "UNLOCK", //Read-Only or Inaccessible
+
+// "EXPORT", //Not yes implemented. Todo: set to Read-Only later
+// "TREE", //todo: TREE should be allowed but if a collection is set to inaccessable then that collection should not be shown
+// "NEW", //todo: NEW should be allowed but if a collection is set to inaccessable then NEW should not work on clusters/records in that collection

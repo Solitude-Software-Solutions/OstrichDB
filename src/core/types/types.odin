@@ -19,6 +19,20 @@ Command :: struct {
 	t_token:            string, //target token only needed for very specific commands like WHERE,HELP, and NEW USER
 }
 
+
+Operation_Permssion_Requirement :: enum {
+	READ_ONLY,
+	READ_WRITE,
+	INACCESSABLE,
+}
+
+
+CommandOperation :: struct {
+	name:          string,
+	permission:    []Operation_Permssion_Requirement,
+	permissionStr: [dynamic]string,
+}
+
 Record :: struct {
 	name:  string,
 	type:  string,

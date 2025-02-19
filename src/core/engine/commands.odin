@@ -818,12 +818,40 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// // FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case FETCH:
+		//--------------Security stuff----------------//
+		//Get the operation permission for the command
+		commandOperation := security.OST_SET_OPERATION_PERMISSIONS(FETCH)
+		// fmt.println("commandOperation: ", commandOperation) //debugging
+		//Get the string representation array of the permission
+		commandPermissions := commandOperation.permissionStr
+		// fmt.println("commandPermissions: ", commandPermissions) //debugging
+		defer free(commandOperation)
+
+
 		log_runtime_event("Used FETCH command", "")
 		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
 				collection := cmd.l_token[0]
+				permissionValue, _ := metadata.OST_GET_METADATA_VALUE(
+					collection,
+					"# Permission",
+					1,
+				)
+				for perm in commandPermissions {
+					if !security.OST_CROSS_CHECK_OPERATION_PERMISSIONS(
+						strings.clone(perm),
+						commandOperation,
+					) {
+						fmt.println(
+							"You do not have permission to perform this operation on this collection.",
+						)
+						return 1
+					}
+				}
+
+
 				str := data.OST_FETCH_COLLECTION(collection)
 				fmt.println(str)
 			} else {
@@ -1808,6 +1836,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	case UNLOCK:
+		//TODO: only admin users can use the UNLOCK command, this may change in the future but for now it is locked to admin users
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
