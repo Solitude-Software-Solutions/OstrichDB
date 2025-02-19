@@ -158,3 +158,16 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 	}
 	return 0
 }
+
+
+OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
+	isAlreadyLocked := false
+	lockStatus, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+	// fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
+	// fmt.println("Permission Value from collection file: ", lockStatus) //debugging
+	if lockStatus == "Read-Only" || lockStatus == "Inaccessible" {
+		isAlreadyLocked = true
+	}
+
+	return isAlreadyLocked
+}

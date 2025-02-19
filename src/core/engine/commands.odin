@@ -2205,21 +2205,38 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			//locking a collection with no flag defaults to it being inaccessable unless unlocked
 			colName := cmd.l_token[0]
-			lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
-			if lockSuccess {
+			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
+
+			if collectionAlreadyLocked {
 				fmt.printfln(
-					"Collection: %s%s%s now now in %s%s%s mode.",
+					"Collection: %s%s%s already has a lock status. Please use the UNLOCK command to unlock it, then try again.",
 					BOLD_UNDERLINE,
 					colName,
 					RESET,
-					BOLD,
-					permission,
-					RESET,
 				)
-			} else {
-				fmt.printfln("Failed to lock collection: %s%s%s", BOLD_UNDERLINE, colName, RESET)
 				return 1
-			}
+			} else {
+
+				lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
+				if lockSuccess {
+					fmt.printfln(
+						"Collection: %s%s%s is now in %s%s%s mode.",
+						BOLD_UNDERLINE,
+						colName,
+						RESET,
+						BOLD,
+						permission,
+						RESET,
+					)
+				} else {
+					fmt.printfln(
+						"Failed to lock collection: %s%s%s",
+						BOLD_UNDERLINE,
+						colName,
+						RESET,
+					)
+					return 1
+				}}
 			break
 		case 2:
 			colName := cmd.l_token[0]
