@@ -13,7 +13,7 @@ import "core:time"
 Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
-Copyright 2024 - Present Marshall A Burns & Solitude Software Solutions LLC
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 *********************************************************/
 
 //NOTE: At one point this file was named quarantine.odin, but was renamed to isolate.odin so you will see
