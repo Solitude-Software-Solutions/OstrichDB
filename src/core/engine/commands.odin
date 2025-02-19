@@ -2207,36 +2207,52 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			colName := cmd.l_token[0]
 			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
 
-			if collectionAlreadyLocked {
+			//next make sure the "locker" is an admin
+			isAdmin := security.OST_CHECK_ADMIN_STATUS(&types.current_user)
+
+			if !isAdmin {
 				fmt.printfln(
-					"Collection: %s%s%s already has a lock status. Please use the UNLOCK command to unlock it, then try again.",
+					"User: %s%s%s does not have permission to lock collections.",
 					BOLD_UNDERLINE,
-					colName,
+					types.current_user.username.Value,
 					RESET,
 				)
 				return 1
 			} else {
 
-				lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
-				if lockSuccess {
+
+				if collectionAlreadyLocked {
 					fmt.printfln(
-						"Collection: %s%s%s is now in %s%s%s mode.",
-						BOLD_UNDERLINE,
-						colName,
-						RESET,
-						BOLD,
-						permission,
-						RESET,
-					)
-				} else {
-					fmt.printfln(
-						"Failed to lock collection: %s%s%s",
+						"Collection: %s%s%s already has a lock status. Please use the UNLOCK command to unlock it, then try again.",
 						BOLD_UNDERLINE,
 						colName,
 						RESET,
 					)
 					return 1
-				}}
+				} else {
+
+					lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
+					if lockSuccess {
+						fmt.printfln(
+							"Collection: %s%s%s is now in %s%s%s mode.",
+							BOLD_UNDERLINE,
+							colName,
+							RESET,
+							BOLD,
+							permission,
+							RESET,
+						)
+					} else {
+						fmt.printfln(
+							"Failed to lock collection: %s%s%s",
+							BOLD_UNDERLINE,
+							colName,
+							RESET,
+						)
+						return 1
+					}
+				}
+			}
 			break
 		case 2:
 			colName := cmd.l_token[0]
@@ -2269,10 +2285,31 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
-			currentPerm, err := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
-			fmt.printfln("Unlocking collection: %s%s%s", BOLD_UNDERLINE, colName, RESET)
-			fmt.printfln("Current permission: %s%s%s", BOLD, currentPerm, RESET)
-			unlockSuccess := data.OST_UNLOCK_COLLECTION(colName, currentPerm)
+			//check that a collection is in fact locked
+			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
+			if !collectionAlreadyLocked {
+				fmt.printfln("Collection: %s%s%s is not locked.", BOLD_UNDERLINE, colName, RESET)
+				return 1
+			} else {
+				//check that current user is admin
+
+				isAdmin := security.OST_CHECK_ADMIN_STATUS(&types.current_user)
+
+				if !isAdmin {
+					fmt.printfln(
+						"User: %s%s%s does not have permission to unlock collections.",
+						BOLD_UNDERLINE,
+						types.current_user.username.Value,
+						RESET,
+					)
+					return 1
+				} else {
+					currentPerm, err := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+					fmt.printfln("Unlocking collection: %s%s%s", BOLD_UNDERLINE, colName, RESET)
+					// fmt.printfln("Current permission: %s%s%s", BOLD, currentPerm, RESET) //debugging
+					unlockSuccess := data.OST_UNLOCK_COLLECTION(colName, currentPerm)
+				}
+			}
 			break
 		case:
 			fmt.printfln("Incomplete command. Correct Usage: UNLOCK <collection_name>")

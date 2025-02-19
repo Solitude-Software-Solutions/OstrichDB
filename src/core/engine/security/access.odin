@@ -3,6 +3,7 @@ package security
 import "../../../utils"
 import "../../const"
 import "../../types"
+import "../data"
 import "../data/metadata"
 import "core:fmt"
 import "core:os"
@@ -23,8 +24,20 @@ File Description:
 
 //Ensure that the user is an admin before allowing an operation
 OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
+	userCollection := fmt.tprintf(
+		"%ssecure_%s%s",
+		const.OST_SECURE_COLLECTION_PATH,
+		user.username.Value,
+		const.OST_FILE_EXTENSION,
+	)
+	// fmt.println("User Collection: ", userCollection) //debugging
+	userCluster := strings.to_upper(user.username.Value)
 	isAdmin := false
-	if user.role.Value == "admin" {
+
+	userRoleVal := data.OST_READ_RECORD_VALUE(userCollection, userCluster, "identifier", "role")
+
+
+	if userRoleVal == "admin" {
 		isAdmin = true
 	}
 
@@ -32,6 +45,7 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 }
 
 
+//Sets the permissions for a given operation
 OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
 	using const
 
@@ -39,7 +53,6 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 	opArr: [dynamic]string
 
 	//todo: TREE should be allowed but if a collection is set to inaccessable then that collection should not be shown
-	//todo: NEW should be allowed but if a collection is set to inaccessable then NEW should not work on clusters/records in that collection
 
 	//these commands will work on a collection that is set to read only or read write
 	readWriteOrReadOnlyCommands := []string{WHERE, COUNT, FETCH, SIZE_OF, TYPE_OF, VALIDATE}
@@ -56,9 +69,6 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 		LOCK,
 		NEW,
 	}
-
-	// //THese commands will work on a collection that is set to read only
-	// readOnlyPermissionReqCommands := []string{FETCH, COUNT, VALIDATE}
 
 
 	//check if operation can be used on a collection that is set to 'Read-Only' or 'Read-Write'
@@ -159,7 +169,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 	return 0
 }
 
-
+//Used to check if a collection is already locked before attempting to lock it again
 OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
 	lockStatus, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)

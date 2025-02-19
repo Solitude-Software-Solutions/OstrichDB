@@ -469,11 +469,11 @@ OST_UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
 		//Require current users password
 		// but for testing purposes we will just unlock it
 		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
-		fmt.println("write success: ", success)
+		// fmt.println("write success: ", success)
 		fmt.printfln("Collection unlocked")
 	} else {
 		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
-		fmt.println("write success: ", success)
+		// fmt.println("write success: ", success)
 		fmt.printfln("Collection unlocked")
 	}
 	return success
