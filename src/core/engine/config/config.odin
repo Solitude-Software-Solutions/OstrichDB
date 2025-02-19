@@ -13,6 +13,11 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Implements the configuration functionality for OstrichDB, allowing
+            users to set and get configuration values. Also contains key
+            procedures for automatically creating and updating the config file.
 *********************************************************/
 main :: proc() {
 	using data

@@ -10,6 +10,11 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Implements the WHERE command functionality for OstrichDB, allowing
+            users to search for clusters and records across collections. This
+            file contains the core search logic and result formatting.
 *********************************************************/
 
 

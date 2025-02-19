@@ -7,6 +7,11 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Implements the client functionality, allowing
+            users to interact with the server and perform various operations.
+            Currently unstable and not fully implemented.
 *********************************************************/
 
 //This file is purely for testing server functionality and interaction with a client
