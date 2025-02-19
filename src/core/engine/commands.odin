@@ -138,7 +138,25 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
 		switch (cmd.t_token) {
 		case CLUSTER, RECORD:
-			found := data.OST_WHERE_OBJECT(cmd.t_token, cmd.l_token[0])
+			collectionName := cmd.l_token[0]
+
+			//Todo this check here seems to work sometimes and other times not. Keep an eye on it - Marshall
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				WHERE,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
+
+			found := data.OST_WHERE_OBJECT(cmd.t_token, collectionName)
 			if !found {
 				fmt.printfln(
 					"No %s%s%s with name: %s%s%s found within OstrichDB.",
@@ -154,12 +172,55 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		if len(cmd.l_token) == 0 {
-			found := data.OST_WHERE_ANY(cmd.t_token)
+
+			found, collectionName, clusterName := data.OST_WHERE_ANY(cmd.t_token)
+
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				WHERE,
+				strings.trim(collectionName, OST_FILE_EXTENSION),
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
+
 			if !found {
 				fmt.printfln(
 					"No data with name: %s%s%s found within OstrichDB.",
 					BOLD_UNDERLINE,
 					cmd.t_token,
+					RESET,
+				)
+			}
+
+			if found && clusterName == "" { 	//if the cluster is found
+				fmt.printfln(
+					"Cluster: %s%s%s -> Collection: %s%s%s",
+					BOLD_UNDERLINE,
+					clusterName,
+					RESET,
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+			} else if found && clusterName != "" { 	//If the record is found
+				fmt.printfln(
+					"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
+					BOLD_UNDERLINE,
+					cmd.t_token,
+					RESET,
+					BOLD_UNDERLINE,
+					clusterName,
+					RESET,
+					BOLD_UNDERLINE,
+					collectionName,
 					RESET,
 				)
 			}
@@ -178,8 +239,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used BACKUP command", "User requested to backup data.")
 		switch (len(cmd.l_token)) {
 		case 1:
+			collectionName := cmd.l_token[0]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				BACKUP,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
 			name := data.OST_CHOOSE_BACKUP_NAME()
-			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(cmd.l_token[0])
+			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 			switch (checks) 
 			{
 			case -1:
@@ -256,34 +333,36 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case 2:
-			cluster_name: string
-			collection_name: string
+			clusterName: string
+			collectionName: string
 			if cmd.isUsingDotNotation == true {
-				collection_name = cmd.l_token[0]
-				cluster_name = cmd.l_token[1]
-
-				permValue, err := metadata.OST_GET_METADATA_VALUE(
-					collection_name,
-					"# Permission",
-					1,
+				collectionName = cmd.l_token[0]
+				clusterName = cmd.l_token[1]
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					NEW,
+					collectionName,
 				)
-				fmt.println(err)
-				// fmt.println(permValue)
-				if permValue == "Read-Only" {
-					fmt.println("YOU ARENT SUPPOSED TO BE HERE...")
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
 				}
+				//--------------Permissions Security stuff End----------------//
 
 
 				fmt.printf(
 					"Creating cluster: %s%s%s within collection: %s%s%s\n",
 					BOLD_UNDERLINE,
-					cluster_name,
+					clusterName,
 					RESET,
 					BOLD_UNDERLINE,
-					collection_name,
+					collectionName,
 					RESET,
 				)
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
@@ -291,7 +370,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// }
 
 				id := data.OST_GENERATE_ID(true)
-				result := data.OST_CREATE_CLUSTER(collection_name, cluster_name, id)
+				result := data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
 				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 
 				switch (result) 
@@ -300,10 +379,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					fmt.printfln(
 						"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
 						BOLD_UNDERLINE,
-						cluster_name,
+						clusterName,
 						RESET,
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					break
@@ -320,7 +399,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					log_err("Failed to create new cluster.", #procedure)
 					break
 				}
-				fn := concat_collection_name(collection_name)
+				fn := concat_collection_name(collectionName)
 				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 			} else {
 				fmt.printfln(
@@ -338,6 +417,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionName := cmd.l_token[0]
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				NEW,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
 			if len(recordName) > 128 {
 				fmt.printfln(
 					"Record name: %s%s%s is too long. Please choose a name less than 128 characters.",
@@ -472,6 +566,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				oldName := cmd.l_token[0]
 				newName := cmd.p_token[TO]
 
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					RENAME,
+					oldName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+
+
 				fmt.printf(
 					"Renaming collection: %s%s%s to %s%s%s\n",
 					BOLD_UNDERLINE,
@@ -530,7 +640,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				newName := cmd.p_token[TO]
 
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					WHERE,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+
+
+				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
@@ -583,6 +708,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					newRName = cmd.p_token[TO]
 					collectionName = cmd.l_token[0]
 					clusterName = cmd.l_token[1]
+
+					//--------------Permissions Security stuff Start----------------//
+					permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+						WHERE,
+						collectionName,
+					)
+					switch (permissionCheckResult) 
+					{
+					case 0:
+						break
+					case:
+						return -1
+					}
+					//--------------Permissions Security stuff End----------------//
+
+
 				} else {
 					oldRName = cmd.l_token[0]
 					newRName = cmd.p_token[TO]
@@ -647,6 +788,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) 
 		{
 		case 1:
+			collectionName := cmd.l_token[0]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				ERASE,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
 			if data.OST_ERASE_COLLECTION(cmd.l_token[0]) == true {
 				fmt.printfln(
 					"Collection: %s%s%s erased successfully",
@@ -664,28 +821,42 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case 2:
-			collection_name: string
-			cluster_name: string
+			collectionName: string
+			clusterName: string
 
 			if cmd.isUsingDotNotation == true {
-				collection_name := cmd.l_token[0]
+				collectionName := cmd.l_token[0]
 				cluster := cmd.l_token[1]
-				clusterID := data.OST_GET_CLUSTER_ID(collection_name, cluster)
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collection_name)
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					ERASE,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+				clusterID := data.OST_GET_CLUSTER_ID(collectionName, cluster)
+				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				switch (checks) 
 				{
 				case -1:
 					return -1
 				}
 
-				if data.OST_ERASE_CLUSTER(collection_name, cluster) == true {
+				if data.OST_ERASE_CLUSTER(collectionName, cluster) == true {
 					fmt.printfln(
 						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
 						BOLD_UNDERLINE,
 						cluster,
 						RESET,
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					data.OST_REMOVE_ID_FROM_CLUSTER(fmt.tprintf("%d", clusterID), false)
@@ -696,11 +867,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						cluster,
 						RESET,
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 				}
-				fn := concat_collection_name(collection_name)
+				fn := concat_collection_name(collectionName)
 				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 			} else {
 				fmt.println(
@@ -721,6 +892,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
+
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					ERASE,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
 
 				clusterID := data.OST_GET_CLUSTER_ID(collectionName, clusterName)
 				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
@@ -818,41 +1004,28 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// // FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case FETCH:
-		//--------------Security stuff----------------//
-		//Get the operation permission for the command
-		commandOperation := security.OST_SET_OPERATION_PERMISSIONS(FETCH)
-		// fmt.println("commandOperation: ", commandOperation) //debugging
-		//Get the string representation array of the permission
-		commandPermissions := commandOperation.permissionStr
-		// fmt.println("commandPermissions: ", commandPermissions) //debugging
-		defer free(commandOperation)
-
-
 		log_runtime_event("Used FETCH command", "")
 		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
-				collection := cmd.l_token[0]
-				permissionValue, _ := metadata.OST_GET_METADATA_VALUE(
-					collection,
-					"# Permission",
-					1,
+				collectionName := cmd.l_token[0]
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					FETCH,
+					collectionName,
 				)
-				for perm in commandPermissions {
-					if !security.OST_CROSS_CHECK_OPERATION_PERMISSIONS(
-						strings.clone(perm),
-						commandOperation,
-					) {
-						fmt.println(
-							"You do not have permission to perform this operation on this collection.",
-						)
-						return 1
-					}
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
 				}
+				//--------------Permissions Security stuff End----------------//
 
-
-				str := data.OST_FETCH_COLLECTION(collection)
+				str := data.OST_FETCH_COLLECTION(collectionName)
 				fmt.println(str)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: FETCH <collection_name>")
@@ -864,9 +1037,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case 2:
 			if cmd.isUsingDotNotation == true {
-				collection := cmd.l_token[0]
-				cluster := cmd.l_token[1]
-				clusterContent := data.OST_FETCH_CLUSTER(collection, cluster)
+				collectionName := cmd.l_token[0]
+				clusterName := cmd.l_token[1]
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					FETCH,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+
+				clusterContent := data.OST_FETCH_CLUSTER(collectionName, clusterName)
 				fmt.printfln(clusterContent)
 			} else {
 				fmt.println(
@@ -887,6 +1075,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					FETCH,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+
 
 				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				switch (checks) 
@@ -936,6 +1139,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					SET,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+
 				value := cmd.p_token[TO] // Get the full string value that was collected by the parser
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
@@ -1210,15 +1427,28 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case CLUSTERS:
 			if len(cmd.l_token) == 1 {
-				collection_name := cmd.l_token[0]
-				result := data.OST_COUNT_CLUSTERS(collection_name)
+				collectionName := cmd.l_token[0]
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					SET,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+				result := data.OST_COUNT_CLUSTERS(collectionName)
 				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
 						"Failed to count clusters in collection %s%s%s",
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					break
@@ -1226,7 +1456,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					fmt.printfln(
 						"There are no clusters in the collection %s%s%s",
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					break
@@ -1235,7 +1465,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"There is %d cluster in the collection %s%s%s",
 						result,
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					break
@@ -1244,7 +1474,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"There are %d clusters in the collection %s%s%s",
 						result,
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					break
@@ -1265,6 +1495,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if (len(cmd.l_token) >= 2 || cmd.isUsingDotNotation == true) {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					COUNT,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
 				result := data.OST_COUNT_RECORDS_IN_CLUSTER(
 					strings.clone(collectionName),
 					strings.clone(clusterName),
@@ -1319,8 +1563,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true {
 				//in the event the user is counting all records in a collection
-				collection_name := cmd.l_token[0]
-				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collection_name)
+				collectionName := cmd.l_token[0]
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					COUNT,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+
+				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collectionName)
 
 				switch result 
 				{
@@ -1328,7 +1587,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					fmt.printfln(
 						"Error counting records in the collection %s%s%s",
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					break
@@ -1336,7 +1595,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					fmt.printfln(
 						"There are no records in collection %s%s%s",
 						BOLD,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					break
@@ -1345,7 +1604,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"There is %d record in the collection %s%s%s",
 						result,
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 					break
@@ -1354,7 +1613,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"There are %d records in the collection %s%s%s",
 						result,
 						BOLD_UNDERLINE,
-						collection_name,
+						collectionName,
 						RESET,
 					)
 				}
@@ -1377,8 +1636,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) 
 		{
 		case 1:
-			collection_name := cmd.l_token[0]
-			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collection_name, 0)
+			collectionName := cmd.l_token[0]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				PURGE,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
+			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			switch exists 
 			{
 			case true:
@@ -1392,7 +1666,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						cmd.l_token[0],
 						RESET,
 					)
-					file := concat_collection_name(collection_name)
+					file := concat_collection_name(collectionName)
 					OST_UPDATE_METADATA_AFTER_OPERATION(file)
 					break
 				case false:
@@ -1416,6 +1690,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 2:
 			collectionName := cmd.l_token[0]
 			clusterName := cmd.l_token[1]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				PURGE,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
 			if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
 				result := data.OST_PURGE_CLUSTER(collectionName, clusterName)
 				switch result {
@@ -1448,6 +1737,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionName := cmd.l_token[0]
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				PURGE,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
 			result := data.OST_PURGE_RECORD(collectionName, clusterName, recordName)
 			switch result {
 			case true:
@@ -1488,28 +1792,53 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used SIZE_OF command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
-			collection_name := cmd.l_token[0]
-			file_path := fmt.tprintf(
-				"%s%s%s",
-				OST_COLLECTION_PATH,
-				collection_name,
-				OST_FILE_EXTENSION,
+			collectionName := cmd.l_token[0]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				SIZE_OF,
+				collectionName,
 			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
+			file_path := concat_collection_name(collectionName)
 			actual_size, metadata_size := OST_SUBTRACT_METADATA_SIZE(file_path)
 			if actual_size != -1 {
 				fmt.printf(
 					"Size of collection %s: %d bytes (excluding %d bytes of metadata)\n",
-					collection_name,
+					collectionName,
 					actual_size,
 					metadata_size,
 				)
 			} else {
-				fmt.printf("Failed to get size of collection %s\n", collection_name)
+				fmt.printf("Failed to get size of collection %s\n", collectionName)
 			}
 		case 2:
 			if cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					SIZE_OF,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+
 				size, success := data.OST_GET_CLUSTER_SIZE(collectionName, clusterName)
 				if success {
 					fmt.printf(
@@ -1535,6 +1864,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					SIZE_OF,
+					collectionName,
+				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
+
 				size, success := data.OST_GET_RECORD_SIZE(collectionName, clusterName, recordName)
 				if success {
 					fmt.printf(
@@ -1569,6 +1913,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionName := cmd.l_token[0]
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				TYPE_OF,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
 			colPath := fmt.tprintf(
 				"%s%s%s",
 				OST_COLLECTION_PATH,
@@ -1618,12 +1977,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
 				newType := cmd.p_token[TO]
-				colPath := fmt.tprintf(
-					"%s%s%s",
-					OST_COLLECTION_PATH,
+
+
+				colPath := concat_collection_name(collectionName)
+
+
+				//--------------Permissions Security stuff Start----------------//
+				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+					CHANGE_TYPE,
 					collectionName,
-					OST_FILE_EXTENSION,
 				)
+				switch (permissionCheckResult) 
+				{
+				case 0:
+					break
+				case:
+					return -1
+				}
+				//--------------Permissions Security stuff End----------------//
 
 				type_is_valid := false
 				for type in VALID_RECORD_TYPES {
@@ -1695,14 +2066,29 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used ISOLATE command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
-			collection_name := cmd.l_token[0]
-			result := data.OST_PERFORM_ISOLATION(collection_name)
+			collectionName := cmd.l_token[0]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				ISOLATE,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
+
+			result := data.OST_PERFORM_ISOLATION(collectionName)
 			switch result {
 			case 0:
 				fmt.printfln(
 					"Successfully isolated collection: %s%s%s",
 					BOLD_UNDERLINE,
-					collection_name,
+					collectionName,
 					RESET,
 				)
 				break
@@ -1710,7 +2096,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln(
 					"Failed to isolate collection: %s%s%s",
 					BOLD_UNDERLINE,
-					collection_name,
+					collectionName,
 					RESET,
 				)
 				break
@@ -1730,6 +2116,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			collectionName := cmd.l_token[0]
+
+			//--------------Permissions Security stuff Start----------------//
+			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+				VALIDATE,
+				collectionName,
+			)
+			switch (permissionCheckResult) 
+			{
+			case 0:
+				break
+			case:
+				return -1
+			}
+			//--------------Permissions Security stuff End----------------//
 
 			result := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 
@@ -1841,6 +2241,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			colName := cmd.l_token[0]
 			currentPerm, err := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+			fmt.printfln("Unlocking collection: %s%s%s", BOLD_UNDERLINE, colName, RESET)
+			fmt.printfln("Current permission: %s%s%s", BOLD, currentPerm, RESET)
 			unlockSuccess := data.OST_UNLOCK_COLLECTION(colName, currentPerm)
 			break
 		case:

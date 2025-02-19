@@ -7,7 +7,7 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            Contains most but not all the types used in OstrichDB.
+            Contains most but not all of the types used in OstrichDB.
 *********************************************************/
 
 
@@ -29,7 +29,7 @@ Operation_Permssion_Requirement :: enum {
 
 CommandOperation :: struct {
 	name:          string,
-	permission:    []Operation_Permssion_Requirement,
+	permission:    [dynamic]Operation_Permssion_Requirement,
 	permissionStr: [dynamic]string,
 }
 

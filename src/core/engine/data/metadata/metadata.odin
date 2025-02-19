@@ -466,7 +466,7 @@ OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: strin
 	for i in 1 ..< 6 {
 		if strings.has_prefix(lines[i], field) {
 			val := strings.split(lines[i], ": ")
-			return val[1], 0
+			return strings.clone(val[1]), 0
 		}
 	}
 

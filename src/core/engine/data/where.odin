@@ -91,7 +91,8 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 }
 
 //handles WHERE {target name}
-OST_WHERE_ANY :: proc(targetName: string) -> bool {
+//returns true if a match is found, the name of the collection and the name of the cluster
+OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
 	using utils
 	using const
 
@@ -116,36 +117,18 @@ OST_WHERE_ANY :: proc(targetName: string) -> bool {
 
 		// Check if it's a cluster name
 		if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
-			fmt.printfln(
-				"Cluster: %s%s%s -> Collection: %s%s%s",
-				BOLD_UNDERLINE,
-				targetName,
-				RESET,
-				BOLD_UNDERLINE,
-				collection,
-				RESET,
-			)
 			found = true
+			return found, collection, ""
+
 		}
 
 		// Check if it's a record name
 		colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
 		if success {
-			fmt.printfln(
-				"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
-				BOLD_UNDERLINE,
-				targetName,
-				RESET,
-				BOLD_UNDERLINE,
-				cluName,
-				RESET,
-				BOLD_UNDERLINE,
-				colName,
-				RESET,
-			)
 			found = true
+			return found, colName, cluName
 		}
 	}
 
-	return found
+	return found, "", ""
 }
