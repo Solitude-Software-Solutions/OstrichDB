@@ -1,9 +1,9 @@
 package engine
 
 import "../../utils"
-import "./config"
 import "../const"
 import "../types"
+import "./config"
 import "./data"
 import "./data/metadata"
 import "./security"
@@ -17,7 +17,7 @@ import "core:time"
 Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
-Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+Copyright 2024 - Present Marshall A Burns & Solitude Software Solutions LLC
 *********************************************************/
 
 
@@ -49,7 +49,7 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-	switch (types.OstrichEngine.Initialized)
+	switch (types.OstrichEngine.Initialized) 
 	{
 	case false:
 		security.OST_INIT_ADMIN_SETUP()
@@ -58,7 +58,7 @@ OST_START_ENGINE :: proc() -> int {
 	case true:
 		for {
 			userSignedIn := OST_RUN_SIGNIN()
-			switch (userSignedIn)
+			switch (userSignedIn) 
 			{
 			case true:
 				OST_START_SESSION_TIMER()
@@ -106,7 +106,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := OST_GET_SESSION_DURATION()
 		maxDurationMet := OST_CHECK_SESSION_DURATION(sessionDuration)
-		switch (maxDurationMet)
+		switch (maxDurationMet) 
 		{
 		case false:
 			break

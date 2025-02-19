@@ -1,9 +1,9 @@
 package engine
 
 import "../../utils"
-import "./config"
 import "../const"
 import "../types"
+import "./config"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -13,7 +13,7 @@ import "core:time"
 Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
-Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+Copyright 2024 - Present Marshall A Burns & Solitude Software Solutions LLC
 *********************************************************/
 
 stopWatch: time.Stopwatch

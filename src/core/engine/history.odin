@@ -13,7 +13,7 @@ import "core:strings"
 Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
-Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
+Copyright 2024 - Present Marshall A Burns & Solitude Software Solutions LLC
 *********************************************************/
 OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	using types
