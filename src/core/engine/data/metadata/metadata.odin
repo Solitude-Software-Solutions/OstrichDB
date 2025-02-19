@@ -159,7 +159,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 
 //fn = file name, param = metadata value to update.
-//1 = time of creation, 2 = last time modified, 3 = file size, 4 = file format version, 5 = checksum, 6 = permission
+//1 = File Format Version, 2 = Permission, 3 = Date of Creation, 4 = Date Last Modified, 5 = File Size, 6 = Checksum
 AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	using utils
 
