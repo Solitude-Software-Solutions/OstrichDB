@@ -12,19 +12,12 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for inferencing data types from imported data files.
+            For .csv files, the inferencing is done by reading the first row of the file. Record
+            names such as "id", "name", "age", etc. are used to infer the data type of the records
 *********************************************************/
-
-/*
-    This file holds all source code for inferencing data types from imported data files.
-    For .csv files, the inferencing is done by reading the first row of the file. Record
-    names such as "id", "name", "age", etc. are used to infer the data type of the records
-
-    if a record name is date,datetime, time or any variation of those, the record is inferred
-    then passed to the ./transfer/external_conversion.odin file to be converted to the format that OstrichDB
-    uses for that particular data type.
-
-    Extremely ugly but until MVP is reached, this is the way it will be done.
-*/
 
 
 commonInts := []string {

@@ -14,6 +14,10 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for handling the command history.
+            It also contains logic for the actual HISTORY command.
 *********************************************************/
 OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	using types

@@ -12,6 +12,9 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains helper procedures that are used throughout the OstrichDB codebase.
 *********************************************************/
 
 // Helper proc that reads an entire file and returns the content as bytes along with a success boolean

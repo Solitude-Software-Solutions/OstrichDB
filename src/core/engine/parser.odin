@@ -10,6 +10,12 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Ah yes... the parser. Within you can find a poorlu written
+            state machine that parses the users input into a command.
+            Commands are then returned to the caller in engine.odin,
+            then executed.
 *********************************************************/
 
 //checks if a token is a valid modifier only used in the parser

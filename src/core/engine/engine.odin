@@ -18,6 +18,12 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for the OstrichDB engine, including the command line,
+            session timer, and command history updating. Also contains
+            logic for re-starting/re-building the engine as well as
+            initializing the data integrity system.
 *********************************************************/
 
 

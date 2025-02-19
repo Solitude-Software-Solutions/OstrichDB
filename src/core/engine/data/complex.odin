@@ -12,6 +12,10 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for how OstrichDB handles'complex' data types.
+            This includes arrays, dates, times, datetimes, and UUIDs.
 *********************************************************/
 //This file is used to define the structure of the complex data types and how OstrichDB will handle them
 

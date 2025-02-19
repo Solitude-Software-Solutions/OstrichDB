@@ -12,6 +12,11 @@ Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for handling collection files(databases), including
+            creation, deletion, renaming, and fetching data from
+            collections as a whole.
 *********************************************************/
 
 MAX_FILE_NAME_LENGTH: [512]byte
