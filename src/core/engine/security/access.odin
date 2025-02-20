@@ -9,6 +9,8 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+import "core:sys/darwin"
+// import "core:sys/linux"
 
 /********************************************************
 Author: Marshall A Burns
@@ -46,6 +48,49 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 }
 
 
+//ngl I hacked this shit together by looking at Odin's souce code for each os' sys package. - Marshall
+OST_SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
+	using os
+	mode: uint = 0o600 // default to file owner read/write
+	switch permission {
+	case "Read-Only":
+		mode = 0o400 // owner read only
+	case "Read-Write":
+		mode = 0o600 // owner read/write
+	case "Inaccessible":
+		mode = 0o000 // No permissions
+	}
+	path := utils.concat_collection_name(fn)
+	if ODIN_OS == .Linux {
+		// linuxPath := strings.clone_to_cstring(path)
+		//Todo: Finish this shit for linux and windows
+	} else if ODIN_OS == .Darwin {
+		darwinPath := string(path)
+		if mode == 0o600 {
+			// For owner read/write
+			perm := darwin.Permission{.PERMISSION_OWNER_READ, .PERMISSION_OWNER_WRITE}
+			success := darwin.sys_chmod(darwinPath, perm)
+			if !success {
+				return false
+			}
+		} else if mode == 0o400 {
+			// For owner read only
+			perm := darwin.Permission{.PERMISSION_OWNER_READ}
+			success := darwin.sys_chmod(darwinPath, perm)
+			if !success {
+				return false
+			}
+		} else if mode == 0o000 {
+			// No permissions
+			perm := darwin.Permission{} // Empty set
+			success := darwin.sys_chmod(darwinPath, perm)
+			if !success {
+				return false
+			}
+		}
+	}
+	return true // Changed from "err == 0" since err isn't defined
+}
 //Sets the permissions for a given operation
 OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
 	using const

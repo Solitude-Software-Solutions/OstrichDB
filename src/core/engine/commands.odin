@@ -2236,6 +2236,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 					lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
 					if lockSuccess {
+						filePath := concat_collection_name(colName)
+						osPermSuccess := security.OST_SET_OS_PERMISSIONS(filePath, permission)
+						if !osPermSuccess {
+							fmt.printfln(
+								"%sWarning: Failed to set OS-level permissions for collection: %s%s%s",
+								YELLOW,
+								BOLD_UNDERLINE,
+								colName,
+								RESET,
+							)
+						}
+
 						fmt.printfln(
 							"Collection: %s%s%s is now in %s%s%s mode.",
 							BOLD_UNDERLINE,

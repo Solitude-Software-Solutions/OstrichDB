@@ -468,10 +468,10 @@ OST_UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
 	success := false
 	if currentPerm == "Inaccessible" {
 		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
-		fmt.printfln("Collection %s%s%s unlocked")
+		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
 	} else if currentPerm == "Read-Only" {
 		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
-		fmt.printfln("Collection %s%s%s unlocked")
+		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
 	} else {
 		fmt.printfln(
 			"Invalid permission value found in collection: %s%s%s",
