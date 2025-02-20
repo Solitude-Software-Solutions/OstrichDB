@@ -9,6 +9,7 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -180,4 +181,23 @@ OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	}
 
 	return isAlreadyLocked
+}
+
+
+//Get user password before unlocking.
+OST_CONFIRM_COLLECECTION_UNLOCK :: proc() -> bool {
+	passIsCorrect := false
+	fmt.println("Please enter your password to continue:")
+	input := utils.get_input(true)
+	password := string(input)
+	validatedPassword := OST_VALIDATE_USER_PASSWORD(password)
+	switch (validatedPassword) {
+	case true:
+		passIsCorrect = true
+	case false:
+		fmt.println("Invalid password. Operation cancelled.")
+		break
+	}
+
+	return passIsCorrect
 }

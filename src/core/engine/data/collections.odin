@@ -448,6 +448,7 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 
 //LOCK foo -r makes the collection read only
 //LOCK foo -n makes the collection inaccessible
+//LOCK foo without a flag makes the collection Inaccessible by default
 OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm: string) {
 	val: string
 	if flag == "-R" {
@@ -462,19 +463,23 @@ OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm:
 	return success, val
 }
 
-//should this require a password?
+//Reverts the permission status of a collection no matter if its in Read-Only or Inaccessible back to Read-Write
 OST_UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
 	success := false
 	if currentPerm == "Inaccessible" {
-		//Require current users password
-		// but for testing purposes we will just unlock it
 		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
-		// fmt.println("write success: ", success)
-		fmt.printfln("Collection unlocked")
+		fmt.printfln("Collection %s%s%s unlocked")
+	} else if currentPerm == "Read-Only" {
+		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
+		fmt.printfln("Collection %s%s%s unlocked")
 	} else {
-		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
-		// fmt.println("write success: ", success)
-		fmt.printfln("Collection unlocked")
+		fmt.printfln(
+			"Invalid permission value found in collection: %s%s%s",
+			utils.BOLD_UNDERLINE,
+			fn,
+			utils.RESET,
+		)
+		return false
 	}
 	return success
 }

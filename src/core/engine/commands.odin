@@ -64,12 +64,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case EXIT:
 		//logout then exit the program
 		log_runtime_event("Used EXIT command", "User requested to exit the program.")
-		OST_USER_LOGOUT(1)
+		security.OST_USER_LOGOUT(1)
 	case LOGOUT:
 		//only returns user to signin.
 		log_runtime_event("Used LOGOUT command", "User requested to logout.")
 		fmt.printfln("Logging out...")
-		OST_USER_LOGOUT(0)
+		security.OST_USER_LOGOUT(0)
 		return 0
 	// Runs the restart script
 	case RESTART:
@@ -2231,6 +2231,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				} else {
 
+					//Get user password
+
+
 					lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
 					if lockSuccess {
 						fmt.printfln(
@@ -2292,7 +2295,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return 1
 			} else {
 				//check that current user is admin
-
 				isAdmin := security.OST_CHECK_ADMIN_STATUS(&types.current_user)
 
 				if !isAdmin {
@@ -2304,10 +2306,34 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return 1
 				} else {
-					currentPerm, err := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
-					fmt.printfln("Unlocking collection: %s%s%s", BOLD_UNDERLINE, colName, RESET)
-					// fmt.printfln("Current permission: %s%s%s", BOLD, currentPerm, RESET) //debugging
-					unlockSuccess := data.OST_UNLOCK_COLLECTION(colName, currentPerm)
+
+					passwordConfirmed := security.OST_CONFIRM_COLLECECTION_UNLOCK()
+					switch (passwordConfirmed) 
+					{
+					case false:
+						fmt.printfln(
+							"Failed to unlock collection: %s%s%s",
+							BOLD_UNDERLINE,
+							colName,
+							RESET,
+						)
+						return 1
+					case true:
+						currentPerm, err := metadata.OST_GET_METADATA_VALUE(
+							colName,
+							"# Permission",
+							1,
+						)
+						fmt.printfln(
+							"Unlocking collection: %s%s%s",
+							BOLD_UNDERLINE,
+							colName,
+							RESET,
+						)
+						// fmt.printfln("Current permission: %s%s%s", BOLD, currentPerm, RESET) //debugging
+						unlockSuccess := data.OST_UNLOCK_COLLECTION(colName, currentPerm)
+						break
+					}
 				}
 			}
 			break

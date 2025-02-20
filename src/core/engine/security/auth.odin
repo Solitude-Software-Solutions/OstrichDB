@@ -1,12 +1,12 @@
-package engine
+package security
 
-import "../../utils"
-import "../const"
-import "../types"
-import "./config"
-import "./data"
-import "./data/metadata"
-import "./security"
+import "../../../utils"
+import "../../const"
+import "../../types"
+import "../config"
+import "../data"
+import "../data/metadata"
+// import "./security"
 import "core:c/libc"
 import "core:fmt"
 import "core:os"
@@ -132,8 +132,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := security.OST_HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
-	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
+	newHash := OST_HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
+	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
 	postMesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================
 	authPassed := OST_CROSS_CHECK_MESH(preMesh, postMesh)
@@ -214,10 +214,10 @@ OST_USER_LOGOUT :: proc(param: int) {
 	}
 }
 
+
 //shorter version of sign in but exclusively for checking passwords for certain db actions
 OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	succesfulValidation := false
-
 
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
@@ -252,8 +252,8 @@ OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := security.OST_HASH_PASSWORD(string(input), algoAsInt, true, false)
-	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
+	newHash := OST_HASH_PASSWORD(string(input), algoAsInt, true, false)
+	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
 	postmesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END
 

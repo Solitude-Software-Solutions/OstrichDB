@@ -1,9 +1,9 @@
-package engine
+package security
 
-import "../../utils"
-import "../const"
-import "../types"
-import "./config"
+import "../../../utils"
+import "../../const"
+import "../../types"
+import "../config"
 import "core:fmt"
 import "core:os"
 import "core:strconv"

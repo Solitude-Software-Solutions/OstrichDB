@@ -3,6 +3,7 @@ package engine
 import "../../utils"
 import "../const"
 import "../types"
+import "./security"
 import "core:c/libc"
 import "core:fmt"
 import "core:os"
@@ -45,7 +46,7 @@ OST_DESTROY :: proc() {
 		fmt.println("Please enter your password to confirm the destruction of OstrichDB.")
 		j := utils.get_input(true)
 		password := string(j)
-		validatedPassword := OST_VALIDATE_USER_PASSWORD(password)
+		validatedPassword := security.OST_VALIDATE_USER_PASSWORD(password)
 		switch (validatedPassword) {
 		case true:
 			fmt.printfln("%sDestroying OstrichDB...%s", utils.RED, utils.RESET)

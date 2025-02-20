@@ -63,11 +63,11 @@ OST_START_ENGINE :: proc() -> int {
 
 	case true:
 		for {
-			userSignedIn := OST_RUN_SIGNIN()
+			userSignedIn := security.OST_RUN_SIGNIN()
 			switch (userSignedIn) 
 			{
 			case true:
-				OST_START_SESSION_TIMER()
+				security.OST_START_SESSION_TIMER()
 				utils.log_runtime_event(
 					"User Signed In",
 					"User successfully logged into OstrichDB",
@@ -110,14 +110,14 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		// fmt.printfln("Command: %v", cmd) //debugging
 
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
-		sessionDuration := OST_GET_SESSION_DURATION()
-		maxDurationMet := OST_CHECK_SESSION_DURATION(sessionDuration)
+		sessionDuration := security.OST_GET_SESSION_DURATION()
+		maxDurationMet := security.OST_CHECK_SESSION_DURATION(sessionDuration)
 		switch (maxDurationMet) 
 		{
 		case false:
 			break
 		case true:
-			OST_HANDLE_MAX_SESSION_DURATION_MET()
+			security.OST_HANDLE_MAX_SESSION_DURATION_MET()
 		}
 
 		result = OST_EXECUTE_COMMAND(&cmd)
