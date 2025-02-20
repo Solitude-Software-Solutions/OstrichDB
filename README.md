@@ -48,8 +48,14 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
    ```bash
    ./scripts/build.sh
    ```
----
 
+5. **Run CI Checks**:
+   ```bash
+   ./scripts/ci-lint.sh
+   ./scripts/ci-format.sh
+   ```
+
+---
 
 ## **Data Structure Overview**
 
@@ -214,6 +220,24 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
 ```
 
 ---
+
+## **CI/CD Practices**
+
+OstrichDB uses Continuous Integration and Continuous Deployment (CI/CD) practices to ensure code quality and streamline the development process. The following CI checks are included:
+
+- **Linting**: Ensures code adheres to style guidelines.
+- **Code Formatting**: Checks that code is properly formatted.
+- **Testing**: Runs the test suite to ensure code correctness.
+
+To run these checks locally, use the following scripts:
+
+```bash
+./scripts/ci-lint.sh
+./scripts/ci-format.sh
+```
+
+---
+
 ## **Future Plans**
 
 - More configuration options
