@@ -2193,7 +2193,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//IMPORT: Imports foreign data into OstrichDB
 	case IMPORT:
-		transfer._import_("csv_test_file") //TODO: chang this to user input
+		transfer.__import_csv__("csv_test_file") //TODO: chang this to user input
 		break
 	case EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")

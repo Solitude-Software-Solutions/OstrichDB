@@ -18,7 +18,9 @@ File Description:
             This file contains the logic for importing data from external sources
             into OstrichDB. Currently, only .csv files are supported.
 *********************************************************/
-_import_ :: proc(fn: string) {
+
+//hanldes all logic for importing the passed in .csv file into OstrichDB as a new foriegn collection
+__import_csv__ :: proc(fn: string) {
 	using data
 
 	collectionPath := utils.concat_collection_name(fn)
@@ -166,6 +168,9 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 	return 0
 }
 
+
+//Takes fields of each record in a .csv file and organizes them into "columns"
+//This helps with the inferance of record types, but could be used for other things I guess
 OST_ORGANIZE_CSV_INTO_COLUMNS :: proc(
 	body: [dynamic]string,
 	num_fields: int,
@@ -204,7 +209,7 @@ ensure_csv_record_length :: proc(fn: string, reader: ^csv.Reader) -> (bool, int)
 	if ok {
 		csv.reader_init_with_string(reader, string(data))
 	} else {
-
+		//TODO: uhhhh do something with this error
 	}
 	defer delete(data)
 
