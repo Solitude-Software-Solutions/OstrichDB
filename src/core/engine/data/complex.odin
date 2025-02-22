@@ -17,10 +17,8 @@ File Description:
             Contains logic for how OstrichDB handles'complex' data types.
             This includes arrays, dates, times, datetimes, and UUIDs.
 *********************************************************/
-//This file is used to define the structure of the complex data types and how OstrichDB will handle them
 
-
-//essentially will look over the passed in string and as long as its encased in [] it will split the string into an array based on the commas
+//split the passed in "array" which is actually a string from the command line at each comma, store into a slice and return it
 OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 	result := strings.split(strArr, ",")
 	// for i in result { 	//debugging
