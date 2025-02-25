@@ -136,6 +136,6 @@ OST_RESTART :: proc() {
 
 //Used to rebuild and restart the engine
 OST_REBUILD :: proc() {
-	libc.system("../scripts/build.sh")
+	libc.system("../scripts/build_run.sh")
 	os.exit(0)
 }

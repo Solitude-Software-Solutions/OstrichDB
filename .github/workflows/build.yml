@@ -23,9 +23,9 @@ jobs:
         run: echo "${GITHUB_WORKSPACE}/Odin" >> $GITHUB_PATH
 
       - name: Make CI build script executable
-        run: chmod +x scripts/ci-build.sh
+        run: chmod +x scripts/build.sh
 
       - name: Run CI build script
         run: |
           cd scripts
-          ./ci-build.sh
+          ./build.sh

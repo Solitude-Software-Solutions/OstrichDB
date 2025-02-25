@@ -41,12 +41,12 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 3. **Make the Build & Restart Scripts Executable**:
    ```bash
-   chmod +x scripts/build.sh scripts/restart.sh
+   chmod +x scripts/build_run.sh scripts/restart.sh
    ```
 
 4. **Run The Build Script**:
    ```bash
-   ./scripts/build.sh
+   ./scripts/build_run.sh
    ```
 ---
 
