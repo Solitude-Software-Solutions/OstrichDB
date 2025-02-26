@@ -1,20 +1,25 @@
 package help
 
 import "../../utils"
-import "../config"
 import "../const"
+import "../engine/config"
 import "../engine/data"
 import "../types"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Implements the HELP command, allowing
+            users to get help with OstrichDB commands.
+            Reads from the help files in the ../docs directory.
+*********************************************************/
 
 
 validCommands := []string {
@@ -44,10 +49,13 @@ validCommands := []string {
 	"ISOLATE", //formerly known as "QUARANTINE"
 	"TREE",
 	"HISTORY",
-	"TEST",
 	"WHERE",
 	"VALIDATE",
 	"BENCHMARK",
+	"IMPORT",
+	"EXPORT",
+	"LOCK",
+	"UNLOCK",
 }
 //called when user only enters the "HELP" command without any arguments
 // will take in the value from the config file. if verbose is true then show data from verbose help file, and vice versa
@@ -56,23 +64,23 @@ OST_SET_HELP_MODE :: proc() -> bool {
 	using types
 	using utils
 
-	value := data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, STRING, CONFIG_FOUR)
+	value := data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, BOOLEAN, CONFIG_FOUR)
 
 	switch (value) 
 	{
-	case "VERBOSE":
-		helpMode.verbose = true
+	case "true":
+		helpMode.isVerbose = true
 		break
-	case "SIMPLE":
-		helpMode.verbose = false
+	case "false":
+		helpMode.isVerbose = false
 		break
 	case:
 		fmt.println(
-			"Invalid value detected in config file.\n Please delete the config file and restart OstrichDB.",
+			"Invalid value detected in config file.\n Please delete the ./bin/core/config.ost file and rebuild OstrichDB.",
 		)
 	}
 
-	return helpMode.verbose
+	return helpMode.isVerbose
 }
 
 //checks if the token that the user wants help with is valid
@@ -91,7 +99,8 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 	using const
 	using utils
 
-	helpMode := OST_SET_HELP_MODE()
+	helpModeIsVerbose := OST_SET_HELP_MODE()
+	fmt.printfln("Help mode is verbose: %v", helpModeIsVerbose)
 	helpText: string
 	data: []byte
 	ok: bool
@@ -106,7 +115,7 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 		)
 		return ""
 	}
-	switch (helpMode) 
+	switch (helpModeIsVerbose) 
 	{
 	case true:
 		data, ok = os.read_entire_file(VERBOSE_HELP_FILE)
@@ -158,16 +167,16 @@ OST_GET_GENERAL_HELP :: proc() -> string {
 }
 
 //shows a table of explaining atoms
-OST_GET_ATOMS_HELP :: proc() -> string {
+OST_GET_CLPS_HELP :: proc() -> string {
 	using const
 
-	data, ok := os.read_entire_file(ATOMS_HELP_FILE)
+	data, ok := os.read_entire_file(CLPS_HELP_FILE)
 	if !ok {
 		return ""
 	}
 	defer delete(data)
 	content := string(data)
-	fmt.printfln("\nHere is a helpful table containing information about ATOMs in OstrichDB:")
+	fmt.printfln("\nHere is a helpful table containing information about CLPs in OstrichDB:")
 	fmt.printfln(
 		"--------------------------------------------------------------------------------------------------------------------",
 	)

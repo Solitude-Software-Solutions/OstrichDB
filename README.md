@@ -19,13 +19,45 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 - macOS & Linux Support
 ---
 
+## **Installation**
+
+### **Prerequisites:**
+- A Unix-based system (macOS, Linux).
+- The Odin programming language installed, built, and properly set in the system's PATH.
+*Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
+
+
+### **Steps:**
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
+   ```
+
+2. **Navigate to the OstrichDB Directory**:
+   ```bash
+   cd path/to/OstrichDB
+   ```
+
+3. **Make the Build & Restart Scripts Executable**:
+   ```bash
+   chmod +x scripts/build_run.sh scripts/restart.sh
+   ```
+
+4. **Run The Build Script**:
+   ```bash
+   ./scripts/build_run.sh
+   ```
+---
+
+
 ## **Data Structure Overview**
 
 OstrichDB organizes data into three levels:
 
-- **Records**: The smallest unit of data (e.g., user name, age, or product details).
-- **Clusters**: Groups of related records (e.g., related information about a person or product).
 - **Collections**: Files that hold multiple clusters (e.g., a database holding multiple product categories).
+- **Clusters**: Groups of related records (e.g., related information about a person or product). Found within collections.
+- **Records**: The smallest unit of data (e.g., user name, age, or product details). Found within clusters.
 
 ---
 
@@ -72,7 +104,7 @@ These operations perform simple tasks without needing additional arguments.
 - **`CLEAR`**: Clears the console screen.
 - **`HISTORY`**: Shows the current users command history.
 - **`DESTROY`**: Completley destorys the entire DBMS. Including all databases, users, configs, and logs.
-- **`TEST`**: A temporary command to run the built-in test suite. (Will be removed in future versions)
+- **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
 
 ---
 
@@ -92,7 +124,9 @@ These operations allow you to perform more complex operations.
 - **`CHANGE_TYPE`**: Allows you to change the type of a record.
 - **`HELP`**: Displays help information for a specific token.
 - **`ISOLATE`**: Quarentines a collection file. Preventing any further changes to the file
-- **`WHERE`**: Searches for a record or cluster by name. DOES NOT WORK WITH COLLECTIONS.
+- **`WHERE`**: Searches for the location of a single or several record(s) or cluster(s). DOES NOT WORK WITH COLLECTIONS.
+- **`VALIDATE`**: Validates a collection file for any errors or corruption.
+- **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
 ---
 
 ### **Parameters**
@@ -103,59 +137,38 @@ Modifiers adjust the behavior of commands. The current supported modifiers are:
 
 
 ## **Supported Record Data Type Tokens**
-When setting a record value, you must specify the records data type by using the `OF_TYPE` modifier. Most types have a shorthand notation for convenience.
-Primary supported data types include:
+When setting a record value, you must specify the records data type by using the `OF_TYPE` modifier. Some types have a shorthand notation for convenience.
+
+### Primary data types include:
   - **`INTEGER`**: Integer values. Short-hand: `INT`.
   - **`STRING`**: Any text value longer than 1 character. Short-hand: `STR`.
   - **`FLOAT`**: Floating-point numbers. Short-hand: `FLT`.
   - **`BOOLEAN`**: true or false values. Short-hand: `BOOL`.
+  - **`CHAR`**: Single character values. No short-hand.
 
-Complex data types include:
-NOTE: When setting array values, separate each element with a comma WITHOUT spaces.
+### Complex data types include:
+*NOTE: When setting array values, separate each element with a comma WITHOUT spaces.*
   - **`[]STRING`**: String arrays. Short-hand: `[]STR`.
   - **`[]INTEGER`**: Integer arrays. Short-hand: `[]INT`.
   - **`[]FLOAT`**: Float arrays. Short-hand: `[]FLT`.
   - **`[]BOOLEAN`**: Boolean arrays. Short-hand: `[]BOOL`.
+  - **`[]CHAR`**: Character arrays. No short-hand.
 
-Other supported data types include:
-  - **`CHAR`**: Single character values.
-  - **`DATE`**: Date values in the format `YYYY-MM-DD`.
-  - **`TIME`**: Time values in the format `HH:MM:SS`.
-  - **`DATETIME`**: Date and time values in the format `YYYY-MM-DDTHH:MM:SS`
+
+### Other supported data types include:
+  - **`DATE`**: Must be in `YYYY-MM-DD` format. No short-hand.
+  - **`TIME`**: Must be in `HH:MM:SS` format. No short-hand.
+  - **`DATETIME`**: Must be in `YYYY-MM-DDTHH:MM:SS` format. No short-hand.
+  - **`[]DATE`**: Date arrays. Each value must follow the above format. No short-hand.
+  - **`[]TIME`**: Time arrays. Each value must follow the above format. No short-hand.
+  - **`[]DATETIME`**: Date and time arrays. Each value must follow the above format. No short-hand.
+  - **`NULL`**: Null value. No short-hand.
+
+    *Note: UUIDs can only have `0-9` and `a-f` characters and must be in the format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.*
+  - **`UUID`**: Universally unique identifier. Must follow the above format. No short-hand.
+  - **`[]UUID`**: UUID arrays. Each value must follow the above format. No short-hand.
 
 ---
-
-## **Installation**
-
-### **Prerequisites:**
-- A Unix-based system (macOS, Linux).
-- Clang & LLVM installed on your system.
-- The Odin programming language installed, built, and properly set in the system's PATH.
-
-
-### **Steps:**
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
-   ```
-
-2. **Navigate to the OstrichDB Directory**:
-   ```bash
-   cd path/to/OstrichDB
-   ```
-
-3. **Make the Build & Restart Scripts Executable**:
-   ```bash
-   chmod +x scripts/build.sh scripts/restart.sh
-   ```
-
-4. **Run The Build Script**:
-   ```bash
-   ./scripts/build.sh
-   ```
----
-
 
 ## **Usage Examples**
    ```bash
@@ -186,12 +199,27 @@ Other supported data types include:
    ```
 ---
 
+## **Configs**
+OstrichDB has a configuration file that allows the user to customize the DBMS to their liking.
+- **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is off)
+- **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is off)
+- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is on)
+- **`SERVER_ON`**: Enable of disable the server mode. (Defualt is off)
+
+**Note: ALL configs must be set using the following command:**
+Values are either `TRUE` or `FALSE`
+
+```
+SET CONFIG {CONFIG_NAME} TO {VALUE}
+```
+
+---
 ## **Future Plans**
 
 - More configuration options
 - Database file compression and zipping
 - Several new command tokens:
-  - `IMPORT`: Load data from external sources(JSON, CSV, etc.)
+  - `IMPORT`: Load data from external sources(CSV, etc.)
   - `EXPORT`: Export data to various formats
   - `LOCK`: Prevent data modification
   - `UNLOCK`: Allow data modification

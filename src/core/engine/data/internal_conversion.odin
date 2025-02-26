@@ -1,16 +1,23 @@
 package data
+
 import "../../../utils"
 import "../../const"
+import "../../types"
 import "../data"
 import "core:fmt"
 import "core:strconv"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for handling the conversion of record data
+            types within OstrichDB.
+*********************************************************/
 
 
 //The following conversion procs are used to convert the passed in record value to the correct data type
@@ -36,10 +43,10 @@ OST_CONVERT_RECORD_TO_FLOAT :: proc(rValue: string) -> (f64, bool) {
 }
 
 OST_CONVERT_RECORD_TO_BOOL :: proc(rValue: string) -> (bool, bool) {
-	lower_str := strings.to_lower(strings.trim_space(rValue))
-	if lower_str == "true" {
+	lowerStr := strings.to_lower(strings.trim_space(rValue))
+	if lowerStr == "true" || lowerStr == "t" {
 		return true, true
-	} else if lower_str == "false" {
+	} else if lowerStr == "false" || lowerStr == "f" {
 		return false, true
 	} else {
 		//no need to do anything other than return here. Once false is returned error handling system will do its thing
@@ -76,10 +83,10 @@ OST_CONVERT_RECORD_TO_BOOL_ARRAY :: proc(rValue: string) -> ([dynamic]bool, bool
 	newArray := make([dynamic]bool)
 	strValue := OST_PARSE_ARRAY(rValue)
 	for i in strValue {
-		lower_str := strings.to_lower(strings.trim_space(i))
-		if lower_str == "true" {
+		lowerStr := strings.to_lower(strings.trim_space(i))
+		if lowerStr == "true" || lowerStr == "t" {
 			append(&newArray, true)
-		} else if lower_str == "false" {
+		} else if lowerStr == "false" || lowerStr == "f" {
 			append(&newArray, false)
 		} else {
 			fmt.printfln("Failed to parse bool array")
@@ -88,6 +95,7 @@ OST_CONVERT_RECORD_TO_BOOL_ARRAY :: proc(rValue: string) -> ([dynamic]bool, bool
 	}
 	return newArray, true
 }
+
 
 OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
 	newArray := make([dynamic]string)
@@ -98,10 +106,64 @@ OST_CONVERT_RECORD_TO_STRING_ARRAY :: proc(rValue: string) -> ([dynamic]string, 
 	return newArray, true
 }
 
+OST_CONVERT_RECORD_TO_CHAR_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for str in strValue {
+		// for char, index in str {
+		append(&newArray, str)
+		// }
+	}
+	return newArray, true
+}
+
+OST_CONVERT_RECORD_TO_DATE_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		date, ok := OST_PARSE_DATE(i)
+		if ok {
+			append(&newArray, date)
+		} else {
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
+
+OST_CONVERT_RECORD_TO_TIME_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		time, ok := OST_PARSE_TIME(i)
+		if ok {
+			append(&newArray, time)
+		} else {
+			fmt.printfln("Failed to parse time array")
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
+
+OST_CONVERT_RECORD_TO_DATETIME_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		dateTime, ok := OST_PARSE_DATETIME(i)
+		if ok {
+			append(&newArray, dateTime)
+		} else {
+			fmt.printfln("Failed to parse datetime array")
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
 //Dont really need the following 3 procs, could just call the parse procs where needed but fuck it - Marshall Burns
 OST_CONVERT_RECORD_TO_DATE :: proc(rValue: string) -> (string, bool) {
-	date, err := OST_PARSE_DATE(rValue)
-	if err == 0 {
+	date, success := OST_PARSE_DATE(rValue)
+	if success == true {
 		return date, true
 	} else {
 		return "", false
@@ -109,8 +171,8 @@ OST_CONVERT_RECORD_TO_DATE :: proc(rValue: string) -> (string, bool) {
 }
 
 OST_CONVERT_RECORD_TO_TIME :: proc(rValue: string) -> (string, bool) {
-	time, err := OST_PARSE_TIME(rValue)
-	if err == 0 {
+	time, success := OST_PARSE_TIME(rValue)
+	if success == true {
 		return time, true
 	} else {
 		return "", false
@@ -118,13 +180,48 @@ OST_CONVERT_RECORD_TO_TIME :: proc(rValue: string) -> (string, bool) {
 }
 
 OST_CONVERT_RECORD_TO_DATETIME :: proc(rValue: string) -> (string, bool) {
-	dateTime, err := OST_PARSE_DATETIME(rValue)
-	if err == 0 {
+	dateTime, success := OST_PARSE_DATETIME(rValue)
+	if success == true {
 		return dateTime, true
 	} else {
 		return "", false
 	}
 }
+
+OST_CONVERT_RECORD_TO_UUID :: proc(rValue: string) -> (string, bool) {
+	uuid, success := OST_PARSE_UUID(rValue)
+	if success == true {
+		return uuid, true
+	} else {
+		return "", false
+	}
+}
+
+OST_CONVERT_RECORD_TO_UUID_ARRAY :: proc(rValue: string) -> ([dynamic]string, bool) {
+	newArray := make([dynamic]string)
+	strValue := OST_PARSE_ARRAY(rValue)
+	for i in strValue {
+		uuid, ok := OST_PARSE_UUID(i)
+		if ok {
+			append(&newArray, uuid)
+		} else {
+			fmt.printfln("Failed to parse time array")
+			return newArray, false
+		}
+	}
+	return newArray, true
+}
+
+//Cannot be a null array
+OST_CONVERT_RECORD_TO_NULL :: proc(rValue: string) -> (string, bool) {
+	if rValue == const.NULL {
+		return rValue, true
+	} else {
+		fmt.printfln("Failed to parse null")
+		return "", false
+	}
+}
+
 
 //Handles the conversion of a record value from an old type to a new type
 //this could also go into the records.odin file but will leave it here for now
@@ -241,9 +338,9 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		switch (oldType) {
 		case STRING:
 			//Old type is STRING
-			lower_str := strings.to_lower(strings.trim_space(value))
-			if lower_str == "true" || lower_str == "false" {
-				return lower_str, true
+			lowerStr := strings.to_lower(strings.trim_space(value))
+			if lowerStr == "true" || lowerStr == "false" {
+				return lowerStr, true
 			}
 			return "", false
 		case:

@@ -1,17 +1,23 @@
 package engine
+
 import "../../utils"
 import "../const"
 import "../types"
+import "./security"
 import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            This file holds the logic for the DESTROY command, which
+            allows users to delete the entire OstrichDB instance.
+*********************************************************/
 
 //Deletes the entire executiable, databases, history files, user files, and cache files.
 OST_DESTROY :: proc() {
@@ -40,7 +46,7 @@ OST_DESTROY :: proc() {
 		fmt.println("Please enter your password to confirm the destruction of OstrichDB.")
 		j := utils.get_input(true)
 		password := string(j)
-		validatedPassword := OST_VALIDATE_USER_PASSWORD(password)
+		validatedPassword := security.OST_VALIDATE_USER_PASSWORD(password)
 		switch (validatedPassword) {
 		case true:
 			fmt.printfln("%sDestroying OstrichDB...%s", utils.RED, utils.RESET)

@@ -1,23 +1,26 @@
-package engine
+package security
 
-import "../../utils"
+import "../../../utils"
+import "../../const"
+import "../../types"
 import "../config"
-import "../const"
-import "../types"
-import "./data"
-import "./data/metadata"
-import "./security"
+import "../data"
+import "../data/metadata"
+// import "./security"
 import "core:c/libc"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for handling user authentication.
+*********************************************************/
 
 //This beffy S.O.B handles user authentication
 OST_RUN_SIGNIN :: proc() -> bool {
@@ -129,8 +132,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := security.OST_HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
-	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
+	newHash := OST_HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
+	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
 	postMesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================
 	authPassed := OST_CROSS_CHECK_MESH(preMesh, postMesh)
@@ -145,7 +148,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
 			OST_CONFIG_PATH,
 			CONFIG_CLUSTER,
-			CONFIG,
+			BOOLEAN,
 			CONFIG_THREE,
 		)
 		if userLoggedInValue == "false" {
@@ -211,10 +214,10 @@ OST_USER_LOGOUT :: proc(param: int) {
 	}
 }
 
+
 //shorter version of sign in but exclusively for checking passwords for certain db actions
 OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	succesfulValidation := false
-
 
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
@@ -249,8 +252,8 @@ OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := security.OST_HASH_PASSWORD(string(input), algoAsInt, true, false)
-	encodedHash := security.OST_ENCODE_HASHED_PASSWORD(newHash)
+	newHash := OST_HASH_PASSWORD(string(input), algoAsInt, true, false)
+	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
 	postmesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END
 

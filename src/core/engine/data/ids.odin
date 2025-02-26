@@ -9,12 +9,16 @@ import "core:math/rand"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for generating and managing IDs for users and clusters.
+            All users and clusters have a unique ID that is generated when they are created.
+*********************************************************/
 
 
 //generates a random ID, ensures its not currently in use by a user or a cluster

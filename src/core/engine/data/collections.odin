@@ -7,12 +7,17 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for handling collection files(databases), including
+            creation, deletion, renaming, and fetching data from
+            collections as a whole.
+*********************************************************/
 
 MAX_FILE_NAME_LENGTH: [512]byte
 
@@ -57,6 +62,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		collectionPath := utils.concat_collection_name(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, collectionType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -83,6 +89,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, collectionType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -100,6 +107,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		collectionPath := fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, collectionType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -127,40 +135,37 @@ OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
 		return false
 	}
 
-	// Skip confirmation if in testing mode
-	if !types.TESTING {
-		fmt.printfln(
-			"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
-			BOLD_UNDERLINE,
-			fn,
-			RESET,
+	fmt.printfln(
+		"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
+		BOLD_UNDERLINE,
+		fn,
+		RESET,
+	)
+	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+	n, inputSuccess := os.read(os.stdin, buf[:])
+	if inputSuccess != 0 {
+		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		throw_err(error1)
+		log_err("Error reading user input", #procedure)
+	}
+
+	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+	cap := strings.to_upper(confirmation)
+
+	switch (cap) {
+	case const.NO:
+		log_runtime_event("User canceled deletion", "User canceled deletion of collection")
+		return false
+	case const.YES:
+	// Continue with deletion
+	case:
+		log_runtime_event(
+			"User entered invalid input",
+			"User entered invalid input when trying to delete collection",
 		)
-		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
-			throw_err(error1)
-			log_err("Error reading user input", #procedure)
-		}
-
-		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-		cap := strings.to_upper(confirmation)
-
-		switch (cap) {
-		case const.NO:
-			log_runtime_event("User canceled deletion", "User canceled deletion of collection")
-			return false
-		case const.YES:
-		// Continue with deletion
-		case:
-			log_runtime_event(
-				"User entered invalid input",
-				"User entered invalid input when trying to delete collection",
-			)
-			error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
-			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-			return false
-		}
+		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
+		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+		return false
 	}
 
 	collectionPath := concat_collection_name(fn)
@@ -417,18 +422,20 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 
 	// Find the end of the metadata header
 	content := string(data)
-	headerEndIndex := strings.index(content, "}")
+	headerEndIndex := strings.index(content, const.METADATA_END)
 	if headerEndIndex == -1 {
 		throw_err(new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #procedure))
 		log_err("Invalid collection file format", #procedure)
 		return false
 	}
 
-	// Extract the metadata header
-	header := content[:headerEndIndex + 1]
+	// Get the metadata header
+	headerEndIndex += len(const.METADATA_END) + 1
+	metaDataHeader := content[:headerEndIndex]
+
 
 	// Write back only the header
-	writeSuccess := os.write_entire_file(collectionPath, transmute([]byte)header)
+	writeSuccess := os.write_entire_file(collectionPath, transmute([]byte)metaDataHeader)
 	if !writeSuccess {
 		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
 		log_err("Error writing purged collection file", #procedure)
@@ -437,4 +444,42 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 	log_runtime_event("Collection purged", fmt.tprintf("User purged collection: %s", fn))
 
 	return true
+}
+
+//LOCK foo -r makes the collection read only
+//LOCK foo -n makes the collection inaccessible
+//LOCK foo without a flag makes the collection Inaccessible by default
+OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm: string) {
+	val: string
+	if flag == "-R" {
+		val = "Read-Only"
+	} else if flag == "-N" {
+		val = "Inaccessible"
+	} else {
+		fmt.printfln("Invalid flag provided")
+		return false, ""
+	}
+	success := metadata.OST_CHANGE_METADATA_VALUE(fn, val, 1, 0)
+	return success, val
+}
+
+//Reverts the permission status of a collection no matter if its in Read-Only or Inaccessible back to Read-Write
+OST_UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
+	success := false
+	if currentPerm == "Inaccessible" {
+		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
+		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
+	} else if currentPerm == "Read-Only" {
+		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
+		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
+	} else {
+		fmt.printfln(
+			"Invalid permission value found in collection: %s%s%s",
+			utils.BOLD_UNDERLINE,
+			fn,
+			utils.RESET,
+		)
+		return false
+	}
+	return success
 }
