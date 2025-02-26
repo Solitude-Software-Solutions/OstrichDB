@@ -2220,7 +2220,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return 1
 			} else {
 
-
 				if collectionAlreadyLocked {
 					fmt.printfln(
 						"Collection: %s%s%s already has a lock status. Please use the UNLOCK command to unlock it, then try again.",
@@ -2230,10 +2229,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return 1
 				} else {
-
-					//Get user password
-
-
+					fmt.printfln("Please enter your password to confirm locking collection: %s%s%s", BOLD_UNDERLINE, colName, RESET)
+					input := utils.get_input(true)
+					password := string(input)
+					validatedPassword := security.OST_VALIDATE_USER_PASSWORD(password)
+					switch (validatedPassword) {
+					case false:
+						fmt.printfln("Invalid password. Operation cancelled.")
+					break
+					case true:
 					lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
 					if lockSuccess {
 						filePath := concat_collection_name(colName)
@@ -2266,6 +2270,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						)
 						return 1
 					}
+				}
 				}
 			}
 			break
