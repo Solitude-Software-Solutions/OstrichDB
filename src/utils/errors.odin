@@ -3,12 +3,15 @@ import "../core/types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for handling errors and error messages.
+*********************************************************/
 
 ErrorType :: enum {
 	NO_ERROR,
@@ -58,7 +61,7 @@ ErrorType :: enum {
 	INCOMPLETE_COMMAND,
 	INVALID_COMMAND,
 	COMMAND_TOO_LONG, //??? idk
-
+	CANNOT_PURGE_HISTORY,
 	//Data Integrity Errors
 	FILE_SIZE_TOO_LARGE,
 	FILE_FORMAT_NOT_VALID,
@@ -127,6 +130,7 @@ ERROR_MESSAGE := [ErrorType]string {
 	.INVALID_CHECKSUM                  = "Checksum mismatch. File may be corrupt",
 	.INVALID_DATA_TYPE_FOUND           = "Invalid Data Type(s) Found In Collection",
 	.INVALID_VALUE_FOR_EXPECTED_TYPE   = "An invalid value was given for the expected type",
+	.CANNOT_PURGE_HISTORY              = "Cannot Purge Users History Cluster",
 }
 
 new_err :: proc(type: ErrorType, message: string, procedure: string) -> Error {

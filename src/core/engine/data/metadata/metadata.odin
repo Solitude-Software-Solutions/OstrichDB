@@ -11,12 +11,17 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Implements the metadata functionality for OstrichDB, Contains
+            procedures used for creating, updating, and validating, and reading
+            the metadata header for collection files.
+*********************************************************/
 
 
 //Sets the files format version(FFV)
@@ -154,13 +159,14 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 
 //fn = file name, param = metadata value to update.
-//1 = time of creation, 2 = last time modified, 3 = file size, 4 = file format version, 5 = checksum
-OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
+//1 = File Format Version, 2 = Permission, 3 = Date of Creation, 4 = Date Last Modified, 5 = File Size, 6 = Checksum
+AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	using utils
 
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
 		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		throw_err(error1)
 		return
 	}
 	defer delete(data)
@@ -174,65 +180,72 @@ OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	fileInfo := OST_GET_FS(fn)
 	fileSize := fileInfo.size
 
-	updated := false
+	found := false
 	for line, i in lines {
 		switch param {
 		case 1:
-			if strings.has_prefix(line, "# Date of Creation:") {
-				lines[i] = fmt.tprintf("# Date of Creation: %s", currentDate)
-				updated = true
+			if strings.has_prefix(line, "# File Format Version:") {
+				lines[i] = fmt.tprintf("# File Format Version: %s", OST_SET_FFV())
+				found = true
 			}
 			break
 		case 2:
-			if strings.has_prefix(line, "# Date Last Modified:") {
-				lines[i] = fmt.tprintf("# Date Last Modified: %s", currentDate)
-				updated = true
+			if strings.has_prefix(line, "# Permission:") {
+				lines[i] = fmt.tprintf("# Permission: %s", "Read-Write")
+				found = true
 			}
 		case 3:
+			if strings.has_prefix(line, "# Date of Creation:") {
+				lines[i] = fmt.tprintf("# Date of Creation: %s", currentDate)
+				found = true
+			}
+			break
+		case 4:
+			if strings.has_prefix(line, "# Date Last Modified:") {
+				lines[i] = fmt.tprintf("# Date Last Modified: %s", currentDate)
+				found = true
+			}
+			break
+		case 5:
 			if strings.has_prefix(line, "# File Size:") {
 				actualSize, _ := OST_SUBTRACT_METADATA_SIZE(fn)
 				if actualSize != -1 {
 					lines[i] = fmt.tprintf("# File Size: %d Bytes", actualSize)
-					updated = true
+					found = true
 				} else {
 					fmt.printfln("Error calculating file size for file %s", fn)
 				}
 			}
 			break
-		case 4:
-			if strings.has_prefix(line, "# File Format Version:") {
-				lines[i] = fmt.tprintf("# File Format Version: %s", OST_SET_FFV())
-				updated = true
-			}
-			break
-		case 5:
+		case 6:
 			if strings.has_prefix(line, "# Checksum:") {
 				lines[i] = fmt.tprintf("# Checksum: %s", OST_GENERATE_CHECKSUM(fn))
-				updated = true
+				found = true
 			}
-			break
 		}
-		if updated {
+		if found {
 			break
 		}
 	}
 
-	if !updated {
-		fmt.println("Metadata field not found in file")
+	if !found {
+		fmt.printfln("Metadata field not found in file. Proc: %s", #procedure)
 		return
 	}
 
 	newContent := strings.join(lines, "\n")
-	err := os.write_entire_file(fn, transmute([]byte)newContent)
+	writeSuccess := os.write_entire_file(fn, transmute([]byte)newContent)
 }
 
 //used when creating a new collection file whether public or not
 OST_UPDATE_METADATA_ON_CREATE :: proc(fn: string) {
-	OST_UPDATE_METADATA_VALUE(fn, 1)
-	OST_UPDATE_METADATA_VALUE(fn, 3)
-	OST_UPDATE_METADATA_VALUE(fn, 4)
-	OST_UPDATE_METADATA_VALUE(fn, 5)
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 1)
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 3)
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 4)
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 5)
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 6)
 }
+
 
 //Creates the file format version file in the temp dir
 OST_CREATE_FFVF :: proc() {
@@ -444,20 +457,95 @@ OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: strin
 	}
 
 	// Verify the header has the correct number of lines
-	expectedLines := 7 // 5 metadata fields + start and end markers
+	expectedLines := 8 // 6 metadata fields + start and end markers
 	if metadataEndIndex != expectedLines - 1 {
 		log_err("Invalid metadata header length", #procedure)
 		return "", -3
 	}
-
-	for i in 1 ..< 5 {
+	// fmt.println("Field: ", field)
+	for i in 1 ..< 6 {
 		if strings.has_prefix(lines[i], field) {
 			val := strings.split(lines[i], ": ")
-			fmt.println("Val: ", val)
-			return val[1], 0
+			return strings.clone(val[1]), 0
 		}
 	}
 
 
 	return "", -4
+}
+
+
+//Similar to the UPDATE_METADATA_VALUE but updates a value wiht the passed in param
+//member is the metadata field to update
+//For now , only used for the "Permission" field, may add more in the future - Marshall
+// colTypes 0 = standar(public), 1 =secure, 2 = history, 3 = config, 4 = ids
+OST_CHANGE_METADATA_VALUE :: proc(fn, newValue: string, member, colType: int) -> bool {
+	using utils
+	using const
+
+	file: string
+
+	switch (colType) {
+	case 0:
+		file = concat_collection_name(fn)
+		break
+	case 1:
+		file = fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, fn, ".ost")
+		break
+	case 2:
+		file = OST_HISTORY_PATH
+		break
+	case 3:
+		file = OST_CONFIG_PATH
+		break
+	case 4:
+		file = OST_ID_PATH
+		break
+
+	}
+	data, readSuccess := os.read_entire_file(file)
+	if !readSuccess {
+		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		throw_err(error1)
+		return false
+	}
+	defer delete(data)
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	defer delete(lines)
+
+
+	fieldFound := false
+	for line, i in lines {
+		switch member {
+		case 1:
+			if strings.has_prefix(line, "# Permission:") {
+				lines[i] = fmt.tprintf("# Permission: %s", newValue)
+				fieldFound = true
+			}
+			break
+		case:
+			fmt.println("Invalid metadata field provided")
+			break
+		}
+	}
+
+	if !fieldFound {
+		fmt.printfln("Metadata field not found in file. Proc: ", #procedure)
+		return false
+	}
+
+	newContent := strings.join(lines, "\n")
+	success := os.write_entire_file(file, transmute([]byte)newContent)
+	return success
+}
+
+
+//Used after most operations on a collection file to update the metadata fields
+OST_UPDATE_METADATA_AFTER_OPERATION :: proc(fn: string) {
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 3) //updates the last time modified
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 4) //updates the file format version
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 5) //updates file size
+	AUTO_OST_UPDATE_METADATA_VALUE(fn, 6) //updates the checksum
 }

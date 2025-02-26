@@ -7,12 +7,15 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains helper procedures that are used throughout the OstrichDB codebase.
+*********************************************************/
 
 // Helper proc that reads an entire file and returns the content as bytes along with a success boolean
 read_file :: proc(filepath: string, location: string) -> ([]byte, bool) {
@@ -169,9 +172,28 @@ append_qoutations :: proc(value: string) -> string {
 }
 
 //helper used to append single qoutation marks to the beginning and end of CHAR record values
-append_single_qoutations :: proc(value: string) -> string {
+append_single_qoutations__string :: proc(value: string) -> string {
 	if strings.contains(value, "'") {
 		return strings.clone(value)
 	}
 	return strings.clone(fmt.tprintf("'%s'", value))
+}
+
+append_single_qoutations__rune :: proc(value: rune) -> string {
+	return strings.clone(fmt.tprintf("'%c'", value))
+}
+
+trim_qoutations :: proc(value: string) -> string {
+	if strings.contains(value, "\"") {
+		return strings.clone(strings.trim(value, "\""))
+	}
+	return strings.clone(value)
+}
+
+
+//helper used for the BENCHMARK command to make sure users input is an integer
+string_is_int :: proc(value: string) -> bool {
+	val, ok := strconv.parse_int(value)
+	return ok
+
 }

@@ -10,104 +10,249 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains the logic for the BENCHMARK command, allowing
+            users to test the performance of the dbms.
+*********************************************************/
+
 
 //Note to developers: In the main() procedure, the number of iterations passed for each benchmarking operation can be adjusted unless a comment states otherwise. - Marshall
-main :: proc() {
+OST_RUN_BENCHMARK :: proc(iterations: []int, default: bool) {
 	using utils
 
+	collectionIterations, clusterIterations, recordIterations: int
+	basicSuiteFailCounter, mediumSuiteFailCounter, advancedSuiteFailCounter: int
+	basicOperationCount, meduimOperationCount, advancedOperationCount: int
+	basicOperationTime, mediumOperationTime, advancedOperationTime: time.Duration
+
+
+	fmt.println("---------------------------------------------------")
+	fmt.println("Running OstrichDB Benchmark Suites. Please wait...")
 	//Create the benchmark directory
 	os.make_directory(const.OST_BENCHMARK_PATH, 0o777)
-	//Create a benchmark result array to keep everything tidy
-	b_results := make([dynamic]types.Benchmark_Result, 0)
-	failCounter := 0
 
 
-	//Change our values at any time :)
-	collectionIterations := 1
-	clusterIterations := 1
-	recordIterations := 1
-
-
+	//default is set if a user passes a number of iterations per data object when using the BENCHMARK command
+	if default == true {
+		fmt.println("Using default iteration values:\nCollections: 2\nClusters: 5\nRecords: 15")
+		//Change our values at any time :)nch
+		collectionIterations = 2
+		clusterIterations = 5
+		recordIterations = 15
+	} else {
+		fmt.printfln(
+			"Using custom iteration values:\nCollections: %d\nClusters: %d\nRecords: %d",
+			iterations[0],
+			iterations[1],
+			iterations[2],
+		)
+		collectionIterations = iterations[0]
+		clusterIterations = iterations[1]
+		recordIterations = iterations[2]
+	}
+	fmt.println("---------------------------------------------------\n")
 	//Note to developers: Each benchmark operation i.e create,fetch, and erase must match the same number of iterations on the same data structure.
 	//For example, if you create 10 collections, you must fetch 10 collections and erase 10 collections. The same applies to clusters and records.
 	// - Marshall
 
-	//Creation Benchmarks
-	benchmark1, colNames := B_CREATE_COLLECTION_OP(collectionIterations)
-	benchmark2, cluNames := B_CREATE_CLUSTER_OP(clusterIterations, colNames)
-	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, recordIterations)
 
-	//Fetching Benchmarks
-	benchmark4 := B_FETCH_COLLECTION_OP(collectionIterations)
-	benchmark5 := B_FETCH_CLUSTER_OP(colNames, clusterIterations)
-	benchmark6 := B_FETCH_RECORD_OP(colNames, cluNames, recordIterations)
+	basicResults := B_BASIC_SUITE(collectionIterations, clusterIterations, recordIterations)
+	mediumResults := B_MEDIUM_SUITE(collectionIterations, clusterIterations, recordIterations)
+	advancedResults := B_ADVANCED_SUITE(collectionIterations, clusterIterations, recordIterations)
 
-	//Erase Benchmarks
-	benchmark7 := B_ERASE_RECORD_OP(colNames, cluNames, recordIterations)
-	benchmark8 := B_ERASE_CLUSTER_OP(colNames, recordIterations)
-	benchmark9 := B_ERASE_COLLECTION_OP(collectionIterations) //Erasing collections last since all other operations depend on them
 
-	append(&b_results, benchmark1)
-	append(&b_results, benchmark2)
-	append(&b_results, benchmark3)
-	append(&b_results, benchmark4)
-	append(&b_results, benchmark5)
-	append(&b_results, benchmark6)
-	append(&b_results, benchmark7)
-	append(&b_results, benchmark8)
-	append(&b_results, benchmark9)
-
-	for result in b_results {
+	//Get the count of failed operations for each suite
+	for result in basicResults {
 		if result.success == false {
-			failCounter += 1
+			basicSuiteFailCounter += 1
+		}
+	}
+	for result in mediumResults {
+		if result.success == false {
+			mediumSuiteFailCounter += 1
+		}
+	}
+	for result in advancedResults {
+		if result.success == false {
+			advancedSuiteFailCounter += 1
 		}
 	}
 
-	//get grand totals
-	totalOperations :=
-		benchmark1.total_ops +
-		benchmark2.total_ops +
-		benchmark3.total_ops +
-		benchmark4.total_ops +
-		benchmark5.total_ops +
-		benchmark6.total_ops +
-		benchmark7.total_ops +
-		benchmark8.total_ops +
-		benchmark9.total_ops
+	//get grand totals for basic suite
+	for i := 0; i < len(basicResults); i += 1 {
+		basicOperationCount += basicResults[i].total_ops
+		basicOperationTime += basicResults[i].op_time
+	}
+	//get grand totals for medium suite
+	for i := 0; i < len(mediumResults); i += 1 {
+		meduimOperationCount += mediumResults[i].total_ops
+		mediumOperationTime += mediumResults[i].op_time
+	}
+	//get grand totals for advanced suite
+	for i := 0; i < len(advancedResults); i += 1 {
+		advancedOperationCount += advancedResults[i].total_ops
+		advancedOperationTime += advancedResults[i].op_time
+	}
+
+	//Get the the operations per second for each suite
+	basicTotalOpsPerSecond := f64(basicOperationCount) / time.duration_seconds(basicOperationTime)
+	mediumTotalOpsPerSecond :=
+		f64(meduimOperationCount) / time.duration_seconds(mediumOperationTime)
+	advancedTotalOpsPerSecond :=
+		f64(advancedOperationCount) / time.duration_seconds(advancedOperationTime)
 
 
-	totalTime :=
-		benchmark1.op_time +
-		benchmark2.op_time +
-		benchmark3.op_time +
-		benchmark4.op_time +
-		benchmark5.op_time +
-		benchmark6.op_time +
-		benchmark7.op_time +
-		benchmark8.op_time +
-		benchmark9.op_time
+	//Print results
+	fmt.println("Basic Benchmark Suite Results:")
+	show_all_benchmark_results("Basic", basicResults)
+	fmt.println("---------------------------------------------------\n")
 
-	totalOpsPerSecond := f64(totalOperations) / time.duration_seconds(totalTime)
+	fmt.println("Medium Benchmark Suite Results:")
+	show_all_benchmark_results("Medium", mediumResults)
+	fmt.println("---------------------------------------------------\n")
 
-	show_all_benchmark_results(b_results) //for individual results use show_benchmark_result(<benchmark_name>)
-	show_grand_totals(totalTime, totalOpsPerSecond, totalOperations, failCounter)
+	fmt.println("Advanced Benchmark Suite Results:")
+	show_all_benchmark_results("Advanced", advancedResults)
 
-
+	show_grand_totals(
+		advancedOperationTime + basicOperationTime + mediumOperationTime,
+		advancedTotalOpsPerSecond + basicTotalOpsPerSecond + mediumTotalOpsPerSecond,
+		advancedOperationCount + meduimOperationCount + basicOperationCount,
+		advancedSuiteFailCounter + mediumSuiteFailCounter + basicSuiteFailCounter,
+	)
 	//Can't forget to free the memory :)
-	delete(b_results)
-	delete(colNames)
-	delete(cluNames)
-	delete(recNames)
+	delete(basicResults)
+	delete(mediumResults)
+	delete(advancedResults)
 
+
+	os.remove(const.OST_BENCHMARK_PATH)
 }
 
+//Creates, fetches, and erases
+B_BASIC_SUITE :: proc(colIter, clutIter, recIter: int) -> [dynamic]types.Benchmark_Result {
+	basicResults := make([dynamic]types.Benchmark_Result, 0)
+	//Create
+	benchmark1, colNames := B_CREATE_COLLECTION_OP(colIter)
+	benchmark2, cluNames := B_CREATE_CLUSTER_OP(clutIter, colNames)
+	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, recIter)
 
+	//Fetch
+	benchmark4 := B_FETCH_COLLECTION_OP(colIter)
+	benchmark5 := B_FETCH_CLUSTER_OP(colNames, clutIter)
+	benchmark6 := B_FETCH_RECORD_OP(colNames, cluNames, recIter)
+
+	//Erase
+	benchmark7 := B_ERASE_RECORD_OP(colNames, cluNames, recIter)
+	benchmark8 := B_ERASE_CLUSTER_OP(colNames, clutIter)
+	benchmark9 := B_ERASE_COLLECTION_OP(colIter)
+
+	append(&basicResults, benchmark1)
+	append(&basicResults, benchmark2)
+	append(&basicResults, benchmark3)
+	append(&basicResults, benchmark4)
+	append(&basicResults, benchmark5)
+	append(&basicResults, benchmark6)
+	append(&basicResults, benchmark7)
+	append(&basicResults, benchmark8)
+	append(&basicResults, benchmark9)
+
+	return basicResults
+}
+
+//Creates,fetches, changes record types and erases
+B_MEDIUM_SUITE :: proc(colIter, clutIter, recIter: int) -> [dynamic]types.Benchmark_Result {
+	mediumResults := make([dynamic]types.Benchmark_Result, 0)
+
+	//Create
+	benchmark1, colNames := B_CREATE_COLLECTION_OP(colIter)
+	benchmark2, cluNames := B_CREATE_CLUSTER_OP(clutIter, colNames)
+	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, recIter)
+
+	//Fetch
+	benchmark4 := B_FETCH_COLLECTION_OP(colIter)
+	benchmark5 := B_FETCH_CLUSTER_OP(colNames, clutIter)
+	benchmark6 := B_FETCH_RECORD_OP(colNames, cluNames, recIter)
+
+	//Change Record Type
+	benchmark7 := B_CHANGE_RECORD_TYPE_OP(colNames, cluNames, recIter)
+
+	//Erase
+	benchmark8 := B_ERASE_RECORD_OP(colNames, cluNames, recIter)
+	benchmark9 := B_ERASE_CLUSTER_OP(colNames, clutIter)
+	benchmark10 := B_ERASE_COLLECTION_OP(colIter)
+
+	append(&mediumResults, benchmark1)
+	append(&mediumResults, benchmark2)
+	append(&mediumResults, benchmark3)
+	append(&mediumResults, benchmark4)
+	append(&mediumResults, benchmark5)
+	append(&mediumResults, benchmark6)
+	append(&mediumResults, benchmark7)
+	append(&mediumResults, benchmark8)
+	append(&mediumResults, benchmark9)
+	append(&mediumResults, benchmark10)
+
+	return mediumResults
+}
+//Creates,fetches, changes record types, purges, creates again then and erases
+B_ADVANCED_SUITE :: proc(colIter, clutIter, recIter: int) -> [dynamic]types.Benchmark_Result {
+	advancedResults := make([dynamic]types.Benchmark_Result, 0)
+
+	//Create
+	benchmark1, colNames := B_CREATE_COLLECTION_OP(colIter)
+	benchmark2, cluNames := B_CREATE_CLUSTER_OP(clutIter, colNames)
+	benchmark3, recNames := B_CREATE_RECORD_OP(colNames, cluNames, recIter)
+
+	//Fetch
+	benchmark4 := B_FETCH_COLLECTION_OP(colIter)
+	benchmark5 := B_FETCH_CLUSTER_OP(colNames, clutIter)
+	benchmark6 := B_FETCH_RECORD_OP(colNames, cluNames, recIter)
+
+	//Change Record Type
+	benchmark7 := B_CHANGE_RECORD_TYPE_OP(colNames, cluNames, recIter)
+
+	//Purge
+	benchmark8 := B_PURGE_COLLECTION_OP(colIter)
+
+	//Delete
+	benchmark9 := B_ERASE_COLLECTION_OP(colIter)
+
+	//Create again
+	benchmark10, colNamesAgain := B_CREATE_COLLECTION_OP(colIter)
+	benchmark11, cluNamesAgain := B_CREATE_CLUSTER_OP(clutIter, colNamesAgain)
+	benchmark12, recNamesAgain := B_CREATE_RECORD_OP(colNamesAgain, cluNamesAgain, recIter)
+
+	//Erase
+	benchmark13 := B_ERASE_RECORD_OP(colNamesAgain, cluNamesAgain, recIter)
+	benchmark14 := B_ERASE_CLUSTER_OP(colNamesAgain, clutIter)
+	benchmark15 := B_ERASE_COLLECTION_OP(colIter)
+
+	append(&advancedResults, benchmark1)
+	append(&advancedResults, benchmark2)
+	append(&advancedResults, benchmark3)
+	append(&advancedResults, benchmark4)
+	append(&advancedResults, benchmark5)
+	append(&advancedResults, benchmark6)
+	append(&advancedResults, benchmark7)
+	append(&advancedResults, benchmark8)
+	append(&advancedResults, benchmark9)
+	append(&advancedResults, benchmark10)
+	append(&advancedResults, benchmark11)
+	append(&advancedResults, benchmark12)
+	append(&advancedResults, benchmark13)
+	append(&advancedResults, benchmark14)
+	append(&advancedResults, benchmark15)
+
+	return advancedResults
+
+}
 //============================================CORE BENCMARKING PROCEDURES============================================//
 //============================================CORE BENCMARKING PROCEDURES============================================//
 //============================================CORE BENCMARKING PROCEDURES============================================//
@@ -445,7 +590,78 @@ B_ERASE_RECORD_OP :: proc(fn, cn: [dynamic]string, iterations: int) -> types.Ben
 		ops_per_second = ops_per_second,
 		success = true,
 	}
+}
 
+
+B_CHANGE_RECORD_TYPE_OP :: proc(
+	colNames, cluNames: [dynamic]string,
+	iterations: int,
+) -> types.Benchmark_Result {
+	startTime := time.now()
+	recordCounter := 0
+
+	for colName in colNames {
+		for cluName in cluNames {
+			for i := 0; i < iterations; i += 1 {
+				recordName := fmt.tprintf("benchmark_record_%d", recordCounter)
+				newType := B_GENERATE_RECORD_TYPE()
+				newValue := B_GENERATE_RECORD_VALUES(newType)
+
+				if B_CHANGE_RECORD_TYPE(colName, cluName, recordName, newType, newValue) == 0 {
+					recordCounter += 1
+					continue
+				} else {
+					return types.Benchmark_Result {
+						op_name = "Change Record Type",
+						total_ops = recordCounter,
+						op_time = time.since(startTime),
+						ops_per_second = 0,
+						success = false,
+					}
+				}
+			}
+		}
+	}
+
+	duration := time.since(startTime)
+	total_ops := len(colNames) * len(cluNames) * iterations
+	ops_per_second := f64(total_ops) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+		op_name = "Change Record Type",
+		total_ops = total_ops,
+		op_time = duration,
+		ops_per_second = ops_per_second,
+		success = true,
+	}
+}
+
+
+B_PURGE_COLLECTION_OP :: proc(iterations: int) -> types.Benchmark_Result {
+	startTime := time.now()
+	for i := 0; i < iterations; i += 1 {
+		if B_PURGE_COLLECTION(fmt.tprintf("benchmark_collection_%d", i)) == 0 {
+			continue
+		} else {
+			return types.Benchmark_Result {
+				op_name = "Purge Collection",
+				total_ops = i,
+				op_time = time.since(startTime),
+				ops_per_second = 0,
+				success = false,
+			}
+		}
+	}
+	duration := time.since(startTime)
+	ops_per_second := f64(iterations) / time.duration_seconds(duration)
+
+	return types.Benchmark_Result {
+		op_name = "Purge Collection",
+		total_ops = iterations,
+		op_time = duration,
+		ops_per_second = ops_per_second,
+		success = true,
+	}
 }
 
 //============================================DATA MANIPULATION PROCEDURES============================================//
@@ -874,6 +1090,95 @@ B_ERASE_RECORD :: proc(fn, cn, rn: string) -> int {
 //ERASE PROCEDURES END
 
 
+// PURGE PROCEDURES START
+B_PURGE_COLLECTION :: proc(fn: string) -> int {
+	file := concat_benchmark_collection(fn)
+	data, readSuccess := utils.read_file(file, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return -1
+	}
+
+	// Find metadata section end
+	content := string(data)
+	headerEnd := strings.index(content, const.METADATA_END)
+	if headerEnd == -1 {
+		return -2
+	}
+
+	// Keep only the metadata header
+	headerEnd += len(const.METADATA_END)
+	metadataHeader := content[:headerEnd]
+
+	// Write back just the metadata
+	writeSuccess := utils.write_to_file(file, transmute([]byte)metadataHeader, #procedure)
+	if !writeSuccess {
+		return -3
+	}
+
+	refresh_metadata(fn)
+	return 0
+}
+
+//Add purge cluster and record procedures here
+// PURGE PROCEDURES END
+
+
+B_CHANGE_RECORD_TYPE :: proc(fn, cn, rn, newType, newValue: string) -> int {
+	file := concat_benchmark_collection(fn)
+	data, readSuccess := utils.read_file(file, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return -1
+	}
+
+	content := string(data)
+	lines := strings.split(content, "\n")
+	newLines := make([dynamic]string)
+	defer delete(lines)
+	defer delete(newLines)
+
+	inTargetCluster := false
+	recordFound := false
+
+	for line in lines {
+		trimmedLine := strings.trim_space(line)
+
+		if strings.contains(trimmedLine, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			inTargetCluster = true
+			append(&newLines, line)
+			continue
+		}
+
+		if inTargetCluster {
+			if strings.has_prefix(trimmedLine, fmt.tprintf("%s :", rn)) {
+				recordFound = true
+				// Replace with new type and value
+				append(&newLines, fmt.tprintf("\t%s :%s: %s", rn, newType, newValue))
+				continue
+			}
+
+			if trimmedLine == "}," {
+				inTargetCluster = false
+			}
+		}
+
+		append(&newLines, line)
+	}
+
+	if !recordFound {
+		return -2
+	}
+
+	newContent := strings.join(newLines[:], "\n")
+	writeSuccess := utils.write_to_file(file, transmute([]byte)newContent, #procedure)
+	if !writeSuccess {
+		return -3
+	}
+
+	refresh_metadata(fn)
+	return 0
+}
 //============================================COMMON UTILS============================================//
 //============================================COMMON UTILS============================================//
 //============================================COMMON UTILS============================================//
@@ -889,14 +1194,13 @@ refresh_metadata :: proc(fn: string) {
 	using metadata
 
 	file := concat_benchmark_collection(fn)
-	OST_UPDATE_METADATA_VALUE(file, 2)
-	OST_UPDATE_METADATA_VALUE(file, 3)
-	OST_UPDATE_METADATA_VALUE(file, 5)
+	OST_UPDATE_METADATA_AFTER_OPERATION(file)
 }
 
-show_benchmark_result :: proc(res: types.Benchmark_Result) {
+show_benchmark_result :: proc(suite: string, res: types.Benchmark_Result) {
 	using utils
 	if res.success {
+		fmt.printfln("Suite: %s%s%s", BOLD, suite, RESET)
 		fmt.printfln("Benchmark: %s%s%s Complete", BOLD_UNDERLINE, res.op_name, RESET)
 		fmt.printfln("Total Operations: %s%d%s", GREEN, res.total_ops, RESET)
 		fmt.printfln("Total Time: %s%d%s", GREEN, res.op_time, RESET)
@@ -915,12 +1219,13 @@ show_benchmark_result :: proc(res: types.Benchmark_Result) {
 	}
 }
 
-show_all_benchmark_results :: proc(results: [dynamic]types.Benchmark_Result) {
+show_all_benchmark_results :: proc(suite: string, results: [dynamic]types.Benchmark_Result) {
 	for res in results {
-		show_benchmark_result(res)
+		show_benchmark_result(suite, res)
 	}
 }
 
+//t1: total time, t2: operations per second, t3: total operations, t4: failed operations
 show_grand_totals :: proc(t1: time.Duration, t2: f64, t3, t4: int) {
 	using utils
 

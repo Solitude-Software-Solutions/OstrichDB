@@ -1,31 +1,31 @@
 name: OstrichDB CI
-
 on:
   push:
-    branches: [ "main", "development" ]
+    # Change the to the upcoming release branch. i.e. Pre_Rel_v0.7.0_dev
+    branches: ["main", "Pre_Rel_v0.7.0_dev"]
   pull_request:
-    branches: [ "main", "development" ]
+    branches: ["main", "Pre_Rel_v0.7.0_dev"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Install Odin
-      run: |
-        git clone https://github.com/odin-lang/Odin
-        cd Odin
-        make
+      - name: Install Odin
+        run: |
+          git clone https://github.com/odin-lang/Odin
+          cd Odin
+          make
 
-    - name: Add Odin to PATH
-      run: echo "${GITHUB_WORKSPACE}/Odin" >> $GITHUB_PATH
+      - name: Add Odin to PATH
+        run: echo "${GITHUB_WORKSPACE}/Odin" >> $GITHUB_PATH
 
-    - name: Make CI build script executable
-      run: chmod +x scripts/ci-build.sh
+      - name: Make CI build script executable
+        run: chmod +x scripts/build.sh
 
-    - name: Run CI build script
-      run: |
-        cd scripts
-        ./ci-build.sh
+      - name: Run CI build script
+        run: |
+          cd scripts
+          ./build.sh

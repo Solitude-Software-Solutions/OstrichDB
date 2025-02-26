@@ -1,12 +1,10 @@
 #!/bin/bash
 
-
-#Used to exit OstrichDB and restart it. Mostly used for development purposes.
+# Used to run OstrichDB without rebuilding. Mostly used for development purposes.
 #Author: Marshall A Burns
 #GitHub: @SchoolyB
 #License: Apache License 2.0 (see LICENSE file for details)
 #Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
-
 
 # Get the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -19,12 +17,8 @@ cd bin
 
 # Check if the executable exists
 if [ -f "main.bin" ]; then
-    echo -e "$(tput setaf 3)Restarting OstrichDB...$(tput sgr0)"
-    # Kill the current process if it's running
-    pkill -f "main.bin"
     # Run the program
     ./main.bin
-
 
     # Capture the exit code
     exit_code=$?
@@ -36,8 +30,6 @@ if [ -f "main.bin" ]; then
 
     # Return to the project root directory
     cd "$DIR/.."
-
-
 else
     echo "$(tput setaf 1)Executable not found. Please build the project first.$(tput sgr0)"
 fi

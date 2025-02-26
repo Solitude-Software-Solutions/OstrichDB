@@ -1,19 +1,24 @@
 package config
 
-import "../../utils"
-import "../const"
-import "../engine/data"
-import "../engine/data/metadata"
-import "../types"
+import "../../../utils"
+import "../../const"
+import "../../types"
+import "../data"
+import "../data/metadata"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Implements the configuration functionality for OstrichDB, allowing
+            users to set and get configuration values. Also contains key
+            procedures for automatically creating and updating the config file.
+*********************************************************/
 main :: proc() {
 	using data
 
@@ -126,7 +131,7 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	if OST_APPEND_CONFIG_RECORD(CONFIG_THREE, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, append_qoutations("SIMPLE"), STRING) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
 	if OST_APPEND_CONFIG_RECORD(CONFIG_FIVE, "false", BOOLEAN) == 0 {
@@ -135,10 +140,14 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	if OST_APPEND_CONFIG_RECORD(CONFIG_SIX, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
+	if OST_APPEND_CONFIG_RECORD(CONFIG_SEVEN, "true", BOOLEAN) == 0 {
+		successCount += 1
+	}
+
 
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
 
-	if successCount != 6 {
+	if successCount != 7 {
 		return false
 	}
 	return true

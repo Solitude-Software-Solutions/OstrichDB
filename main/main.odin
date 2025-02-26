@@ -1,23 +1,26 @@
 package main
-import "../core/client"
-import "../core/config"
-import "../core/const"
-import "../core/engine"
-import "../core/engine/data"
-import "../core/engine/data/metadata"
-import "../core/engine/security"
-import "../core/server"
-import "../core/types"
-import "../tests"
-import "../utils"
+
+import "../src/core/client"
+import "../src/core/const"
+import "../src/core/engine"
+import "../src/core/engine/config"
+import "../src/core/engine/data"
+import "../src/core/engine/data/metadata"
+import "../src/core/engine/security"
+import "../src/core/server"
+import "../src/core/types"
+import "../src/utils"
 import "core:fmt"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            The the main entry point for the OstrichDB DBMS.
+*********************************************************/
 
 main :: proc() {
 	using const

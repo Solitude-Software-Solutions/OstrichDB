@@ -1,9 +1,9 @@
 package engine
 
 import "../../utils"
-import "../config"
 import "../const"
 import "../types"
+import "./config"
 import "./data"
 import "./data/metadata"
 import "./security"
@@ -13,12 +13,18 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for the OstrichDB engine, including the command line,
+            session timer, and command history updating. Also contains
+            logic for re-starting/re-building the engine as well as
+            initializing the data integrity system.
+*********************************************************/
 
 
 //initialize the data integrity system
@@ -57,11 +63,11 @@ OST_START_ENGINE :: proc() -> int {
 
 	case true:
 		for {
-			userSignedIn := OST_RUN_SIGNIN()
+			userSignedIn := security.OST_RUN_SIGNIN()
 			switch (userSignedIn) 
 			{
 			case true:
-				OST_START_SESSION_TIMER()
+				security.OST_START_SESSION_TIMER()
 				utils.log_runtime_event(
 					"User Signed In",
 					"User successfully logged into OstrichDB",
@@ -104,14 +110,14 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		// fmt.printfln("Command: %v", cmd) //debugging
 
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
-		sessionDuration := OST_GET_SESSION_DURATION()
-		maxDurationMet := OST_CHECK_SESSION_DURATION(sessionDuration)
+		sessionDuration := security.OST_GET_SESSION_DURATION()
+		maxDurationMet := security.OST_CHECK_SESSION_DURATION(sessionDuration)
 		switch (maxDurationMet) 
 		{
 		case false:
 			break
 		case true:
-			OST_HANDLE_MAX_SESSION_DURATION_MET()
+			security.OST_HANDLE_MAX_SESSION_DURATION_MET()
 		}
 
 		result = OST_EXECUTE_COMMAND(&cmd)
@@ -130,6 +136,6 @@ OST_RESTART :: proc() {
 
 //Used to rebuild and restart the engine
 OST_REBUILD :: proc() {
-	libc.system("../scripts/build.sh")
+	libc.system("../scripts/build_run.sh")
 	os.exit(0)
 }

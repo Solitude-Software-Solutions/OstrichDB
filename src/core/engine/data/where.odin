@@ -5,12 +5,17 @@ import "../../types"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Implements the WHERE command functionality for OstrichDB, allowing
+            users to search for clusters and records across collections. This
+            file contains the core search logic and result formatting.
+*********************************************************/
 
 
 //Contains all logic for the WHERE command
@@ -20,13 +25,13 @@ import "core:strings"
 //`WHERE foo` would show the location of every 2nd or 3rd layer data object with the name foo
 
 //handles WHERE {target} {target name}
-OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
+OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 	using const
 	using utils
 
 	// Early return for invalid target
 	if target == COLLECTION {
-		return 1, false
+		return false
 	}
 
 	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
@@ -77,17 +82,17 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> (int, bool) {
 					RESET,
 				)
 				found = true
-				// Remove the return here to continue searching
+
 			}
 		}
 	}
 
-	// Return true if we found any matches
-	return 0, found
+	return found
 }
 
 //handles WHERE {target name}
-OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
+//returns true if a match is found, the name of the collection and the name of the cluster
+OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
 	using utils
 	using const
 
@@ -112,36 +117,18 @@ OST_WHERE_ANY :: proc(targetName: string) -> (int, bool) {
 
 		// Check if it's a cluster name
 		if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
-			fmt.printfln(
-				"Cluster: %s%s%s -> Collection: %s%s%s",
-				BOLD_UNDERLINE,
-				targetName,
-				RESET,
-				BOLD_UNDERLINE,
-				collection,
-				RESET,
-			)
 			found = true
+			return found, collection, ""
+
 		}
 
 		// Check if it's a record name
 		colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
 		if success {
-			fmt.printfln(
-				"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
-				BOLD_UNDERLINE,
-				targetName,
-				RESET,
-				BOLD_UNDERLINE,
-				cluName,
-				RESET,
-				BOLD_UNDERLINE,
-				colName,
-				RESET,
-			)
 			found = true
+			return found, colName, cluName
 		}
 	}
 
-	return 0, found
+	return found, "", ""
 }

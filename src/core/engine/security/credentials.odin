@@ -1,9 +1,9 @@
 package security
 
 import "../../../utils"
-import "../../config"
 import "../../const"
 import "../../types"
+import "../config"
 import "../data"
 import "../data/metadata"
 import "core:c/libc"
@@ -14,12 +14,17 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
-//=========================================================//
-// Author: Marshall A Burns aka @SchoolyB
-//
-// Copyright 2024 Marshall A Burns and Solitude Software Solutions LLC
-// Licensed under Apache License 2.0 (see LICENSE file for details)
-//=========================================================//
+/********************************************************
+Author: Marshall A Burns
+GitHub: @SchoolyB
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+File Description:
+            Contains logic for handling user management,
+            including creating, deleting, and updating
+            user accounts.
+*********************************************************/
 
 SIGN_IN_ATTEMPTS: int
 FAILED_SIGN_IN_TIMER := time.MIN_DURATION //this will be used to track the time between failed sign in attempts. this timeer will start after the 5th failed attempt in a row
@@ -328,9 +333,7 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
 	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, dn, d, "identifier", id)
 
-	OST_UPDATE_METADATA_VALUE(secureFilePath, 2)
-	OST_UPDATE_METADATA_VALUE(secureFilePath, 3)
-	OST_UPDATE_METADATA_VALUE(secureFilePath, 5)
+	OST_UPDATE_METADATA_AFTER_OPERATION(secureFilePath)
 	return 0
 }
 
@@ -469,64 +472,37 @@ OST_CREATE_NEW_USER :: proc(
 	using types
 
 	buf: [1024]byte
-
-
-	if types.TESTING {
-		// In testing mode, use provided test values
-		if role == "" || username == "" || password == "" {
-			fmt.println("Error: Required test parameters are missing")
+	if user.role.Value == "admin" {
+		fmt.println("Please enter role you would like to assign the new account")
+		fmt.printf("1. Admin\n2. User\n3. Guest\n")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			fmt.printfln("Error reading input")
 			return 1
 		}
 
-		// Set role based on test input
-		switch strings.to_upper(role) {
-		case "ADMIN":
+		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
+		if inputToCap == "1" || inputToCap == "ADMIN" {
 			new_user.role.Value = "admin"
-		case "USER":
+		} else if inputToCap == "2" || inputToCap == "USER" {
 			new_user.role.Value = "user"
-		case "GUEST":
-			new_user.role.Value = "guest"
-		case:
-			return 1
-		}
-
-		new_user.username.Value = username
-		new_user.password.Value = password
-
-	} else {
-		if user.role.Value == "admin" {
-			fmt.println("Please enter role you would like to assign the new account")
-			fmt.printf("1. Admin\n2. User\n3. Guest\n")
-			n, inputSuccess := os.read(os.stdin, buf[:])
-			if inputSuccess != 0 {
-				fmt.printfln("Error reading input")
-				return 1
-			}
-
-			inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
-			if inputToCap == "1" || inputToCap == "ADMIN" {
-				new_user.role.Value = "admin"
-			} else if inputToCap == "2" || inputToCap == "USER" {
-				new_user.role.Value = "user"
-			} else if inputToCap == "3" || inputToCap == "GUEST" {
-				new_user.role.Value = "guest"
-			} else {
-				fmt.printfln("Invalid role entered")
-				return 1
-			}
-		} else if (user.role.Value == "user") {
+		} else if inputToCap == "3" || inputToCap == "GUEST" {
 			new_user.role.Value = "guest"
 		} else {
-			fmt.println("You do not have the required permissions to create a new account")
-			fmt.printfln(
-				"To create a new account you must be logged in as an admin or user account",
-			)
+			fmt.printfln("Invalid role entered")
 			return 1
 		}
-
-		newUserName := OST_GET_USERNAME(false)
-		new_user.username.Value = newUserName
+	} else if (user.role.Value == "user") {
+		new_user.role.Value = "guest"
+	} else {
+		fmt.println("You do not have the required permissions to create a new account")
+		fmt.printfln("To create a new account you must be logged in as an admin or user account")
+		return 1
 	}
+
+	newUserName := OST_GET_USERNAME(false)
+	new_user.username.Value = newUserName
+
 
 	// Common validation logic for both test and interactive modes
 	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(new_user.username.Value)
@@ -550,15 +526,14 @@ OST_CREATE_NEW_USER :: proc(
 	}
 
 	result := data.OST_CREATE_COLLECTION(newColName, 1)
-	if !types.TESTING {
-		fmt.printf(
-			"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
-		)
-		libc.system("stty -echo")
-		initpassword := OST_GET_PASSWORD(false)
-		libc.system("stty echo")
-		new_user.password.Value = initpassword
-	}
+	fmt.printf(
+		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
+	)
+	libc.system("stty -echo")
+	initpassword := OST_GET_PASSWORD(false)
+	libc.system("stty echo")
+	new_user.password.Value = initpassword
+
 
 	saltAsString := string(new_user.salt)
 	hashAsString := string(new_user.hashedPassword)
@@ -725,7 +700,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	}
 
 	// Remove the users histrory cluster
-	data.OST_ERASE_HISTORY_CLUSTER(username)
+	// OST_ERASE_HISTORY_CLUSTER(username) //TODO: Need to rewrite this proc due to moving the onld one to a different file
 	log_runtime_event(
 		"User deleted",
 		fmt.tprintf("Administrator %s deleted user %s", types.user.username.Value, username),
