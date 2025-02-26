@@ -1417,12 +1417,8 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 	collectionPath: string
 	if isCounting == true {
-		collectionPath = fmt.tprintf(
-			"%s%s%s",
-			const.OST_COLLECTION_PATH,
-			fn,
-			const.OST_FILE_EXTENSION,
-		)
+		collectionPath = utils.concat_collection_name(fn)
+		
 	} else if isCounting == false {
 		collectionPath = fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
 		// fmt.printfln(
@@ -1479,35 +1475,40 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 
 //reads over the passed in collection file and returns the number of records in that collection
 OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
-	collectionPath := utils.concat_collection_name(fn)
-	data, readSuccess := utils.read_file(collectionPath, #procedure)
-	if !readSuccess {
-		return -1
-	}
-	defer delete(data)
+    collectionPath := utils.concat_collection_name(fn)
+    data, readSuccess := utils.read_file(collectionPath, #procedure)
+    if !readSuccess {
+        return -1
+    }
+    defer delete(data)
 
-	content := string(data)
-	clusters := strings.split(content, "},")
-	recordCount := 0
-	for cluster in clusters {
-		if !strings.contains(cluster, "cluster_name :identifier:") {
-			continue // Skip non-cluster content
-		}
-		lines := strings.split(cluster, "\n")
-		for line in lines {
-			trimmedLine := strings.trim_space(line)
-			if len(trimmedLine) > 0 &&
-			   !strings.has_prefix(trimmedLine, "cluster_name") &&
-			   !strings.has_prefix(trimmedLine, "cluster_id") &&
-			   strings.contains(trimmedLine, ":") &&
-			   !strings.contains(trimmedLine, const.METADATA_START) &&
-			   !strings.contains(trimmedLine, const.METADATA_END) {
-				recordCount += 1
-			}
-		}
-	}
+    content := string(data)
+    // Skip metadata section
+    if metadataEnd := strings.index(content, "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@"); metadataEnd >= 0 {
+        content = content[metadataEnd + len("@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@"):]
+    }
 
-	return recordCount
+    clusters := strings.split(content, "},")
+    recordCount := 0
+    for cluster in clusters {
+        if !strings.contains(cluster, "cluster_name :identifier:") {
+            continue // Skip non-cluster content
+        }
+        lines := strings.split(cluster, "\n")
+        for line in lines {
+            trimmedLine := strings.trim_space(line)
+            if len(trimmedLine) > 0 &&
+               !strings.has_prefix(trimmedLine, "cluster_name") &&
+               !strings.has_prefix(trimmedLine, "cluster_id") &&
+               strings.contains(trimmedLine, ":") &&
+               !strings.contains(trimmedLine, const.METADATA_START) &&
+               !strings.contains(trimmedLine, const.METADATA_END) {
+                recordCount += 1
+            }
+        }
+    }
+
+    return recordCount
 }
 
 //deletes the data value of the passed in record but keeps the name and type
