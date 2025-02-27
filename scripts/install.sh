@@ -4,7 +4,7 @@ set -e
 # Configuration
 PROGRAM_NAME="OstrichDB"
 REPO="Solitude-Software-Solutions/OstrichDB"
-RELEASE_TAG="Pre_Rel_v0.6.0_dev"  #Change this to the latest pre_release tag
+RELEASE_TAG="Pre_Rel_v0.7.0_dev"  #Change this to the latest pre_release tag
 RELEASE_URL="https://github.com/${REPO}/archive/refs/tags/${RELEASE_TAG}.tar.gz"
 BUILD_SCRIPT="scripts/build.sh"
 
@@ -81,16 +81,16 @@ fi
 
 echo "Building $PROGRAM_NAME..."
 # Change to the src directory and build
-cd src #TODO: this is removed once 0.7 is released
+# cd src #TODO: this is removed once 0.7 is released
 odin build main
 
 # Check if build was successful
 if [ $? -eq 0 ]; then
     echo "$(tput setaf 2)Build successful$(tput sgr0)"
-    
+
     # Create bin directory and move the executable
     mkdir -p ../bin && mv main.bin ../bin/
-    
+
     # Copy the binary to installation directory
     echo "Installing OstrichDB to $INSTALL_DIR/ostrichdb"
     cp "../bin/main.bin" "$INSTALL_DIR/ostrichdb"

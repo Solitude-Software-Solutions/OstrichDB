@@ -247,6 +247,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			collectionName := cmd.l_token[0]
 
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
+
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				BACKUP,
@@ -344,6 +354,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if cmd.isUsingDotNotation == true {
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
+
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					NEW,
@@ -424,6 +445,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
 
+
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				NEW,
@@ -573,6 +604,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				newName := cmd.p_token[TO]
 
 
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(oldName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						oldName,
+						RESET,
+					)
+					return -1
+				}
+
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					RENAME,
@@ -646,6 +687,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				newName := cmd.p_token[TO]
 
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
+
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					WHERE,
@@ -715,6 +766,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName = cmd.l_token[0]
 					clusterName = cmd.l_token[1]
 
+
+					if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+						fmt.printfln(
+							"Collection: %s%s%s does not exist.",
+							BOLD_UNDERLINE,
+							collectionName,
+							RESET,
+						)
+						return -1
+					}
 					//--------------Permissions Security stuff Start----------------//
 					permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 						WHERE,
@@ -795,6 +856,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			collectionName := cmd.l_token[0]
 
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
+
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				ERASE,
@@ -832,6 +903,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if cmd.isUsingDotNotation == true {
 				collectionName := cmd.l_token[0]
 				cluster := cmd.l_token[1]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -898,6 +979,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
 
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -1016,6 +1107,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.l_token) > 0 {
 				collectionName := cmd.l_token[0]
 
+				//check that the collection even exists
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
+
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					FETCH,
@@ -1044,6 +1146,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if cmd.isUsingDotNotation == true {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -1080,6 +1192,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -1140,10 +1262,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) 
 		{
 		case 3:
+			//Setting a standard records value
 			if TO in cmd.p_token && cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
+
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SET,
@@ -1434,6 +1568,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case CLUSTERS:
 			if len(cmd.l_token) == 1 {
 				collectionName := cmd.l_token[0]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SET,
@@ -1502,6 +1646,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					COUNT,
@@ -1570,6 +1724,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true {
 				//in the event the user is counting all records in a collection
 				collectionName := cmd.l_token[0]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -1644,6 +1808,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			collectionName := cmd.l_token[0]
 
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
+
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				PURGE,
@@ -1658,44 +1832,37 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			//--------------Permissions Security stuff End----------------//
 
-			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
-			switch exists 
+			result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
+			switch result 
 			{
 			case true:
-				result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
-				switch result 
-				{
-				case true:
-					fmt.printfln(
-						"Successfully purged collection: %s%s%s",
-						BOLD_UNDERLINE,
-						cmd.l_token[0],
-						RESET,
-					)
-					file := concat_collection_name(collectionName)
-					OST_UPDATE_METADATA_AFTER_OPERATION(file)
-					break
-				case false:
-					fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
-					break
-				}
-			case false:
 				fmt.printfln(
-					"Collection: %s%s%s not found in OstrichDB.",
-					BOLD,
+					"Successfully purged collection: %s%s%s",
+					BOLD_UNDERLINE,
 					cmd.l_token[0],
 					RESET,
 				)
-				log_runtime_event(
-					"Invalid PURGE command",
-					"User tried to purge a collection that does not exist.",
-				)
+				file := concat_collection_name(collectionName)
+				OST_UPDATE_METADATA_AFTER_OPERATION(file)
+				break
+			case false:
+				fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
 				break
 			}
 			break
 		case 2:
 			collectionName := cmd.l_token[0]
 			clusterName := cmd.l_token[1]
+
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
 
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -1744,6 +1911,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
 
+
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				PURGE,
@@ -1800,6 +1977,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			collectionName := cmd.l_token[0]
 
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
+
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				SIZE_OF,
@@ -1830,6 +2017,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -1871,6 +2068,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
 
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SIZE_OF,
@@ -1921,6 +2128,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
 
+
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				TYPE_OF,
@@ -1985,6 +2202,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
 				newType := cmd.p_token[TO]
+
+				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					fmt.printfln(
+						"Collection: %s%s%s does not exist.",
+						BOLD_UNDERLINE,
+						collectionName,
+						RESET,
+					)
+					return -1
+				}
 
 
 				colPath := concat_collection_name(collectionName)
@@ -2077,6 +2304,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			collectionName := cmd.l_token[0]
 
+
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				ISOLATE,
@@ -2125,6 +2362,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			collectionName := cmd.l_token[0]
+
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				fmt.printfln(
+					"Collection: %s%s%s does not exist.",
+					BOLD_UNDERLINE,
+					collectionName,
+					RESET,
+				)
+				return -1
+			}
 
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -2205,6 +2452,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			//locking a collection with no flag defaults to it being inaccessable unless unlocked
 			colName := cmd.l_token[0]
+
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(colName, 0) {
+				fmt.printfln("Collection: %s%s%s does not exist.", BOLD_UNDERLINE, colName, RESET)
+				return -1
+			}
 			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
 
 			//next make sure the "locker" is an admin
@@ -2229,48 +2481,53 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return 1
 				} else {
-					fmt.printfln("Please enter your password to confirm locking collection: %s%s%s", BOLD_UNDERLINE, colName, RESET)
+					fmt.printfln(
+						"Please enter your password to confirm locking collection: %s%s%s",
+						BOLD_UNDERLINE,
+						colName,
+						RESET,
+					)
 					input := utils.get_input(true)
 					password := string(input)
 					validatedPassword := security.OST_VALIDATE_USER_PASSWORD(password)
 					switch (validatedPassword) {
 					case false:
 						fmt.printfln("Invalid password. Operation cancelled.")
-					break
+						break
 					case true:
-					lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
-					if lockSuccess {
-						filePath := concat_collection_name(colName)
-						osPermSuccess := security.OST_SET_OS_PERMISSIONS(filePath, permission)
-						if !osPermSuccess {
+						lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
+						if lockSuccess {
+							filePath := concat_collection_name(colName)
+							osPermSuccess := security.OST_SET_OS_PERMISSIONS(filePath, permission)
+							if !osPermSuccess {
+								fmt.printfln(
+									"%sWarning: Failed to set OS-level permissions for collection: %s%s%s",
+									YELLOW,
+									BOLD_UNDERLINE,
+									colName,
+									RESET,
+								)
+							}
+
 							fmt.printfln(
-								"%sWarning: Failed to set OS-level permissions for collection: %s%s%s",
-								YELLOW,
+								"Collection: %s%s%s is now in %s%s%s mode.",
+								BOLD_UNDERLINE,
+								colName,
+								RESET,
+								BOLD,
+								permission,
+								RESET,
+							)
+						} else {
+							fmt.printfln(
+								"Failed to lock collection: %s%s%s",
 								BOLD_UNDERLINE,
 								colName,
 								RESET,
 							)
+							return 1
 						}
-
-						fmt.printfln(
-							"Collection: %s%s%s is now in %s%s%s mode.",
-							BOLD_UNDERLINE,
-							colName,
-							RESET,
-							BOLD,
-							permission,
-							RESET,
-						)
-					} else {
-						fmt.printfln(
-							"Failed to lock collection: %s%s%s",
-							BOLD_UNDERLINE,
-							colName,
-							RESET,
-						)
-						return 1
 					}
-				}
 				}
 			}
 			break
