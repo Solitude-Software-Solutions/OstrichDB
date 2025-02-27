@@ -26,19 +26,10 @@ mkdir -p "$INSTALL_DIR"
 export PATH="$INSTALL_DIR:$PATH"
 
 
+#Todo: This is a very specific path that is exclusive to my setup...How do I make this more general?
 cd "$HOME/code/OstrichDB"
 
-# Copy the contents of the scripts directory to the installation directory
-
-
-
 cp -r scripts/ "$INSTALL_DIR"
-
-mkdir -p "scripts"
-cd "&INSTALL_DIR/scripts"
-cp -r * "$LOCAL_OSTRICH_DIR/scripts"
-
-
 
 
 # Check if build script exists
@@ -75,7 +66,7 @@ rm -rf "$TMP_DIR"
 
 if command -v ostrichdb >/dev/null 2>&1; then
     echo "✅ Installation successful!"
-    echo "OstrichDB has been installed to $INSTALL_DIR/ostrichdb"
+    echo "OstrichDB has been installed to $INSTALL_DIR/"
     echo ""
     echo "To start using OstrichDB, open a new terminal and run:"
     echo "    ostrichdb"
