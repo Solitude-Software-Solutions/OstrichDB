@@ -1,11 +1,13 @@
 #!/bin/bash
 
-
-# This script is only used for building OstrichDB. To run, either use the build_run.sh script or build with this script then run it manually.
 #Author: Marshall A Burns
 #GitHub: @SchoolyB
 #License: Apache License 2.0 (see LICENSE file for details)
 #Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+# Note: The OstrichDB program itself does not actually use this script in the codebase.
+# This script is only to be used by CI/CD processes and the terminal thats installing OstrichDB
+# If you are a developer use the `local_build.sh` or `local_build_run.sh` scripts
 
 # Get the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -14,10 +16,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR/.."
 
 
-# Print the current directory
-# echo "Current directory: $(pwd)"
-# Build the project in the src directory
-odin build main
+# Build the project, if DEV_MODE is true then shit breaks so LEAVE IT THE FUCK ALONE - Marshall
+odin build main -define:OST_DEV_MODE=false
 
 # Check if build was successful
 if [ $? -eq 0 ]; then

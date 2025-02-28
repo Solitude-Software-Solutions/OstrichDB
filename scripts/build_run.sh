@@ -1,11 +1,12 @@
 #!/bin/bash
 
-#This script builds and runs OstrichDB. Mostly used for development purposes.
-
 #Author: Marshall A Burns
 #GitHub: @SchoolyB
 #License: Apache License 2.0 (see LICENSE file for details)
 #Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
+# Note: The OstrichDB program only uses this script when in DEV_MODE and using the OstrichDB REBUILD command
+# If you are a developer use the `local_build.sh` or `local_build_run.sh` scripts
 
 
 # Get the directory of this script
@@ -17,8 +18,8 @@ cd "$DIR/.."
 # # Change to the src directory
 # cd src
 
-# Build the project in the src directory
-odin build main
+# Build the project, if DEV_MODE is true then shit breaks so LEAVE IT THE FUCK ALONE - Marshall
+odin build main -define:OST_DEV_MODE=false
 
 # Check if build was successful
 if [ $? -eq 0 ]; then
