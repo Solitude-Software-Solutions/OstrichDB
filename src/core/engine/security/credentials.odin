@@ -38,7 +38,7 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 	if err == nil {
 		return 0
 	}
-	createDirSuccess := os.make_directory("./secure")
+	createDirSuccess := os.make_directory(const.OST_SECURE_COLLECTION_PATH)
 	if createDirSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_CREATE_DIRECTORY,

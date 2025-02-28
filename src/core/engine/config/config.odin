@@ -25,7 +25,7 @@ main :: proc() {
 	OST_CREATE_COLLECTION("config", 3)
 	id := OST_GENERATE_ID(true)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
-	OST_CREATE_CLUSTER_BLOCK("./core/config.ost", id, const.CONFIG_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK("./.ostrichdb/core/config.ost", id, const.CONFIG_CLUSTER)
 
 	appendSuccess := OST_APPEND_ALL_CONFIG_RECORDS()
 	if !appendSuccess {
@@ -38,7 +38,7 @@ main :: proc() {
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	using utils
 	configExists: bool
-	binDir, e := os.open("./core/")
+	binDir, e := os.open("./.ostrichdb/core/")
 	defer os.close(binDir)
 
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)
@@ -160,24 +160,21 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	using const
 	using utils
 
-	file := OST_CONFIG_PATH
-	cn := CONFIG_CLUSTER
-
-	result := data.OST_CHECK_IF_RECORD_EXISTS(file, CONFIG_CLUSTER, rn)
+	result := data.OST_CHECK_IF_RECORD_EXISTS(OST_CONFIG_PATH, CONFIG_CLUSTER, rn)
 	if !result {
 		fmt.printfln("Config: %s%s% does not exist", BOLD_UNDERLINE, rn, RESET)
 		return false
 	}
 
 	// Read the collection file
-	res, readSuccess := read_file(file, #procedure)
+	res, readSuccess := read_file(OST_CONFIG_PATH, #procedure)
 	defer delete(res)
 	if !readSuccess {
 		fmt.printfln("Failed to read config file")
 		return false
 	}
 
-	recordType, getTypeSuccess := data.OST_GET_RECORD_TYPE(file, cn, rn)
+	recordType, getTypeSuccess := data.OST_GET_RECORD_TYPE(OST_CONFIG_PATH, CONFIG_CLUSTER, rn)
 	//Standard value allocation
 	valueAny: any = 0
 	ok: bool
@@ -213,7 +210,7 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	}
 
 	// Update the record in the file
-	success := data.OST_UPDATE_RECORD_IN_FILE(file, cn, rn, valueAny)
+	success := data.OST_UPDATE_RECORD_IN_FILE(OST_CONFIG_PATH, CONFIG_CLUSTER, rn, valueAny)
 
 
 	return success
