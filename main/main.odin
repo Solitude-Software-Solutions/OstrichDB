@@ -35,6 +35,7 @@ main :: proc() {
 	data.main()
 	utils.main()
 
+
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
 	switch (configFound) 
 	{

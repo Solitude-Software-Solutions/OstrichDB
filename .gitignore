@@ -8,6 +8,7 @@ ols.json
 .vscode
 .vs
 .DS_Store
+.ostrichdb
 
 # Uncomment these two when actually implementing zig
 #.zig-cache/
