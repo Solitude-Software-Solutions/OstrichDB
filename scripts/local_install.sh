@@ -69,6 +69,8 @@ echo "✓ Odin compiler found"
 #Todo: This is a very specific path that is exclusive to my setup...How do I make this more general?
 cd "$HOME/code/OstrichDB"
 
+# Todo: since rebuild and restart script are looking for  specific executable file: main.bin
+    # this wont be needed anymore???
 cp -r scripts/ "$INSTALL_DIR"
 
 
