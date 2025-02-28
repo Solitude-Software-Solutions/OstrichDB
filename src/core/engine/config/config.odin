@@ -25,7 +25,7 @@ main :: proc() {
 	OST_CREATE_COLLECTION("config", 3)
 	id := OST_GENERATE_ID(true)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
-	OST_CREATE_CLUSTER_BLOCK("./.ostrichdb/core/config.ost", id, const.CONFIG_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK(const.OST_CONFIG_PATH, id, const.CONFIG_CLUSTER)
 
 	appendSuccess := OST_APPEND_ALL_CONFIG_RECORDS()
 	if !appendSuccess {
@@ -38,7 +38,7 @@ main :: proc() {
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	using utils
 	configExists: bool
-	binDir, e := os.open("./.ostrichdb/core/")
+	binDir, e := os.open(const.OST_CORE_PATH)
 	defer os.close(binDir)
 
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)

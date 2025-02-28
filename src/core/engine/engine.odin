@@ -130,13 +130,20 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 //Used to restart the engine
 OST_RESTART :: proc() {
-	libc.system("./.ostrichdb/restart.sh")
-	os.exit(0)
+	if const.OST_DEV_MODE == true {
+		libc.system(const.OST_RESTART_SCRIPT_PATH)
+		os.exit(0)
+	} else {
+		fmt.println("Using the RESTART command is only available in development mode.")
+	}
 }
 
 //Used to rebuild and restart the engine
-//Todo: These are uselss when the program is installed...
 OST_REBUILD :: proc() {
-	libc.system("./.ostrichdb/build_run.sh")
-	os.exit(0)
+	if const.OST_DEV_MODE == true {
+		libc.system(const.OST_BUILD_SCRIPT_PATH)
+		os.exit(0)
+	} else {
+		fmt.println("Using the REBUILD command is only available in development mode.")
+	}
 }

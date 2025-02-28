@@ -25,9 +25,10 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 - A Unix-based system (macOS, Linux).
 - The Odin programming language installed, built, and properly set in the system's PATH.
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
+- If you are an "End User" you will need `curl` installed on your system.
 
-
-### **Steps:**
+### Installation For Developers:
+#### **Steps:**
 
 1. **Clone the Repository**:
    ```bash
@@ -39,15 +40,63 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
    cd path/to/OstrichDB
    ```
 
-3. **Make the Build & Restart Scripts Executable**:
+3. **Make the Build, Run & Restart Scripts Executable**:
    ```bash
-   chmod +x scripts/build_run.sh scripts/restart.sh
+   chmod +x scripts/local_build_run.sh && chmod +x scripts/local_build.sh && chmod +x scripts/restart.sh
    ```
 
 4. **Run The Build Script**:
    ```bash
-   ./scripts/build_run.sh
+   ./scripts/local_build_run.sh
    ```
+
+
+### Installation For End Users:
+#### **Steps:**
+1. Use curl to download the latest release:
+   ```bash
+   curl -o install.sh https://raw.githubusercontent.com/Solitude-Software-Solutions/OstrichDB/8a0825c5e5f275e4ade7266aee6675890fc32fe5/scripts/install.sh
+   ```
+
+2. Make the script executable:
+    ```bash
+    chmod +x install.sh
+    ```
+3. Run the script:
+    ```bash
+    ./install.sh
+    ```
+4. Find and run the OstrichDB executable:
+*Note: This will be located in a directory called `.ostrichdb` in the same directory as the install script.*
+You can run the executable by double clicking it or running it from the terminal with the following command:
+    ```bash
+    ./path/to/.ostrichdb/ostrichdb
+    ```
+
+
+### Installing From Source:
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
+   ```
+
+2. **Navigate to the OstrichDB Directory**:
+   ```bash
+   cd path/to/OstrichDB
+   ```
+3. Open the `local_install.sh` script and follow the directions at the top of the file.
+4. Run the script:
+   ```bash
+   ./local_install.sh
+   ```
+5. Find you installed OstirchDB executable in the `.ostrichdb` directory in the same directory you chose to install OstrichDB in via the `local_install.sh` script.
+6. Run the executable by double clicking it or running it from the terminal with the following command:
+    ```bash
+    ./path/to/.ostrichdb/ostrichdb
+    ```
+
+
+
 ---
 
 

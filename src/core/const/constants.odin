@@ -1,4 +1,5 @@
 package const
+import "core:fmt"
 import "core:time"
 /********************************************************
 Author: Marshall A Burns
@@ -10,17 +11,50 @@ File Description:
             Contains all constants used throughout the OstrichDB project.
 *********************************************************/
 
-//PATH CONSTANTS
+//Defines is a command line constant pfor file paths
+//Read more about this here: https://odin-lang.org/docs/overview/#command-line-defines
+OST_DEV_MODE :: #config(OST_DEV_MODE, false)
+
+//Conditional file path constants thanks to the install debacle of Feb 2025 - Marshall
+//See more here: https://github.com/Solitude-Software-Solutions/OstrichDB/issues/223
+//DO NOT TOUCH MF - Marshall
+when OST_DEV_MODE == true {
+	OST_TMP_PATH :: "./tmp/"
+	OST_COLLECTION_PATH :: "./collections/"
+	OST_SECURE_COLLECTION_PATH :: "./secure/"
+	OST_BACKUP_PATH :: "./backups/"
+	OST_CORE_PATH :: "./core/"
+	OST_CONFIG_PATH :: "./core/config.ost"
+	OST_ID_PATH :: "./core/ids.ost"
+	OST_HISTORY_PATH :: "./core/history.ost"
+	OST_BENCHMARK_PATH :: "./benchmark/"
+	LOG_DIR_PATH :: "./logs/"
+	RUNTIME_LOG_PATH :: "./logs/runtime.log"
+	ERROR_LOG_PATH :: "./logs/errors.log"
+	OST_QUARANTINE_PATH :: "./quarantine/"
+	OST_RESTART_SCRIPT_PATH :: "../scripts/restart.sh"
+	OST_BUILD_SCRIPT_PATH :: "../scripts/local_build_run.sh"
+} else {
+	OST_TMP_PATH :: "./.ostrichdb/tmp/"
+	OST_COLLECTION_PATH :: "./.ostrichdb/collections/"
+	OST_SECURE_COLLECTION_PATH :: "./.ostrichdb/secure/"
+	OST_BACKUP_PATH :: "./.ostrichdb/backups/"
+	OST_CORE_PATH :: "./.ostrichdb/core/"
+	OST_CONFIG_PATH :: "./.ostrichdb/core/config.ost"
+	OST_ID_PATH :: "./.ostrichdb/core/ids.ost"
+	OST_HISTORY_PATH :: "./.ostrichdb/core/history.ost"
+	OST_BENCHMARK_PATH :: "./.ostrichdb/benchmark/"
+	LOG_DIR_PATH :: "./.ostrichdb/logs/"
+	RUNTIME_LOG_PATH :: "./.ostrichdb/logs/runtime.log"
+	ERROR_LOG_PATH :: "./.ostrichdb/logs/errors.log"
+	OST_QUARANTINE_PATH :: "./.ostrichdb/quarantine/"
+	OST_RESTART_SCRIPT_PATH :: "./.ostrichdb/restart.sh"
+	OST_BUILD_SCRIPT_PATH :: "./.ostrichdb/build_run.sh"
+}
+
+//Non-changing PATH CONSTANTS
+
 OST_FFVF_PATH :: "ost_file_format_version.tmp"
-OST_TMP_PATH :: "./.ostrichdb/tmp/"
-OST_COLLECTION_PATH :: "./.ostrichdb/collections/"
-OST_SECURE_COLLECTION_PATH :: "./.ostrichdb/secure/"
-OST_BACKUP_PATH :: "./.ostrichdb/backups/"
-OST_CORE_PATH :: "./.ostrichdb/core/"
-OST_CONFIG_PATH :: "./.ostrichdb/core/config.ost"
-OST_ID_PATH :: "./.ostrichdb/core/ids.ost"
-OST_HISTORY_PATH :: "./.ostrichdb/core/history.ost"
-OST_BENCHMARK_PATH :: "./.ostrichdb/benchmark/"
 CONFIG_CLUSTER :: "OSTRICH_CONFIGS"
 CLUSTER_ID_CLUSTER :: "CLUSTER__IDS"
 USER_ID_CLUSTER :: "USER__IDS"
@@ -29,12 +63,6 @@ VERBOSE_HELP_FILE :: "../src/core/help/docs/verbose/verbose.md"
 SIMPLE_HELP_FILE :: "../src/core/help/docs/simple/simple.md"
 GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
 CLPS_HELP_FILE :: "../src/core/help/docs/clps/clps.txt"
-OST_QUARANTINE_PATH :: "./.ostrichdb/quarantine/"
-
-//UTIL CONSTANTS
-LOG_DIR_PATH :: "./.ostrichdb/logs/"
-RUNTIME_LOG_PATH :: "./.ostrichdb/logs/runtime.log"
-ERROR_LOG_PATH :: "./.ostrichdb/logs/errors.log"
 
 
 //CONFIG FILE CONSTANTS

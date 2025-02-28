@@ -5,9 +5,7 @@
 #License: Apache License 2.0 (see LICENSE file for details)
 #Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
-# Note: The OstrichDB program itself does not actually use this script in the codebase.
-# This script is only to be used by CI/CD processes and the terminal thats installing OstrichDB
-# If you are a developer use the `local_build.sh` or `local_build_run.sh` scripts
+# Use this script to build the project locally. Only used for development purposes.
 
 # Get the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -16,8 +14,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR/.."
 
 
-# Build the project, if DEV_MODE is true then shit breaks so LEAVE IT THE FUCK ALONE - Marshall
-odin build main -define:OST_DEV_MODE=false
+# Print the current directory
+# echo "Current directory: $(pwd)"
+# Build the project, if DEV_MODE is false then shit breaks so LEAVE IT THE FUCK ALONE - Marshall
+odin build main -define:OST_DEV_MODE=true
 
 # Check if build was successful
 if [ $? -eq 0 ]; then
