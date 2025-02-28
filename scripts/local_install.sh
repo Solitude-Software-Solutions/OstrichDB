@@ -26,6 +26,46 @@ mkdir -p "$INSTALL_DIR"
 export PATH="$INSTALL_DIR:$PATH"
 
 
+# Ensure that installation directory is in the PATH permanently
+if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
+    echo "Adding $INSTALL_DIR to PATH permanently"
+
+    # Determine shell config file
+    if [[ "$SHELL" == *"bash"* ]]; then
+        SHELL_CONFIG="$HOME/.bashrc"
+    elif [[ "$SHELL" == *"zsh"* ]]; then
+        SHELL_CONFIG="$HOME/.zshrc"
+    fi
+
+    # Add to shell config if not already present
+    if [[ -f "$SHELL_CONFIG" ]]; then
+        if ! grep -q "export PATH=\"$INSTALL_DIR:\$PATH\"" "$SHELL_CONFIG"; then
+            echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$SHELL_CONFIG"
+            echo "Updated $SHELL_CONFIG with PATH information"
+        fi
+    else
+        echo "Warning: Could not determine your shell configuration file."
+        echo "Please manually add $INSTALL_DIR to your PATH."
+    fi
+fi
+
+
+# Check for Odin compiler
+if ! command -v odin &> /dev/null; then
+    echo "Error: Odin compiler not found in PATH."
+    echo "Please install Odin first. You can install it via:"
+    if [[ "$OS" == "Darwin" ]]; then
+        echo "  - Homebrew: brew install odin"
+    elif [[ "$OS" == "Linux" ]]; then
+        echo "  - Check your distribution's package manager"
+    fi
+    echo "  - Or from source: https://github.com/odin-lang/Odin"
+    exit 1
+fi
+
+echo "✓ Odin compiler found"
+
+
 #Todo: This is a very specific path that is exclusive to my setup...How do I make this more general?
 cd "$HOME/code/OstrichDB"
 
