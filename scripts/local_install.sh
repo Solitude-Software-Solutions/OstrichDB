@@ -1,11 +1,13 @@
 #!/bin/bash
-set -e
 
-# Configuration
+# This file does the same thing as the other install.sh file
+# but it only installs the current local version of OstrichDB
+# Todo: remove this later
+
+
+
+
 PROGRAM_NAME="OstrichDB"
-REPO="Solitude-Software-Solutions/OstrichDB"
-RELEASE_TAG="Pre_Rel_v0.7.1_dev"  #Change this to the latest pre_release tag
-RELEASE_URL="https://github.com/${REPO}/archive/refs/tags/${RELEASE_TAG}.tar.gz"
 BUILD_SCRIPT="scripts/build.sh"
 
 echo "============== OstrichDB Installer =============="
@@ -16,11 +18,13 @@ ARCH=$(uname -m)
 echo "Detected system: $OS $ARCH"
 
 # Setup installation directory
+LOCAL_OSTRICH_DIR="$HOME/code/OstrichDB"
 INSTALL_DIR="$HOME/.ostrichdb/"
 mkdir -p "$INSTALL_DIR"
 
-# Add the installation directory to PATH immediately for this session
+
 export PATH="$INSTALL_DIR:$PATH"
+
 
 # Ensure that installation directory is in the PATH permanently
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
@@ -45,6 +49,7 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     fi
 fi
 
+
 # Check for Odin compiler
 if ! command -v odin &> /dev/null; then
     echo "Error: Odin compiler not found in PATH."
@@ -60,17 +65,14 @@ fi
 
 echo "✓ Odin compiler found"
 
-# Create temporary directory
-TMP_DIR=$(mktemp -d)
-cd "$TMP_DIR"
 
-echo "Downloading $PROGRAM_NAME version $RELEASE_TAG..."
-curl -fsSL "$RELEASE_URL" -o "${PROGRAM_NAME}.tar.gz"
-tar -xzf "${PROGRAM_NAME}.tar.gz"
+#Todo: This is a very specific path that is exclusive to my setup...How do I make this more general?
+cd "$HOME/code/OstrichDB"
 
-# The extraction creates a directory with the release tag
-EXTRACT_DIR="OstrichDB-${RELEASE_TAG//\//_}"
-cd "$EXTRACT_DIR"
+# Todo: since rebuild and restart script are looking for  specific executable file: main.bin
+    # this wont be needed anymore???
+cp -r scripts/ "$INSTALL_DIR"
+
 
 # Check if build script exists
 if [ ! -f "$BUILD_SCRIPT" ]; then
@@ -106,7 +108,7 @@ rm -rf "$TMP_DIR"
 
 if command -v ostrichdb >/dev/null 2>&1; then
     echo "✅ Installation successful!"
-    echo "OstrichDB has been installed to $INSTALL_DIR/ostrichdb"
+    echo "OstrichDB has been installed to $INSTALL_DIR/"
     echo ""
     echo "To start using OstrichDB, open a new terminal and run:"
     echo "    ostrichdb"

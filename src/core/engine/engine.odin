@@ -130,12 +130,13 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 //Used to restart the engine
 OST_RESTART :: proc() {
-	libc.system("../scripts/restart.sh")
+	libc.system("./.ostrichdb/restart.sh")
 	os.exit(0)
 }
 
 //Used to rebuild and restart the engine
+//Todo: These are uselss when the program is installed...
 OST_REBUILD :: proc() {
-	libc.system("../scripts/build_run.sh")
+	libc.system("./.ostrichdb/build_run.sh")
 	os.exit(0)
 }

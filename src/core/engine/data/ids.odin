@@ -76,12 +76,12 @@ OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 		return
 	}
 	//create a cluster for cluster ids
-	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluOneid, CLUSTER_ID_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK("./.ostrichdb/core/ids.ost", cluOneid, CLUSTER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
 
 	cluTwoid := OST_GENERATE_ID(true)
 	//create a cluster for user ids
-	OST_CREATE_CLUSTER_BLOCK("./core/ids.ost", cluTwoid, USER_ID_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK("./.ostrichdb/core/ids.ost", cluTwoid, USER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_ID_PATH)

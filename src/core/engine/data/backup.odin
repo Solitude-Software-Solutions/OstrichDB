@@ -18,7 +18,7 @@ File Description:
 *********************************************************/
 
 OST_CREATE_BACKUP_DIR :: proc() {
-	os.make_directory("./backups")
+	os.make_directory(const.OST_BACKUP_PATH)
 }
 
 
