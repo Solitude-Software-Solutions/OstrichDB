@@ -1,0 +1,29 @@
+name: OstrichDB CI (Ubuntu)
+on:
+  push:
+    branches: ["main", "development"]
+  pull_request:
+    branches: ["main", "development"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Odin
+        run: |
+          git clone https://github.com/odin-lang/Odin
+          cd Odin
+          make
+
+      - name: Add Odin to PATH
+        run: echo "${GITHUB_WORKSPACE}/Odin" >> $GITHUB_PATH
+
+      - name: Make CI build script executable
+        run: chmod +x scripts/build.sh
+
+      - name: Run OstrichDB build script
+        run: |
+          cd scripts
+          ./build.sh
