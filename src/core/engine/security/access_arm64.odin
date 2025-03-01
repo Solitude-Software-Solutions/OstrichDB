@@ -1,4 +1,5 @@
-#+build !linux // This is a build constraint: it tells the compiler to ignore this file when building macOS
+#+build !linux
+// This is a build constraint: it tells the compiler to ignore this file when building for linux
 package security
 
 import "../../../utils"

@@ -1,4 +1,5 @@
-#+build !darwin // This is a build constraint: it tells the compiler to ignore this file when building for Linux
+#+build !darwin
+// This is a build constraint: it tells the compiler to ignore this file when building for darwin
 package security
 
 import "../../../utils"
@@ -65,30 +66,30 @@ OST_SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
 	if ODIN_OS == .Linux {
 		// linuxPath := strings.clone_to_cstring(path)
 		//Todo: Finish this shit for linux and windows
-	} else if ODIN_OS == .Darwin {
-		darwinPath := string(path)
-		if mode == 0o600 {
-			// For owner read/write
-			perm := darwin.Permission{.PERMISSION_OWNER_READ, .PERMISSION_OWNER_WRITE}
-			success := darwin.sys_chmod(darwinPath, perm)
-			if !success {
-				return false
-			}
-		} else if mode == 0o400 {
-			// For owner read only
-			perm := darwin.Permission{.PERMISSION_OWNER_READ}
-			success := darwin.sys_chmod(darwinPath, perm)
-			if !success {
-				return false
-			}
-		} else if mode == 0o000 {
-			// No permissions
-			perm := darwin.Permission{} // Empty set
-			success := darwin.sys_chmod(darwinPath, perm)
-			if !success {
-				return false
-			}
-		}
+		// } else if ODIN_OS == .Darwin {
+		// 	darwinPath := string(path)
+		// 	if mode == 0o600 {
+		// 		// For owner read/write
+		// 		perm := darwin.Permission{.PERMISSION_OWNER_READ, .PERMISSION_OWNER_WRITE}
+		// 		success := darwin.sys_chmod(darwinPath, perm)
+		// 		if !success {
+		// 			return false
+		// 		}
+		// 	} else if mode == 0o400 {
+		// 		// For owner read only
+		// 		perm := darwin.Permission{.PERMISSION_OWNER_READ}
+		// 		success := darwin.sys_chmod(darwinPath, perm)
+		// 		if !success {
+		// 			return false
+		// 		}
+		// 	} else if mode == 0o000 {
+		// 		// No permissions
+		// 		perm := darwin.Permission{} // Empty set
+		// 		success := darwin.sys_chmod(darwinPath, perm)
+		// 		if !success {
+		// 			return false
+		// 		}
+		// 	}
 	}
 	return true // Changed from "err == 0" since err isn't defined
 }
