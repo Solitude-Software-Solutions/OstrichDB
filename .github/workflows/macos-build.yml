@@ -11,6 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install LLVM 18
+        run: brew install llvm@18
+
       - name: Install Odin
         run: |
           git clone https://github.com/odin-lang/Odin
