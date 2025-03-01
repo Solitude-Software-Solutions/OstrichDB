@@ -1,3 +1,4 @@
+#+build !darwin // This is a build constraint: it tells the compiler to ignore this file when building for Linux
 package security
 
 import "../../../utils"
@@ -9,8 +10,8 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-import "core:sys/darwin"
-// import "core:sys/linux"
+import "core:sys/linux"
+
 
 /********************************************************
 Author: Marshall A Burns
