@@ -173,7 +173,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	case false:
 		fmt.printfln("Auth Failed. Password was incorrect please try again.")
 		types.USER_SIGNIN_STATUS = false
-		os.exit(0)
+		OST_RUN_SIGNIN()
+
 	}
 	return USER_SIGNIN_STATUS
 

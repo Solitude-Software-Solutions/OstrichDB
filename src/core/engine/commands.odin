@@ -2614,9 +2614,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case:
 			fmt.printfln("Incomplete command. Correct Usage: UNLOCK <collection_name>")
 		}
-
 		//unlock is the only way to re-enable Read-Write access to a collection unless user deletes then creates a new one
 		break
+	case ENC:
+		switch (len(cmd.l_token)) {
+		case 1:
+			colName := cmd.l_token[0]
+			security.OST_ENCRYPT_COLLECTION(colName, 0, &types.current_user)
+			break
+		}
+		break
+	case DEC:
+		switch (len(cmd.l_token)) {
+		case 1:
+			colName := cmd.l_token[0]
+			security.OST_DECRYPT_COLLECTION(colName, 0, &types.current_user)
+			break
+		}
+
 	//END OF COMMAND TOKEN EVALUATION
 	case:
 		fmt.printfln(

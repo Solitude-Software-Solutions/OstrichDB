@@ -107,6 +107,9 @@ IMPORT :: "IMPORT"
 EXPORT :: "EXPORT"
 LOCK :: "LOCK"
 UNLOCK :: "UNLOCK"
+TEST :: "TEST" //Useful for testing new procdures for command line. i.e TEST FOO could just call a procedure you want to perform on the collection FOO
+ENC :: "ENC" //Encrypt a collection
+DEC :: "DEC" //Decrypt a collection
 //Target Tokens
 COLLECTION :: "COLLECTION"
 CLUSTER :: "CLUSTER"
