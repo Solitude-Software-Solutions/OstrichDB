@@ -65,14 +65,19 @@ User :: struct {
 	password:       User_Credential, //will never be stored as plain text
 
 	//below this line is for encryption purposes
-	salt:           []u8,
-	hashedPassword: []u8, //this is the hashed password without the salt
+	salt:           SpecialUserCred,
+	hashedPassword: SpecialUserCred, //this is the hashed password without the salt
 	store_method:   int,
 	//below is literally for the users command HISTORY
 	commandHistory: CommandHistory,
-	m_k:            []u8, //master key
+	m_k:            SpecialUserCred, //master key
 }
 
+
+SpecialUserCred :: struct {
+	valAsBytes: []u8,
+	valAsStr:   string,
+}
 //a users command history
 CommandHistory :: struct {
 	cHistoryNamePrefix: string, //will always be "history_"
