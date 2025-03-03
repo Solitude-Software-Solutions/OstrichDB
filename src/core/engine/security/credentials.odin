@@ -71,8 +71,8 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 	libc.system("stty -echo")
 	initpassword := OST_GET_PASSWORD(true)
-	saltAsString := string(user.salt)
-	hashAsString := string(user.hashedPassword)
+	saltAsString := string(user.salt.valAsStr)
+	hashAsString := string(user.hashedPassword.valAsStr)
 	algoMethodAsString := strconv.itoa(buf[:], user.store_method)
 	user.user_id = data.OST_GENERATE_ID(true) //for secure clustser, the cluster id is the user id
 	OST_CREATE_COLLECTION("history", 2)
@@ -89,7 +89,10 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	inituserName = fmt.tprintf("secure_%s", inituserName)
 	OST_CREATE_COLLECTION(inituserName, 1)
 	mk := OST_GEN_MASTER_KEY()
+	types.user.m_k.valAsBytes = mk
 	mkAsString := transmute(string)mk
+	types.user.m_k.valAsStr = mkAsString
+
 
 	OST_STORE_USER_CREDS(
 		inituserName,
@@ -101,7 +104,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "role", "admin")
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "salt", saltAsString)
 
-	hashAsStr := transmute(string)user.hashedPassword
+	hashAsStr := transmute(string)user.hashedPassword.valAsBytes
 
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "hash", hashAsStr)
 	OST_STORE_USER_CREDS(
@@ -289,17 +292,17 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 		if isInitializing == true {
 			user.password.Length = len(p)
 			user.password.Value = strings.clone(p)
-			user.hashedPassword = OST_HASH_PASSWORD(p, 0, false, true)
+			user.hashedPassword.valAsBytes = OST_HASH_PASSWORD(p, 0, false, true)
 
-			encodedPassword := OST_ENCODE_HASHED_PASSWORD(user.hashedPassword)
-			user.hashedPassword = encodedPassword
+			encodedPassword := OST_ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
+			user.hashedPassword.valAsBytes = encodedPassword
 		} else if isInitializing == false {
 			new_user.password.Length = len(p)
 			new_user.password.Value = strings.clone(p)
-			new_user.hashedPassword = OST_HASH_PASSWORD(p, 0, false, false)
+			new_user.hashedPassword.valAsBytes = OST_HASH_PASSWORD(p, 0, false, false)
 
-			encodedPassword := OST_ENCODE_HASHED_PASSWORD(new_user.hashedPassword)
-			new_user.hashedPassword = encodedPassword
+			encodedPassword := OST_ENCODE_HASHED_PASSWORD(new_user.hashedPassword.valAsBytes)
+			new_user.hashedPassword.valAsBytes = encodedPassword
 			return new_user.password.Value
 		}
 	}
@@ -535,8 +538,8 @@ OST_CREATE_NEW_USER :: proc(
 	new_user.password.Value = initpassword
 
 
-	saltAsString := string(new_user.salt)
-	hashAsString := string(new_user.hashedPassword)
+	saltAsString := string(new_user.salt.valAsStr)
+	hashAsString := string(new_user.hashedPassword.valAsStr)
 	algoMethodAsString := strconv.itoa(buf[:], new_user.store_method)
 
 	new_user.user_id = data.OST_GENERATE_ID(true)

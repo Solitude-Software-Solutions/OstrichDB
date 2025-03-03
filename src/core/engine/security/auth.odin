@@ -6,7 +6,8 @@ import "../../types"
 import "../config"
 import "../data"
 import "../data/metadata"
-// import "./security"
+import "../security"
+import "core:bytes"
 import "core:c/libc"
 import "core:fmt"
 import "core:os"
@@ -151,6 +152,19 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			BOOLEAN,
 			CONFIG_THREE,
 		)
+
+		//Master Key shit
+		mkValueRead := data.OST_READ_RECORD_VALUE(
+			secColPath,
+			usernameCapitalized,
+			"identifier",
+			"m_k",
+		)
+		mkValueAsBytes := security.OST_M_K_STIRNG_TO_BYTE(mkValueRead)
+		current_user.m_k.valAsStr = strings.clone(mkValueRead)
+		current_user.m_k.valAsBytes = mkValueAsBytes
+
+
 		if userLoggedInValue == "false" {
 			// config.OST_TOGGLE_CONFIG(const.CONFIG_THREE)
 			config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_THREE, "true")

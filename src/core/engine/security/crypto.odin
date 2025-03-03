@@ -18,6 +18,7 @@ Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 File Description:
             Contains logic for hashing passwords and generating salts.
             Also contains logic for generating a master key for each user.
+            Not to be confused with the encryption logic in the encryption.odin file.
 *********************************************************/
 
 
@@ -88,9 +89,9 @@ OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing:
 	//generate the salt
 	salt: []u8 = OST_GENERATE_SALT()
 	if (isInitializing == true) {
-		types.user.salt = salt //store the salt into the user struct
+		types.user.salt.valAsBytes = salt //store the salt into the user struct
 	} else if (isInitializing == false) {
-		types.new_user.salt = salt //store the salt into the user struct
+		types.new_user.salt.valAsBytes = salt //store the salt into the user struct
 	}
 	hashedPassword: []u8
 
@@ -129,10 +130,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_224, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 1
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 1
 		}
 		break
@@ -141,10 +142,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_256, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 2
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 2
 		}
 		break
@@ -153,10 +154,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_384, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 3
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 3
 		}
 		break
@@ -165,10 +166,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_512, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 4
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 4
 		}
 		break
@@ -177,10 +178,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA512_256, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 5
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 5
 		}
 	}
@@ -256,4 +257,9 @@ OST_GEN_MASTER_KEY :: proc() -> []byte {
 	rand.shuffle(key)
 
 	return key
+}
+
+
+OST_M_K_STIRNG_TO_BYTE :: proc(m_k: string) -> []byte {
+	return transmute([]byte)m_k
 }

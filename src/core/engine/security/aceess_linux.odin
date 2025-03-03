@@ -21,9 +21,8 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            Contains logic for handling user management,
-            including creating, deleting, and updating
-            user accounts.
+            Contains logic how users access databases within
+            OsthichDB. Not yet fully implemented.
 *********************************************************/
 
 
