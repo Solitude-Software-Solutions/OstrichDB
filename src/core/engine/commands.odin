@@ -2620,7 +2620,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
-			security.OST_ENCRYPT_COLLECTION(colName, 0, &types.current_user)
+			if security.OST_ENCRYPT_COLLECTION(colName, 0, &types.current_user) {
+				fmt.printfln(
+					"Successfully encrypted collection: %s%s%s",
+					BOLD_UNDERLINE,
+					colName,
+					RESET,
+				)
+				fmt.println("Auto-decrypting collection....")
+				security.OST_DECRYPT_COLLECTION(colName, 0, &types.current_user)
+			} else {
+				fmt.printfln(
+					"Failed to encrypt collection: %s%s%s",
+					BOLD_UNDERLINE,
+					colName,
+					RESET,
+				)
+			}
 			break
 		}
 		break

@@ -3,11 +3,12 @@ package security
 import "../../../utils"
 import "../../const"
 import "../../types"
+import "core:crypto/"
 import "core:crypto/aead"
 import "core:crypto/aes"
 import "core:encoding/hex"
 import "core:fmt"
-import "core:math/rand"
+
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -57,31 +58,33 @@ OST_ENCRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 	defer delete(data)
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#Context_GCM
-	gcmContext := new(aes.Context_GCM)
+	gcmContext := types.temp_ECE.contxt
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#init_gcm
-	aes.init_gcm(gcmContext, types.current_user.m_k.valAsBytes)
+	aes.init_gcm(&gcmContext, types.current_user.m_k.valAsBytes)
 
 	iv := OST_GENERATE_IV()
 	aad: []byte
 	ciphertext := make([]byte, len(data) + aes.BLOCK_SIZE)
 	tag := make([]byte, aes.GCM_TAG_SIZE)
-
-	encryptedData := make([]byte, len(data) + aes.BLOCK_SIZE)
+	dataToEncrypt := make([]byte, len(data) + aes.BLOCK_SIZE)
 
 	// https://pkg.odin-lang.org/core/crypto/aes/#seal_gcm
-	aes.seal_gcm(gcmContext, encryptedData, tag, iv, aad, encryptedData)
+	aes.seal_gcm(&gcmContext, dataToEncrypt, tag, iv, aad, data)
 
+	//I think its super fucking unsafe but dec needs to use it so fuck it for now - Marshall
+	types.temp_ECE.tag = tag
 
 	//Write encrypted data to file
-	writeSuccess := utils.write_to_file(file, encryptedData, #procedure)
+	writeSuccess := utils.write_to_file(file, dataToEncrypt, #procedure)
 	if !writeSuccess {
 		fmt.printfln("Failed to write to file in procedure: %s", #procedure)
 		return false
 	}
 	//Reset the gcm context so it can be used again
 	// https://pkg.odin-lang.org/core/crypto/aes/#reset_gcm
-	aes.reset_gcm(gcmContext)
+	aes.reset_gcm(&gcmContext)
+
 
 	return true
 
@@ -91,10 +94,6 @@ OST_ENCRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 //IV is the initialization vector for the encryption
 OST_GENERATE_IV :: proc() -> []byte {
 	iv := make([]byte, aes.BLOCK_SIZE)
-
-	for i := 0; i < aes.BLOCK_SIZE; i += 1 {
-		iv[i] = byte(rand.int127())
-	}
-
+	crypto.rand_bytes(iv)
 	return iv
 }

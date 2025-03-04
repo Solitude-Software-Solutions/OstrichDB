@@ -1,4 +1,5 @@
 package types
+import "core:crypto/aes"
 import "core:time"
 /********************************************************
 Author: Marshall A Burns
@@ -229,6 +230,7 @@ ErrorSuppression :: struct {
 	enabled: bool, //uses the OST_READ_CONFIG_VALUE to get the value of the error suppression config then set true or false
 }
 
+
 benchmark_result: Benchmark_Result
 Benchmark_Result :: struct {
 	op_name:        string,
@@ -236,4 +238,12 @@ Benchmark_Result :: struct {
 	ops_per_second: f64,
 	total_ops:      int,
 	success:        bool,
+}
+
+
+//Crypto Stuff
+temp_ECE: ECE_Process
+ECE_Process :: struct {
+	contxt: aes.Context_GCM,
+	tag:    []u8, //Warn: This shit is prob super unsafe
 }
