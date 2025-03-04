@@ -33,6 +33,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using metadata
 	using const
 	using utils
+	using security
 	// using data //cant use this when using utils namespace
 
 	//TODO: not even using these...
@@ -320,6 +321,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					fileName := concat_collection_name(cmd.l_token[0])
 					OST_UPDATE_METADATA_ON_CREATE(fileName)
+					OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 				} else {
 					fmt.printf(
 						"Failed to create collection %s%s%s.\n",
@@ -364,6 +366,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
+				OST_DECRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -428,6 +431,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 				fn := concat_collection_name(collectionName)
 				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+				OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			} else {
 				fmt.printfln(
 					"Invalid command. Correct Usage: NEW <collection_name>.<cluster_name>",
@@ -455,6 +459,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
+
+			OST_DECRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				NEW,
@@ -527,7 +533,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 						fn := concat_collection_name(collectionName)
 						OST_UPDATE_METADATA_AFTER_OPERATION(fn)
-
 						break
 					case -1, 1:
 						fmt.printfln(
@@ -567,6 +572,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a record name or type to create.",
 				)
 			}
+			OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Location> <Parameters>")

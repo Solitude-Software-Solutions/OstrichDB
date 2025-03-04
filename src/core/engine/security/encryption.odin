@@ -44,10 +44,11 @@ Decryption process :
 //user - user is passed so the the proc can access 1, the username, and 2, the users master key
 OST_ENCRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -> bool {
 	//depending on collection file type, concat correct path
+	masterKey: []byte
 	file: string
 	switch (fType) {
 	case 0:
-		//Standard Collection or test collection
+		//Standard Collection
 		file = utils.concat_collection_name(fName)
 	case 1:
 		//Secure Collection
@@ -70,15 +71,26 @@ OST_ENCRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 		fmt.printfln("Invalid File Type Passed in procedure: %s", #procedure)
 		return false
 	}
+
+	//Evalauete what master key to use based on collection type
+	switch (fType) {
+	case 0:
+		//Standard(public) collections
+		masterKey = types.current_user.m_k.valAsBytes
+	case 1 ..< 4:
+		// Private collections only OstrichDB has access to
+		masterKey = const.SYS_MASTER_KEY
+	}
+
+
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
-		fmt.printfln("Failed to read file: %s in procedure: %s", file, #procedure)
 		return false
 	}
 	defer delete(data)
 
 	gcmContext := types.temp_ECE.contxt
-	aes.init_gcm(&gcmContext, types.current_user.m_k.valAsBytes)
+	aes.init_gcm(&gcmContext, masterKey)
 
 	iv := OST_GENERATE_IV()
 	aad: []byte
@@ -99,7 +111,6 @@ OST_ENCRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 
 	writeSuccess := utils.write_to_file(file, finalData, #procedure)
 	if !writeSuccess {
-		fmt.printfln("Failed to write to file in procedure: %s", #procedure)
 		return false
 	}
 

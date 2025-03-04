@@ -42,6 +42,7 @@ Decryption process :
 
 //FType - 0 = Standard(public) collection,  1 = Secure(private) collection,2 config(core), 3 = history(core), 4 = ids(core)
 OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -> bool {
+	masterKey: []byte
 	file: string
 	switch (fType) {
 	case 0:
@@ -68,6 +69,18 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 		fmt.printfln("Invalid File Type Passed in procedure: %s", #procedure)
 		return false
 	}
+
+
+	//Evalauete what master key to use based on collection type
+	switch (fType) {
+	case 0:
+		//Standard(public) collections
+		masterKey = types.current_user.m_k.valAsBytes
+	case 1 ..< 4:
+		// Private collections only OstrichDB has access to
+		masterKey = const.SYS_MASTER_KEY
+	}
+
 	encryptedData, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
 		fmt.printfln("Failed to read file: %s in procedure: %s", file, #procedure)
@@ -77,7 +90,7 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#Context_GCM
 	gcmContext := types.temp_ECE.contxt
-	aes.init_gcm(&gcmContext, types.current_user.m_k.valAsBytes)
+	aes.init_gcm(&gcmContext, masterKey)
 
 	// Say encryptedData is 319 bytes long
 	// iv: is the first 16 bytes
@@ -107,6 +120,7 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 
 	// https://pkg.odin-lang.org/core/crypto/aes/#reset_gcm
 	aes.reset_gcm(&gcmContext)
+	delete(tag)
 
 	return true
 }

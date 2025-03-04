@@ -222,6 +222,42 @@ METADATA_HEADER: []string : {
 	METADATA_END,
 }
 
+
+SYS_MASTER_KEY: []byte : {
+	0x4f,
+	0x53,
+	0x54,
+	0x52,
+	0x49,
+	0x43,
+	0x48,
+	0x44,
+	0x42,
+	0x53,
+	0x59,
+	0x53,
+	0x54,
+	0x45,
+	0x4d,
+	0x4b,
+	0x45,
+	0x59,
+	0x32,
+	0x30,
+	0x32,
+	0x34,
+	0x50,
+	0x52,
+	0x45,
+	0x53,
+	0x45,
+	0x4e,
+	0x54,
+	0x21,
+	0x40,
+	0x23,
+}
+
 MAX_SESSION_TIME: time.Duration : 86400000000000 //1 day in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print
 // MAX_SESSION_TIME: time.Duration : 60000000000 //1 minute in nano seconds only used for testing
@@ -250,29 +286,3 @@ BannedUserNames := []string {
 //IMPORT CONSTANTS
 //suffix that is added to the cluster name when a .csv file is imported
 CSV_CLU :: "_CSV_IMPORT"
-
-
-//DELETE WHEN DONE IMPLEMENTING SECURITY UPDATE
-//The comment next to each command is the permission level that each command needs to perform the command on a collection
-//If a collection is locked with the 'Inaccessible' permission then  the only command that will work on that collection is 'UNLOCK'
-// "WHERE", //Read-Only or Read-Write
-// "COUNT", //Read-Only or Read-Write
-// "FETCH", //Read-Only or Read-Write
-// "SIZE_OF", //Read-Only or Read-Write
-// "TYPE_OF", //Read-Only or Read-Write
-// "VALIDATE", //Read-Write for now because validation system is stil broken and will quarantine the collection. Todo: set to Read-Only later
-// //---------------------
-// "ISOLATE", //Read-Write
-// "BACKUP", //Read-Write
-// "ERASE", //Read-Write
-// "RENAME", //Read-Write
-// "SET", //Read-Write
-// "PURGE", //Read-Write
-// "CHANGE_TYPE", //Read-Write
-// "LOCK", //Read-Write
-// //---------------------
-// "UNLOCK", //Read-Only or Inaccessible
-
-// "EXPORT", //Not yes implemented. Todo: set to Read-Only later
-// "TREE", //todo: TREE should be allowed but if a collection is set to inaccessable then that collection should not be shown
-// "NEW", //todo: NEW should be allowed but if a collection is set to inaccessable then NEW should not work on clusters/records in that collection

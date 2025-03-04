@@ -31,7 +31,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	//get the username input from the user
 	buf: [1024]byte
-	fmt.printfln("Please enter your username:")
+	fmt.printfln("Please enter your %susername%s:", BOLD, RESET)
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
@@ -111,7 +111,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	//POST-MESHING START=======================================================================================================
 
 	//get the password input from the user
-	fmt.printfln("Please enter your password:")
+	fmt.printfln("Please enter your %spassword%s:", BOLD, RESET)
 	libc.system("stty -echo")
 	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
@@ -141,8 +141,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	switch authPassed {
 	case true:
 		OST_START_SESSION_TIMER()
-		fmt.printfln("\n\nSucessfully signed in!")
-		fmt.printfln("Welcome, %s!\n", userNameFound)
+		fmt.printfln("\n\n%sSucessfully signed in!%s", GREEN, RESET)
+		fmt.printfln("Welcome, %s%s%s!\n", BOLD_UNDERLINE, userNameFound, RESET)
 		USER_SIGNIN_STATUS = true
 		current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
@@ -172,7 +172,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		}
 		break
 	case false:
-		fmt.printfln("Auth Failed. Password was incorrect please try again.")
+		fmt.printfln("%sAuth Failed. Password was incorrect please try again.%s", RED, RESET)
 		types.USER_SIGNIN_STATUS = false
 		OST_RUN_SIGNIN()
 
