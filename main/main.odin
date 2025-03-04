@@ -47,7 +47,7 @@ main :: proc() {
 
 	//Print the Ostrich logo and version
 	version := string(get_ost_version())
-	fmt.println(fmt.tprintf(ostrich_art, GREEN, version, RESET))
+	fmt.println(fmt.tprintf(ostrich_art, BLUE, version, RESET))
 	if data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, BOOLEAN, CONFIG_ONE) == "true" {
 		OstrichEngine.Initialized = true
 		log_runtime_event("OstrichDB Engine Initialized", "")
