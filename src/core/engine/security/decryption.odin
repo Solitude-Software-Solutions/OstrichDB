@@ -18,6 +18,29 @@ File Description:
             All the logic for decrypting collection files can be found within
 *********************************************************/
 
+
+/*
+Note: Here is a general outline of the "EDE" process within OstrichDB:
+
+Encryption rocess :
+1. Generate IV (16 bytes)
+2. Create ciphertext buffer (same size as input data)
+3. Create tag buffer (16 bytes for GCM)
+4. Encrypt the data into ciphertext buffer
+5. Combine IV + ciphertext for storage
+
+In plaintest the encrypted data would look like:
+[IV (16 bytes)][Ciphertext (N bytes)]
+Where N is the size of the plaintext data
+----------------------------------------
+
+Decryption process :
+1. Read IV from encrypted data
+2. Read ciphertext from encrypted data
+3. Use IV, ciphertext, and tag to decrypt data
+*/
+
+//FType - 0 = Standard(public) collection,  1 = Secure(private) collection,2 config(core), 3 = history(core), 4 = ids(core)
 OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -> bool {
 	file: string
 	switch (fType) {
@@ -56,8 +79,7 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 	gcmContext := types.temp_ECE.contxt
 	aes.init_gcm(&gcmContext, types.current_user.m_k.valAsBytes)
 
-	// Developer Note:
-	// say encryptedData is 319 bytes long
+	// Say encryptedData is 319 bytes long
 	// iv: is the first 16 bytes
 	// ciphertext: is the amount of bytes after the iv in this case 303 bytes
 	// aad: Additional Authenticated Data

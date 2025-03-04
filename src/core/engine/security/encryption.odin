@@ -8,7 +8,6 @@ import "core:crypto/aead"
 import "core:crypto/aes"
 import "core:encoding/hex"
 import "core:fmt"
-
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -19,6 +18,27 @@ File Description:
             All the logic for encrypting collection files can be found within
 *********************************************************/
 
+
+/*
+Note: Here is a general outline of the "EDE" process within OstrichDB:
+
+Encryption rocess :
+1. Generate IV (16 bytes)
+2. Create ciphertext buffer (same size as input data)
+3. Create tag buffer (16 bytes for GCM)
+4. Encrypt the data into ciphertext buffer
+5. Combine IV + ciphertext for storage
+
+In plaintest the encrypted data would look like:
+[IV (16 bytes)][Ciphertext (N bytes)]
+Where N is the size of the plaintext data
+----------------------------------------
+
+Decryption process :
+1. Read IV from encrypted data
+2. Read ciphertext from encrypted data
+3. Use IV, ciphertext, and tag to decrypt data
+*/
 
 //FType - 0 = Standard(public) collection,  1 = Secure(private) collection,2 config(core), 3 = history(core), 4 = ids(core)
 //user - user is passed so the the proc can access 1, the username, and 2, the users master key
@@ -57,37 +77,34 @@ OST_ENCRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 	}
 	defer delete(data)
 
-	//https://pkg.odin-lang.org/core/crypto/aes/#Context_GCM
 	gcmContext := types.temp_ECE.contxt
-
-	//https://pkg.odin-lang.org/core/crypto/aes/#init_gcm
 	aes.init_gcm(&gcmContext, types.current_user.m_k.valAsBytes)
 
 	iv := OST_GENERATE_IV()
 	aad: []byte
-	ciphertext := make([]byte, len(data) + aes.BLOCK_SIZE)
+
+	// The ciphertext needs to be exactly the size of the plaintext(file data)
+	ciphertext := make([]byte, len(data))
 	tag := make([]byte, aes.GCM_TAG_SIZE)
-	dataToEncrypt := make([]byte, len(data) + aes.BLOCK_SIZE)
 
 	// https://pkg.odin-lang.org/core/crypto/aes/#seal_gcm
-	aes.seal_gcm(&gcmContext, dataToEncrypt, tag, iv, aad, data)
-
-	//I think its super fucking unsafe but dec needs to use it so fuck it for now - Marshall
+	aes.seal_gcm(&gcmContext, ciphertext, tag, iv, aad, data)
+	// Store tag for dec
 	types.temp_ECE.tag = tag
 
-	//Write encrypted data to file
-	writeSuccess := utils.write_to_file(file, dataToEncrypt, #procedure)
+	// Create final buffer that includes IV + ciphertext
+	finalData := make([]byte, len(iv) + len(ciphertext))
+	copy(finalData[:len(iv)], iv)
+	copy(finalData[len(iv):], ciphertext)
+
+	writeSuccess := utils.write_to_file(file, finalData, #procedure)
 	if !writeSuccess {
 		fmt.printfln("Failed to write to file in procedure: %s", #procedure)
 		return false
 	}
-	//Reset the gcm context so it can be used again
-	// https://pkg.odin-lang.org/core/crypto/aes/#reset_gcm
+
 	aes.reset_gcm(&gcmContext)
-
-
 	return true
-
 }
 
 

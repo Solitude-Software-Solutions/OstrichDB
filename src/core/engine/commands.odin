@@ -2627,8 +2627,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					colName,
 					RESET,
 				)
-				fmt.println("Auto-decrypting collection....")
-				security.OST_DECRYPT_COLLECTION(colName, 0, &types.current_user)
+				// fmt.println("Auto-decrypting collection....")
+				// security.OST_DECRYPT_COLLECTION(colName, 0, &types.current_user)
 			} else {
 				fmt.printfln(
 					"Failed to encrypt collection: %s%s%s",
