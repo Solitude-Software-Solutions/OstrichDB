@@ -55,18 +55,23 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#Context_GCM
 	gcmContext := new(aes.Context_GCM)
+	// fmt.printfln("Key: %s", types.current_user.m_k.valAsBytes)
 	aes.init_gcm(gcmContext, types.current_user.m_k.valAsBytes)
 
 	// Extract the IV from the first BLOCK_SIZE bytes of the encrypted data
 	iv := encryptedData[:aes.BLOCK_SIZE]
 	// The actual ciphertext starts after the IV
 	ciphertext := encryptedData[aes.BLOCK_SIZE:]
+	fmt.println("ciphertext: ", ciphertext)
 	aad: []byte
 	tag := make([]byte, aes.GCM_TAG_SIZE)
+	fmt.println("tag: ", tag)
 	decryptedData := make([]byte, len(ciphertext))
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#open_gcm
+	// fmt.println("DecryptedData befor gcm_open:", decryptedData)
 	success := aes.open_gcm(gcmContext, decryptedData, iv, aad, ciphertext, tag)
+	// fmt.println("DecryptedData after gcm_open:", decryptedData)
 
 	if !success {
 		fmt.printfln("Failed to decrypt file: %s in procedure: %s", file, #procedure)

@@ -160,6 +160,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			"identifier",
 			"m_k",
 		)
+
 		mkValueAsBytes := security.OST_M_K_STIRNG_TO_BYTE(mkValueRead)
 		current_user.m_k.valAsStr = strings.clone(mkValueRead)
 		current_user.m_k.valAsBytes = mkValueAsBytes
