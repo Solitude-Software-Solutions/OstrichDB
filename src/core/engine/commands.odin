@@ -620,6 +620,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
+				OST_DECRYPT_COLLECTION(oldName, 0, &types.current_user)
+
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					RENAME,
@@ -680,6 +682,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					break
 				}
 
+				OST_ENCRYPT_COLLECTION(newName, 0, &types.current_user)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: RENAME <old_name> TO <new_name>")
 			}
@@ -702,6 +705,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
+
+
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -759,6 +765,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to rename.",
 				)
 			}
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			break
 		case 3:
 			oldRName: string
@@ -782,6 +789,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						)
 						return -1
 					}
+
+					OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 					//--------------Permissions Security stuff Start----------------//
 					permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 						WHERE,
@@ -851,6 +860,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid record name to rename.",
 				)
 			}
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			break
 		}
 		break
