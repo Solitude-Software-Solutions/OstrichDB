@@ -2173,6 +2173,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// TYPE_OF: Allows for the retrieval of the type of a record
 	case TYPE_OF:
+		log_runtime_event("Used TYPE_OF command", "")
 		//only works on records
 		if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
 			collectionName := cmd.l_token[0]
@@ -2189,6 +2190,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
+
+			OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				TYPE_OF,
@@ -2241,7 +2244,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 
 		}
-		log_runtime_event("Used TYPE_OF command", "")
+		OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 		break
 	// CHANGE_TYPE: Allows for the changing of a record's type
 	case CHANGE_TYPE:
