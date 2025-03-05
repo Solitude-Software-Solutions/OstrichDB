@@ -241,10 +241,8 @@ Benchmark_Result :: struct {
 	success:        bool,
 }
 
-
-//Crypto Stuff
-temp_ECE: ECE_Process
-ECE_Process :: struct {
+//EDE Stuff
+DE_Process :: struct {
 	contxt: aes.Context_GCM,
 	tag:    []u8, //Warn: This shit is prob super unsafe
 }

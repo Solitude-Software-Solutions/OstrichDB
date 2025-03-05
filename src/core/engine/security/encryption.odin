@@ -89,7 +89,7 @@ OST_ENCRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 	}
 	defer delete(data)
 
-	gcmContext := types.temp_ECE.contxt
+	gcmContext := types.temp_DE.contxt
 	aes.init_gcm(&gcmContext, masterKey)
 
 	iv := OST_GENERATE_IV()

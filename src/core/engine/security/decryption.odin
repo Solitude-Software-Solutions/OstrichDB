@@ -89,7 +89,7 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 	defer delete(encryptedData)
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#Context_GCM
-	gcmContext := types.temp_ECE.contxt
+	gcmContext := types.temp_DE.contxt
 	aes.init_gcm(&gcmContext, masterKey)
 
 	// Say encryptedData is 319 bytes long
