@@ -1854,6 +1854,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
+			OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				PURGE,
@@ -1885,6 +1886,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
 				break
 			}
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			break
 		case 2:
 			collectionName := cmd.l_token[0]
@@ -1900,6 +1902,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
+			OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				PURGE,
@@ -1941,6 +1944,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					break
 				}
 			}
+
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			break
 		case 3:
 			collectionName := cmd.l_token[0]
@@ -1957,6 +1962,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
+
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				PURGE,
@@ -2002,9 +2009,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				break
 			}
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			break
 		}
-
 		break
 	//SIZE_OF: Allows for the retrieval of the size of collections, clusters, or records in bytes
 	case SIZE_OF:
@@ -2023,6 +2030,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
+			OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				SIZE_OF,
@@ -2049,6 +2057,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			} else {
 				fmt.printf("Failed to get size of collection %s\n", collectionName)
 			}
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
+			break
 		case 2:
 			if cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
@@ -2063,7 +2073,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
-
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SIZE_OF,
@@ -2098,6 +2108,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"Invalid command. Use dot notation for clusters: SIZE_OF CLUSTER collection_name.cluster_name",
 				)
 			}
+			OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
+			break
 		case 3:
 			if cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
@@ -2114,6 +2126,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
+
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SIZE_OF,
@@ -2155,6 +2169,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Invalid SIZE_OF command. Use SIZE_OF COLLECTION, SIZE_OF CLUSTER, or SIZE_OF RECORD.",
 			)
 		}
+		OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 		break
 	// TYPE_OF: Allows for the retrieval of the type of a record
 	case TYPE_OF:
