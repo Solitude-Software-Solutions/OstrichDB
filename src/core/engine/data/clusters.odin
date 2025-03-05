@@ -24,12 +24,13 @@ File Description:
 main :: proc() {
 	using const
 
+	//Create the core dirs and files OstrichDB needs to function
 	metadata.OST_CREATE_FFVF()
 	os.make_directory(OST_CORE_PATH)
 	os.make_directory(OST_QUARANTINE_PATH)
 	os.make_directory(OST_COLLECTION_PATH)
+	os.make_directory(OST_BACKUP_PATH)
 	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
-	OST_CREATE_BACKUP_DIR()
 }
 
 

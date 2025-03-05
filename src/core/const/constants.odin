@@ -286,3 +286,6 @@ BannedUserNames := []string {
 //IMPORT CONSTANTS
 //suffix that is added to the cluster name when a .csv file is imported
 CSV_CLU :: "_CSV_IMPORT"
+
+
+encWarningMsg :: "WARNING: OstrichDB has detected that the encryption status of one or more core collections has changed. This could be due to a critical error or a security breach. OstrichDB will now attempt to re-encrypt the affected collections. If this process fails, OstrichDB will exit and you will need to delete OstrichDB and reinstall. Please contact support if you have any questions."

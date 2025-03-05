@@ -11,6 +11,7 @@ import "../src/core/server"
 import "../src/core/types"
 import "../src/utils"
 import "core:fmt"
+import "core:os"
 import "core:strings"
 /********************************************************
 Author: Marshall A Burns
@@ -36,12 +37,27 @@ main :: proc() {
 	utils.main()
 
 
+	//Security stuff
+	security.OST_RUN_ENC_CHECKS()
+
+
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
 	switch (configFound) 
 	{
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
 		config.main()
+		if security.OST_CHECK_IF_COLLECTION_IS_ENCRYPTED("", 2) == 1 {
+			if security.OST_ENCRYPT_COLLECTION("", 2) != 0 {
+				fmt.printfln(const.encWarningMsg)
+				os.exit(1)
+			} else {
+				fmt.printfln("Config collection status: %sEncrypted%s", utils.GREEN, utils.RESET)
+			}
+		} else if security.OST_CHECK_IF_COLLECTION_IS_ENCRYPTED("", 2) == 0 {
+			fmt.printfln("Config collection status: %sEncrypted%s", utils.GREEN, utils.RESET)
+
+		}
 	}
 	log_runtime_event("OstrichDB Started", "")
 

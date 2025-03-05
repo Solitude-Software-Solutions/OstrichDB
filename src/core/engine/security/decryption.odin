@@ -101,7 +101,7 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 	iv := encryptedData[:aes.BLOCK_SIZE]
 	ciphertext := encryptedData[aes.BLOCK_SIZE:]
 	aad: []byte
-	tag := types.temp_ECE.tag
+	tag := types.temp_DE.tag
 	dataToDecrypt := make([]byte, len(ciphertext))
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#open_gcm

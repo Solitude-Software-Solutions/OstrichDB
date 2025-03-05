@@ -2689,7 +2689,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
-			if security.OST_ENCRYPT_COLLECTION(colName, 0, &types.current_user) {
+			if security.OST_ENCRYPT_COLLECTION(colName, 0, &types.current_user) == 0 {
 				fmt.printfln(
 					"Successfully encrypted collection: %s%s%s",
 					BOLD_UNDERLINE,

@@ -17,10 +17,6 @@ File Description:
             users to create backups of collections.
 *********************************************************/
 
-OST_CREATE_BACKUP_DIR :: proc() {
-	os.make_directory(const.OST_BACKUP_PATH)
-}
-
 
 OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	using const

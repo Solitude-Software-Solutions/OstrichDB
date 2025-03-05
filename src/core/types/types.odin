@@ -59,7 +59,7 @@ User_Credential :: struct {
 user: User
 current_user: User //used to track the user of the current session
 new_user: User //used for creating new accounts post initialization
-system_user: User //OstrichDB itself
+system_user: User //OstrichDB itself, used specifically for the master key
 User :: struct {
 	user_id:        i64, //randomly generated user id
 	role:           User_Credential,
@@ -241,7 +241,8 @@ Benchmark_Result :: struct {
 	success:        bool,
 }
 
-//EDE Stuff
+//DE Stuff
+temp_DE: DE_Process
 DE_Process :: struct {
 	contxt: aes.Context_GCM,
 	tag:    []u8, //Warn: This shit is prob super unsafe

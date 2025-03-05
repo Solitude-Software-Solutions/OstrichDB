@@ -48,7 +48,6 @@ Creates a new collection file with metadata within the DB
 3 config file
 4 id cache file
 */
-
 OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
