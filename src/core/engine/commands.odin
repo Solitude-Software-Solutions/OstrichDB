@@ -1607,6 +1607,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
+
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SET,
@@ -1667,7 +1669,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid collection name to count clusters.",
 				)
 			}
-
+			OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			break
 		case RECORDS:
 			//in the event the users is counting the records in a specific cluster
@@ -1685,6 +1687,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
+
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					COUNT,
@@ -1750,6 +1754,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					break
 				}
+				OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true {
 				//in the event the user is counting all records in a collection
 				collectionName := cmd.l_token[0]
@@ -1764,6 +1769,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					COUNT,
@@ -1826,6 +1832,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to count records.",
 				)
 			}
+			OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			break
 		}
 		break
