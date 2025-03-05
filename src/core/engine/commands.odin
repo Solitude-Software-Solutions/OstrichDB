@@ -609,7 +609,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				oldName := cmd.l_token[0]
 				newName := cmd.p_token[TO]
 
-
 				if !data.OST_CHECK_IF_COLLECTION_EXISTS(oldName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
@@ -706,9 +705,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-
 				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
-
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					WHERE,
@@ -1304,6 +1301,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SET,
@@ -1416,6 +1414,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fn := concat_collection_name(collectionName)
 				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 			}
+			OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			break
 		case 1:
 			switch (cmd.t_token) {
@@ -1424,6 +1423,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				if TO in cmd.p_token {
 					configName := cmd.l_token[0]
 					value: string
+
+					OST_DECRYPT_COLLECTION("", 2, &types.system_user)
+
 					for key, val in cmd.p_token {
 						value = strings.to_lower(val)
 					}
@@ -1560,6 +1562,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
 					)
 				}
+				OST_ENCRYPT_COLLECTION("", 2, &types.system_user)
 				break
 			}
 		case:

@@ -59,6 +59,7 @@ User_Credential :: struct {
 user: User
 current_user: User //used to track the user of the current session
 new_user: User //used for creating new accounts post initialization
+system_user: User //OstrichDB itself
 User :: struct {
 	user_id:        i64, //randomly generated user id
 	role:           User_Credential,
