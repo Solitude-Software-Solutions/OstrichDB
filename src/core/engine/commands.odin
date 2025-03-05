@@ -2266,11 +2266,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
-
-
 				colPath := concat_collection_name(collectionName)
 
-
+				OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					CHANGE_TYPE,
@@ -2349,6 +2347,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Invalid CHANGE_TYPE command",
 				"User did not provide a valid record name to change type.",
 			)
+			OST_DECRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			break
 		}
 	// ISOLATE: Allows for the isolation of a collection so that it cannot be accessed via the CLI
@@ -2368,6 +2367,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
+
+			OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				ISOLATE,
@@ -2410,6 +2411,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			break
 		}
+		OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 		break
 	//VALIDATE: Runs the data integrity check on a collection, if it passes GTG, if the the collection is isolated
 	case VALIDATE:
@@ -2427,6 +2429,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
+			OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				VALIDATE,
@@ -2463,6 +2466,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 		}
+		OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
+		break
 	//BENCHMARK: Runs the benchmarking suite with or without parameters
 	case BENCHMARK:
 		switch (len(cmd.l_token)) {
@@ -2511,6 +2516,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln("Collection: %s%s%s does not exist.", BOLD_UNDERLINE, colName, RESET)
 				return -1
 			}
+
+			OST_DECRYPT_COLLECTION(colName, 0, &types.current_user)
 			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
 
 			//next make sure the "locker" is an admin
@@ -2525,7 +2532,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return 1
 			} else {
-
 				if collectionAlreadyLocked {
 					fmt.printfln(
 						"Collection: %s%s%s already has a lock status. Please use the UNLOCK command to unlock it, then try again.",
@@ -2584,10 +2590,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					}
 				}
 			}
+
+			OST_ENCRYPT_COLLECTION(colName, 0, &types.current_user)
 			break
 		case 2:
 			colName := cmd.l_token[0]
 			flag := cmd.l_token[1]
+
+			OST_DECRYPT_COLLECTION(colName, 0, &types.current_user)
+
 			fmt.printfln("Locking collection: %s%s%s ", BOLD_UNDERLINE, colName, RESET)
 			lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, flag)
 			if lockSuccess {
@@ -2610,6 +2621,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Incomplete command. Correct Usage: LOCK <collection_name> or LOCK <collection_name> -{flag}",
 			)
 		}
+		OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 		break
 	case UNLOCK:
 		//TODO: only admin users can use the UNLOCK command, this may change in the future but for now it is locked to admin users
@@ -2617,6 +2629,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			colName := cmd.l_token[0]
 			//check that a collection is in fact locked
+
+			OST_ENCRYPT_COLLECTION(colName, 0, &types.current_user)
+
 			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
 			if !collectionAlreadyLocked {
 				fmt.printfln("Collection: %s%s%s is not locked.", BOLD_UNDERLINE, colName, RESET)
@@ -2634,7 +2649,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return 1
 				} else {
-
 					passwordConfirmed := security.OST_CONFIRM_COLLECECTION_UNLOCK()
 					switch (passwordConfirmed) 
 					{
@@ -2664,6 +2678,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					}
 				}
 			}
+			OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			break
 		case:
 			fmt.printfln("Incomplete command. Correct Usage: UNLOCK <collection_name>")
