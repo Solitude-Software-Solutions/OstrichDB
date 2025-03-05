@@ -1138,7 +1138,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
-
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					FETCH,
@@ -1162,6 +1162,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid collection name to fetch.",
 				)
 			}
+			OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			break
 		case 2:
 			if cmd.isUsingDotNotation == true {
@@ -1178,6 +1179,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					FETCH,
@@ -1203,6 +1205,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to fetch.",
 				)
 			}
+			OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 			break
 		case 3:
 			collectionName: string
@@ -1224,6 +1227,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					FETCH,
@@ -1277,6 +1281,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Targets_name>")
 			log_runtime_event("Invalid FETCH command", "User did not provide a valid target.")
 		}
+		OST_ENCRYPT_COLLECTION(cmd.l_token[0], 0, &types.current_user)
 		break
 	// SET: Allows for the setting of values within records or configs
 	case SET:
