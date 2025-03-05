@@ -882,6 +882,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
+			OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				ERASE,
@@ -911,6 +912,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 			}
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			break
 		case 2:
 			collectionName: string
@@ -930,6 +932,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					ERASE,
@@ -984,6 +987,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to erase.",
 				)
 			}
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			break
 		case 3:
 			collectionName: string
@@ -1005,7 +1009,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
-
+				OST_DECRYPT_COLLECTION(collectionName, 0, &types.current_user)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					ERASE,
@@ -1055,6 +1059,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 				}
 			}
+			OST_ENCRYPT_COLLECTION(collectionName, 0, &types.current_user)
 			break
 		// case USER:
 		// 	secColPath := fmt.tprintf(
