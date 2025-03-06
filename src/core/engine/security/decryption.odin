@@ -42,6 +42,7 @@ Decryption process :
 */
 
 
+//
 OST_DECRYPT_COLLECTION :: proc(
 	fName: string,
 	fType: types.CollectionType,

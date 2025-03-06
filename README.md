@@ -294,3 +294,8 @@ Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines o
 ## **License**
 
 OstrichDB is released under the **Apache License 2.0**. For the full license text, see [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+
+
+## CodeRabbit
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Solitude-Software-Solutions/OstrichDB?labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit%20Reviews)
