@@ -79,7 +79,9 @@ ErrorType :: enum {
 Error :: struct {
 	type:      ErrorType,
 	message:   string, //The message that the error displays/logs
+	file:      string, //the file that the error occurred in
 	procedure: string, //the procedure that the error occurred in
+	line:      int, //the line number that the error occurred on
 }
 
 ERROR_MESSAGE := [ErrorType]string {
@@ -133,8 +135,8 @@ ERROR_MESSAGE := [ErrorType]string {
 	.CANNOT_PURGE_HISTORY              = "Cannot Purge Users History Cluster",
 }
 
-new_err :: proc(type: ErrorType, message: string, procedure: string) -> Error {
-	return Error{type = type, message = message, procedure = procedure}
+new_err :: proc(type: ErrorType, message, file, procedure: string, line: int) -> Error {
+	return Error{type = type, message = message, procedure = procedure, file = file, line = line}
 }
 
 get_err_msg :: proc(type: ErrorType) -> string {
@@ -145,20 +147,26 @@ throw_err :: proc(err: Error) -> int {
 	if types.errSupression.enabled { 	//if error supression is off return
 		return 0
 	} else {
-		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
-		fmt.printfln(
-			"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
-			RESET,
-			BOLD,
-			err.procedure,
-			RESET,
-			BOLD,
-			err.type,
-			RESET,
-			BOLD,
-			err.message,
-			RESET,
-		)
+		// fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
+		// fmt.printfln(
+		// 	"ERROR%s occured in...\nFile: [%s%s%s]\nOstrichDB Procedure: [%s%s%s] @ Line: [%s%d%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+		// 	RESET,
+		// 	BOLD,
+		// 	err.file,
+		// 	RESET,
+		// 	BOLD,
+		// 	err.procedure,
+		// 	RESET,
+		// 	BOLD,
+		// 	err.line,
+		// 	RESET,
+		// 	BOLD,
+		// 	err.type,
+		// 	RESET,
+		// 	BOLD,
+		// 	err.message,
+		// 	RESET,
+		// )
 		return 1
 	}
 }
@@ -169,20 +177,20 @@ throw_custom_err :: proc(err: Error, custom_message: string) -> int {
 	if types.errSupression.enabled {
 		return 0
 	} else {
-		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
-		fmt.printfln(
-			"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
-			RESET,
-			BOLD,
-			err.procedure,
-			RESET,
-			BOLD,
-			err.type,
-			RESET,
-			BOLD,
-			custom_message,
-			RESET,
-		)
+		// fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
+		// fmt.printfln(
+		// 	"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+		// 	RESET,
+		// 	BOLD,
+		// 	err.procedure,
+		// 	RESET,
+		// 	BOLD,
+		// 	err.type,
+		// 	RESET,
+		// 	BOLD,
+		// 	custom_message,
+		// 	RESET,
+		// )
 		return 1
 	}
 }

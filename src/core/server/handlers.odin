@@ -188,16 +188,16 @@ OST_HANDLE_PUT_REQ :: proc(
 	recordName := strings.split(pathSegments[5], "?")
 	slicedRecordName := strings.to_upper(recordName[0])
 
-	switch (pathSegments[0]) 
+	switch (pathSegments[0])
 	{
 	case "collection":
-		switch (segments) 
+		switch (segments)
 		{
 		case 2:
 			// In the event of something like: /collection/collecion_name
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
-				data.OST_CREATE_COLLECTION(collectionName, 0)
+				data.OST_CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
 				return types.HttpStatus {
 					code = .OK,
 					text = types.HttpStatusText[.OK],
@@ -240,7 +240,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			}
 			collectionNamePath := fmt.tprintf(
 				"%s%s%s",
-				const.OST_COLLECTION_PATH,
+				const.OST_PUBLIC_PATH,
 				collectionName,
 				const.OST_FILE_EXTENSION,
 			)
@@ -336,7 +336,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 
 	collectionNamePath := fmt.tprintf(
 		"%s%s%s",
-		const.OST_COLLECTION_PATH,
+		const.OST_PUBLIC_PATH,
 		collectionName,
 		const.OST_FILE_EXTENSION,
 	)

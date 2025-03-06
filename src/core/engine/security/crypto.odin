@@ -199,63 +199,11 @@ OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 
 //used to generate a 256 bit master key for each user
 OST_GEN_MASTER_KEY :: proc() -> []byte {
-	keyAsStr: string
-	key: []byte
-	randC: string //random char
-	randN: int //random number
-	concatStr: string
-
-	chars: []string = {
-		"a",
-		"b",
-		"c",
-		"d",
-		"e",
-		"f",
-		"g",
-		"h",
-		"i",
-		"j",
-		"k",
-		"l",
-		"m",
-		"n",
-		"o",
-		"p",
-		"q",
-		"r",
-		"s",
-		"t",
-		"u",
-		"v",
-		"w",
-		"x",
-		"y",
-	}
-
-	nums := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 0}
-
-	//generate a random string of 15 lower case characters
-	for c := 0; c < 15; c += 1 {
-		randC = rand.choice(chars)
-		concatStr = strings.concatenate([]string{keyAsStr, randC})
-		keyAsStr = concatStr
-	}
-
-
-	//generate a random number and convert it to a string
-	nBuff: [8]byte
-	for n := 0; n < 17; n += 1 {
-		randN = rand.choice(nums)
-		convetedN := strconv.itoa(nBuff[:], randN)
-		join := strings.concatenate([]string{keyAsStr, convetedN})
-		keyAsStr = join
-	}
-
-	//convert the string to a byte array then shuffle the array
-	key = transmute([]byte)keyAsStr
-	rand.shuffle(key)
-
+	key := make([]byte, 32)
+    // Fill the buffer with random bytes
+    for i := 0; i < 32; i += 1 {
+        key[i] = byte(rand.int31_max(256))
+    }
 	return key
 }
 

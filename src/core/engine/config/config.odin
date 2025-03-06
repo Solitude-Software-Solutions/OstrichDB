@@ -22,7 +22,7 @@ File Description:
 main :: proc() {
 	using data
 
-	OST_CREATE_COLLECTION("config", 3)
+	OST_CREATE_COLLECTION("", .CONFIG_PRIVATE)
 	id := OST_GENERATE_ID(true)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 	OST_CREATE_CLUSTER_BLOCK(const.OST_CONFIG_PATH, id, const.CONFIG_CLUSTER)
@@ -33,18 +33,25 @@ main :: proc() {
 		fmt.println("ERROR: Failed to append all config records")
 		fmt.println("Please rebuild OstrichDB")
 	}
+
 }
 
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	using utils
 	configExists: bool
-	binDir, e := os.open(const.OST_CORE_PATH)
+	binDir, e := os.open(const.OST_PRIVATE_PATH)
 	defer os.close(binDir)
 
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)
 
 	if readDirSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_DIRECTORY, get_err_msg(.CANNOT_READ_DIRECTORY), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_DIRECTORY,
+			get_err_msg(.CANNOT_READ_DIRECTORY),
+			#file,
+			#procedure,
+			#line,
+		)
 		log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
@@ -89,7 +96,13 @@ OST_APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 
 	//if the cluster is not found or the structure is invalid, return
 	if clusterStart == -1 || closingBrace == -1 {
-		error2 := new_err(.CANNOT_FIND_CLUSTER, get_err_msg(.CANNOT_FIND_CLUSTER), #procedure)
+		error2 := new_err(
+			.CANNOT_FIND_CLUSTER,
+			get_err_msg(.CANNOT_FIND_CLUSTER),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error2)
 		log_err("Unable to find cluster/valid structure", #procedure)
 		return -1
@@ -193,7 +206,9 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 		valueTypeError := new_err(
 			.INVALID_VALUE_FOR_EXPECTED_TYPE,
 			get_err_msg(.INVALID_VALUE_FOR_EXPECTED_TYPE),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_custom_err(
 			valueTypeError,

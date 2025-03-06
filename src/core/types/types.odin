@@ -34,6 +34,16 @@ CommandOperation :: struct {
 	permissionStr: [dynamic]string,
 }
 
+CollectionType :: enum {
+	STANDARD_PUBLIC = 0, //Enc/Dec with users master key
+	SECURE_PRIVATE  = 1, //Enc/Dec with users master key even though its private
+	CONFIG_PRIVATE  = 2, //Enc/Dec with systems master key
+	HISTORY_PRIVATE = 3, //Enc/Dec with systems master key
+	ID_PRIVATE      = 4, //Enc/Dec with systems master key
+	//Todo: Add Quaratine, backup, and benchmark
+}
+
+
 Record :: struct {
 	name:  string,
 	type:  string,
@@ -59,7 +69,47 @@ User_Credential :: struct {
 user: User
 current_user: User //used to track the user of the current session
 new_user: User //used for creating new accounts post initialization
-system_user: User //OstrichDB itself, used specifically for the master key
+system_user: User = { 	//OstrichDB itself
+	user_id = -1,
+	username = User_Credential{Value = "OstrichDB", Length = 9},
+	m_k = SpecialUserCred {
+		valAsBytes = []u8 {
+			0x8F,
+			0x2A,
+			0x1D,
+			0x5E,
+			0x9C,
+			0x4B,
+			0x7F,
+			0x3A,
+			0x6D,
+			0x0E,
+			0x8B,
+			0x2C,
+			0x5F,
+			0x9A,
+			0x7D,
+			0x4E,
+			0x1B,
+			0x3C,
+			0x6A,
+			0x8D,
+			0x2E,
+			0x5F,
+			0x7C,
+			0x9B,
+			0x4A,
+			0x1D,
+			0x8E,
+			0x3F,
+			0x6C,
+			0x9B,
+			0x2A,
+			0x5,
+		},
+		valAsStr = "8F2A1D5E9C4B7F3A6D0E8B2C5F9A7D4E1B3C6A8D2E5F7C9B4A1D8E3F6C9B2A5",
+	},
+}
 User :: struct {
 	user_id:        i64, //randomly generated user id
 	role:           User_Credential,
@@ -240,6 +290,7 @@ Benchmark_Result :: struct {
 	total_ops:      int,
 	success:        bool,
 }
+
 
 //DE Stuff
 temp_DE: DE_Process

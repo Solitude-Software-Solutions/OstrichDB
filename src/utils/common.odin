@@ -18,36 +18,62 @@ File Description:
 *********************************************************/
 
 // Helper proc that reads an entire file and returns the content as bytes along with a success boolean
-read_file :: proc(filepath: string, location: string) -> ([]byte, bool) {
+read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
 	data, success := os.read_entire_file(filepath)
 	if !success {
-		error := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), location)
+		error := new_err(
+			.CANNOT_READ_FILE,
+			get_err_msg(.CANNOT_READ_FILE),
+			#file,
+			procedure,
+			#line,
+		)
 		throw_err(error)
-		log_err("Error reading file", location)
+		log_err("Error reading file", procedure)
 		return nil, false
 	}
 	return data, true
 }
 
 // Helper proc that writes data to a file and returns a success boolean
-write_to_file :: proc(filepath: string, data: []byte, location: string) -> bool {
+write_to_file :: proc(filepath: string, data: []byte, procedure: string) -> bool {
 	success := os.write_entire_file(filepath, data)
 	if !success {
-		error := new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), location)
+		error := new_err(
+			.CANNOT_WRITE_TO_FILE,
+			get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#file,
+			procedure,
+			#line,
+		)
 		throw_err(error)
-		log_err("Error writing to file", location)
+		log_err("Error writing to file", procedure)
 		return false
 	}
 	return true
 }
 
 // Helper proc that opens a file with specified flags and returns file handle and success boolean
-open_file :: proc(filepath: string, flags: int, mode: int, location: string) -> (os.Handle, bool) {
+open_file :: proc(
+	filepath: string,
+	flags: int,
+	mode: int,
+	procedure: string,
+) -> (
+	os.Handle,
+	bool,
+) {
 	handle, err := os.open(filepath, flags, mode)
 	if err != 0 {
-		error := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), location)
+		error := new_err(
+			.CANNOT_OPEN_FILE,
+			get_err_msg(.CANNOT_OPEN_FILE),
+			#file,
+			procedure,
+			#line,
+		)
 		throw_err(error)
-		log_err("Error opening file", location)
+		log_err("Error opening file", procedure)
 		return 0, false
 	}
 	return handle, true
@@ -57,7 +83,12 @@ open_file :: proc(filepath: string, flags: int, mode: int, location: string) -> 
 //helper used for updating collection file metadata from the command line
 concat_collection_name :: proc(colFileName: string) -> string {
 	return strings.clone(
-		fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, colFileName, const.OST_FILE_EXTENSION),
+		fmt.tprintf(
+			"%s%s%s",
+			const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
+			colFileName,
+			const.OST_FILE_EXTENSION,
+		),
 	)
 }
 

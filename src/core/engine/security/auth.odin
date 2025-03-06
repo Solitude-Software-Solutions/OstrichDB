@@ -35,7 +35,13 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Could not read user input during sign in", #procedure)
 		return false
@@ -74,7 +80,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		error2 := new_err(
 			.ENTERED_USERNAME_NOT_FOUND,
 			get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_err(error2)
 		fmt.printfln(
@@ -115,7 +123,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	libc.system("stty -echo")
 	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error3 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error3 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #file,
+		#procedure,
+		#line,)
 		throw_err(error3)
 		log_err("Could not read user input during sign in", #procedure)
 		libc.system("stty echo")
@@ -207,7 +217,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param) 
+		switch (param)
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false

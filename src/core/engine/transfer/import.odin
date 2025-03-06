@@ -34,7 +34,7 @@ __import_csv__ :: proc(fn: string) {
 		return
 	}
 
-	OST_CREATE_COLLECTION(fn, 0) //create a collection with the name of the .csv file
+	OST_CREATE_COLLECTION(fn, .STANDARD_PUBLIC) //create a collection with the name of the .csv file
 	id := OST_GENERATE_ID(true)
 	OST_CREATE_CLUSTER(fn, csvClusterName, id)
 
@@ -140,7 +140,9 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structure", #procedure)

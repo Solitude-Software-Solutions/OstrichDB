@@ -3,6 +3,7 @@ package security
 import "../../../utils"
 import "../../const"
 import "../../types"
+import "core:crypto/_aes"
 import "core:crypto/aead"
 import "core:crypto/aes"
 import "core:encoding/hex"
@@ -40,51 +41,53 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-//FType - 0 = Standard(public) collection,  1 = Secure(private) collection,2 config(core), 3 = history(core), 4 = ids(core)
-OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -> bool {
+
+OST_DECRYPT_COLLECTION :: proc(
+	fName: string,
+	fType: types.CollectionType,
+	user: types.User,
+) -> int {
 	masterKey: []byte
 	file: string
 	switch (fType) {
-	case 0:
-		//Standard Collection or test collection
+	case .STANDARD_PUBLIC:
+		//Public Standard Collection
 		file = utils.concat_collection_name(fName)
-	case 1:
-		//Secure Collection
+	case .SECURE_PRIVATE:
+		//Private Secure Collection
 		file = fmt.tprintf(
 			"secure_%s%s",
 			&types.current_user.username.Value,
 			const.OST_FILE_EXTENSION,
 		)
-	case 2:
-		//Config Collection
+	case .CONFIG_PRIVATE:
+		//Private Config Collection
 		file = const.OST_CONFIG_PATH
-	case 3:
-		//History Collection
+	case .HISTORY_PRIVATE:
+		//Private History Collection
 		file = const.OST_HISTORY_PATH
-	case 4:
-		//ID Collection
+	case .ID_PRIVATE:
+		//Private ID Collection
 		file = const.OST_ID_PATH
 	//case 5: Todo: Add case for benchmark collections and quarantine collections
 	case:
 		fmt.printfln("Invalid File Type Passed in procedure: %s", #procedure)
-		return false
+		return -1
 	}
 
-
-	//Evalauete what master key to use based on collection type
-	switch (fType) {
-	case 0:
+	#partial switch (fType) {
+	case .STANDARD_PUBLIC:
 		//Standard(public) collections
-		masterKey = types.current_user.m_k.valAsBytes
-	case 1 ..< 4:
+		masterKey = user.m_k.valAsBytes
+	case:
 		// Private collections only OstrichDB has access to
-		masterKey = const.SYS_MASTER_KEY
+		masterKey = types.system_user.m_k.valAsBytes
 	}
 
 	encryptedData, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
 		fmt.printfln("Failed to read file: %s in procedure: %s", file, #procedure)
-		return false
+		return -2
 	}
 	defer delete(encryptedData)
 
@@ -102,6 +105,7 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 	ciphertext := encryptedData[aes.BLOCK_SIZE:]
 	aad: []byte
 	tag := types.temp_DE.tag
+	// fmt.println("tag @ dec: ", tag) //debugging
 	dataToDecrypt := make([]byte, len(ciphertext))
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#open_gcm
@@ -109,18 +113,20 @@ OST_DECRYPT_COLLECTION :: proc(fName: string, fType: int, user: ..^types.User) -
 
 	if !success {
 		fmt.printfln("Failed to decrypt file: %s in procedure: %s", file, #procedure)
-		return false
+		return -3
 	}
 
 	writeSuccess := utils.write_to_file(file, dataToDecrypt, #procedure)
 	if !writeSuccess {
 		fmt.printfln("Failed to write to file in procedure: %s", #procedure)
-		return false
+		return -4
 	}
 
 	// https://pkg.odin-lang.org/core/crypto/aes/#reset_gcm
 	aes.reset_gcm(&gcmContext)
-	delete(tag)
 
-	return true
+	//freeing up the tag buffer so it can be reused
+	delete(types.temp_DE.tag)
+
+	return 0
 }

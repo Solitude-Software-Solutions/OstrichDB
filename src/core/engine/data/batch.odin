@@ -37,7 +37,7 @@ OST_HANDLE_COLLECTION_BATCH_REQ :: proc(
 	case .NEW:
 		for name in collectionNames {
 			fmt.printfln("Creating collection: %s", name)
-			if !OST_CREATE_COLLECTION(strings.to_upper(name), 0) {
+			if !OST_CREATE_COLLECTION(strings.to_upper(name), .STANDARD_PUBLIC) {
 				return 1, ""
 			}
 		}

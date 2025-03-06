@@ -150,7 +150,9 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 		error1 := utils.new_err(
 			.CLUSTER_IDS_NOT_VALID,
 			get_err_msg(.CLUSTER_IDS_NOT_VALID),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_err(error1)
 		log_err("Cluster IDs in collection are not compliant", #procedure)
@@ -161,7 +163,13 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 	case false:
 		data_integrity_checks.File_Size.Severity = .LOW
 		Severity_Code = 0
-		error2 := new_err(.FILE_SIZE_TOO_LARGE, get_err_msg(.FILE_SIZE_TOO_LARGE), #procedure)
+		error2 := new_err(
+			.FILE_SIZE_TOO_LARGE,
+			get_err_msg(.FILE_SIZE_TOO_LARGE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error2)
 		log_err("File size is not compliant", #procedure)
 	}
@@ -170,7 +178,13 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 	case false:
 		data_integrity_checks.File_Format.Severity = .HIGH
 		Severity_Code = 2
-		error3 := new_err(.FILE_FORMAT_NOT_VALID, get_err_msg(.FILE_FORMAT_NOT_VALID), #procedure)
+		error3 := new_err(
+			.FILE_FORMAT_NOT_VALID,
+			get_err_msg(.FILE_FORMAT_NOT_VALID),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error3)
 		log_err("Collection format is not compliant", #procedure)
 	}
@@ -179,7 +193,13 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 	case false:
 		data_integrity_checks.Checksum.Severity = .HIGH
 		Severity_Code = 2
-		error4 := new_err(.INVALID_CHECKSUM, utils.get_err_msg(.INVALID_CHECKSUM), #procedure)
+		error4 := new_err(
+			.INVALID_CHECKSUM,
+			utils.get_err_msg(.INVALID_CHECKSUM),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error4)
 		log_err("Checksum is not compliant", #procedure)
 	}

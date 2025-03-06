@@ -123,7 +123,13 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	rawData, readSuccess := os.read_entire_file(fn)
 	defer delete(rawData)
 	if !readSuccess {
-		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_FILE,
+			get_err_msg(.CANNOT_READ_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error readinding collection file", #procedure)
 		return false
@@ -139,7 +145,13 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	defer os.close(file)
 
 	if openSuccess != 0 {
-		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_OPEN_FILE,
+			get_err_msg(.CANNOT_OPEN_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error opening collection file", #procedure)
 		return false
@@ -149,7 +161,13 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 	writter, ok := os.write(file, blockAsBytes)
 	if ok != 0 {
-		error1 := new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_WRITE_TO_FILE,
+			get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error writing metadata header to collection file", #procedure)
 		return false
@@ -165,7 +183,13 @@ AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_FILE,
+			get_err_msg(.CANNOT_READ_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		return
 	}
@@ -262,7 +286,13 @@ OST_CREATE_FFVF :: proc() {
 	defer os.close(file)
 
 	if createSuccess != 0 {
-		error1 := new_err(.CANNOT_CREATE_FILE, get_err_msg(.CANNOT_CREATE_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_CREATE_FILE,
+			get_err_msg(.CANNOT_CREATE_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_custom_err(error1, "Cannot create file format version file")
 	}
 
@@ -277,7 +307,9 @@ OST_CREATE_FFVF :: proc() {
 		error1 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
 			get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_custom_err(error1, "Cannot write to file format version file")
 	}
@@ -478,34 +510,46 @@ OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: strin
 //Similar to the UPDATE_METADATA_VALUE but updates a value wiht the passed in param
 //member is the metadata field to update
 //For now , only used for the "Permission" field, may add more in the future - Marshall
-// colTypes 0 = standar(public), 1 =secure, 2 = history, 3 = config, 4 = ids
-OST_CHANGE_METADATA_VALUE :: proc(fn, newValue: string, member, colType: int) -> bool {
+// 0 - public, 1 - secure, 2 - config, 3 - history, 4 - id
+OST_CHANGE_METADATA_VALUE :: proc(
+	fn, newValue: string,
+	member: int,
+	colType: types.CollectionType,
+) -> bool {
 	using utils
 	using const
 
 	file: string
 
 	switch (colType) {
-	case 0:
+	case .STANDARD_PUBLIC:
 		file = concat_collection_name(fn)
 		break
-	case 1:
+	case .SECURE_PRIVATE:
 		file = fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, fn, ".ost")
 		break
-	case 2:
-		file = OST_HISTORY_PATH
-		break
-	case 3:
+	case .CONFIG_PRIVATE:
 		file = OST_CONFIG_PATH
 		break
-	case 4:
+	case .HISTORY_PRIVATE:
+		file = OST_HISTORY_PATH
+		break
+	case .ID_PRIVATE:
 		file = OST_ID_PATH
 		break
 
 	}
+
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
-		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		fmt.printfln("Error reading file: %s", file)
+		error1 := new_err(
+			.CANNOT_READ_FILE,
+			get_err_msg(.CANNOT_READ_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		return false
 	}

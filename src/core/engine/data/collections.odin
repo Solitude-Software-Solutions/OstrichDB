@@ -19,7 +19,19 @@ File Description:
             collections as a whole.
 *********************************************************/
 
-MAX_FILE_NAME_LENGTH: [512]byte
+
+main :: proc() {
+	using const
+
+	//Create the core dirs and files OstrichDB needs to function
+	metadata.OST_CREATE_FFVF()
+	os.make_directory(OST_PRIVATE_PATH)
+	os.make_directory(OST_PUBLIC_PATH)
+	os.make_directory(OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	os.make_directory(OST_QUARANTINE_PATH)
+	os.make_directory(OST_BACKUP_PATH)
+	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
+}
 
 
 //used for the command line
@@ -31,29 +43,31 @@ OST_CHOOSE_COLLECTION_NAME :: proc() {
 		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
 			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error1)
 		utils.log_err("Error reading user input", #procedure)
 	}
 	name := strings.trim_right(string(buf[:n]), "\n")
-	_ = OST_CREATE_COLLECTION(strings.clone(name), 0)
+	_ = OST_CREATE_COLLECTION(strings.clone(name), .STANDARD_PUBLIC)
 }
 
 /*
 Creates a new collection file with metadata within the DB
 0 standard
 1 secure
-2 history file
-3 config file
-4 id cache file
+2 config
+3 history
+4 id
 */
-OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
+OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (collectionType) 
+	switch (colType) 
 	{
-	case 0:
+	case .STANDARD_PUBLIC:
 		//standard cluster file
 		if OST_PERFORM_COLLECTION_NAME_CHECK(fn) == 1 {
 			return false
@@ -61,12 +75,14 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		collectionPath := utils.concat_collection_name(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, collectionType)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
+				#file,
 				#procedure,
+				#line,
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating new collection file", #procedure)
@@ -75,7 +91,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
-	case 1:
+	case .SECURE_PRIVATE:
 		//secure file
 		if OST_PERFORM_COLLECTION_NAME_CHECK(fn) == 1 {
 			return false
@@ -88,12 +104,14 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, collectionType)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
+				#file,
 				#procedure,
+				#line,
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating .ost file", #procedure)
@@ -102,16 +120,61 @@ OST_CREATE_COLLECTION :: proc(fn: string, collectionType: int) -> bool {
 		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
 		defer os.close(createFile)
 		return true
-	case 2, 3, 4:
-		collectionPath := fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
+
+	case .CONFIG_PRIVATE:
+		collectionPath := const.OST_CONFIG_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, collectionType)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
+				#file,
 				#procedure,
+				#line,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error creating .ost file", #procedure)
+			return false
+		}
+		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		defer os.close(createFile)
+		return true
+
+	case .HISTORY_PRIVATE:
+		collectionPath := const.OST_HISTORY_PATH
+		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
+		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
+		if createSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_CREATE_FILE,
+				utils.get_err_msg(.CANNOT_CREATE_FILE),
+				#file,
+				#procedure,
+				#line,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error creating .ost file", #procedure)
+			return false
+		}
+		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		defer os.close(createFile)
+		return true
+
+	case .ID_PRIVATE:
+		collectionPath := const.OST_ID_PATH
+		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
+		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
+		if createSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_CREATE_FILE,
+				utils.get_err_msg(.CANNOT_CREATE_FILE),
+				#file,
+				#procedure,
+				#line,
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating .ost file", #procedure)
@@ -143,7 +206,13 @@ OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
 	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
 	n, inputSuccess := os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error reading user input", #procedure)
 	}
@@ -162,7 +231,7 @@ OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
 			"User entered invalid input",
 			"User entered invalid input when trying to delete collection",
 		)
-		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
+		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #file, #procedure, #line)
 		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 		return false
 	}
@@ -172,7 +241,13 @@ OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
 	// Delete the file
 	deleteSuccess := os.remove(collectionPath)
 	if deleteSuccess != 0 {
-		error1 := new_err(.CANNOT_DELETE_FILE, get_err_msg(.CANNOT_DELETE_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_DELETE_FILE,
+			get_err_msg(.CANNOT_DELETE_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error deleting .ost file", #procedure)
 		return false
@@ -190,14 +265,20 @@ OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 	using utils
 
 	nameAsBytes := transmute([]byte)fn
-	if len(nameAsBytes) > len(MAX_FILE_NAME_LENGTH) {
+	if len(nameAsBytes) > len(const.MAX_COLLECTION_NAME_LENGTH) {
 		fmt.printfln("Given file name is too long, Cannot exceed 512 bytes")
 		return 1
 	}
 	//CHECK#2: check if the file already exists
 	existenceCheck, readSuccess := os.read_entire_file_from_filename(fn)
 	if readSuccess {
-		error1 := new_err(.FILE_ALREADY_EXISTS, get_err_msg(.FILE_ALREADY_EXISTS), #procedure)
+		error1 := new_err(
+			.FILE_ALREADY_EXISTS,
+			get_err_msg(.FILE_ALREADY_EXISTS),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("collection file already exists", #procedure)
 		return 1
@@ -219,7 +300,7 @@ OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	switch (type) {
 	case 0:
-		colPath, openSuccess := os.open(const.OST_COLLECTION_PATH)
+		colPath, openSuccess := os.open(const.OST_PUBLIC_PATH)
 		collections, readSuccess := os.read_dir(colPath, -1)
 
 		for collection in collections {
@@ -246,14 +327,16 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 
 
 OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
-	colPath := fmt.tprintf("%s%s%s", const.OST_COLLECTION_PATH, old, const.OST_FILE_EXTENSION)
+	colPath := fmt.tprintf("%s%s%s", const.OST_PUBLIC_PATH, old, const.OST_FILE_EXTENSION)
 
 	file, readSuccess := os.read_entire_file_from_filename(colPath)
 	if !readSuccess {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error1)
 		utils.log_err("Error reading provided .ost file", #procedure)
@@ -289,7 +372,9 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error1)
 		utils.log_err("Error reading .ost file", #procedure)
@@ -316,7 +401,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 	using const
 
-	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
+	collectionsDir, errOpen := os.open(OST_PUBLIC_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -349,7 +434,9 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 			error := utils.new_err(
 				.CANNOT_READ_INPUT,
 				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#file,
 				#procedure,
+				#line,
 			)
 			utils.throw_err(error)
 			utils.log_err("Error reading user input", #procedure)
@@ -390,7 +477,7 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (found: bool, name: string) {
 OST_COUNT_COLLECTIONS :: proc() -> int {
 	using const
 
-	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
+	collectionsDir, errOpen := os.open(OST_PUBLIC_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -413,7 +500,9 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
-		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
+		throw_err(
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+		)
 		log_err("Error reading collection file", #procedure)
 		return false
 	}
@@ -423,7 +512,9 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 	content := string(data)
 	headerEndIndex := strings.index(content, const.METADATA_END)
 	if headerEndIndex == -1 {
-		throw_err(new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #procedure))
+		throw_err(
+			new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #file, #procedure, #line),
+		)
 		log_err("Invalid collection file format", #procedure)
 		return false
 	}
@@ -436,7 +527,15 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 	// Write back only the header
 	writeSuccess := os.write_entire_file(collectionPath, transmute([]byte)metaDataHeader)
 	if !writeSuccess {
-		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+		throw_err(
+			new_err(
+				.CANNOT_WRITE_TO_FILE,
+				get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#file,
+				#procedure,
+				#line,
+			),
+		)
 		log_err("Error writing purged collection file", #procedure)
 		return false
 	}
@@ -458,7 +557,7 @@ OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm:
 		fmt.printfln("Invalid flag provided")
 		return false, ""
 	}
-	success := metadata.OST_CHANGE_METADATA_VALUE(fn, val, 1, 0)
+	success := metadata.OST_CHANGE_METADATA_VALUE(fn, val, 1, .STANDARD_PUBLIC)
 	return success, val
 }
 
@@ -466,10 +565,10 @@ OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm:
 OST_UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
 	success := false
 	if currentPerm == "Inaccessible" {
-		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
+		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)
 		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
 	} else if currentPerm == "Read-Only" {
-		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, 0)
+		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)
 		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
 	} else {
 		fmt.printfln(

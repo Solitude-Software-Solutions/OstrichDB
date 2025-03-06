@@ -34,7 +34,7 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 	using utils
 
 	//perform a check to see if the secure directory already exists to prevent errors and overwriting
-	_, err := os.stat("./secure")
+	_, err := os.stat(const.OST_SECURE_COLLECTION_PATH)
 	if err == nil {
 		return 0
 	}
@@ -43,7 +43,9 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 		error1 := utils.new_err(
 			.CANNOT_CREATE_DIRECTORY,
 			get_err_msg(.CANNOT_CREATE_DIRECTORY),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_err(error1)
 		log_err("Error occured while attempting to generate new secure file", #procedure)
@@ -75,25 +77,35 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	hashAsString := string(user.hashedPassword.valAsStr)
 	algoMethodAsString := strconv.itoa(buf[:], user.store_method)
 	user.user_id = data.OST_GENERATE_ID(true) //for secure clustser, the cluster id is the user id
-	OST_CREATE_COLLECTION("history", 2)
 
-	user.username.Value = inituserName
+	// //Create then encrypt the History collection
+	OST_CREATE_COLLECTION("", .HISTORY_PRIVATE)
+	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
+
+	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
+	// fmt.printfln("System user: %s, in %s at line %s", types.system_user, #file, #line)
+	fmt.println("types.syste,_user: @creds ", types.system_user)
+	// OST_DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user)
+
+	// user.username.Value = inituserName
 
 
-	//store the id to both clusters in the id collection
+	// //store the id to both clusters in the id collection
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
 
-
+	// //Create a cluster in the history collection that will hold this users command history
 	OST_CREATE_CLUSTER_BLOCK(OST_HISTORY_PATH, user.user_id, user.username.Value)
+
+	//Create a secure collection for the user
 	inituserName = fmt.tprintf("secure_%s", inituserName)
-	OST_CREATE_COLLECTION(inituserName, 1)
+	OST_CREATE_COLLECTION(user.username.Value, .SECURE_PRIVATE)
 	mk := OST_GEN_MASTER_KEY()
 	types.user.m_k.valAsBytes = mk
 	mkAsString := transmute(string)mk
 	types.user.m_k.valAsStr = mkAsString
 
-
+	//Store all the user credentials within the secure collection
 	OST_STORE_USER_CREDS(
 		inituserName,
 		user.username.Value,
@@ -116,6 +128,8 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
+
+	OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user)
 	engineInit := config.OST_UPDATE_CONFIG_VALUE(CONFIG_ONE, "true")
 
 	switch (engineInit) 
@@ -127,11 +141,17 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-	//update metadata fields
+	// update metadata of the history collection and the secure collection
+	OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_HISTORY_PATH)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(
 		fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, inituserName, OST_FILE_EXTENSION),
 	)
+
+	// //re-encrypt the secure collection
+	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
+	OST_ENCRYPT_COLLECTION("", .SECURE_PRIVATE, types.user)
+
 	fmt.println("Please re-launch OstrichDB...")
 	return 0
 }
@@ -160,7 +180,13 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error reading input", #procedure)
 	}
@@ -221,7 +247,13 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 	enteredStr: string
 	if inputSuccess != 0 {
 
-		error1 := utils.new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error reading input", #procedure)
 	}
@@ -271,7 +303,13 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 	confirmation: string
 
 	if inputSuccess != 0 {
-		error1 := utils.new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error reading input", #procedure)
 	}
@@ -325,7 +363,9 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
 			utils.get_err_msg(.CANNOT_OPEN_FILE),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_err(error1)
 		log_err("Error opening user credentials file", #procedure)
@@ -528,7 +568,7 @@ OST_CREATE_NEW_USER :: proc(
 		return 1
 	}
 
-	result := data.OST_CREATE_COLLECTION(newColName, 1)
+	result := data.OST_CREATE_COLLECTION(newColName, .SECURE_PRIVATE)
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
@@ -655,7 +695,13 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 
 	n, inputSuccess := os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		return false
 	}
@@ -674,7 +720,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 			"User entered invalid input",
 			"User entered invalid input when trying to delete user",
 		)
-		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
+		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #file, #procedure, #line)
 		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 		return false
 	}
@@ -696,7 +742,13 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	// Delete the user's secure collection file
 	deleteSuccess := os.remove(file)
 	if deleteSuccess != 0 {
-		error1 := new_err(.CANNOT_DELETE_FILE, get_err_msg(.CANNOT_DELETE_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_DELETE_FILE,
+			get_err_msg(.CANNOT_DELETE_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error deleting user's secure collection file", #procedure)
 		return false
