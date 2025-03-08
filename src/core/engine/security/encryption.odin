@@ -46,7 +46,10 @@ OST_ENCRYPT_COLLECTION :: proc(
 	fName: string,
 	fType: types.CollectionType,
 	user: types.User,
-) -> int {
+) -> (
+	int,
+	[]byte,
+) {
 	//depending on collection file type, concat correct path
 	masterKey: []byte
 	file: string
@@ -79,7 +82,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 	//case 5: Todo: Add case for benchmark collections and quarantine collections
 	case:
 		fmt.printfln("Invalid File Type Passed in procedure: %s", #procedure)
-		return -1
+		return -1, []byte{}
 	}
 
 	//Evalauete what master key to use based on collection type
@@ -98,7 +101,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
-		return -2
+		return -2, []byte{}
 	}
 	defer delete(data)
 
@@ -111,19 +114,20 @@ OST_ENCRYPT_COLLECTION :: proc(
 	// The ciphertext needs to be exactly the size of the plaintext(file data)
 	ciphertext := make([]byte, len(data))
 	tag := make([]byte, aes.GCM_TAG_SIZE)
+	fmt.println("============================================================")
 	fmt.println("Showing encryption results of file: ", file)
+	fmt.println("master key @ encryption: ", masterKey)
 	fmt.println("iv: @ encryption", iv) //debugging
 	fmt.println("aad: @ encryption", aad) //debugging
-	fmt.println("master key @ encryption: ", masterKey)
 
 	// https://pkg.odin-lang.org/core/crypto/aes/#seal_gcm
 	aes.seal_gcm(gcmContext, ciphertext, tag, iv, aad, data)
 	// Store tag for dec
-	types.temp_DE.tag = tag
 
+	t := tag
+	fmt.println("tag @ encryption: ", t) //debugging
 	fmt.println("ciphertext @ encryption: ", ciphertext) //debugging
-	fmt.println("tag @ encryption: ", types.temp_DE.tag) //debugging
-
+	fmt.println("============================================================")
 	// Create final buffer that includes IV + ciphertext
 	finalData := make([]byte, len(iv) + len(ciphertext))
 	copy(finalData[:len(iv)], iv)
@@ -131,11 +135,11 @@ OST_ENCRYPT_COLLECTION :: proc(
 
 	writeSuccess := utils.write_to_file(file, finalData, #procedure)
 	if !writeSuccess {
-		return -3
+		return -3, []byte{}
 	}
 
 	aes.reset_gcm(gcmContext)
-	return 0
+	return 0, t
 }
 
 

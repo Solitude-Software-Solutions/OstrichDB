@@ -80,7 +80,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	// //Create then encrypt the History collection
 	OST_CREATE_COLLECTION("", .HISTORY_PRIVATE)
-	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
+	_, tag := OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
 
 	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
 	// fmt.printfln("System user: %s, in %s at line %s", types.system_user, #file, #line)
@@ -142,7 +142,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	}
 
 	// update metadata of the history collection and the secure collection
-	OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
+	OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user, tag)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_HISTORY_PATH)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(
 		fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, inituserName, OST_FILE_EXTENSION),

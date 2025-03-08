@@ -47,6 +47,7 @@ OST_DECRYPT_COLLECTION :: proc(
 	fName: string,
 	fType: types.CollectionType,
 	user: types.User,
+	tag: []byte,
 ) -> int {
 	masterKey: []byte
 	file: string
@@ -105,16 +106,15 @@ OST_DECRYPT_COLLECTION :: proc(
 	iv := encryptedData[:aes.BLOCK_SIZE]
 	ciphertext := encryptedData[aes.BLOCK_SIZE:]
 	aad: []byte
-	tag := types.temp_DE.tag
 
 	dataToDecrypt := make([]byte, len(ciphertext))
 
 	fmt.println("Showing decryption results of file: ", file)
-	fmt.println("tag @ decryption: ", tag) //debugging
+	fmt.println("master key @ decrption: ", masterKey)
 	fmt.println("iv: @ decryption", iv) //debugging
 	fmt.println("aad: @ decryption", aad) //debugging
+	fmt.println("tag @ decryption: ", tag) //debugging
 	fmt.println("ciphertext @ decryption: ", ciphertext) //debugging
-	fmt.println("master key @ decrption: ", masterKey)
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#open_gcm
 	success := aes.open_gcm(gcmContext, dataToDecrypt, iv, aad, ciphertext, tag)
