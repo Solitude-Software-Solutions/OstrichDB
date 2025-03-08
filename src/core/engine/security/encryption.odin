@@ -102,8 +102,8 @@ OST_ENCRYPT_COLLECTION :: proc(
 	}
 	defer delete(data)
 
-	gcmContext := types.temp_DE.contxt
-	aes.init_gcm(&gcmContext, masterKey)
+	gcmContext := new(aes.Context_GCM)
+	aes.init_gcm(gcmContext, masterKey)
 
 	iv := OST_GENERATE_IV()
 	aad: []byte
@@ -111,13 +111,18 @@ OST_ENCRYPT_COLLECTION :: proc(
 	// The ciphertext needs to be exactly the size of the plaintext(file data)
 	ciphertext := make([]byte, len(data))
 	tag := make([]byte, aes.GCM_TAG_SIZE)
-	// fmt.println("tag @ enc: ", tag) //debugging
+	fmt.println("Showing encryption results of file: ", file)
+	fmt.println("iv: @ encryption", iv) //debugging
+	fmt.println("aad: @ encryption", aad) //debugging
+	fmt.println("master key @ encryption: ", masterKey)
 
 	// https://pkg.odin-lang.org/core/crypto/aes/#seal_gcm
-	aes.seal_gcm(&gcmContext, ciphertext, tag, iv, aad, data)
+	aes.seal_gcm(gcmContext, ciphertext, tag, iv, aad, data)
 	// Store tag for dec
 	types.temp_DE.tag = tag
-	// fmt.println("types.temp_DE.tag enc: ", tag) //debugging
+
+	fmt.println("ciphertext @ encryption: ", ciphertext) //debugging
+	fmt.println("tag @ encryption: ", types.temp_DE.tag) //debugging
 
 	// Create final buffer that includes IV + ciphertext
 	finalData := make([]byte, len(iv) + len(ciphertext))
@@ -129,7 +134,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 		return -3
 	}
 
-	aes.reset_gcm(&gcmContext)
+	aes.reset_gcm(gcmContext)
 	return 0
 }
 

@@ -295,6 +295,6 @@ Benchmark_Result :: struct {
 //DE Stuff
 temp_DE: DE_Process
 DE_Process :: struct {
-	contxt: aes.Context_GCM,
-	tag:    []u8, //Warn: This shit is prob super unsafe
+	// contxt: aes.Context_GCM,
+	tag: []u8, //Warn: This shit is prob super unsafe
 }

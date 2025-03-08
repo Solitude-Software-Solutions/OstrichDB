@@ -84,7 +84,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
 	// fmt.printfln("System user: %s, in %s at line %s", types.system_user, #file, #line)
-	fmt.println("types.syste,_user: @creds ", types.system_user)
+	// fmt.println("types.syste,_user: @creds ", types.system_user)
 	// OST_DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user)
 
 	// user.username.Value = inituserName
@@ -129,7 +129,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
 
-	OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user)
+	// OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user)
 	engineInit := config.OST_UPDATE_CONFIG_VALUE(CONFIG_ONE, "true")
 
 	switch (engineInit) 
@@ -149,8 +149,8 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 
 	// //re-encrypt the secure collection
-	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
-	OST_ENCRYPT_COLLECTION("", .SECURE_PRIVATE, types.user)
+	// OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
+	// OST_ENCRYPT_COLLECTION("", .SECURE_PRIVATE, types.user)
 
 	fmt.println("Please re-launch OstrichDB...")
 	return 0

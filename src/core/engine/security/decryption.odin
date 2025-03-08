@@ -3,7 +3,7 @@ package security
 import "../../../utils"
 import "../../const"
 import "../../types"
-import "core:crypto/_aes"
+// import "core:crypto/_aes"
 import "core:crypto/aead"
 import "core:crypto/aes"
 import "core:encoding/hex"
@@ -93,8 +93,8 @@ OST_DECRYPT_COLLECTION :: proc(
 	defer delete(encryptedData)
 
 	//https://pkg.odin-lang.org/core/crypto/aes/#Context_GCM
-	gcmContext := types.temp_DE.contxt
-	aes.init_gcm(&gcmContext, masterKey)
+	gcmContext := new(aes.Context_GCM)
+	aes.init_gcm(gcmContext, masterKey)
 
 	// Say encryptedData is 319 bytes long
 	// iv: is the first 16 bytes
@@ -106,11 +106,18 @@ OST_DECRYPT_COLLECTION :: proc(
 	ciphertext := encryptedData[aes.BLOCK_SIZE:]
 	aad: []byte
 	tag := types.temp_DE.tag
-	// fmt.println("tag @ dec: ", tag) //debugging
+
 	dataToDecrypt := make([]byte, len(ciphertext))
 
+	fmt.println("Showing decryption results of file: ", file)
+	fmt.println("tag @ decryption: ", tag) //debugging
+	fmt.println("iv: @ decryption", iv) //debugging
+	fmt.println("aad: @ decryption", aad) //debugging
+	fmt.println("ciphertext @ decryption: ", ciphertext) //debugging
+	fmt.println("master key @ decrption: ", masterKey)
+
 	//https://pkg.odin-lang.org/core/crypto/aes/#open_gcm
-	success := aes.open_gcm(&gcmContext, dataToDecrypt, iv, aad, ciphertext, tag)
+	success := aes.open_gcm(gcmContext, dataToDecrypt, iv, aad, ciphertext, tag)
 
 	if !success {
 		fmt.printfln("Failed to decrypt file: %s in procedure: %s", file, #procedure)
@@ -124,7 +131,7 @@ OST_DECRYPT_COLLECTION :: proc(
 	}
 
 	// https://pkg.odin-lang.org/core/crypto/aes/#reset_gcm
-	aes.reset_gcm(&gcmContext)
+	aes.reset_gcm(gcmContext)
 
 	//freeing up the tag buffer so it can be reused
 	delete(types.temp_DE.tag)
