@@ -80,24 +80,16 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	// //Create then encrypt the History collection
 	OST_CREATE_COLLECTION("", .HISTORY_PRIVATE)
-	// _, tag := OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
-
-	enchistoryData := test_encrypt("", .HISTORY_PRIVATE, user)
-
 	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
-	// fmt.printfln("System user: %s, in %s at line %s", types.system_user, #file, #line)
-	// fmt.println("types.syste,_user: @creds ", types.system_user)
-	// OST_DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user)
-
-	// user.username.Value = inituserName
-
-
+	user.username.Value = inituserName
 	// //store the id to both clusters in the id collection
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
 
+
 	// //Create a cluster in the history collection that will hold this users command history
 	OST_CREATE_CLUSTER_BLOCK(OST_HISTORY_PATH, user.user_id, user.username.Value)
+
 
 	//Create a secure collection for the user
 	inituserName = fmt.tprintf("secure_%s", inituserName)
@@ -131,9 +123,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
 
-	// OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user)
 	engineInit := config.OST_UPDATE_CONFIG_VALUE(CONFIG_ONE, "true")
-	test_decrypt(types.system_user.m_k.valAsBytes, enchistoryData)
 
 	switch (engineInit) 
 	{
@@ -151,9 +141,12 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, inituserName, OST_FILE_EXTENSION),
 	)
 
-	// //re-encrypt the secure collection
-	// OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
-	// OST_ENCRYPT_COLLECTION("", .SECURE_PRIVATE, types.user)
+
+	//Encrypt the the history, id, and new users secure collection
+	OST_ENCRYPT_COLLECTION("", .SECURE_PRIVATE, types.user)
+	OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user)
+	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, user)
+	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, user)
 
 	fmt.println("Please re-launch OstrichDB...")
 	return 0

@@ -58,17 +58,6 @@ OST_START_ENGINE :: proc() -> int {
 	switch (types.OstrichEngine.Initialized) 
 	{
 	case false:
-		//ENCRYPT CONFIG AND IDS PRIVATE COLLECTIONS
-		// fmt.println("types.syste,_user  @engine : ", types.system_user)
-		// if security.OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, types.system_user) != 0 { 	//ids
-		// 	fmt.printfln(const.encWarningMsg)
-		// 	os.exit(1)
-		// }
-
-		// if security.OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user) != 0 { 	//config
-		// 	fmt.printfln(const.encWarningMsg)
-		// 	os.exit(1)
-		// }
 		//Continue with engine initialization
 		security.OST_INIT_ADMIN_SETUP()
 		break
