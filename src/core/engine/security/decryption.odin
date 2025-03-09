@@ -8,6 +8,7 @@ import "core:crypto/aes"
 import "core:encoding/hex"
 import "core:fmt"
 import "core:math/rand"
+import "core:os"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -40,14 +41,42 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-OST_DECRYPT_COLLECTION :: proc(key, ciphertext: []u8) -> []u8 {
+OST_DECRYPT_COLLECTION :: proc(
+	colName: string,
+	colType: types.CollectionType,
+	key, ciphertext: []u8,
+) -> []u8 {
 	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
+	file: string
+
+	#partial switch (colType) {
+	case .STANDARD_PUBLIC:
+		file = utils.concat_collection_name(colName)
+		break
+	case .SECURE_PRIVATE:
+		file = fmt.tprintf(
+			"%ssecure_%s%s",
+			const.OST_SECURE_COLLECTION_PATH,
+			colName,
+			const.OST_FILE_EXTENSION,
+		)
+		break
+	case .CONFIG_PRIVATE:
+		file = const.OST_CONFIG_PATH
+		break
+	case .HISTORY_PRIVATE:
+		file = const.OST_HISTORY_PATH
+		break
+	case .ID_PRIVATE:
+		file = const.OST_ID_PATH
+		break
+	}
 	n := len(ciphertext) - aes.GCM_IV_SIZE - aes.GCM_TAG_SIZE //n is the size of the ciphertext minus 16 bytes for the iv then minus another 16 bytes for the tag
 	if n <= 0 do return nil //if n is less than or equal to 0 then return nil
 
 	aad: []u8 = nil
-	decryptedDataDestination := make([]u8, n) //allocate the size of the decrypted data that comes from the allocation context
+	decryptedData := make([]u8, n) //allocate the size of the decrypted data that comes from the allocation context
 	iv := ciphertext[:aes.GCM_IV_SIZE] //iv is the first 16 bytes
 	encryptedData := ciphertext[aes.GCM_IV_SIZE:][:n] //the actual encryptedData is the bytes after the iv
 	tag := ciphertext[aes.GCM_IV_SIZE + n:] // tag is the 16 bytes at the end of the ciphertext
@@ -55,18 +84,22 @@ OST_DECRYPT_COLLECTION :: proc(key, ciphertext: []u8) -> []u8 {
 	gcmContext: aes.Context_GCM
 	aes.init_gcm(&gcmContext, key) //initialize the gcm context with the key
 
-	if aes.open_gcm(&gcmContext, decryptedDataDestination, iv, aad, encryptedData, tag) {
+	if aes.open_gcm(&gcmContext, decryptedData, iv, aad, encryptedData, tag) {
 		fmt.println("Decryption successful")
-		return decryptedDataDestination
 	} else {
-		delete(decryptedDataDestination)
+		delete(decryptedData)
 		fmt.println("Failed to decrypt data")
 		return nil
 	}
 
 	aes.reset_gcm(&gcmContext)
 
-	return nil
+	//delete the decrypted file then create a new one with the same name and write the decrypted data to it
+	os.remove(file)
+	utils.write_to_file(file, decryptedData, #procedure)
+
+
+	return decryptedData
 }
 
 //TODO: one possible solution to actually storing the decrypted data into the file itself is to take the decrypted data that is in memory, delete the "decrypted" file, then make a new one in the same path

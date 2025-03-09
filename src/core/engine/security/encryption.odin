@@ -43,9 +43,7 @@ Decryption process :
 
 //user - user is passed so the the proc can access 1, the username, and 2, the users master key
 OST_ENCRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, key: []u8) -> []u8 {
-
 	file: string
-
 	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
 	switch (colType) {

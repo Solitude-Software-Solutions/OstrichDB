@@ -149,6 +149,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes)
 
+
 	fmt.println("Please re-launch OstrichDB...")
 	return 0
 }
