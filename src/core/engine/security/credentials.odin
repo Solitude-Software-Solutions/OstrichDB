@@ -134,19 +134,20 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-	// update metadata of the history collection and the secure collection
-	// OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user, tag)
+
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_HISTORY_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_ID_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(
 		fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, inituserName, OST_FILE_EXTENSION),
 	)
 
 
 	//Encrypt the the history, id, and new users secure collection
-	OST_ENCRYPT_COLLECTION("", .SECURE_PRIVATE, types.user)
+	OST_ENCRYPT_COLLECTION("", .SECURE_PRIVATE, user)
 	OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user)
-	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, user)
-	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, user)
+	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
+	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, types.system_user)
 
 	fmt.println("Please re-launch OstrichDB...")
 	return 0
