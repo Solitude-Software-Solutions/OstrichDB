@@ -73,12 +73,12 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 	libc.system("stty -echo")
 	initpassword := OST_GET_PASSWORD(true)
-	saltAsString := string(user.salt.valAsStr)
-	hashAsString := string(user.hashedPassword.valAsStr)
-	algoMethodAsString := strconv.itoa(buf[:], user.store_method)
+	saltAsString := string(user.salt.valAsBytes)
+	hashAsString := string(user.hashedPassword.valAsBytes)
+
+	algoMethodAsString := fmt.tprintf("%d", user.store_method)
 	user.user_id = data.OST_GENERATE_ID(true) //for secure clustser, the cluster id is the user id
 
-	// //Create then encrypt the History collection
 	OST_CREATE_COLLECTION("", .HISTORY_PRIVATE)
 	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
 	user.username.Value = inituserName
@@ -93,11 +93,11 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	//Create a secure collection for the user
 	inituserName = fmt.tprintf("secure_%s", inituserName)
-	OST_CREATE_COLLECTION(user.username.Value, .SECURE_PRIVATE)
+	OST_CREATE_COLLECTION(inituserName, .SECURE_PRIVATE)
 	mk := OST_GEN_MASTER_KEY()
-	types.user.m_k.valAsBytes = mk
 	mkAsString := transmute(string)mk
-	types.user.m_k.valAsStr = mkAsString
+	user.m_k.valAsBytes = mk
+	user.m_k.valAsStr = mkAsString
 
 	//Store all the user credentials within the secure collection
 	OST_STORE_USER_CREDS(
@@ -109,10 +109,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "role", "admin")
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "salt", saltAsString)
-
-	hashAsStr := transmute(string)user.hashedPassword.valAsBytes
-
-	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "hash", hashAsStr)
+	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "hash", hashAsString)
 	OST_STORE_USER_CREDS(
 		inituserName,
 		user.username.Value,
@@ -134,7 +131,6 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_HISTORY_PATH)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_ID_PATH)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
@@ -142,12 +138,16 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, inituserName, OST_FILE_EXTENSION),
 	)
 
-
 	//Encrypt the the history, id, and new users secure collection
-	OST_ENCRYPT_COLLECTION("", .SECURE_PRIVATE, user)
-	OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user)
-	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user)
-	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, types.system_user)
+	encData := OST_ENCRYPT_COLLECTION(
+		user.username.Value,
+		.SECURE_PRIVATE,
+		system_user.m_k.valAsBytes,
+	)
+
+	OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes)
 
 	fmt.println("Please re-launch OstrichDB...")
 	return 0
@@ -331,6 +331,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 
 			encodedPassword := OST_ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
 			user.hashedPassword.valAsBytes = encodedPassword
+
 		} else if isInitializing == false {
 			new_user.password.Length = len(p)
 			new_user.password.Value = strings.clone(p)
@@ -504,129 +505,129 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // creates a new user account post engine initialization
 //also determines if the currently logged in user has permission to create a new user account
 //allows for test mode to be used to create a new user without the need for interactive input
-OST_CREATE_NEW_USER :: proc(
-	username: string = "",
-	password: string = "",
-	role: string = "",
-) -> int {
-	using types
+// OST_CREATE_NEW_USER :: proc(
+// 	username: string = "",
+// 	password: string = "",
+// 	role: string = "",
+// ) -> int {
+// 	using types
 
-	buf: [1024]byte
-	if user.role.Value == "admin" {
-		fmt.println("Please enter role you would like to assign the new account")
-		fmt.printf("1. Admin\n2. User\n3. Guest\n")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			fmt.printfln("Error reading input")
-			return 1
-		}
+// 	buf: [1024]byte
+// 	if user.role.Value == "admin" {
+// 		fmt.println("Please enter role you would like to assign the new account")
+// 		fmt.printf("1. Admin\n2. User\n3. Guest\n")
+// 		n, inputSuccess := os.read(os.stdin, buf[:])
+// 		if inputSuccess != 0 {
+// 			fmt.printfln("Error reading input")
+// 			return 1
+// 		}
 
-		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
-		if inputToCap == "1" || inputToCap == "ADMIN" {
-			new_user.role.Value = "admin"
-		} else if inputToCap == "2" || inputToCap == "USER" {
-			new_user.role.Value = "user"
-		} else if inputToCap == "3" || inputToCap == "GUEST" {
-			new_user.role.Value = "guest"
-		} else {
-			fmt.printfln("Invalid role entered")
-			return 1
-		}
-	} else if (user.role.Value == "user") {
-		new_user.role.Value = "guest"
-	} else {
-		fmt.println("You do not have the required permissions to create a new account")
-		fmt.printfln("To create a new account you must be logged in as an admin or user account")
-		return 1
-	}
+// 		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
+// 		if inputToCap == "1" || inputToCap == "ADMIN" {
+// 			new_user.role.Value = "admin"
+// 		} else if inputToCap == "2" || inputToCap == "USER" {
+// 			new_user.role.Value = "user"
+// 		} else if inputToCap == "3" || inputToCap == "GUEST" {
+// 			new_user.role.Value = "guest"
+// 		} else {
+// 			fmt.printfln("Invalid role entered")
+// 			return 1
+// 		}
+// 	} else if (user.role.Value == "user") {
+// 		new_user.role.Value = "guest"
+// 	} else {
+// 		fmt.println("You do not have the required permissions to create a new account")
+// 		fmt.printfln("To create a new account you must be logged in as an admin or user account")
+// 		return 1
+// 	}
 
-	newUserName := OST_GET_USERNAME(false)
-	new_user.username.Value = newUserName
-
-
-	// Common validation logic for both test and interactive modes
-	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(new_user.username.Value)
-	if isBannedUsername {
-		fmt.printfln("Username is banned. Please enter a different username")
-		fmt.println("Cannot create user with name: ", new_user.username.Value)
-		return 1
-	}
-
-	newColName := fmt.tprintf("secure_%s", new_user.username.Value)
-	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
-
-	if exists {
-		fmt.printfln(
-			"There is already a user with the name: %s%s%s\nPlease try again.",
-			utils.BOLD_UNDERLINE,
-			new_user.username.Value,
-			utils.RESET,
-		)
-		return 1
-	}
-
-	result := data.OST_CREATE_COLLECTION(newColName, .SECURE_PRIVATE)
-	fmt.printf(
-		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
-	)
-	libc.system("stty -echo")
-	initpassword := OST_GET_PASSWORD(false)
-	libc.system("stty echo")
-	new_user.password.Value = initpassword
+// 	newUserName := OST_GET_USERNAME(false)
+// 	new_user.username.Value = newUserName
 
 
-	saltAsString := string(new_user.salt.valAsStr)
-	hashAsString := string(new_user.hashedPassword.valAsStr)
-	algoMethodAsString := strconv.itoa(buf[:], new_user.store_method)
+// 	// Common validation logic for both test and interactive modes
+// 	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(new_user.username.Value)
+// 	if isBannedUsername {
+// 		fmt.printfln("Username is banned. Please enter a different username")
+// 		fmt.println("Cannot create user with name: ", new_user.username.Value)
+// 		return 1
+// 	}
 
-	new_user.user_id = data.OST_GENERATE_ID(true)
+// 	newColName := fmt.tprintf("secure_%s", new_user.username.Value)
+// 	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
 
-	//store the id to both clusters in the id collection
-	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 0)
-	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 1)
+// 	if exists {
+// 		fmt.printfln(
+// 			"There is already a user with the name: %s%s%s\nPlease try again.",
+// 			utils.BOLD_UNDERLINE,
+// 			new_user.username.Value,
+// 			utils.RESET,
+// 		)
+// 		return 1
+// 	}
 
-	// Store user credentials
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"user_name",
-		new_user.username.Value,
-	)
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"role",
-		new_user.role.Value,
-	)
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"salt",
-		saltAsString,
-	)
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"hash",
-		hashAsString,
-	)
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"store_method",
-		algoMethodAsString,
-	)
+// 	result := data.OST_CREATE_COLLECTION(newColName, .SECURE_PRIVATE)
+// 	fmt.printf(
+// 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
+// 	)
+// 	libc.system("stty -echo")
+// 	initpassword := OST_GET_PASSWORD(false)
+// 	libc.system("stty echo")
+// 	new_user.password.Value = initpassword
 
-	// Create history cluster.
-	data.OST_CREATE_CLUSTER_BLOCK(const.OST_HISTORY_PATH, user.user_id, new_user.username.Value)
 
-	return 0
-}
+// 	saltAsString := string(new_user.salt.valAsStr)
+// 	hashAsString := string(new_user.hashedPassword.valAsStr)
+// 	algoMethodAsString := strconv.itoa(buf[:], new_user.store_method)
+
+// 	new_user.user_id = data.OST_GENERATE_ID(true)
+
+// 	//store the id to both clusters in the id collection
+// 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 0)
+// 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 1)
+
+// 	// Store user credentials
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"user_name",
+// 		new_user.username.Value,
+// 	)
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"role",
+// 		new_user.role.Value,
+// 	)
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"salt",
+// 		saltAsString,
+// 	)
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"hash",
+// 		hashAsString,
+// 	)
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"store_method",
+// 		algoMethodAsString,
+// 	)
+
+// 	// Create history cluster.
+// 	data.OST_CREATE_CLUSTER_BLOCK(const.OST_HISTORY_PATH, user.user_id, new_user.username.Value)
+
+// 	return 0
+// }
 
 //Checks that un as username is not a banned username from the banned usernames list
 OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {

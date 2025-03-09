@@ -42,14 +42,10 @@ Decryption process :
 */
 
 //user - user is passed so the the proc can access 1, the username, and 2, the users master key
-OST_ENCRYPT_COLLECTION :: proc(
-	colName: string,
-	colType: types.CollectionType,
-	user: types.User,
-) -> []u8 {
+OST_ENCRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, key: []u8) -> []u8 {
 
 	file: string
-	key := user.m_k.valAsBytes
+
 	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
 	switch (colType) {
@@ -58,17 +54,12 @@ OST_ENCRYPT_COLLECTION :: proc(
 		file = utils.concat_collection_name(colName)
 	case .SECURE_PRIVATE:
 		//Private Secure Collection
-		if user.username.Value == "OstrichDB" {
-			//If the user is the system user, break..This proc will not need to do anything with the file if the user is the system user
-			break
-		} else {
-			file = fmt.tprintf(
-				"%ssecure_%s%s",
-				const.OST_SECURE_COLLECTION_PATH,
-				user.username.Value,
-				const.OST_FILE_EXTENSION,
-			)
-		}
+		file = fmt.tprintf(
+			"%ssecure_%s%s",
+			const.OST_SECURE_COLLECTION_PATH,
+			colName,
+			const.OST_FILE_EXTENSION,
+		)
 	case .CONFIG_PRIVATE:
 		//Private Config Collection
 		file = const.OST_CONFIG_PATH
@@ -84,22 +75,9 @@ OST_ENCRYPT_COLLECTION :: proc(
 		return []u8{}
 	}
 
-	//Evalauete what master key to use based on collection type
-	#partial switch (colType) {
-	case .STANDARD_PUBLIC:
-		//Standard(public) collections
-		break
-	case .SECURE_PRIVATE, .CONFIG_PRIVATE, .HISTORY_PRIVATE, .ID_PRIVATE:
-		// Private collections only OstrichDB has access to
-		key = types.system_user.m_k.valAsBytes
-	case:
-		fmt.printfln("Invalid File Type Passed in procedure: %s", #procedure)
-		return []u8{}
-	}
-
-
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
+		fmt.printfln("Failed to read file: %s", file)
 		return []u8{}
 	}
 	defer delete(data)
@@ -134,10 +112,9 @@ OST_ENCRYPT_COLLECTION :: proc(
 	writeSuccess := utils.write_to_file(file, dst, #procedure) //write the encrypted data to the file
 
 	if !writeSuccess {
+		fmt.printfln("Failed to write to file: %s", file)
 		return []u8{}
 	}
 
 	return dst //return the encrypted data
-
-
 }
