@@ -108,7 +108,14 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			utils.log_err("Could not read user input from command line", #procedure)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
+		security.OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		OST_APPEND_COMMAND_TO_HISTORY(input)
+		security.OST_ENCRYPT_COLLECTION(
+			"",
+			.HISTORY_PRIVATE,
+			types.system_user.m_k.valAsBytes,
+			true,
+		)
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
 
