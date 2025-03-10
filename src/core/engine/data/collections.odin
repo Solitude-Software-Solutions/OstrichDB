@@ -300,7 +300,7 @@ OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	switch (type) {
 	case 0:
-		colPath, openSuccess := os.open(const.OST_PUBLIC_PATH)
+		colPath, openSuccess := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
 		collections, readSuccess := os.read_dir(colPath, -1)
 
 		for collection in collections {
