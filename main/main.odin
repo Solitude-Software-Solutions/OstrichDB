@@ -50,7 +50,20 @@ main :: proc() {
 	//Print the Ostrich logo and version
 	version := string(get_ost_version())
 	fmt.println(fmt.tprintf(ostrich_art, BLUE, version, RESET))
-	OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+
+	//Check if the config collection is already encrypted
+	isEncrypted, _ := OST_ENCRYPT_COLLECTION(
+		"",
+		.CONFIG_PRIVATE,
+		types.system_user.m_k.valAsBytes,
+		true,
+	)
+
+	if isEncrypted == 2 {
+		OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	}
+
+
 	if data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, BOOLEAN, CONFIG_ONE) == "true" {
 		OstrichEngine.Initialized = true
 		log_runtime_event("OstrichDB Engine Initialized", "")
