@@ -116,6 +116,3 @@ OST_DECRYPT_COLLECTION :: proc(
 
 	return 0, decryptedData
 }
-
-//TODO: one possible solution to actually storing the decrypted data into the file itself is to take the decrypted data that is in memory, delete the "decrypted" file, then make a new one in the same path
-// with the same name and write the decrypted data to it. This would be a good way to ensure that the decrypted data is not stored in memory for long periods of time
