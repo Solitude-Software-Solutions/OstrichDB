@@ -1417,6 +1417,7 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 	records: [dynamic]string
 	histBuf: [1024]byte
 
+
 	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
 	defer delete(data)
 	if !readSuccess {
@@ -1434,7 +1435,7 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 					parts := strings.split(line, ":COMMAND:")
 					if len(parts) >= 2 {
 						value := strings.trim_space(parts[1])
-						append(&records, value)
+						append(&records, strings.clone(value))
 					}
 				}
 			}
