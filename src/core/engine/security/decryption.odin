@@ -41,7 +41,14 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-OST_DECRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, key: []u8) -> []u8 {
+OST_DECRYPT_COLLECTION :: proc(
+	colName: string,
+	colType: types.CollectionType,
+	key: []u8,
+) -> (
+	success: int,
+	decData: []u8,
+) {
 	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
 	file: string
@@ -70,10 +77,14 @@ OST_DECRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, k
 	}
 
 
-	ciphertext, success := utils.read_file(file, #procedure)
+	ciphertext, readSuccess := utils.read_file(file, #procedure)
+	if !readSuccess {
+		fmt.println("Failed to read file")
+		return -1, nil
+	}
 
 	n := len(ciphertext) - aes.GCM_IV_SIZE - aes.GCM_TAG_SIZE //n is the size of the ciphertext minus 16 bytes for the iv then minus another 16 bytes for the tag
-	if n <= 0 do return nil //if n is less than or equal to 0 then return nil
+	if n <= 0 do return -2, nil //if n is less than or equal to 0 then return nil
 
 	aad: []u8 = nil
 	decryptedData := make([]u8, n) //allocate the size of the decrypted data that comes from the allocation context
@@ -89,17 +100,21 @@ OST_DECRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, k
 	} else {
 		delete(decryptedData)
 		fmt.println("Failed to decrypt data")
-		return nil
+		return -3, nil
 	}
 
 	aes.reset_gcm(&gcmContext)
 
 	//delete the decrypted file then create a new one with the same name and write the decrypted data to it
 	os.remove(file)
-	utils.write_to_file(file, decryptedData, #procedure)
+	writeSuccess := utils.write_to_file(file, decryptedData, #procedure)
+	if !writeSuccess {
+		fmt.println("Failed to write to file")
+		return -4, nil
+	}
 
 
-	return decryptedData
+	return 0, decryptedData
 }
 
 //TODO: one possible solution to actually storing the decrypted data into the file itself is to take the decrypted data that is in memory, delete the "decrypted" file, then make a new one in the same path

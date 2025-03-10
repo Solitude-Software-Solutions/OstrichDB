@@ -41,8 +41,15 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-//user - user is passed so the the proc can access 1, the username, and 2, the users master key
-OST_ENCRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, key: []u8) -> []u8 {
+
+OST_ENCRYPT_COLLECTION :: proc(
+	colName: string,
+	colType: types.CollectionType,
+	key: []u8,
+) -> (
+	success: int,
+	encData: []u8,
+) {
 	file: string
 	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
@@ -70,13 +77,13 @@ OST_ENCRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, k
 	//case 5: Todo: Add case for benchmark collections and quarantine collections
 	case:
 		fmt.printfln("Invalid File Type Passed in procedure: %s", #procedure)
-		return []u8{}
+		return -1, nil
 	}
 
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
 		fmt.printfln("Failed to read file: %s", file)
-		return []u8{}
+		return -2, nil
 	}
 	defer delete(data)
 
@@ -89,9 +96,6 @@ OST_ENCRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, k
 	encryptedData := dst[aes.GCM_IV_SIZE:][:n] //set the actual encrypted data to the bytes after the iv
 	tag := dst[aes.GCM_IV_SIZE + n:] //set the tag to the 16 bytes at the end of the buffer
 
-
-	// fmt.println("dst: ", dst) //debugging
-
 	crypto.rand_bytes(iv) //generate a random iv
 
 	gcmContext: aes.Context_GCM //create a gcm context
@@ -99,20 +103,13 @@ OST_ENCRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, k
 
 
 	aes.seal_gcm(&gcmContext, encryptedData, tag, iv, aad, data) //encrypt the data
-	// fmt.println("encryptedData: ", encryptedData) //debugging
-	// fmt.println("============================================================")
-	// fmt.println("Showing encryption results of file: ", file) //debugging
-	// fmt.println("master key @ encryption: ", key) //debugging
-	// fmt.println("iv: @ encryption", iv) //debugging
-	// fmt.println("aad: @ encryption", aad) //debugging
-	// fmt.println("tag @ encryption: ", tag) //debugging
 
 	writeSuccess := utils.write_to_file(file, dst, #procedure) //write the encrypted data to the file
 
 	if !writeSuccess {
 		fmt.printfln("Failed to write to file: %s", file)
-		return []u8{}
+		return -3, nil
 	}
 
-	return dst //return the encrypted data
+	return 0, dst
 }

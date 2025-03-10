@@ -8,6 +8,7 @@ import "../data"
 import "../data/metadata"
 import "core:c/libc"
 import "core:crypto/hash"
+import "core:encoding/hex"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
@@ -94,10 +95,18 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	//Create a secure collection for the user
 	inituserName = fmt.tprintf("secure_%s", inituserName)
 	OST_CREATE_COLLECTION(inituserName, .SECURE_PRIVATE)
+	// OST_GEN_MASTER_KEY returns a 32 byte master key that is hex encoded
 	mk := OST_GEN_MASTER_KEY()
-	mkAsString := transmute(string)mk
-	user.m_k.valAsBytes = mk
-	user.m_k.valAsStr = mkAsString
+	mkAsString := transmute(string)mk //dont worry about this
+	// user.m_k.valAsStr = mkAsString //dont worry about this
+
+	//this value is passed to my encryption and decryption functions. must be 32 bytes
+	user.m_k.valAsBytes = OST_DECODE_M_K(mk)
+
+
+	fmt.println("length of user.m_k.valAsBytes during setup: ", len(user.m_k.valAsBytes))
+	fmt.println("user.m_k.valAsBytes during setup: ", user.m_k.valAsBytes)
+	fmt.println("user.m_k.valAsStr during setup: ", user.m_k.valAsStr)
 
 	//Store all the user credentials within the secure collection
 	OST_STORE_USER_CREDS(
@@ -139,7 +148,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 
 	//Encrypt the the history, id, and new users secure collection
-	OST_ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes)
+	// OST_ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes)
 	OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes)

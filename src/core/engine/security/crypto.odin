@@ -197,7 +197,7 @@ OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 }
 
 
-//used to generate a 256 bit master key for each user
+//used to generate a 256 bit master key for each user, encodes it to hexidecimal, then returns it as a 64 byte array
 OST_GEN_MASTER_KEY :: proc() -> []byte {
 	key := make([]byte, 32)
 	// Fill the buffer with random bytes
@@ -206,11 +206,15 @@ OST_GEN_MASTER_KEY :: proc() -> []byte {
 	}
 
 
-	encodedKey := hex.encode(key)
+	encodedKey := hex.encode(key) //encode the key to us hexidecimal characters
 	return encodedKey
 }
 
-
-OST_M_K_STIRNG_TO_BYTE :: proc(m_k: string) -> []byte {
-	return transmute([]byte)m_k
+OST_DECODE_M_K :: proc(m_k: []byte) -> []byte {
+	decodedKey, _ := hex.decode(m_k)
+	return decodedKey
 }
+
+// OST_M_K_STIRNG_TO_BYTE :: proc(m_k: string) -> []byte {
+// 	return transmute([]byte)m_k
+// }

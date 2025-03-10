@@ -87,6 +87,15 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		user.role.Value = "guest"
 	}
 
+	//Voodoo??
+	userMKStr := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "m_k")
+	// user.m_k.valAsStr = userMKStr
+	user.m_k.valAsBytes = OST_DECODE_M_K(transmute([]byte)userMKStr)
+
+	fmt.println("length of user.m_k.valAsBytes during auth: ", len(user.m_k.valAsBytes))
+	fmt.println("user.m_k.valAsBytes during auth: ", user.m_k.valAsBytes)
+	fmt.println("user.m_k.valAsStr during auth: ", userMKStr)
+
 	if (userNameFound != usernameCapitalized) {
 		error2 := new_err(
 			.ENTERED_USERNAME_NOT_FOUND,
@@ -171,6 +180,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		USER_SIGNIN_STATUS = true
 		current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
+
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
 			OST_CONFIG_PATH,
 			CONFIG_CLUSTER,
@@ -186,9 +196,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			"m_k",
 		)
 
-		mkValueAsBytes := security.OST_M_K_STIRNG_TO_BYTE(mkValueRead)
-		current_user.m_k.valAsStr = strings.clone(mkValueRead)
-		current_user.m_k.valAsBytes = mkValueAsBytes
+		// mkValueAsBytes := security.OST_M_K_STIRNG_TO_BYTE(mkValueRead)
+		current_user.m_k.valAsStr = user.m_k.valAsStr
+		current_user.m_k.valAsBytes = user.m_k.valAsBytes
 
 
 		if userLoggedInValue == "false" {
