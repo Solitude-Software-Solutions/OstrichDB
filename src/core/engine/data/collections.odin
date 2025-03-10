@@ -401,7 +401,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 	using const
 
-	collectionsDir, errOpen := os.open(OST_PUBLIC_PATH)
+	collectionsDir, errOpen := os.open(OST_PUBLIC_STANDARD_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -419,7 +419,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 	fmt.printf("\n")
 	fmt.printf("\n")
 	if len(foundFiles) == 1 {
-		fmt.println("Found 1 collection\n--------------------------------", len(collectionNames))
+		fmt.println("Found 1 collection\n--------------------------------")
 	} else {
 		fmt.printfln(
 			"Found %d collections\n--------------------------------",
@@ -451,6 +451,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 			append(&collectionNames, file.name)
 			withoutExt := strings.split(file.name, OST_FILE_EXTENSION)
 			fmt.println(withoutExt[0])
+			fmt.println("")
 			OST_LIST_CLUSTERS_IN_FILE(withoutExt[0], showRecords)
 		}
 	}
