@@ -114,7 +114,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			"",
 			.HISTORY_PRIVATE,
 			types.system_user.m_k.valAsBytes,
-			true,
+			false,
 		)
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging

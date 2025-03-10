@@ -104,8 +104,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// Shows the current users past command history
 	case HISTORY:
 		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
+		OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
 
+		OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		for cmd, index in commandHistory {
 			fmt.printfln("%d: %s", index + 1, cmd)
 		}
@@ -136,6 +138,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		// parses the command that has been stored in the most recent command history index. Crucial for the HISTORY command
 		cmd := OST_PARSE_COMMAND(commandHistory[commandIndex])
 		OST_EXECUTE_COMMAND(&cmd)
+
+
+		delete(commandHistory)
 		break
 	//HISTORY CLUSTER FUCK END :)
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
