@@ -318,7 +318,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//NEW: Allows for the creation of new records, clusters, or collections
 	case NEW:
-		fmt.println("current_user: ", types.current_user)
+		// fmt.println("current_user: ", types.current_user)
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case 1:

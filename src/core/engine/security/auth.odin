@@ -92,10 +92,6 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	// user.m_k.valAsStr = userMKStr
 	user.m_k.valAsBytes = OST_DECODE_M_K(transmute([]byte)userMKStr)
 
-	fmt.println("length of user.m_k.valAsBytes during auth: ", len(user.m_k.valAsBytes))
-	fmt.println("user.m_k.valAsBytes during auth: ", user.m_k.valAsBytes)
-	fmt.println("user.m_k.valAsStr during auth: ", userMKStr)
-
 	if (userNameFound != usernameCapitalized) {
 		error2 := new_err(
 			.ENTERED_USERNAME_NOT_FOUND,

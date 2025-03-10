@@ -103,11 +103,6 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	//this value is passed to my encryption and decryption functions. must be 32 bytes
 	user.m_k.valAsBytes = OST_DECODE_M_K(mk)
 
-
-	fmt.println("length of user.m_k.valAsBytes during setup: ", len(user.m_k.valAsBytes))
-	fmt.println("user.m_k.valAsBytes during setup: ", user.m_k.valAsBytes)
-	fmt.println("user.m_k.valAsStr during setup: ", user.m_k.valAsStr)
-
 	//Store all the user credentials within the secure collection
 	OST_STORE_USER_CREDS(
 		inituserName,
