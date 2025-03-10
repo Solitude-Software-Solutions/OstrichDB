@@ -41,11 +41,7 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-OST_DECRYPT_COLLECTION :: proc(
-	colName: string,
-	colType: types.CollectionType,
-	key, ciphertext: []u8,
-) -> []u8 {
+OST_DECRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, key: []u8) -> []u8 {
 	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
 	file: string
@@ -72,6 +68,10 @@ OST_DECRYPT_COLLECTION :: proc(
 		file = const.OST_ID_PATH
 		break
 	}
+
+
+	ciphertext, success := utils.read_file(file, #procedure)
+
 	n := len(ciphertext) - aes.GCM_IV_SIZE - aes.GCM_TAG_SIZE //n is the size of the ciphertext minus 16 bytes for the iv then minus another 16 bytes for the tag
 	if n <= 0 do return nil //if n is less than or equal to 0 then return nil
 

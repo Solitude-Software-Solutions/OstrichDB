@@ -139,16 +139,10 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 
 	//Encrypt the the history, id, and new users secure collection
-	encData := OST_ENCRYPT_COLLECTION(
-		user.username.Value,
-		.SECURE_PRIVATE,
-		system_user.m_k.valAsBytes,
-	)
-
+	OST_ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes)
 	OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes)
-
 
 	fmt.println("Please re-launch OstrichDB...")
 	return 0

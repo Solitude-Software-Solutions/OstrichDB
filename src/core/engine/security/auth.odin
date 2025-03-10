@@ -55,12 +55,23 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	usernameCapitalized := strings.to_upper(userName)
 
 	found, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
+	if !found {
+		fmt.printfln(
+			"There is no account within OstrichDB associated with the entered username. Please try again.",
+		)
+		log_err("User entered a username that does not exist in the database", #procedure)
+		return false
+	}
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
 		OST_SECURE_COLLECTION_PATH,
 		userName,
 		OST_FILE_EXTENSION,
 	)
+
+	//decrypt the user secure collection
+	OST_DECRYPT_COLLECTION(usernameCapitalized, .SECURE_PRIVATE, types.system_user.m_k.valAsBytes)
+
 	userNameFound := data.OST_READ_RECORD_VALUE(
 		secColPath,
 		usernameCapitalized,
@@ -123,9 +134,13 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	libc.system("stty -echo")
 	n, inputSuccess = os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error3 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #file,
-		#procedure,
-		#line,)
+		error3 := new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error3)
 		log_err("Could not read user input during sign in", #procedure)
 		libc.system("stty echo")
@@ -187,6 +202,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		OST_RUN_SIGNIN()
 
 	}
+	OST_ENCRYPT_COLLECTION(usernameCapitalized, .SECURE_PRIVATE, types.system_user.m_k.valAsBytes)
 	return USER_SIGNIN_STATUS
 
 }
@@ -217,7 +233,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param)
+		switch (param) 
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false
