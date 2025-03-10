@@ -524,7 +524,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
-			filePath := fmt.tprintf("%s%s%s", OST_PUBLIC_PATH, collectionName, OST_FILE_EXTENSION)
+			colPath := fmt.tprintf(
+				"%s%s%s",
+				OST_PUBLIC_STANDARD_COLLECTION_PATH,
+				collectionName,
+				OST_FILE_EXTENSION,
+			)
 
 			if OF_TYPE in cmd.p_token && cmd.isUsingDotNotation == true {
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[OF_TYPE])
@@ -541,7 +546,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 
 					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
-						filePath,
+						colPath,
 						clusterName,
 						recordName,
 						"",
@@ -563,7 +568,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						//IF a records type is NULL, technically it cant hold a value, the word NULL in the value slot
 						// of a record is mostly a placeholder
 						if rType == NULL {
-							data.OST_SET_RECORD_VALUE(filePath, clusterName, recordName, NULL)
+							data.OST_SET_RECORD_VALUE(colPath, clusterName, recordName, NULL)
 						}
 
 						fn := concat_collection_name(collectionName)
@@ -2427,7 +2432,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			//--------------Permissions Security stuff End----------------//
 
-			colPath := fmt.tprintf("%s%s%s", OST_PUBLIC_PATH, collectionName, OST_FILE_EXTENSION)
+			colPath := fmt.tprintf(
+				"%s%s%s",
+				OST_PUBLIC_STANDARD_COLLECTION_PATH,
+				collectionName,
+				OST_FILE_EXTENSION,
+			)
 			rType, success := data.OST_GET_RECORD_TYPE(colPath, clusterName, recordName)
 			if !success {
 				fmt.printfln(
