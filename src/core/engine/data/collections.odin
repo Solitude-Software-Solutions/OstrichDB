@@ -327,7 +327,12 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 
 
 OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
-	colPath := fmt.tprintf("%s%s%s", const.OST_PUBLIC_PATH, old, const.OST_FILE_EXTENSION)
+	colPath := fmt.tprintf(
+		"%s%s%s",
+		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
+		old,
+		const.OST_FILE_EXTENSION,
+	)
 
 	file, readSuccess := os.read_entire_file_from_filename(colPath)
 	if !readSuccess {
@@ -558,6 +563,7 @@ OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm:
 		fmt.printfln("Invalid flag provided")
 		return false, ""
 	}
+	fmt.printfln("%s() is getting... fn:%s, val:%s, flag:%s ", #procedure, fn, val, flag)
 	success := metadata.OST_CHANGE_METADATA_VALUE(fn, val, 1, .STANDARD_PUBLIC)
 	return success, val
 }

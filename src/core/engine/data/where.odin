@@ -34,7 +34,7 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 		return false
 	}
 
-	collectionsDir, errOpen := os.open(OST_PUBLIC_PATH)
+	collectionsDir, errOpen := os.open(OST_PUBLIC_STANDARD_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -52,7 +52,7 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 	// Search through collections
 	for collection in collectionNames {
 		if target == CLUSTER {
-			collectionPath := fmt.tprintf("%s%s", OST_PUBLIC_PATH, collection)
+			collectionPath := fmt.tprintf("%s%s", OST_PUBLIC_STANDARD_COLLECTION_PATH, collection)
 			if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
 				fmt.printfln(
 					"Cluster: %s%s%s -> Collection: %s%s%s",
@@ -96,7 +96,7 @@ OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
 	using utils
 	using const
 
-	collectionsDir, errOpen := os.open(OST_PUBLIC_PATH)
+	collectionsDir, errOpen := os.open(OST_PUBLIC_STANDARD_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -113,7 +113,7 @@ OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
 
 	// Search through collections
 	for collection in collectionNames {
-		collectionPath := fmt.tprintf("%s%s", OST_PUBLIC_PATH, collection)
+		collectionPath := fmt.tprintf("%s%s", OST_PUBLIC_STANDARD_COLLECTION_PATH, collection)
 
 		// Check if it's a cluster name
 		if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {

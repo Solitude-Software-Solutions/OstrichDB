@@ -32,8 +32,9 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 		user.username.Value,
 		const.OST_FILE_EXTENSION,
 	)
-	// fmt.println("User Collection: ", userCollection) //debugging
+	fmt.println("User Collection: ", userCollection) //debugging
 	userCluster := strings.to_upper(user.username.Value)
+	fmt.println("User Cluster: ", userCluster) //debugging
 	isAdmin := false
 
 	userRoleVal := data.OST_READ_RECORD_VALUE(userCollection, userCluster, "identifier", "role")
@@ -183,8 +184,14 @@ OST_OPERATION_IS_ALLOWED :: proc(
 
 
 //Handles all the logic from above and returns a 1 if the user does not have permission to perform the passed in operation
+//Performs Decryption of the secure collection, performs the check the re-encrypts the users secure collection
 OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) -> int {
 	// fmt.println("Getting passed colName: ", colName) //debugging
+	// OST_DECRYPT_COLLECTION(
+	// 	types.current_user.username.Value,
+	// 	.SECURE_PRIVATE,
+	// 	types.system_user.m_k.valAsBytes,
+	// )
 	//Get the operation permission for the command
 	commandOperation := OST_SET_OPERATION_PERMISSIONS(command)
 	// fmt.println("commandOperation: ", commandOperation) //debugging
@@ -208,9 +215,22 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 				utils.YELLOW,
 				utils.RESET,
 			)
+			OST_ENCRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				false,
+			)
 			return 1
 		}
 	}
+
+	OST_ENCRYPT_COLLECTION(
+		types.current_user.username.Value,
+		.SECURE_PRIVATE,
+		types.system_user.m_k.valAsBytes,
+		false,
+	)
 	return 0
 }
 
@@ -218,6 +238,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
 	lockStatus, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+	fmt.println("lockstatus: ", lockStatus) //debugging
 	// fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
 	// fmt.println("Permission Value from collection file: ", lockStatus) //debugging
 	if lockStatus == "Read-Only" || lockStatus == "Inaccessible" {
