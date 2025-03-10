@@ -50,6 +50,7 @@ main :: proc() {
 	//Print the Ostrich logo and version
 	version := string(get_ost_version())
 	fmt.println(fmt.tprintf(ostrich_art, BLUE, version, RESET))
+	OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	if data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, BOOLEAN, CONFIG_ONE) == "true" {
 		OstrichEngine.Initialized = true
 		log_runtime_event("OstrichDB Engine Initialized", "")
@@ -60,6 +61,7 @@ main :: proc() {
 	// server.OST_START_SERVER(Config) //When testing the server, uncomment this line and comment out the client.OST_TEST_CLIENT(Config) line
 	// }
 	// client.OST_TEST_CLIENT(Config) //When testing the client, uncomment this line and comment out the server.OST_START_SERVER(Config) line
+	OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	fmt.println("Starting OstrichDB DBMS")
 	engine.OST_START_ENGINE()
 
