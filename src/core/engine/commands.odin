@@ -340,6 +340,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						cmd.l_token[0],
 						.STANDARD_PUBLIC,
 						types.current_user.m_k.valAsBytes,
+						false,
 					)
 				} else {
 					fmt.printf(
@@ -460,6 +461,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
+					false,
 				)
 			} else {
 				fmt.printfln(
@@ -604,6 +606,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case:
@@ -721,6 +724,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					newName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
+					false,
 				)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: RENAME <old_name> TO <new_name>")
@@ -810,6 +814,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 3:
@@ -913,6 +918,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		}
@@ -973,6 +979,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 2:
@@ -1056,6 +1063,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 3:
@@ -1136,6 +1144,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		// case USER:
@@ -1247,6 +1256,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 2:
@@ -1298,6 +1308,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 3:
@@ -1378,7 +1389,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Targets_name>")
 			log_runtime_event("Invalid FETCH command", "User did not provide a valid target.")
 		}
-		OST_ENCRYPT_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+		OST_ENCRYPT_COLLECTION(
+			cmd.l_token[0],
+			.STANDARD_PUBLIC,
+			types.current_user.m_k.valAsBytes,
+			false,
+		)
 		break
 	// SET: Allows for the setting of values within records or configs
 	case SET:
@@ -1522,6 +1538,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 1:
@@ -1670,7 +1687,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
 					)
 				}
-				OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.current_user.m_k.valAsBytes)
+				OST_ENCRYPT_COLLECTION(
+					"",
+					.CONFIG_PRIVATE,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
 				break
 			}
 		case:
@@ -1785,6 +1807,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case RECORDS:
@@ -1878,6 +1901,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
+					false,
 				)
 			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true {
 				//in the event the user is counting all records in a collection
@@ -1964,6 +1988,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		}
@@ -2026,6 +2051,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 2:
@@ -2093,6 +2119,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 3:
@@ -2115,6 +2142,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			//--------------Permissions Security stuff Start----------------//
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -2165,6 +2193,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		}
@@ -2221,6 +2250,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 2:
@@ -2280,6 +2310,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case 3:
@@ -2345,7 +2376,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Invalid SIZE_OF command. Use SIZE_OF COLLECTION, SIZE_OF CLUSTER, or SIZE_OF RECORD.",
 			)
 		}
-		OST_ENCRYPT_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+		OST_ENCRYPT_COLLECTION(
+			cmd.l_token[0],
+			.STANDARD_PUBLIC,
+			types.current_user.m_k.valAsBytes,
+			false,
+		)
 		break
 	// TYPE_OF: Allows for the retrieval of the type of a record
 	case TYPE_OF:
@@ -2419,7 +2455,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 
 		}
-		OST_ENCRYPT_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+		OST_ENCRYPT_COLLECTION(
+			cmd.l_token[0],
+			.STANDARD_PUBLIC,
+			types.current_user.m_k.valAsBytes,
+			false,
+		)
 		break
 	// CHANGE_TYPE: Allows for the changing of a record's type
 	case CHANGE_TYPE:
@@ -2447,6 +2488,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
+					false,
 				)
 				//--------------Permissions Security stuff Start----------------//
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
@@ -2598,7 +2640,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			break
 		}
-		OST_ENCRYPT_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+		OST_ENCRYPT_COLLECTION(
+			cmd.l_token[0],
+			.STANDARD_PUBLIC,
+			types.current_user.m_k.valAsBytes,
+			false,
+		)
 		break
 	//VALIDATE: Runs the data integrity check on a collection, if it passes GTG, if the the collection is isolated
 	case VALIDATE:
@@ -2657,7 +2704,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 		}
-		OST_ENCRYPT_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+		OST_ENCRYPT_COLLECTION(
+			cmd.l_token[0],
+			.STANDARD_PUBLIC,
+			types.current_user.m_k.valAsBytes,
+			false,
+		)
 		break
 	//BENCHMARK: Runs the benchmarking suite with or without parameters
 	case BENCHMARK:
@@ -2709,9 +2761,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 
 			OST_DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+
 			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
 
 			//next make sure the "locker" is an admin
+			OST_DECRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+			)
 			isAdmin := security.OST_CHECK_ADMIN_STATUS(&types.current_user)
 
 			if !isAdmin {
@@ -2782,7 +2840,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			}
 
-			OST_ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+
+			OST_ENCRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				false,
+			)
+
+			OST_ENCRYPT_COLLECTION(
+				colName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 2:
 			colName := cmd.l_token[0]
@@ -2812,7 +2883,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Incomplete command. Correct Usage: LOCK <collection_name> or LOCK <collection_name> -{flag}",
 			)
 		}
-		OST_ENCRYPT_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+		OST_ENCRYPT_COLLECTION(
+			cmd.l_token[0],
+			.STANDARD_PUBLIC,
+			types.current_user.m_k.valAsBytes,
+			false,
+		)
 		break
 	case UNLOCK:
 		//TODO: only admin users can use the UNLOCK command, this may change in the future but for now it is locked to admin users
@@ -2821,8 +2897,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			colName := cmd.l_token[0]
 			//check that a collection is in fact locked
 
-			OST_ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+			OST_DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 
+			OST_DECRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+			)
 			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
 			if !collectionAlreadyLocked {
 				fmt.printfln("Collection: %s%s%s is not locked.", BOLD_UNDERLINE, colName, RESET)
@@ -2870,9 +2951,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			}
 			OST_ENCRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				false,
+			)
+
+			OST_ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			break
 		case:
@@ -2884,10 +2973,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
-			encSuccess, _ := security.OST_ENCRYPT_COLLECTION(
+			encSuccess, _ := OST_ENCRYPT_COLLECTION(
 				colName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
+				false,
 			)
 			if encSuccess == 0 {
 				fmt.printfln(

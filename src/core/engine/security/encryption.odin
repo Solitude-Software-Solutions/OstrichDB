@@ -41,11 +41,12 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-
+//checkingEncryptStatus is false if we are just encrypting and true if we are just checking if the collection is already encrypted
 OST_ENCRYPT_COLLECTION :: proc(
 	colName: string,
 	colType: types.CollectionType,
 	key: []u8,
+	checkingEncryptStatus: bool,
 ) -> (
 	success: int,
 	encData: []u8,
@@ -103,6 +104,10 @@ OST_ENCRYPT_COLLECTION :: proc(
 
 
 	aes.seal_gcm(&gcmContext, encryptedData, tag, iv, aad, data) //encrypt the data
+
+	if checkingEncryptStatus == true {
+		return 2, dst
+	}
 
 	writeSuccess := utils.write_to_file(file, dst, #procedure) //write the encrypted data to the file
 

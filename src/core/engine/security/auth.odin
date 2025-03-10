@@ -208,7 +208,12 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		OST_RUN_SIGNIN()
 
 	}
-	OST_ENCRYPT_COLLECTION(usernameCapitalized, .SECURE_PRIVATE, types.system_user.m_k.valAsBytes)
+	OST_ENCRYPT_COLLECTION(
+		usernameCapitalized,
+		.SECURE_PRIVATE,
+		types.system_user.m_k.valAsBytes,
+		false,
+	)
 	return USER_SIGNIN_STATUS
 
 }

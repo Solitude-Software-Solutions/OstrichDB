@@ -95,11 +95,8 @@ OST_DECRYPT_COLLECTION :: proc(
 	gcmContext: aes.Context_GCM
 	aes.init_gcm(&gcmContext, key) //initialize the gcm context with the key
 
-	if aes.open_gcm(&gcmContext, decryptedData, iv, aad, encryptedData, tag) {
-		fmt.println("Decryption successful")
-	} else {
+	if !aes.open_gcm(&gcmContext, decryptedData, iv, aad, encryptedData, tag) {
 		delete(decryptedData)
-		fmt.println("Failed to decrypt data")
 		return -3, nil
 	}
 
