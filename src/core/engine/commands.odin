@@ -1101,11 +1101,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case 2:
 			collectionName: string
-			clusterName: string
+			cluster: string
 
 			if cmd.isUsingDotNotation == true {
-				collectionName := cmd.l_token[0]
-				cluster := cmd.l_token[1]
+				collectionName = cmd.l_token[0]
+				cluster = cmd.l_token[1]
 
 				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(

@@ -55,7 +55,7 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 OST_START_ENGINE :: proc() -> int {
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-	switch (types.OstrichEngine.Initialized) 
+	switch (types.OstrichEngine.Initialized)
 	{
 	case false:
 		//Continue with engine initialization
@@ -64,24 +64,24 @@ OST_START_ENGINE :: proc() -> int {
 
 	case true:
 		for {
+		security.OST_ENCRYPT_COLLECTION(
+			"",
+			.CONFIG_PRIVATE,
+			types.system_user.m_k.valAsBytes,
+			false,
+		)
 			userSignedIn := security.OST_RUN_SIGNIN()
-			switch (userSignedIn) 
+			switch (userSignedIn)
 			{
 			case true:
+
 				security.OST_START_SESSION_TIMER()
 				utils.log_runtime_event(
 					"User Signed In",
 					"User successfully logged into OstrichDB",
 				)
 				result := OST_ENGINE_COMMAND_LINE()
-				security.OST_ENCRYPT_COLLECTION(
-					"",
-					.CONFIG_PRIVATE,
-					types.system_user.m_k.valAsBytes,
-					false,
-				)
 				return result
-
 			case false:
 				fmt.printfln("Sign in failed. Please try again.")
 				security.OST_ENCRYPT_COLLECTION(
@@ -134,7 +134,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := security.OST_GET_SESSION_DURATION()
 		maxDurationMet := security.OST_CHECK_SESSION_DURATION(sessionDuration)
-		switch (maxDurationMet) 
+		switch (maxDurationMet)
 		{
 		case false:
 			break

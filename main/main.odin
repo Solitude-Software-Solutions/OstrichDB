@@ -28,12 +28,6 @@ main :: proc() {
 	using utils
 	using types
 	using security
-	fmt.println("Scanning for encrypted collections...")
-	totalCol, alreadyEnc, notEnc := OST_RUN_ENCRYPTION_CHECK()
-	fmt.println("Total collections scanned: ", totalCol)
-	fmt.println("Total collections encrypted: ", alreadyEnc)
-	fmt.println("Total collections not encrypted: ", notEnc)
-
 
 	Config := Server_Config {
 		port = 8083,
@@ -80,7 +74,7 @@ main :: proc() {
 	// server.OST_START_SERVER(Config) //When testing the server, uncomment this line and comment out the client.OST_TEST_CLIENT(Config) line
 	// }
 	// client.OST_TEST_CLIENT(Config) //When testing the client, uncomment this line and comment out the server.OST_START_SERVER(Config) line
-	OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	// OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	fmt.println("Starting OstrichDB DBMS")
 	engine.OST_START_ENGINE()
 
