@@ -323,7 +323,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	//NEW: Allows for the creation of new records, clusters, or collections
 	case NEW:
-		// fmt.println("current_user: ", types.current_user)
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
@@ -381,7 +380,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if cmd.isUsingDotNotation == true {
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
-
 				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
@@ -671,6 +669,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 
 				//--------------Permissions Security stuff Start----------------//
+				/*
+				Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+				to perform a collection rename operation
+				*/
+				OST_DECRYPT_COLLECTION(
+					types.current_user.username.Value,
+					.SECURE_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+				)
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					RENAME,
 					oldName,
@@ -678,12 +686,30 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						oldName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
-
 
 				fmt.printf(
 					"Renaming collection: %s%s%s to %s%s%s\n",
@@ -741,12 +767,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case 2:
-			clusterName: string
 			collectionName: string
-
 			if TO in cmd.p_token && cmd.isUsingDotNotation == true {
 				oldName := cmd.l_token[1]
-				collectionName := cmd.l_token[0]
+				collectionName = cmd.l_token[0]
 				newName := cmd.p_token[TO]
 
 				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -764,16 +788,46 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
 				)
+
 				//--------------Permissions Security stuff Start----------------//
+				/*
+				Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+				to perform a cluster rename operation
+				*/
+				OST_DECRYPT_COLLECTION(
+					collectionName,
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+				)
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					WHERE,
+					RENAME,
 					collectionName,
 				)
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
@@ -804,6 +858,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 					fn := concat_collection_name(collectionName)
+
 					OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 				} else {
 					fmt.println(

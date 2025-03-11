@@ -187,11 +187,7 @@ OST_OPERATION_IS_ALLOWED :: proc(
 //Performs Decryption of the secure collection, performs the check the re-encrypts the users secure collection
 OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) -> int {
 	// fmt.println("Getting passed colName: ", colName) //debugging
-	// OST_DECRYPT_COLLECTION(
-	// 	types.current_user.username.Value,
-	// 	.SECURE_PRIVATE,
-	// 	types.system_user.m_k.valAsBytes,
-	// )
+
 	//Get the operation permission for the command
 	commandOperation := OST_SET_OPERATION_PERMISSIONS(command)
 	// fmt.println("commandOperation: ", commandOperation) //debugging

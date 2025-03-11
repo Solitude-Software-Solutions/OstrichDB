@@ -318,7 +318,7 @@ OST_RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 			nameStart += len("cluster_name :identifier:")
 			// Find the end of the line
 			nameEnd := strings.index(cluster[nameStart:], "\n")
-			fmt.println("nameEnd: ", nameEnd) //debugging
+			// fmt.println("nameEnd: ", nameEnd) //debugging
 			if nameEnd != -1 {
 				// Extract the actual cluster name
 				cluster_name := strings.trim_space(cluster[nameStart:][:nameEnd])

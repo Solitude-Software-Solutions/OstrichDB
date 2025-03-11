@@ -83,7 +83,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
-		fmt.printfln("Failed to read file: %s", file)
+		fmt.printfln("Failed to read file: %s for encryption", file)
 		return -2, nil
 	}
 	defer delete(data)
