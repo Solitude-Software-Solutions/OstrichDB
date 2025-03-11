@@ -94,7 +94,8 @@ concat_collection_name :: proc(colFileName: string) -> string {
 
 //helper to get users input from the command line
 get_input :: proc(isPassword: bool) -> string {
-	buf: [1024]byte
+	buf := new([1024]byte)
+	defer free(buf)
 	if isPassword {
 		libc.system("stty -echo") //hide input
 	} else {

@@ -292,12 +292,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			//--------------Permissions Security stuff End----------------//
 
 			name := data.OST_CHOOSE_BACKUP_NAME()
-			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-			switch (checks) 
-			{
-			case -1:
-				return -1
-			}
+			// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+			// switch (checks)
+			// {
+			// case -1:
+			// 	return -1
+			// }
 			success := data.OST_CREATE_BACKUP_COLLECTION(name, cmd.l_token[0])
 			if success {
 				fmt.printfln(
@@ -914,7 +914,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					//--------------Permissions Security stuff Start----------------//
 					/*
 					Decrpyt the logged in users secure collection to ensure their role has the correct permissions
-					to perform a cluster rename operation
+					to perform a record rename operation
 					*/
 					OST_DECRYPT_COLLECTION(
 						collectionName,
@@ -1041,6 +1041,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				types.current_user.m_k.valAsBytes,
 			)
 			//--------------Permissions Security stuff Start----------------//
+			/*
+			Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+			to perform a collection erase operation
+			*/
+			OST_DECRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+			)
+
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				ERASE,
 				collectionName,
@@ -1048,8 +1058,27 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			switch (permissionCheckResult) 
 			{
 			case 0:
+				OST_ENCRYPT_COLLECTION(
+					types.current_user.username.Value,
+					.SECURE_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+					false,
+				)
 				break
 			case:
+				//If the permission check fails, re-encrypt the "working" and "secure" collections
+				OST_ENCRYPT_COLLECTION(
+					collectionName,
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
+				OST_ENCRYPT_COLLECTION(
+					types.current_user.username.Value,
+					.SECURE_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+					false,
+				)
 				return -1
 			}
 			//--------------Permissions Security stuff End----------------//
@@ -1093,7 +1122,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
 				)
+
 				//--------------Permissions Security stuff Start----------------//
+				/*
+				Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+				to perform a cluster erase operation
+				*/
+				OST_DECRYPT_COLLECTION(
+					collectionName,
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+				)
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					ERASE,
 					collectionName,
@@ -1101,18 +1141,38 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
+
 				clusterID := data.OST_GET_CLUSTER_ID(collectionName, cluster)
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
+				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// switch (checks)
+				// {
+				// case -1:
+				// 	return -1
+				// }
 
 				if data.OST_ERASE_CLUSTER(collectionName, cluster) == true {
 					fmt.printfln(
@@ -1124,7 +1184,32 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					data.OST_REMOVE_ID_FROM_CLUSTER(fmt.tprintf("%d", clusterID), false)
+					OST_DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user.m_k.valAsBytes)
+					if data.OST_REMOVE_ID_FROM_CLUSTER(fmt.tprintf("%d", clusterID), false) {
+						OST_ENCRYPT_COLLECTION(
+							"",
+							.ID_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
+					} else {
+						OST_ENCRYPT_COLLECTION(
+							"",
+							.ID_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
+
+						fmt.printfln(
+							"Failed to erase cluster: %s%s%s from collection: %s%s%s",
+							BOLD_UNDERLINE,
+							cluster,
+							RESET,
+							BOLD_UNDERLINE,
+							collectionName,
+							RESET,
+						)
+					}
 				} else {
 					fmt.printfln(
 						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
@@ -1160,9 +1245,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			recordName: string
 
 			if cmd.isUsingDotNotation == true {
-				collectionName := cmd.l_token[0]
-				clusterName := cmd.l_token[1]
-				recordName := cmd.l_token[2]
+				collectionName = cmd.l_token[0]
+				clusterName = cmd.l_token[1]
+				recordName = cmd.l_token[2]
 
 
 				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -1179,7 +1264,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
 				)
-				//--------------Permissions Security stuff Start----------------//
+
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					ERASE,
 					collectionName,
@@ -1187,19 +1273,38 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
 
 				clusterID := data.OST_GET_CLUSTER_ID(collectionName, clusterName)
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
+				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// switch (checks)
+				// {
+				// case -1:
+				// 	return -1
+				// }
 				if data.OST_ERASE_RECORD(collectionName, clusterName, recordName) == true {
 					fmt.printfln(
 						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
@@ -1235,57 +1340,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		// case USER:
-		// 	secColPath := fmt.tprintf(
-		// 		"%ssecure_%s%s",
-		// 		OST_SECURE_COLLECTION_PATH,
-		// 		types.current_user.username.Value,
-		// 		OST_FILE_EXTENSION,
-		// 	)
-		// 	result: bool
-		// 	if len(cmd.l_token) == 1 {
-		// 		//evaluate current logged in users role
-		// 		if data.OST_READ_RECORD_VALUE(
-		// 			   secColPath,
-		// 			   types.current_user.username.Value,
-		// 			   "identifier",
-		// 			   "role",
-		// 		   ) ==
-		// 		   "admin" {
-		// 			result := security.OST_DELETE_USER(cmd.l_token[0])
-		// 			if result {
-		// 				fmt.printfln(
-		// 					"User: %s%s%s successfully deleted.",
-		// 					BOLD_UNDERLINE,
-		// 					cmd.l_token[0],
-		// 					RESET,
-		// 				)
-		// 			} else {
-		// 				fmt.printfln(
-		// 					"Failed to delete user: %s%s%s",
-		// 					BOLD_UNDERLINE,
-		// 					cmd.l_token[0],
-		// 					RESET,
-		// 				)
-		// 			}
-		// 		} else {
-		// 			fmt.printfln(
-		// 				"User: %s%s%s does not have permission to delete users.",
-		// 				BOLD_UNDERLINE,
-		// 				types.current_user.username.Value,
-		// 				RESET,
-		// 			)
-		// 			result = false
-		// 		}
-		// 		if result == true {
-		// 			return 0
-		// 		} else {
-		// 			return -1
-		// 		}
-		// 	} else {
-		// 		fmt.printfln("Incomplete command. Correct Usage: ERASE USER <username>")
-		// 	}
-		// 	break
 		case:
 			fmt.printfln(
 				"Invalid command structure. Correct Usage: ERASE <collection_name>.<cluster_name>.<record_name>",
@@ -1439,12 +1493,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				//--------------Permissions Security stuff End----------------//
 
 
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
+				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// switch (checks)
+				// {
+				// case -1:
+				// 	return -1
+				// }
 				record, found := data.OST_FETCH_RECORD(collectionName, clusterName, recordName)
 				fmt.printfln(
 					"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",

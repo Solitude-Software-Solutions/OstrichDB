@@ -28,6 +28,12 @@ main :: proc() {
 	using utils
 	using types
 	using security
+	fmt.println("Scanning for encrypted collections...")
+	totalCol, alreadyEnc, notEnc := OST_RUN_ENCRYPTION_CHECK()
+	fmt.println("Total collections scanned: ", totalCol)
+	fmt.println("Total collections encrypted: ", alreadyEnc)
+	fmt.println("Total collections not encrypted: ", notEnc)
+
 
 	Config := Server_Config {
 		port = 8083,

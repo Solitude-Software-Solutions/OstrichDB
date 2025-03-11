@@ -9,6 +9,7 @@ import "core:crypto/aes"
 import "core:encoding/hex"
 import "core:fmt"
 import "core:os"
+import "core:strings"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -117,4 +118,113 @@ OST_ENCRYPT_COLLECTION :: proc(
 	}
 
 	return 0, dst
+}
+
+
+//Used go through each collection wether private or public. Check if its ecrypted and if not encrypt it.
+OST_RUN_ENCRYPTION_CHECK :: proc(
+) -> (
+	totalCollections: int,
+	alreadyEncrypted: int,
+	notEncryted: int,
+) {
+	totalCollections = 0
+	alreadyEncrypted = 0
+	notEncryted = 0
+
+	//Core private collections
+	privateDir, _ := os.open(const.OST_PRIVATE_PATH)
+	files, _ := os.read_dir(privateDir, -1)
+	for file in files {
+
+		//Config collection
+		if file.name == "config.ost" {
+			totalCollections += 1
+			configCheckSuccess, _ := OST_ENCRYPT_COLLECTION(
+				"",
+				.CONFIG_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				true,
+			)
+			if configCheckSuccess == 2 {
+				alreadyEncrypted += 1
+			} else if configCheckSuccess == 1 {
+				notEncryted += 1
+			}
+			//NEXT COLLECTION
+		} else if file.name == "history.ost" { 	//History collection
+			totalCollections += 1
+			historyCheckSuccess, _ := OST_ENCRYPT_COLLECTION(
+				"",
+				.HISTORY_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				true,
+			)
+			if historyCheckSuccess == 2 {
+				alreadyEncrypted += 1
+			} else if historyCheckSuccess == 1 {
+				notEncryted += 1
+			}
+			//NEXT COLLECTION
+		} else if file.name == "ids.ost" { 	//ID collection
+			totalCollections += 1
+			idsCheckSuccess, _ := OST_ENCRYPT_COLLECTION(
+				"",
+				.ID_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				true,
+			)
+			if idsCheckSuccess == 2 {
+				alreadyEncrypted += 1
+			} else if idsCheckSuccess == 1 {
+				notEncryted += 1
+			}
+		}
+	}
+
+
+	//Secure collections
+	secDir, _ := os.open(const.OST_SECURE_COLLECTION_PATH)
+	secFiles, _ := os.read_dir(secDir, -1)
+	for file in secFiles {
+		totalCollections += 1
+		secFileWithoutExt := strings.trim_right(file.name, const.OST_FILE_EXTENSION)
+		secFileWithoutPrefix := strings.trim_left(secFileWithoutExt, "secure_")
+		fmt.printfln("Checking if %s is encrypted\n", secFileWithoutPrefix)
+		seccColCheckSuccess, _ := OST_ENCRYPT_COLLECTION(
+			secFileWithoutPrefix,
+			.SECURE_PRIVATE,
+			types.system_user.m_k.valAsBytes,
+			true,
+		)
+		if seccColCheckSuccess == 2 {
+			alreadyEncrypted += 1
+		} else if seccColCheckSuccess == 1 {
+			notEncryted += 1
+		}
+	}
+
+
+	//Standard Public collections
+	standardPublicDir, _ := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	standardFiles, _ := os.read_dir(standardPublicDir, -1)
+
+	for file in standardFiles {
+		totalCollections += 1
+		standardFileWithoutExt := strings.trim_right(file.name, const.OST_FILE_EXTENSION)
+		fmt.printfln("Checking if %s is encrypted", standardFileWithoutExt)
+		standardCheckSuccess, _ := OST_ENCRYPT_COLLECTION(
+			standardFileWithoutExt,
+			.STANDARD_PUBLIC,
+			types.system_user.m_k.valAsBytes,
+			true,
+		)
+		if standardCheckSuccess == 2 {
+			alreadyEncrypted += 1
+		} else if standardCheckSuccess == 1 {
+			notEncryted += 1
+		}
+	}
+
+	return totalCollections, alreadyEncrypted, notEncryted
 }

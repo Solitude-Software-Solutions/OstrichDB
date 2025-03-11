@@ -74,10 +74,22 @@ OST_START_ENGINE :: proc() -> int {
 					"User successfully logged into OstrichDB",
 				)
 				result := OST_ENGINE_COMMAND_LINE()
+				security.OST_ENCRYPT_COLLECTION(
+					"",
+					.CONFIG_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+					false,
+				)
 				return result
 
 			case false:
 				fmt.printfln("Sign in failed. Please try again.")
+				security.OST_ENCRYPT_COLLECTION(
+					"",
+					.CONFIG_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+					false,
+				)
 				continue
 			}
 		}

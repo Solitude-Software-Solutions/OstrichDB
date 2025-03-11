@@ -465,16 +465,15 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 }
 
 
-OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (found: bool, name: string) {
+OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (bool, string) {
 	secDir, e := os.open(const.OST_SECURE_COLLECTION_PATH)
 	files, readDirSuccess := os.read_dir(secDir, -1)
-	found = false
+	found := false
 	for file in files {
-		if strings.contains(file.name, fn) {
+		if file.name == fmt.tprintf("secure_%s%s", fn, const.OST_FILE_EXTENSION) {
 			found = true
-			return found, file.name
+			// fmt.println("Found secure collection: ", file.name) //debugging
 		}
-
 	}
 	return found, ""
 }
