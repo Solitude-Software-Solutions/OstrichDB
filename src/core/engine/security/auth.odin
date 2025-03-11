@@ -39,22 +39,14 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		return false
 	}
 	usernameCapitalized := strings.to_upper(userName)
-
-	//----------------------------
-	//TODO: For some odd fucking reason this return value is coming back as true but then the false block is being executed.
-	// I have no idea why Commenting out for now. - Marshall 11 March 2025
-	// secCollectionFound, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
-	// fmt.println("usernameCapitalized: ", usernameCapitalized) //debugging
-	// fmt.println("userSecCollection: ", userSecCollection) //debugging
-	// fmt.println("secCollectionFound: ", secCollectionFound) //debugging
-	// if secCollectionFound == false {
-	// 	fmt.println(
-	// 		"There is no account within OstrichDB associated with the entered username. Please try again.",
-	// 	)
-	// 	log_err("User entered a username that does not exist in the database", #procedure)
-	// 	return false
+	secCollectionFound, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
+	if secCollectionFound == false {
+		fmt.println(
+			"There is no account within OstrichDB associated with the entered username. Please try again.",
+		)
+		log_err("User entered a username that does not exist in the database", #procedure)
+		return false
 	}
-	//----------------------------
 
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
@@ -64,14 +56,13 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	)
 
 	//decrypt the user secure collection
-	OST_DECRYPT_COLLECTION(usernameCapitalized, .SECURE_PRIVATE, types.system_user.m_k.valAsBytes)
-
-	userNameFound := data.OST_READ_RECORD_VALUE(
-		secColPath,
+	decSuccess, _ := OST_DECRYPT_COLLECTION(
 		usernameCapitalized,
-		"identifier",
-		"user_name",
+		.SECURE_PRIVATE,
+		types.system_user.m_k.valAsBytes,
 	)
+
+
 	userRole := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "role")
 	if userRole == "admin" {
 		user.role.Value = "admin"
@@ -86,21 +77,6 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	// user.m_k.valAsStr = userMKStr
 	user.m_k.valAsBytes = OST_DECODE_M_K(transmute([]byte)userMKStr)
 
-	if (userNameFound != usernameCapitalized) {
-		error2 := new_err(
-			.ENTERED_USERNAME_NOT_FOUND,
-			get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error2)
-		fmt.printfln(
-			"There is no account within OstrichDB associated with the entered username. Please try again.",
-		)
-		log_err("User entered a username that does not exist in the database", #procedure)
-		return false
-	}
 
 	user.username.Value = strings.clone(usernameCapitalized)
 
@@ -154,9 +130,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	case true:
 		OST_START_SESSION_TIMER()
 		fmt.printfln("\n\n%sSucessfully signed in!%s", GREEN, RESET)
-		fmt.printfln("Welcome, %s%s%s!\n", BOLD_UNDERLINE, userNameFound, RESET)
+		fmt.printfln("Welcome, %s%s%s!\n", BOLD_UNDERLINE, usernameCapitalized, RESET)
 		USER_SIGNIN_STATUS = true
-		current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
+		current_user.username.Value = strings.clone(usernameCapitalized) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
 
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
@@ -226,7 +202,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param)
+		switch (param) 
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false
