@@ -30,38 +30,32 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	using utils
 
 	//get the username input from the user
-	buf: [1024]byte
 	fmt.printfln("Please enter your %susername%s:", BOLD, RESET)
-	n, inputSuccess := os.read(os.stdin, buf[:])
+	n := get_input(false)
 
-	if inputSuccess != 0 {
-		error1 := new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error1)
-		log_err("Could not read user input during sign in", #procedure)
-		return false
-	}
-
-	userName := strings.trim_right(string(buf[:n]), "\r\n")
+	userName := n
 	if len(userName) == 0 {
 		fmt.printfln("Username cannot be empty. Please try again.")
 		return false
 	}
 	usernameCapitalized := strings.to_upper(userName)
 
-	found, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
-	if !found {
-		fmt.printfln(
-			"There is no account within OstrichDB associated with the entered username. Please try again.",
-		)
-		log_err("User entered a username that does not exist in the database", #procedure)
-		return false
+	//----------------------------
+	//TODO: For some odd fucking reason this return value is coming back as true but then the false block is being executed.
+	// I have no idea why Commenting out for now. - Marshall 11 March 2025
+	// secCollectionFound, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
+	// fmt.println("usernameCapitalized: ", usernameCapitalized) //debugging
+	// fmt.println("userSecCollection: ", userSecCollection) //debugging
+	// fmt.println("secCollectionFound: ", secCollectionFound) //debugging
+	// if secCollectionFound == false {
+	// 	fmt.println(
+	// 		"There is no account within OstrichDB associated with the entered username. Please try again.",
+	// 	)
+	// 	log_err("User entered a username that does not exist in the database", #procedure)
+	// 	return false
 	}
+	//----------------------------
+
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
 		OST_SECURE_COLLECTION_PATH,
@@ -137,21 +131,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	//get the password input from the user
 	fmt.printfln("Please enter your %spassword%s:", BOLD, RESET)
 	libc.system("stty -echo")
-	n, inputSuccess = os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error3 := new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error3)
-		log_err("Could not read user input during sign in", #procedure)
-		libc.system("stty echo")
-		return false
-	}
-	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
+	n = get_input(true)
+
+	enteredPassword := n
 	libc.system("stty echo")
 
 	if len(enteredPassword) == 0 {
@@ -244,7 +226,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param) 
+		switch (param)
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false
