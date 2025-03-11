@@ -910,16 +910,46 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						.STANDARD_PUBLIC,
 						types.current_user.m_k.valAsBytes,
 					)
+
 					//--------------Permissions Security stuff Start----------------//
+					/*
+					Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+					to perform a cluster rename operation
+					*/
+					OST_DECRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+					)
+
 					permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-						WHERE,
+						RENAME,
 						collectionName,
 					)
 					switch (permissionCheckResult) 
 					{
 					case 0:
+						OST_ENCRYPT_COLLECTION(
+							types.current_user.username.Value,
+							.SECURE_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
 						break
 					case:
+						//If the permission check fails, re-encrypt the "working" and "secure" collections
+						OST_ENCRYPT_COLLECTION(
+							collectionName,
+							.STANDARD_PUBLIC,
+							types.current_user.m_k.valAsBytes,
+							false,
+						)
+						OST_ENCRYPT_COLLECTION(
+							types.current_user.username.Value,
+							.SECURE_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
 						return -1
 					}
 					//--------------Permissions Security stuff End----------------//
@@ -969,7 +999,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					log_err("Failed to rename record.", #procedure)
 					break
 				}
-
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME <collection_name>.<cluster_name>.<old_name> TO <new_name>",
@@ -1040,12 +1069,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
-				collectionName,
-				.STANDARD_PUBLIC,
-				types.current_user.m_k.valAsBytes,
-				false,
-			)
 			break
 		case 2:
 			collectionName: string
