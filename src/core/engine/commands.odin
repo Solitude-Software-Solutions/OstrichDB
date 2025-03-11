@@ -340,6 +340,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					fileName := concat_collection_name(cmd.l_token[0])
 					OST_UPDATE_METADATA_ON_CREATE(fileName)
+
 					OST_ENCRYPT_COLLECTION(
 						cmd.l_token[0],
 						.STANDARD_PUBLIC,
@@ -395,16 +396,46 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					types.current_user.m_k.valAsBytes,
 				)
 
+
 				//--------------Permissions Security stuff Start----------------//
+				/*
+				Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+				to perform a cluster creation operation
+				*/
+				OST_DECRYPT_COLLECTION(
+					collectionName,
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+				)
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					NEW,
+					ERASE,
 					collectionName,
 				)
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
@@ -441,6 +472,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						BOLD_UNDERLINE,
 						collectionName,
 						RESET,
+					)
+					OST_ENCRYPT_COLLECTION(
+						cmd.l_token[0],
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
 					)
 					break
 				case 1, 2, 3:
@@ -482,7 +519,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionName := cmd.l_token[0]
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
-
 
 			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
@@ -1371,7 +1407,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
 				)
+
 				//--------------Permissions Security stuff Start----------------//
+				/*
+				Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+				to perform a collection rename operation
+				*/
+				OST_DECRYPT_COLLECTION(
+					types.current_user.username.Value,
+					.SECURE_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+				)
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					FETCH,
 					collectionName,
@@ -1379,11 +1426,31 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
+
 
 				str := data.OST_FETCH_COLLECTION(collectionName)
 				fmt.println(str)

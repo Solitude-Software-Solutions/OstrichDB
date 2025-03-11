@@ -108,7 +108,6 @@ OST_ENCRYPT_COLLECTION :: proc(
 
 	if checkingEncryptStatus == true {
 		return 2, nil
-
 	}
 
 	writeSuccess := utils.write_to_file(file, dst, #procedure) //write the encrypted data to the file

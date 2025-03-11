@@ -49,8 +49,6 @@ OST_DECRYPT_COLLECTION :: proc(
 	success: int,
 	decData: []u8,
 ) {
-	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
-
 	file: string
 
 	#partial switch (colType) {

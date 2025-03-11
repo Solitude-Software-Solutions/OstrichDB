@@ -62,7 +62,6 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.system_user.m_k.valAsBytes,
 	)
 
-
 	userRole := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "role")
 	if userRole == "admin" {
 		user.role.Value = "admin"
