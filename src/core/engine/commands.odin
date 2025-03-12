@@ -171,6 +171,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				WHERE,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -206,6 +207,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				WHERE,
 				strings.trim(collectionName, OST_FILE_EXTENSION),
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -281,6 +283,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				BACKUP,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -411,6 +414,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					ERASE,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -550,6 +554,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				ERASE,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -748,6 +753,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					RENAME,
 					oldName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -869,6 +875,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					RENAME,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -991,6 +998,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 						RENAME,
 						collectionName,
+						1,
 					)
 					switch (permissionCheckResult) 
 					{
@@ -1120,6 +1128,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				ERASE,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -1203,6 +1212,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					ERASE,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -1335,6 +1345,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					ERASE,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -1452,6 +1463,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					FETCH,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -1532,6 +1544,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					FETCH,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -1620,6 +1633,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					FETCH,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -1721,16 +1735,48 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
 				)
+
+
 				//--------------Permissions Security stuff Start----------------//
+				/*
+				Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+				to perform a record value set operation
+				*/
+				OST_DECRYPT_COLLECTION(
+					collectionName,
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+				)
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SET,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
@@ -1846,9 +1892,48 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				log_runtime_event("Used SET command", "")
 				if TO in cmd.p_token {
 					configName := cmd.l_token[0]
-					value: string
+					value := cmd.p_token[TO]
 
-					OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.current_user.m_k.valAsBytes)
+					//--------------Permissions Security stuff Start----------------//
+					/*
+					Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+					to perform a config set operation
+					*/
+					OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+
+					permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+						SET,
+						"",
+						3,
+					)
+					switch (permissionCheckResult) 
+					{
+					case 0:
+						OST_ENCRYPT_COLLECTION(
+							types.current_user.username.Value,
+							.SECURE_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
+						break
+					case:
+						//If the permission check fails, re-encrypt the "working" and "secure" collections
+						OST_ENCRYPT_COLLECTION(
+							"",
+							.CONFIG_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
+
+						OST_ENCRYPT_COLLECTION(
+							types.current_user.username.Value,
+							.SECURE_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
+						return -1
+					}
+					//--------------Permissions Security stuff End----------------//
 
 					for key, val in cmd.p_token {
 						value = strings.to_lower(val)
@@ -2046,6 +2131,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SET,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -2135,6 +2221,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					COUNT,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -2225,6 +2312,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					COUNT,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -2319,6 +2407,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				PURGE,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -2376,6 +2465,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				PURGE,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -2447,6 +2537,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				PURGE,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -2523,6 +2614,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				SIZE_OF,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -2575,6 +2667,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SIZE_OF,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -2638,6 +2731,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					SIZE_OF,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -2711,6 +2805,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				TYPE_OF,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -2798,6 +2893,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					CHANGE_TYPE,
 					collectionName,
+					1,
 				)
 				switch (permissionCheckResult) 
 				{
@@ -2906,6 +3002,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				ISOLATE,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{
@@ -2976,6 +3073,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 				VALIDATE,
 				collectionName,
+				1,
 			)
 			switch (permissionCheckResult) 
 			{

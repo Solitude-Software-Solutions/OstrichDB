@@ -185,7 +185,10 @@ OST_OPERATION_IS_ALLOWED :: proc(
 
 //Handles all the logic from above and returns a 1 if the user does not have permission to perform the passed in operation
 //Performs Decryption of the secure collection, performs the check the re-encrypts the users secure collection
-OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) -> int {
+OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
+	command, colName: string,
+	colType: int,
+) -> int {
 	// fmt.println("Getting passed colName: ", colName) //debugging
 
 	//Get the operation permission for the command
@@ -197,7 +200,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 	defer free(commandOperation)
 
 
-	permissionValue, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+	permissionValue, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", colType)
 	// fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
 	// fmt.println("Permission Value from collection file: ", permissionValue) //debugging
 	for perm in commandPermissions {
@@ -211,22 +214,22 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 				utils.YELLOW,
 				utils.RESET,
 			)
-			OST_ENCRYPT_COLLECTION(
-				types.current_user.username.Value,
-				.SECURE_PRIVATE,
-				types.system_user.m_k.valAsBytes,
-				false,
-			)
+			// OST_ENCRYPT_COLLECTION(
+			// 	types.current_user.username.Value,
+			// 	.SECURE_PRIVATE,
+			// 	types.system_user.m_k.valAsBytes,
+			// 	false,
+			// )
 			return 1
 		}
 	}
 
-	OST_ENCRYPT_COLLECTION(
-		types.current_user.username.Value,
-		.SECURE_PRIVATE,
-		types.system_user.m_k.valAsBytes,
-		false,
-	)
+	// OST_ENCRYPT_COLLECTION(
+	// 	types.current_user.username.Value,
+	// 	.SECURE_PRIVATE,
+	// 	types.system_user.m_k.valAsBytes,
+	// 	false,
+	// )
 	return 0
 }
 

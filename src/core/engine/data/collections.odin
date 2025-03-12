@@ -125,7 +125,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		collectionPath := const.OST_CONFIG_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
+		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
