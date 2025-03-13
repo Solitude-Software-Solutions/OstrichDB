@@ -125,8 +125,8 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 			append(&operation.permission, types.Operation_Permssion_Requirement.READ_ONLY)
 			append(&operation.permission, types.Operation_Permssion_Requirement.READ_WRITE)
 
+			append(&opArr, "Read-Write") //Believe it or not the order in which these are appended is important. Dumb design I know. - Marshall
 			append(&opArr, "Read-Only")
-			append(&opArr, "Read-Write")
 			operation.permissionStr = opArr
 			return operation
 		}
@@ -189,24 +189,24 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 	command, colName: string,
 	colType: int,
 ) -> int {
-	// fmt.println("Getting passed colName: ", colName) //debugging
+	fmt.println("Getting passed colName: ", colName) //debugging
 
 	//Get the operation permission for the command
 	commandOperation := OST_SET_OPERATION_PERMISSIONS(command)
-	// fmt.println("commandOperation: ", commandOperation) //debugging
+	fmt.println("commandOperation: ", commandOperation) //debugging
 	//Get the string representation array of the permission
 	commandPermissions := commandOperation.permissionStr
-	// fmt.println("commandPermissions: ", commandPermissions) //debugging
+	fmt.println("commandPermissions: ", commandPermissions) //debugging
 	defer free(commandOperation)
 
 
 	permissionValue, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", colType)
-	// fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
-	// fmt.println("Permission Value from collection file: ", permissionValue) //debugging
+	fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
+	fmt.println("Permission Value from collection file: ", permissionValue) //debugging
 	for perm in commandPermissions {
-		// fmt.println("This operation can be performed on a collection that is set to: ", perm) //debugging
+		fmt.println("This operation can be performed on a collection that is set to: ", perm) //debugging
 		opIsAllowed := OST_OPERATION_IS_ALLOWED(permissionValue, commandOperation)
-		// fmt.println("opIsAllowed: ", opIsAllowed) //debugging
+		fmt.println("opIsAllowed: ", opIsAllowed) //debugging
 		if !opIsAllowed {
 			fmt.printfln(
 				"%s%sYou do not have permission to perform this operation on this collection.%s",
@@ -214,22 +214,10 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 				utils.YELLOW,
 				utils.RESET,
 			)
-			// OST_ENCRYPT_COLLECTION(
-			// 	types.current_user.username.Value,
-			// 	.SECURE_PRIVATE,
-			// 	types.system_user.m_k.valAsBytes,
-			// 	false,
-			// )
 			return 1
 		}
 	}
 
-	// OST_ENCRYPT_COLLECTION(
-	// 	types.current_user.username.Value,
-	// 	.SECURE_PRIVATE,
-	// 	types.system_user.m_k.valAsBytes,
-	// 	false,
-	// )
 	return 0
 }
 

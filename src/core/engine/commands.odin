@@ -2122,25 +2122,51 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
+				//--------------Permissions Security stuff Start----------------//
+				/*
+				Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+				to perform a cluster count operation
+				*/
+
 				OST_DECRYPT_COLLECTION(
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
 				)
-				//--------------Permissions Security stuff Start----------------//
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					SET,
+					COUNT,
 					collectionName,
 					1,
 				)
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
+
 				result := data.OST_COUNT_CLUSTERS(collectionName)
 				switch (result) 
 				{
@@ -2201,7 +2227,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
-
 				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
@@ -2212,12 +2237,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
+				//--------------Permissions Security stuff Start----------------//
+				/*
+				Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+				to count the number of records in a specific cluster operation
+				*/
 				OST_DECRYPT_COLLECTION(
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
 				)
-				//--------------Permissions Security stuff Start----------------//
+
 				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
 					COUNT,
 					collectionName,
@@ -2226,11 +2256,31 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				switch (permissionCheckResult) 
 				{
 				case 0:
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case:
+					//If the permission check fails, re-encrypt the "working" and "secure" collections
+					OST_ENCRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
+					OST_ENCRYPT_COLLECTION(
+						types.current_user.username.Value,
+						.SECURE_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
 					return -1
 				}
 				//--------------Permissions Security stuff End----------------//
+
 				result := data.OST_COUNT_RECORDS_IN_CLUSTER(
 					strings.clone(collectionName),
 					strings.clone(clusterName),
@@ -2289,95 +2339,126 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					types.current_user.m_k.valAsBytes,
 					false,
 				)
-			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true {
-				//in the event the user is counting all records in a collection
-				collectionName := cmd.l_token[0]
-
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				OST_DECRYPT_COLLECTION(
-					collectionName,
-					.STANDARD_PUBLIC,
-					types.current_user.m_k.valAsBytes,
-				)
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					COUNT,
-					collectionName,
-					1,
-				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
-
-				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collectionName)
-
-				switch result 
-				{
-				case -1:
-					fmt.printfln(
-						"Error counting records in the collection %s%s%s",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					break
-				case 0:
-					fmt.printfln(
-						"There are no records in collection %s%s%s",
-						BOLD,
-						collectionName,
-						RESET,
-					)
-					break
-				case 1:
-					fmt.printfln(
-						"There is %d record in the collection %s%s%s",
-						result,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					break
-				case:
-					fmt.printfln(
-						"There are %d records in the collection %s%s%s",
-						result,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-				}
-
-			} else {
-				fmt.printfln(
-					"Invalid command structure. Correct Usage: COUNT RECORDS <collection_name>.<cluster_name>",
-				)
-				log_runtime_event(
-					"Invalid COUNT command",
-					"User did not provide a valid cluster name to count records.",
-				)
 			}
-			OST_ENCRYPT_COLLECTION(
-				cmd.l_token[0],
-				.STANDARD_PUBLIC,
-				types.current_user.m_k.valAsBytes,
-				false,
-			)
-			break
+		// else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true { 	//TODO: 12 March, 2025 THIS WHOLE BLOCK IS FUCKED FOR SOME REASON - MARSHALL
+		// 	//in the event the user is counting all records in a collection
+		// 	collectionName := cmd.l_token[0]
+
+		// 	if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+		// 		fmt.printfln(
+		// 			"Collection: %s%s%s does not exist.",
+		// 			BOLD_UNDERLINE,
+		// 			collectionName,
+		// 			RESET,
+		// 		)
+		// 		return -1
+		// 	}
+
+		// 	//--------------Permissions Security stuff Start----------------//
+		// 	/*
+		// 	Decrpyt the logged in users secure collection to ensure their role has the correct permissions
+		// 	to count all records in a collection operation
+		// 	*/
+		// 	success, decData := OST_DECRYPT_COLLECTION(
+		// 		collectionName,
+		// 		.STANDARD_PUBLIC,
+		// 		types.current_user.m_k.valAsBytes,
+		// 	)
+		// 	fmt.println("Suc: ", success)
+		// 	fmt.printfln("DATA: %s", string(decData))
+
+		// 	if success == 0 {
+		// 		return 0
+		// 	}
+
+		// 	permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+		// 		COUNT,
+		// 		collectionName,
+		// 		1,
+		// 	)
+		// 	switch (permissionCheckResult)
+		// 	{
+		// 	case 0:
+		// 		OST_ENCRYPT_COLLECTION(
+		// 			types.current_user.username.Value,
+		// 			.SECURE_PRIVATE,
+		// 			types.system_user.m_k.valAsBytes,
+		// 			false,
+		// 		)
+		// 		break
+		// 	case:
+		// 		//If the permission check fails, re-encrypt the "working" and "secure" collections
+		// 		OST_ENCRYPT_COLLECTION(
+		// 			collectionName,
+		// 			.STANDARD_PUBLIC,
+		// 			types.current_user.m_k.valAsBytes,
+		// 			false,
+		// 		)
+		// 		OST_ENCRYPT_COLLECTION(
+		// 			types.current_user.username.Value,
+		// 			.SECURE_PRIVATE,
+		// 			types.system_user.m_k.valAsBytes,
+		// 			false,
+		// 		)
+		// 		return -1
+		// 	}
+		// 	//--------------Permissions Security stuff End----------------//
+
+		// 	result := data.OST_COUNT_RECORDS_IN_COLLECTION(collectionName)
+
+		// 	switch result
+		// 	{
+		// 	case -1:
+		// 		fmt.printfln(
+		// 			"Error counting records in the collection %s%s%s",
+		// 			BOLD_UNDERLINE,
+		// 			collectionName,
+		// 			RESET,
+		// 		)
+		// 		break
+		// 	case 0:
+		// 		fmt.printfln(
+		// 			"There are no records in collection %s%s%s",
+		// 			BOLD,
+		// 			collectionName,
+		// 			RESET,
+		// 		)
+		// 		break
+		// 	case 1:
+		// 		fmt.printfln(
+		// 			"There is %d record in the collection %s%s%s",
+		// 			result,
+		// 			BOLD_UNDERLINE,
+		// 			collectionName,
+		// 			RESET,
+		// 		)
+		// 		break
+		// 	case:
+		// 		fmt.printfln(
+		// 			"There are %d records in the collection %s%s%s",
+		// 			result,
+		// 			BOLD_UNDERLINE,
+		// 			collectionName,
+		// 			RESET,
+		// 		)
+		// 	}
+
+		// } else {
+		// 	fmt.printfln(
+		// 		"Invalid command structure. Correct Usage: COUNT RECORDS <collection_name>.<cluster_name>",
+		// 	)
+		// 	log_runtime_event(
+		// 		"Invalid COUNT command",
+		// 		"User did not provide a valid cluster name to count records.",
+		// 	)
+		// }
+		// OST_ENCRYPT_COLLECTION(
+		// 	cmd.l_token[0],
+		// 	.STANDARD_PUBLIC,
+		// 	types.current_user.m_k.valAsBytes,
+		// 	false,
+		// )
+		// break
 		}
 		break
 	// //PURGE: Removes all data from the provided collection, cluster, or record but maintains the structure

@@ -482,7 +482,7 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (bool, string) {
 OST_COUNT_COLLECTIONS :: proc() -> int {
 	using const
 
-	collectionsDir, errOpen := os.open(OST_PUBLIC_PATH)
+	collectionsDir, errOpen := os.open(OST_PUBLIC_STANDARD_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)

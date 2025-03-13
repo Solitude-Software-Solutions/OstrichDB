@@ -95,6 +95,7 @@ OST_DECRYPT_COLLECTION :: proc(
 
 	if !aes.open_gcm(&gcmContext, decryptedData, iv, aad, encryptedData, tag) {
 		delete(decryptedData)
+		fmt.println("Failed to decrypt data")
 		return -3, nil
 	}
 
