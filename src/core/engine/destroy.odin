@@ -67,40 +67,42 @@ OST_DESTROY :: proc() {
 
 
 	dirs := []string {
-		"./backups/",
-		"./collections/",
-		"./logs/",
-		"./quarantine/",
-		"./secure/",
+		const.OST_PRIVATE_PATH,
+		const.OST_PUBLIC_PATH,
+		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
+		const.OST_SECURE_COLLECTION_PATH,
+		const.LOG_DIR_PATH,
 		"./tmp/",
 	}
-
-	//remove files in sub-directories
 	for dir in dirs {
-		dir_handle, err := os.open(dir)
-		if err != 0 {
-			utils.log_err(fmt.tprintf("Failed to open directory %s", dir), #procedure)
-			continue
-		}
-		defer os.close(dir_handle)
-
-		files, read_err := os.read_dir(dir_handle, -1)
-		if read_err != 0 {
-			utils.log_err(fmt.tprintf("Failed to read directory %s", dir), #procedure)
-			continue
-		}
-
-		for file in files {
-			file_path := fmt.tprintf("%s%s", dir, file.name)
-			err := os.remove(file_path)
-			if err != 0 {
-				utils.log_err(fmt.tprintf("Failed to remove file %s", file_path), #procedure)
-			}
-		}
+		os.remove(dir)
 	}
+	// //remove files in sub-directories
+	// for dir in dirs {
+	// 	dir_handle, err := os.open(dir)
+	// 	if err != 0 {
+	// 		utils.log_err(fmt.tprintf("Failed to open directory %s", dir), #procedure)
+	// 		continue
+	// 	}
+	// 	defer os.close(dir_handle)
+
+	// 	files, read_err := os.read_dir(dir_handle, -1)
+	// 	if read_err != 0 {
+	// 		utils.log_err(fmt.tprintf("Failed to read directory %s", dir), #procedure)
+	// 		continue
+	// 	}
+
+	// 	for file in files {
+	// 		file_path := fmt.tprintf("%s%s", dir, file.name)
+	// 		err := os.remove(file_path)
+	// 		if err != 0 {
+	// 			utils.log_err(fmt.tprintf("Failed to remove file %s", file_path), #procedure)
+	// 		}
+	// 	}
+	// }
 
 	//remove files in binary dir
-	files := []string{"./core/ids.ost", "./core/history.ost", "./core/config.ost", "./main.bin"}
+	files := []string{"./main.bin"}
 
 	for file in files {
 		err := os.remove(file)

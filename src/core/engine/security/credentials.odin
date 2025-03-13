@@ -8,6 +8,7 @@ import "../data"
 import "../data/metadata"
 import "core:c/libc"
 import "core:crypto/hash"
+import "core:encoding/hex"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
@@ -34,7 +35,7 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 	using utils
 
 	//perform a check to see if the secure directory already exists to prevent errors and overwriting
-	_, err := os.stat("./secure")
+	_, err := os.stat(const.OST_SECURE_COLLECTION_PATH)
 	if err == nil {
 		return 0
 	}
@@ -43,7 +44,9 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 		error1 := utils.new_err(
 			.CANNOT_CREATE_DIRECTORY,
 			get_err_msg(.CANNOT_CREATE_DIRECTORY),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_err(error1)
 		log_err("Error occured while attempting to generate new secure file", #procedure)
@@ -71,26 +74,36 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 	libc.system("stty -echo")
 	initpassword := OST_GET_PASSWORD(true)
-	saltAsString := string(user.salt)
-	hashAsString := string(user.hashedPassword)
-	algoMethodAsString := strconv.itoa(buf[:], user.store_method)
+	saltAsString := string(user.salt.valAsBytes)
+	hashAsString := string(user.hashedPassword.valAsBytes)
+
+	algoMethodAsString := fmt.tprintf("%d", user.store_method)
 	user.user_id = data.OST_GENERATE_ID(true) //for secure clustser, the cluster id is the user id
-	OST_CREATE_COLLECTION("history", 2)
 
+	OST_CREATE_COLLECTION("", .HISTORY_PRIVATE)
+	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
 	user.username.Value = inituserName
-
-
-	//store the id to both clusters in the id collection
+	// //store the id to both clusters in the id collection
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
 
 
+	// //Create a cluster in the history collection that will hold this users command history
 	OST_CREATE_CLUSTER_BLOCK(OST_HISTORY_PATH, user.user_id, user.username.Value)
-	inituserName = fmt.tprintf("secure_%s", inituserName)
-	OST_CREATE_COLLECTION(inituserName, 1)
-	mk := OST_GEN_MASTER_KEY()
-	mkAsString := transmute(string)mk
 
+
+	//Create a secure collection for the user
+	inituserName = fmt.tprintf("secure_%s", inituserName)
+	OST_CREATE_COLLECTION(inituserName, .SECURE_PRIVATE)
+	// OST_GEN_MASTER_KEY returns a 32 byte master key that is hex encoded
+	mk := OST_GEN_MASTER_KEY()
+	mkAsString := transmute(string)mk //dont worry about this
+	// user.m_k.valAsStr = mkAsString //dont worry about this
+
+	//this value is passed to my encryption and decryption functions. must be 32 bytes
+	user.m_k.valAsBytes = OST_DECODE_M_K(mk)
+
+	//Store all the user credentials within the secure collection
 	OST_STORE_USER_CREDS(
 		inituserName,
 		user.username.Value,
@@ -100,10 +113,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "role", "admin")
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "salt", saltAsString)
-
-	hashAsStr := transmute(string)user.hashedPassword
-
-	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "hash", hashAsStr)
+	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "hash", hashAsString)
 	OST_STORE_USER_CREDS(
 		inituserName,
 		user.username.Value,
@@ -113,6 +123,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	)
 
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
+
 	engineInit := config.OST_UPDATE_CONFIG_VALUE(CONFIG_ONE, "true")
 
 	switch (engineInit) 
@@ -124,11 +135,20 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-	//update metadata fields
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_HISTORY_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_ID_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(
 		fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, inituserName, OST_FILE_EXTENSION),
 	)
+
+	//Encrypt the the config, history, id, and new users secure collection
+	OST_ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes, false)
+	OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
+	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
+	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes, false)
+
+
 	fmt.println("Please re-launch OstrichDB...")
 	return 0
 }
@@ -157,7 +177,13 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 	n, inputSuccess := os.read(os.stdin, buf[:])
 
 	if inputSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error reading input", #procedure)
 	}
@@ -218,7 +244,13 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 	enteredStr: string
 	if inputSuccess != 0 {
 
-		error1 := utils.new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error reading input", #procedure)
 	}
@@ -268,7 +300,13 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 	confirmation: string
 
 	if inputSuccess != 0 {
-		error1 := utils.new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := utils.new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error reading input", #procedure)
 	}
@@ -289,17 +327,18 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 		if isInitializing == true {
 			user.password.Length = len(p)
 			user.password.Value = strings.clone(p)
-			user.hashedPassword = OST_HASH_PASSWORD(p, 0, false, true)
+			user.hashedPassword.valAsBytes = OST_HASH_PASSWORD(p, 0, false, true)
 
-			encodedPassword := OST_ENCODE_HASHED_PASSWORD(user.hashedPassword)
-			user.hashedPassword = encodedPassword
+			encodedPassword := OST_ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
+			user.hashedPassword.valAsBytes = encodedPassword
+
 		} else if isInitializing == false {
 			new_user.password.Length = len(p)
 			new_user.password.Value = strings.clone(p)
-			new_user.hashedPassword = OST_HASH_PASSWORD(p, 0, false, false)
+			new_user.hashedPassword.valAsBytes = OST_HASH_PASSWORD(p, 0, false, false)
 
-			encodedPassword := OST_ENCODE_HASHED_PASSWORD(new_user.hashedPassword)
-			new_user.hashedPassword = encodedPassword
+			encodedPassword := OST_ENCODE_HASHED_PASSWORD(new_user.hashedPassword.valAsBytes)
+			new_user.hashedPassword.valAsBytes = encodedPassword
 			return new_user.password.Value
 		}
 	}
@@ -322,7 +361,9 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
 			utils.get_err_msg(.CANNOT_OPEN_FILE),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_err(error1)
 		log_err("Error opening user credentials file", #procedure)
@@ -464,129 +505,129 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // creates a new user account post engine initialization
 //also determines if the currently logged in user has permission to create a new user account
 //allows for test mode to be used to create a new user without the need for interactive input
-OST_CREATE_NEW_USER :: proc(
-	username: string = "",
-	password: string = "",
-	role: string = "",
-) -> int {
-	using types
+// OST_CREATE_NEW_USER :: proc(
+// 	username: string = "",
+// 	password: string = "",
+// 	role: string = "",
+// ) -> int {
+// 	using types
 
-	buf: [1024]byte
-	if user.role.Value == "admin" {
-		fmt.println("Please enter role you would like to assign the new account")
-		fmt.printf("1. Admin\n2. User\n3. Guest\n")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			fmt.printfln("Error reading input")
-			return 1
-		}
+// 	buf: [1024]byte
+// 	if user.role.Value == "admin" {
+// 		fmt.println("Please enter role you would like to assign the new account")
+// 		fmt.printf("1. Admin\n2. User\n3. Guest\n")
+// 		n, inputSuccess := os.read(os.stdin, buf[:])
+// 		if inputSuccess != 0 {
+// 			fmt.printfln("Error reading input")
+// 			return 1
+// 		}
 
-		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
-		if inputToCap == "1" || inputToCap == "ADMIN" {
-			new_user.role.Value = "admin"
-		} else if inputToCap == "2" || inputToCap == "USER" {
-			new_user.role.Value = "user"
-		} else if inputToCap == "3" || inputToCap == "GUEST" {
-			new_user.role.Value = "guest"
-		} else {
-			fmt.printfln("Invalid role entered")
-			return 1
-		}
-	} else if (user.role.Value == "user") {
-		new_user.role.Value = "guest"
-	} else {
-		fmt.println("You do not have the required permissions to create a new account")
-		fmt.printfln("To create a new account you must be logged in as an admin or user account")
-		return 1
-	}
+// 		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
+// 		if inputToCap == "1" || inputToCap == "ADMIN" {
+// 			new_user.role.Value = "admin"
+// 		} else if inputToCap == "2" || inputToCap == "USER" {
+// 			new_user.role.Value = "user"
+// 		} else if inputToCap == "3" || inputToCap == "GUEST" {
+// 			new_user.role.Value = "guest"
+// 		} else {
+// 			fmt.printfln("Invalid role entered")
+// 			return 1
+// 		}
+// 	} else if (user.role.Value == "user") {
+// 		new_user.role.Value = "guest"
+// 	} else {
+// 		fmt.println("You do not have the required permissions to create a new account")
+// 		fmt.printfln("To create a new account you must be logged in as an admin or user account")
+// 		return 1
+// 	}
 
-	newUserName := OST_GET_USERNAME(false)
-	new_user.username.Value = newUserName
-
-
-	// Common validation logic for both test and interactive modes
-	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(new_user.username.Value)
-	if isBannedUsername {
-		fmt.printfln("Username is banned. Please enter a different username")
-		fmt.println("Cannot create user with name: ", new_user.username.Value)
-		return 1
-	}
-
-	newColName := fmt.tprintf("secure_%s", new_user.username.Value)
-	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
-
-	if exists {
-		fmt.printfln(
-			"There is already a user with the name: %s%s%s\nPlease try again.",
-			utils.BOLD_UNDERLINE,
-			new_user.username.Value,
-			utils.RESET,
-		)
-		return 1
-	}
-
-	result := data.OST_CREATE_COLLECTION(newColName, 1)
-	fmt.printf(
-		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
-	)
-	libc.system("stty -echo")
-	initpassword := OST_GET_PASSWORD(false)
-	libc.system("stty echo")
-	new_user.password.Value = initpassword
+// 	newUserName := OST_GET_USERNAME(false)
+// 	new_user.username.Value = newUserName
 
 
-	saltAsString := string(new_user.salt)
-	hashAsString := string(new_user.hashedPassword)
-	algoMethodAsString := strconv.itoa(buf[:], new_user.store_method)
+// 	// Common validation logic for both test and interactive modes
+// 	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(new_user.username.Value)
+// 	if isBannedUsername {
+// 		fmt.printfln("Username is banned. Please enter a different username")
+// 		fmt.println("Cannot create user with name: ", new_user.username.Value)
+// 		return 1
+// 	}
 
-	new_user.user_id = data.OST_GENERATE_ID(true)
+// 	newColName := fmt.tprintf("secure_%s", new_user.username.Value)
+// 	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
 
-	//store the id to both clusters in the id collection
-	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 0)
-	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 1)
+// 	if exists {
+// 		fmt.printfln(
+// 			"There is already a user with the name: %s%s%s\nPlease try again.",
+// 			utils.BOLD_UNDERLINE,
+// 			new_user.username.Value,
+// 			utils.RESET,
+// 		)
+// 		return 1
+// 	}
 
-	// Store user credentials
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"user_name",
-		new_user.username.Value,
-	)
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"role",
-		new_user.role.Value,
-	)
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"salt",
-		saltAsString,
-	)
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"hash",
-		hashAsString,
-	)
-	OST_STORE_USER_CREDS(
-		newColName,
-		new_user.username.Value,
-		new_user.user_id,
-		"store_method",
-		algoMethodAsString,
-	)
+// 	result := data.OST_CREATE_COLLECTION(newColName, .SECURE_PRIVATE)
+// 	fmt.printf(
+// 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
+// 	)
+// 	libc.system("stty -echo")
+// 	initpassword := OST_GET_PASSWORD(false)
+// 	libc.system("stty echo")
+// 	new_user.password.Value = initpassword
 
-	// Create history cluster.
-	data.OST_CREATE_CLUSTER_BLOCK(const.OST_HISTORY_PATH, user.user_id, new_user.username.Value)
 
-	return 0
-}
+// 	saltAsString := string(new_user.salt.valAsStr)
+// 	hashAsString := string(new_user.hashedPassword.valAsStr)
+// 	algoMethodAsString := strconv.itoa(buf[:], new_user.store_method)
+
+// 	new_user.user_id = data.OST_GENERATE_ID(true)
+
+// 	//store the id to both clusters in the id collection
+// 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 0)
+// 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 1)
+
+// 	// Store user credentials
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"user_name",
+// 		new_user.username.Value,
+// 	)
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"role",
+// 		new_user.role.Value,
+// 	)
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"salt",
+// 		saltAsString,
+// 	)
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"hash",
+// 		hashAsString,
+// 	)
+// 	OST_STORE_USER_CREDS(
+// 		newColName,
+// 		new_user.username.Value,
+// 		new_user.user_id,
+// 		"store_method",
+// 		algoMethodAsString,
+// 	)
+
+// 	// Create history cluster.
+// 	data.OST_CREATE_CLUSTER_BLOCK(const.OST_HISTORY_PATH, user.user_id, new_user.username.Value)
+
+// 	return 0
+// }
 
 //Checks that un as username is not a banned username from the banned usernames list
 OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
@@ -652,7 +693,13 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 
 	n, inputSuccess := os.read(os.stdin, buf[:])
 	if inputSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_INPUT,
+			get_err_msg(.CANNOT_READ_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		return false
 	}
@@ -671,7 +718,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 			"User entered invalid input",
 			"User entered invalid input when trying to delete user",
 		)
-		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #procedure)
+		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #file, #procedure, #line)
 		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 		return false
 	}
@@ -693,7 +740,13 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	// Delete the user's secure collection file
 	deleteSuccess := os.remove(file)
 	if deleteSuccess != 0 {
-		error1 := new_err(.CANNOT_DELETE_FILE, get_err_msg(.CANNOT_DELETE_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_DELETE_FILE,
+			get_err_msg(.CANNOT_DELETE_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error deleting user's secure collection file", #procedure)
 		return false

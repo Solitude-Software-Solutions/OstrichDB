@@ -12,8 +12,6 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:sys/darwin"
-
-
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -21,9 +19,8 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            Contains logic for handling user management,
-            including creating, deleting, and updating
-            user accounts.
+            Contains logic how users access databases within
+            OsthichDB. Not yet fully implemented.
 *********************************************************/
 
 
@@ -35,8 +32,9 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 		user.username.Value,
 		const.OST_FILE_EXTENSION,
 	)
-	// fmt.println("User Collection: ", userCollection) //debugging
+	fmt.println("User Collection: ", userCollection) //debugging
 	userCluster := strings.to_upper(user.username.Value)
+	fmt.println("User Cluster: ", userCluster) //debugging
 	isAdmin := false
 
 	userRoleVal := data.OST_READ_RECORD_VALUE(userCollection, userCluster, "identifier", "role")
@@ -127,8 +125,8 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 			append(&operation.permission, types.Operation_Permssion_Requirement.READ_ONLY)
 			append(&operation.permission, types.Operation_Permssion_Requirement.READ_WRITE)
 
+			append(&opArr, "Read-Write") //Believe it or not the order in which these are appended is important. Dumb design I know. - Marshall
 			append(&opArr, "Read-Only")
-			append(&opArr, "Read-Write")
 			operation.permissionStr = opArr
 			return operation
 		}
@@ -186,8 +184,16 @@ OST_OPERATION_IS_ALLOWED :: proc(
 
 
 //Handles all the logic from above and returns a 1 if the user does not have permission to perform the passed in operation
-OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) -> int {
-	// fmt.println("Getting passed colName: ", colName) //debugging
+//Performs Decryption of the secure collection, performs the check the re-encrypts the users secure collection
+OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
+	command, colName: string,
+	colType: types.CollectionType,
+) -> int {
+	// fmt.println(
+	// 	"proc OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION Getting passed colName: ",
+	// 	colName,
+	// ) //debugging
+
 	//Get the operation permission for the command
 	commandOperation := OST_SET_OPERATION_PERMISSIONS(command)
 	// fmt.println("commandOperation: ", commandOperation) //debugging
@@ -197,7 +203,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 	defer free(commandOperation)
 
 
-	permissionValue, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+	permissionValue, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", colType)
 	// fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
 	// fmt.println("Permission Value from collection file: ", permissionValue) //debugging
 	for perm in commandPermissions {
@@ -214,13 +220,19 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 			return 1
 		}
 	}
+
 	return 0
 }
 
 //Used to check if a collection is already locked before attempting to lock it again
 OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
-	lockStatus, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+	lockStatus, success := metadata.OST_GET_METADATA_VALUE(
+		colName,
+		"# Permission",
+		.STANDARD_PUBLIC,
+	)
+	fmt.println("lockstatus: ", lockStatus) //debugging
 	// fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
 	// fmt.println("Permission Value from collection file: ", lockStatus) //debugging
 	if lockStatus == "Read-Only" || lockStatus == "Inaccessible" {
@@ -247,4 +259,81 @@ OST_CONFIRM_COLLECECTION_UNLOCK :: proc() -> bool {
 	}
 
 	return passIsCorrect
+}
+
+
+//Performs the permission check on the collection before allowing the operation to be performed. Used on command line
+OST_EXEC_CMD_LINE_PERM_CHECK :: proc(
+	colName, commandStr: string,
+	colType: types.CollectionType,
+) -> int {
+
+	//Decrypt the "working" collection to see what specific permission is set for operations to be performed
+	#partial switch (colType) {
+	case .CONFIG_PRIVATE:
+		OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		break
+	case:
+		OST_DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+		break
+	}
+
+	//Decrypt the logged in users secure collection to ensure their role allows for the requested operation to be performed
+	OST_DECRYPT_COLLECTION(
+		types.current_user.username.Value,
+		.SECURE_PRIVATE,
+		types.system_user.m_k.valAsBytes,
+	)
+
+	//Cross check the permissions set for the operation to be performed and the users role
+	permissionCheckResult := OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
+		commandStr,
+		colName,
+		colType,
+	)
+	switch (permissionCheckResult) 
+	{
+	case 0:
+		//If the permission check passes, re-encrypt the "secure" collection and continue with the operation
+		OST_ENCRYPT_COLLECTION(
+			types.current_user.username.Value,
+			.SECURE_PRIVATE,
+			types.system_user.m_k.valAsBytes,
+			false,
+		)
+		break
+	case:
+		// If the permission check fails, re-encrypt the "working" and "secure" collections
+		#partial switch (colType) {
+		case .CONFIG_PRIVATE:
+			OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			break
+		case .ISOLATE_PUBLIC:
+			OST_ENCRYPT_COLLECTION(
+				colName,
+				.ISOLATE_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
+			break
+
+		case:
+			OST_ENCRYPT_COLLECTION(
+				colName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
+			break
+		}
+		OST_ENCRYPT_COLLECTION(
+			types.current_user.username.Value,
+			.SECURE_PRIVATE,
+			types.system_user.m_k.valAsBytes,
+			false,
+		)
+		return -1
+	}
+
+	return 0
 }

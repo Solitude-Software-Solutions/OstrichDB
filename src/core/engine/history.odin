@@ -33,6 +33,9 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 		false,
 	)
 
+	// History Collection file size limit.
+	// Doesnt measure bytes of the file but instead
+	// the num of records of the users command history cluster
 	limitOn := data.OST_READ_RECORD_VALUE(
 		const.OST_CONFIG_PATH,
 		const.CONFIG_CLUSTER,
@@ -86,7 +89,9 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	data, readSuccess := os.read_entire_file(OST_HISTORY_PATH)
 	defer delete(data)
 	if !readSuccess {
-		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
+		throw_err(
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+		)
 		log_err("Error reading collection file", #procedure)
 		return false
 	}
@@ -122,7 +127,9 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 					userName,
 					RESET,
 				),
+				#file,
 				#procedure,
+				#line,
 			),
 		)
 		log_err("Error finding cluster in collection", #procedure)
@@ -130,7 +137,15 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	}
 	writeSuccess := os.write_entire_file(OST_HISTORY_PATH, newContent[:])
 	if !writeSuccess {
-		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+		throw_err(
+			new_err(
+				.CANNOT_WRITE_TO_FILE,
+				get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#file,
+				#procedure,
+				#line,
+			),
+		)
 		log_err("Error writing to collection file", #procedure)
 		return false
 	}
@@ -150,7 +165,9 @@ OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(const.OST_HISTORY_PATH)
 	if !readSuccess {
-		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
+		throw_err(
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+		)
 		log_err("Error reading collection file", #procedure)
 		return false
 	}
@@ -221,14 +238,30 @@ OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
 	}
 
 	if !clusterFound {
-		throw_err(new_err(.CANNOT_FIND_CLUSTER, get_err_msg(.CANNOT_FIND_CLUSTER), #procedure))
+		throw_err(
+			new_err(
+				.CANNOT_FIND_CLUSTER,
+				get_err_msg(.CANNOT_FIND_CLUSTER),
+				#file,
+				#procedure,
+				#line,
+			),
+		)
 		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
 	//write the new content to the collection file
 	writeSuccess := os.write_entire_file(const.OST_HISTORY_PATH, newContent[:])
 	if !writeSuccess {
-		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+		throw_err(
+			new_err(
+				.CANNOT_WRITE_TO_FILE,
+				get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#file,
+				#procedure,
+				#line,
+			),
+		)
 		log_err("Error writing to collection file", #procedure)
 		return false
 	}
@@ -256,7 +289,9 @@ OST_CHECK_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
 						currentUser.username.Value,
 						RESET,
 					),
+					#file,
 					#procedure,
+					#line,
 				),
 			)
 			log_err("Error purging history cluster", #procedure)

@@ -6,7 +6,8 @@ import "../../types"
 import "../config"
 import "../data"
 import "../data/metadata"
-// import "./security"
+import "../security"
+import "core:bytes"
 import "core:c/libc"
 import "core:fmt"
 import "core:os"
@@ -29,37 +30,38 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	using utils
 
 	//get the username input from the user
-	buf: [1024]byte
-	fmt.printfln("Please enter your username:")
-	n, inputSuccess := os.read(os.stdin, buf[:])
+	fmt.printfln("Please enter your %susername%s:", BOLD, RESET)
+	n := get_input(false)
 
-	if inputSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
-		throw_err(error1)
-		log_err("Could not read user input during sign in", #procedure)
-		return false
-	}
-
-	userName := strings.trim_right(string(buf[:n]), "\r\n")
+	userName := n
 	if len(userName) == 0 {
 		fmt.printfln("Username cannot be empty. Please try again.")
 		return false
 	}
 	usernameCapitalized := strings.to_upper(userName)
+	secCollectionFound, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
+	if secCollectionFound == false {
+		fmt.println(
+			"There is no account within OstrichDB associated with the entered username. Please try again.",
+		)
+		log_err("User entered a username that does not exist in the database", #procedure)
+		return false
+	}
 
-	found, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
 	secColPath := fmt.tprintf(
 		"%ssecure_%s%s",
 		OST_SECURE_COLLECTION_PATH,
 		userName,
 		OST_FILE_EXTENSION,
 	)
-	userNameFound := data.OST_READ_RECORD_VALUE(
-		secColPath,
+
+	//decrypt the user secure collection
+	decSuccess, _ := OST_DECRYPT_COLLECTION(
 		usernameCapitalized,
-		"identifier",
-		"user_name",
+		.SECURE_PRIVATE,
+		types.system_user.m_k.valAsBytes,
 	)
+
 	userRole := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "role")
 	if userRole == "admin" {
 		user.role.Value = "admin"
@@ -69,19 +71,11 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		user.role.Value = "guest"
 	}
 
-	if (userNameFound != usernameCapitalized) {
-		error2 := new_err(
-			.ENTERED_USERNAME_NOT_FOUND,
-			get_err_msg(.ENTERED_USERNAME_NOT_FOUND),
-			#procedure,
-		)
-		throw_err(error2)
-		fmt.printfln(
-			"There is no account within OstrichDB associated with the entered username. Please try again.",
-		)
-		log_err("User entered a username that does not exist in the database", #procedure)
-		return false
-	}
+	//Voodoo??
+	userMKStr := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "m_k")
+	// user.m_k.valAsStr = userMKStr
+	user.m_k.valAsBytes = OST_DECODE_M_K(transmute([]byte)userMKStr)
+
 
 	user.username.Value = strings.clone(usernameCapitalized)
 
@@ -110,17 +104,11 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	//POST-MESHING START=======================================================================================================
 
 	//get the password input from the user
-	fmt.printfln("Please enter your password:")
+	fmt.printfln("Please enter your %spassword%s:", BOLD, RESET)
 	libc.system("stty -echo")
-	n, inputSuccess = os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error3 := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
-		throw_err(error3)
-		log_err("Could not read user input during sign in", #procedure)
-		libc.system("stty echo")
-		return false
-	}
-	enteredPassword := strings.trim_right(string(buf[:n]), "\r\n")
+	n = get_input(true)
+
+	enteredPassword := n
 	libc.system("stty echo")
 
 	if len(enteredPassword) == 0 {
@@ -140,27 +128,49 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	switch authPassed {
 	case true:
 		OST_START_SESSION_TIMER()
-		fmt.printfln("\n\nSucessfully signed in!")
-		fmt.printfln("Welcome, %s!\n", userNameFound)
+		fmt.printfln("\n\n%sSucessfully signed in!%s", GREEN, RESET)
+		fmt.printfln("Welcome, %s%s%s!\n", BOLD_UNDERLINE, usernameCapitalized, RESET)
 		USER_SIGNIN_STATUS = true
-		current_user.username.Value = strings.clone(userNameFound) //set the current user to the user that just signed in for HISTORY command reasons
+		current_user.username.Value = strings.clone(usernameCapitalized) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
+
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
 			OST_CONFIG_PATH,
 			CONFIG_CLUSTER,
 			BOOLEAN,
 			CONFIG_THREE,
 		)
+
+		//Master Key shit
+		mkValueRead := data.OST_READ_RECORD_VALUE(
+			secColPath,
+			usernameCapitalized,
+			"identifier",
+			"m_k",
+		)
+
+		// mkValueAsBytes := security.OST_M_K_STIRNG_TO_BYTE(mkValueRead)
+		current_user.m_k.valAsStr = user.m_k.valAsStr
+		current_user.m_k.valAsBytes = user.m_k.valAsBytes
+
+
 		if userLoggedInValue == "false" {
 			// config.OST_TOGGLE_CONFIG(const.CONFIG_THREE)
 			config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_THREE, "true")
 		}
 		break
 	case false:
-		fmt.printfln("Auth Failed. Password was incorrect please try again.")
+		fmt.printfln("%sAuth Failed. Password was incorrect please try again.%s", RED, RESET)
 		types.USER_SIGNIN_STATUS = false
-		os.exit(0)
+		OST_RUN_SIGNIN()
+
 	}
+	OST_ENCRYPT_COLLECTION(
+		usernameCapitalized,
+		.SECURE_PRIVATE,
+		types.system_user.m_k.valAsBytes,
+		false,
+	)
 	return USER_SIGNIN_STATUS
 
 }

@@ -58,11 +58,18 @@ OST_START_ENGINE :: proc() -> int {
 	switch (types.OstrichEngine.Initialized) 
 	{
 	case false:
+		//Continue with engine initialization
 		security.OST_INIT_ADMIN_SETUP()
 		break
 
 	case true:
 		for {
+			security.OST_ENCRYPT_COLLECTION(
+				"",
+				.CONFIG_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				false,
+			)
 			userSignedIn := security.OST_RUN_SIGNIN()
 			switch (userSignedIn) 
 			{
@@ -74,9 +81,14 @@ OST_START_ENGINE :: proc() -> int {
 				)
 				result := OST_ENGINE_COMMAND_LINE()
 				return result
-
 			case false:
 				fmt.printfln("Sign in failed. Please try again.")
+				security.OST_ENCRYPT_COLLECTION(
+					"",
+					.CONFIG_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+					false,
+				)
 				continue
 			}
 		}
@@ -99,13 +111,22 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			error := utils.new_err(
 				.CANNOT_READ_INPUT,
 				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#file,
 				#procedure,
+				#line,
 			)
 			utils.throw_err(error)
 			utils.log_err("Could not read user input from command line", #procedure)
 		}
 		input := strings.trim_right(string(buf[:n]), "\r\n")
+		security.OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		OST_APPEND_COMMAND_TO_HISTORY(input)
+		security.OST_ENCRYPT_COLLECTION(
+			"",
+			.HISTORY_PRIVATE,
+			types.system_user.m_k.valAsBytes,
+			false,
+		)
 		cmd := OST_PARSE_COMMAND(input)
 		// fmt.printfln("Command: %v", cmd) //debugging
 

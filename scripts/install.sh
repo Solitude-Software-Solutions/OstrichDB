@@ -81,7 +81,7 @@ fi
 
 echo "Building $PROGRAM_NAME..."
 # Change to the src directory and build
-# cd src #TODO: this is removed once 0.7 is released
+
 odin build main
 
 # Check if build was successful

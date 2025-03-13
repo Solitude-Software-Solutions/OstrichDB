@@ -67,7 +67,7 @@ OST_CHECK_IF_CLUSTER_ID_EXISTS :: proc(id: i64) -> bool {
 OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 	using const
 
-	OST_CREATE_COLLECTION("ids", 4)
+	OST_CREATE_COLLECTION("", .ID_PRIVATE)
 	cluOneid := OST_GENERATE_ID(true)
 
 	// doing this prevents the creation of cluster_id records each time the program starts up. Only allows it once

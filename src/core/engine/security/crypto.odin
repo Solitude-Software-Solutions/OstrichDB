@@ -18,6 +18,7 @@ Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 File Description:
             Contains logic for hashing passwords and generating salts.
             Also contains logic for generating a master key for each user.
+            Not to be confused with the encryption logic in the encryption.odin file.
 *********************************************************/
 
 
@@ -88,9 +89,9 @@ OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing:
 	//generate the salt
 	salt: []u8 = OST_GENERATE_SALT()
 	if (isInitializing == true) {
-		types.user.salt = salt //store the salt into the user struct
+		types.user.salt.valAsBytes = salt //store the salt into the user struct
 	} else if (isInitializing == false) {
-		types.new_user.salt = salt //store the salt into the user struct
+		types.new_user.salt.valAsBytes = salt //store the salt into the user struct
 	}
 	hashedPassword: []u8
 
@@ -129,10 +130,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_224, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 1
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 1
 		}
 		break
@@ -141,10 +142,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_256, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 2
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 2
 		}
 		break
@@ -153,10 +154,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_384, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 3
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 3
 		}
 		break
@@ -165,10 +166,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA3_512, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 4
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 4
 		}
 		break
@@ -177,10 +178,10 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 			hashedPassword = hash.hash_string(hash.Algorithm.SHA512_256, p)
 		}
 		if (isInitializing == true) {
-			user.hashedPassword = hashedPassword
+			user.hashedPassword.valAsBytes = hashedPassword
 			user.store_method = 5
 		} else if (isInitializing == false) {
-			new_user.hashedPassword = hashedPassword
+			new_user.hashedPassword.valAsBytes = hashedPassword
 			new_user.store_method = 5
 		}
 	}
@@ -196,64 +197,24 @@ OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 }
 
 
-//used to generate a 256 bit master key for each user
+//used to generate a 256 bit master key for each user, encodes it to hexidecimal, then returns it as a 64 byte array
 OST_GEN_MASTER_KEY :: proc() -> []byte {
-	keyAsStr: string
-	key: []byte
-	randC: string //random char
-	randN: int //random number
-	concatStr: string
-
-	chars: []string = {
-		"a",
-		"b",
-		"c",
-		"d",
-		"e",
-		"f",
-		"g",
-		"h",
-		"i",
-		"j",
-		"k",
-		"l",
-		"m",
-		"n",
-		"o",
-		"p",
-		"q",
-		"r",
-		"s",
-		"t",
-		"u",
-		"v",
-		"w",
-		"x",
-		"y",
-	}
-
-	nums := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 0}
-
-	//generate a random string of 15 lower case characters
-	for c := 0; c < 15; c += 1 {
-		randC = rand.choice(chars)
-		concatStr = strings.concatenate([]string{keyAsStr, randC})
-		keyAsStr = concatStr
+	key := make([]byte, 32)
+	// Fill the buffer with random bytes
+	for i := 0; i < 32; i += 1 {
+		key[i] = byte(rand.int31_max(256))
 	}
 
 
-	//generate a random number and convert it to a string
-	nBuff: [8]byte
-	for n := 0; n < 17; n += 1 {
-		randN = rand.choice(nums)
-		convetedN := strconv.itoa(nBuff[:], randN)
-		join := strings.concatenate([]string{keyAsStr, convetedN})
-		keyAsStr = join
-	}
-
-	//convert the string to a byte array then shuffle the array
-	key = transmute([]byte)keyAsStr
-	rand.shuffle(key)
-
-	return key
+	encodedKey := hex.encode(key) //encode the key to us hexidecimal characters
+	return encodedKey
 }
+
+OST_DECODE_M_K :: proc(m_k: []byte) -> []byte {
+	decodedKey, _ := hex.decode(m_k)
+	return decodedKey
+}
+
+// OST_M_K_STIRNG_TO_BYTE :: proc(m_k: string) -> []byte {
+// 	return transmute([]byte)m_k
+// }

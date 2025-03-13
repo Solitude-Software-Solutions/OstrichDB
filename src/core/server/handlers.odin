@@ -197,7 +197,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			// In the event of something like: /collection/collecion_name
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
-				data.OST_CREATE_COLLECTION(collectionName, 0)
+				data.OST_CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
 				return types.HttpStatus {
 					code = .OK,
 					text = types.HttpStatusText[.OK],
@@ -240,7 +240,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			}
 			collectionNamePath := fmt.tprintf(
 				"%s%s%s",
-				const.OST_COLLECTION_PATH,
+				const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
 				collectionName,
 				const.OST_FILE_EXTENSION,
 			)
@@ -336,7 +336,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 
 	collectionNamePath := fmt.tprintf(
 		"%s%s%s",
-		const.OST_COLLECTION_PATH,
+		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
 		collectionName,
 		const.OST_FILE_EXTENSION,
 	)

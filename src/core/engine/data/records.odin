@@ -56,7 +56,9 @@ OST_CHECK_IF_RECORD_EXISTS :: proc(fn, cn, rn: string) -> bool {
 	error2 := utils.new_err(
 		.CANNOT_FIND_CLUSTER,
 		utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+		#file,
 		#procedure,
+		#line,
 	)
 	utils.throw_custom_err(error2, fmt.tprintf("Specified cluster not found: %s", cn))
 	utils.log_err("Specified cluster not found", #procedure)
@@ -117,7 +119,9 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structure", #procedure)
@@ -180,7 +184,9 @@ OST_APPEND_CREDENTIAL_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structure", #procedure)
@@ -238,7 +244,9 @@ OST_READ_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structur", #procedure)
@@ -268,11 +276,11 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 	recordType: string
 	recordData: string
 
-	collectionDir, openDirSuccess := os.open(const.OST_COLLECTION_PATH)
+	collectionDir, openDirSuccess := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
 	collections, readDirSuccess := os.read_dir(collectionDir, -1) //might not be -1
 
 	for collection in collections {
-		colPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collection.name)
+		colPath := fmt.tprintf("%s%s", const.OST_PUBLIC_STANDARD_COLLECTION_PATH, collection.name)
 		data, collectionReadSuccess := os.read_entire_file(colPath)
 		defer delete(data)
 		content := string(data)
@@ -378,7 +386,13 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 		data, readSuccess := os.read_entire_file(collectionPath)
 		if !readSuccess {
 			utils.throw_err(
-				utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+				utils.new_err(
+					.CANNOT_READ_FILE,
+					utils.get_err_msg(.CANNOT_READ_FILE),
+					#file,
+					#procedure,
+					#line,
+				),
 			)
 			utils.log_err("Could not read file", #procedure)
 			return -1
@@ -457,7 +471,9 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 				utils.new_err(
 					.CANNOT_WRITE_TO_FILE,
 					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
+					#file,
 					#procedure,
+					#line,
 				),
 			)
 			utils.log_err("Could not write to file", #procedure)
@@ -473,12 +489,13 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 OST_GET_DATABASE_TREE :: proc() {
 	OST_GET_ALL_COLLECTION_NAMES(true)
 	// on MacOS, the below call always shows 64b as the size of all collections so need to always subract 64b from the total size even if there are no collections
-	//need to test on Linux
-	totalSize := metadata.OST_GET_FS(const.OST_COLLECTION_PATH).size
+	//TODO: need to test on Linux
+	totalSize := metadata.OST_GET_FS(const.OST_PUBLIC_STANDARD_COLLECTION_PATH).size
 	sizeMinus64 := totalSize - 64
 
 	// output data size
-	fmt.printfln("Size of data: %dBytes", sizeMinus64)
+	fmt.printfln("Total Size of data: %d Bytes (Not counting metadata)", sizeMinus64)
+	fmt.println("-----------------------------\n")
 
 }
 
@@ -612,7 +629,7 @@ OST_FIND_RECORD_IN_CLUSTER :: proc(
 ) {
 	collectionPath := fmt.tprintf(
 		"%s%s%s",
-		const.OST_COLLECTION_PATH,
+		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
 		strings.to_upper(collectionName),
 		const.OST_FILE_EXTENSION,
 	)
@@ -719,7 +736,11 @@ OST_SCAN_COLLECTION_FOR_RECORD :: proc(
 	cluName: string,
 	success: bool,
 ) {
-	collectionPath := fmt.tprintf("%s%s", const.OST_COLLECTION_PATH, collectionName)
+	collectionPath := fmt.tprintf(
+		"%s%s",
+		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
+		collectionName,
+	)
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
@@ -768,14 +789,16 @@ OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 	defer delete(collections)
 	defer delete(clusters)
 
-	colDir, openDirSuccess := os.open(const.OST_COLLECTION_PATH)
+	colDir, openDirSuccess := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
 
 	files, err := os.read_dir(colDir, 1)
 	if err != 0 {
 		error := utils.new_err(
 			.CANNOT_READ_DIRECTORY,
 			utils.get_err_msg(.CANNOT_READ_DIRECTORY),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error)
 		utils.log_err("Could not read collection directory", #procedure)
@@ -785,7 +808,10 @@ OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 
 	for file in files {
 		if !strings.has_suffix(file.name, ".ost") do continue
-		filepath := strings.join([]string{const.OST_COLLECTION_PATH, file.name}, "")
+		filepath := strings.join(
+			[]string{const.OST_PUBLIC_STANDARD_COLLECTION_PATH, file.name},
+			"",
+		)
 		data, readSuccess := os.read_entire_file(filepath)
 		if !readSuccess {
 			fmt.println("Error reading file:", file.name)
@@ -1039,7 +1065,9 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		valueTypeError := utils.new_err(
 			.INVALID_VALUE_FOR_EXPECTED_TYPE,
 			utils.get_err_msg(.INVALID_VALUE_FOR_EXPECTED_TYPE),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_custom_err(
 			valueTypeError,
@@ -1202,7 +1230,13 @@ OST_FETCH_RECORD :: proc(fn: string, cn: string, rn: string) -> (types.Record, b
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
 		utils.throw_err(
-			utils.new_err(.CANNOT_READ_FILE, utils.get_err_msg(.CANNOT_READ_FILE), #procedure),
+			utils.new_err(
+				.CANNOT_READ_FILE,
+				utils.get_err_msg(.CANNOT_READ_FILE),
+				#file,
+				#procedure,
+				#line,
+			),
 		)
 		return types.Record{}, false
 	}
@@ -1266,7 +1300,9 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 		error1 := utils.new_err(
 			.CANNOT_READ_INPUT,
 			utils.get_err_msg(.CANNOT_READ_INPUT),
+			#file,
 			#procedure,
+			#line,
 		)
 		utils.throw_err(error1)
 		utils.log_err("Error reading user input", #procedure)
@@ -1287,7 +1323,13 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
 			"User entered invalid input",
 			"User entered invalid input when trying to delete record",
 		)
-		error2 := utils.new_err(.INVALID_INPUT, utils.get_err_msg(.INVALID_INPUT), #procedure)
+		error2 := utils.new_err(
+			.INVALID_INPUT,
+			utils.get_err_msg(.INVALID_INPUT),
+			#file,
+			#procedure,
+			#line,
+		)
 		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 		return false
 	}
@@ -1383,6 +1425,7 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 	records: [dynamic]string
 	histBuf: [1024]byte
 
+
 	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
 	defer delete(data)
 	if !readSuccess {
@@ -1400,7 +1443,7 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 					parts := strings.split(line, ":COMMAND:")
 					if len(parts) >= 2 {
 						value := strings.trim_space(parts[1])
-						append(&records, value)
+						append(&records, strings.clone(value))
 					}
 				}
 			}
@@ -1418,9 +1461,14 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 	collectionPath: string
 	if isCounting == true {
 		collectionPath = utils.concat_collection_name(fn)
-		
+
 	} else if isCounting == false {
-		collectionPath = fmt.tprintf("%s%s%s", const.OST_CORE_PATH, fn, const.OST_FILE_EXTENSION)
+		collectionPath = fmt.tprintf(
+			"%s%s%s",
+			const.OST_PRIVATE_PATH,
+			fn,
+			const.OST_FILE_EXTENSION,
+		)
 		// fmt.printfln(
 		// 	"%s procedure is counting records in cluster: %s within collection: %s",
 		// 	#procedure,
@@ -1475,40 +1523,41 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 
 //reads over the passed in collection file and returns the number of records in that collection
 OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
-    collectionPath := utils.concat_collection_name(fn)
-    data, readSuccess := utils.read_file(collectionPath, #procedure)
-    if !readSuccess {
-        return -1
-    }
-    defer delete(data)
+	collectionPath := utils.concat_collection_name(fn)
+	data, readSuccess := utils.read_file(collectionPath, #procedure)
+	if !readSuccess {
+		return -1
+	}
+	defer delete(data)
 
-    content := string(data)
-    // Skip metadata section
-    if metadataEnd := strings.index(content, "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@"); metadataEnd >= 0 {
-        content = content[metadataEnd + len("@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@"):]
-    }
+	content := string(data)
+	// Skip metadata section
+	if metadataEnd := strings.index(content, "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@");
+	   metadataEnd >= 0 {
+		content = content[metadataEnd + len("@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@"):]
+	}
 
-    clusters := strings.split(content, "},")
-    recordCount := 0
-    for cluster in clusters {
-        if !strings.contains(cluster, "cluster_name :identifier:") {
-            continue // Skip non-cluster content
-        }
-        lines := strings.split(cluster, "\n")
-        for line in lines {
-            trimmedLine := strings.trim_space(line)
-            if len(trimmedLine) > 0 &&
-               !strings.has_prefix(trimmedLine, "cluster_name") &&
-               !strings.has_prefix(trimmedLine, "cluster_id") &&
-               strings.contains(trimmedLine, ":") &&
-               !strings.contains(trimmedLine, const.METADATA_START) &&
-               !strings.contains(trimmedLine, const.METADATA_END) {
-                recordCount += 1
-            }
-        }
-    }
+	clusters := strings.split(content, "},")
+	recordCount := 0
+	for cluster in clusters {
+		if !strings.contains(cluster, "cluster_name :identifier:") {
+			continue // Skip non-cluster content
+		}
+		lines := strings.split(cluster, "\n")
+		for line in lines {
+			trimmedLine := strings.trim_space(line)
+			if len(trimmedLine) > 0 &&
+			   !strings.has_prefix(trimmedLine, "cluster_name") &&
+			   !strings.has_prefix(trimmedLine, "cluster_id") &&
+			   strings.contains(trimmedLine, ":") &&
+			   !strings.contains(trimmedLine, const.METADATA_START) &&
+			   !strings.contains(trimmedLine, const.METADATA_END) {
+				recordCount += 1
+			}
+		}
+	}
 
-    return recordCount
+	return recordCount
 }
 
 //deletes the data value of the passed in record but keeps the name and type
@@ -1596,7 +1645,7 @@ OST_GET_RECORD_SIZE :: proc(
 ) {
 	collection_path := fmt.tprintf(
 		"%s%s%s",
-		const.OST_COLLECTION_PATH,
+		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
 		collection_name,
 		const.OST_FILE_EXTENSION,
 	)

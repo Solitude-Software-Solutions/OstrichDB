@@ -20,34 +20,36 @@ OST_DEV_MODE :: #config(OST_DEV_MODE, false)
 //DO NOT TOUCH MF - Marshall
 when OST_DEV_MODE == true {
 	OST_TMP_PATH :: "./tmp/"
-	OST_COLLECTION_PATH :: "./collections/"
-	OST_SECURE_COLLECTION_PATH :: "./secure/"
-	OST_BACKUP_PATH :: "./backups/"
-	OST_CORE_PATH :: "./core/"
-	OST_CONFIG_PATH :: "./core/config.ost"
-	OST_ID_PATH :: "./core/ids.ost"
-	OST_HISTORY_PATH :: "./core/history.ost"
-	OST_BENCHMARK_PATH :: "./benchmark/"
+	OST_PRIVATE_PATH :: "./private/"
+	OST_PUBLIC_PATH :: "./public/"
+	OST_PUBLIC_STANDARD_COLLECTION_PATH :: "./public/standard/"
+	OST_SECURE_COLLECTION_PATH :: "./private/secure/"
+	OST_BACKUP_PATH :: "./public/backups/"
+	OST_CONFIG_PATH :: "./private/config.ost"
+	OST_ID_PATH :: "./private/ids.ost"
+	OST_HISTORY_PATH :: "./private/history.ost"
+	OST_BENCHMARK_PATH :: "./private/benchmark/"
 	LOG_DIR_PATH :: "./logs/"
 	RUNTIME_LOG_PATH :: "./logs/runtime.log"
 	ERROR_LOG_PATH :: "./logs/errors.log"
-	OST_QUARANTINE_PATH :: "./quarantine/"
+	OST_QUARANTINE_PATH :: "./public/quarantine/"
 	OST_RESTART_SCRIPT_PATH :: "../scripts/restart.sh"
 	OST_BUILD_SCRIPT_PATH :: "../scripts/local_build_run.sh"
 } else {
 	OST_TMP_PATH :: "./.ostrichdb/tmp/"
-	OST_COLLECTION_PATH :: "./.ostrichdb/collections/"
-	OST_SECURE_COLLECTION_PATH :: "./.ostrichdb/secure/"
-	OST_BACKUP_PATH :: "./.ostrichdb/backups/"
-	OST_CORE_PATH :: "./.ostrichdb/core/"
-	OST_CONFIG_PATH :: "./.ostrichdb/core/config.ost"
-	OST_ID_PATH :: "./.ostrichdb/core/ids.ost"
-	OST_HISTORY_PATH :: "./.ostrichdb/core/history.ost"
-	OST_BENCHMARK_PATH :: "./.ostrichdb/benchmark/"
+	OST_PRIVATE_PATH :: "./.ostrichdb/private/"
+	OST_PUBLIC_PATH :: "./.ostrichdb/public/"
+	OST_PUBLIC_STANDARD_COLLECTION_PATH :: "./.ostrichdb/public/standard/"
+	OST_SECURE_COLLECTION_PATH :: "./.ostrichdb/private/secure/"
+	OST_BACKUP_PATH :: "./.ostrichdb/public/backups/"
+	OST_CONFIG_PATH :: "./.ostrichdb/private/config.ost"
+	OST_ID_PATH :: "./.ostrichdb/private/ids.ost"
+	OST_HISTORY_PATH :: "./.ostrichdb/private/history.ost"
+	OST_BENCHMARK_PATH :: "./.ostrichdb/private/benchmark/"
 	LOG_DIR_PATH :: "./.ostrichdb/logs/"
 	RUNTIME_LOG_PATH :: "./.ostrichdb/logs/runtime.log"
 	ERROR_LOG_PATH :: "./.ostrichdb/logs/errors.log"
-	OST_QUARANTINE_PATH :: "./.ostrichdb/quarantine/"
+	OST_QUARANTINE_PATH :: "./.ostrichdb/public/quarantine/"
 	OST_RESTART_SCRIPT_PATH :: "./.ostrichdb/restart.sh"
 	OST_BUILD_SCRIPT_PATH :: "./.ostrichdb/build_run.sh"
 }
@@ -107,6 +109,9 @@ IMPORT :: "IMPORT"
 EXPORT :: "EXPORT"
 LOCK :: "LOCK"
 UNLOCK :: "UNLOCK"
+TEST :: "TEST" //Useful for testing new procdures for command line. i.e TEST FOO could just call a procedure you want to perform on the collection FOO
+ENC :: "ENC" //Encrypt a collection
+DEC :: "DEC" //Decrypt a collection
 //Target Tokens
 COLLECTION :: "COLLECTION"
 CLUSTER :: "CLUSTER"
@@ -219,6 +224,44 @@ METADATA_HEADER: []string : {
 	METADATA_END,
 }
 
+
+SYS_MASTER_KEY := []byte {
+	0x8F,
+	0x2A,
+	0x1D,
+	0x5E,
+	0x9C,
+	0x4B,
+	0x7F,
+	0x3A,
+	0x6D,
+	0x0E,
+	0x8B,
+	0x2C,
+	0x5F,
+	0x9A,
+	0x7D,
+	0x4E,
+	0x1B,
+	0x3C,
+	0x6A,
+	0x8D,
+	0x2E,
+	0x5F,
+	0x7C,
+	0x9B,
+	0x4A,
+	0x1D,
+	0x8E,
+	0x3F,
+	0x6C,
+	0x9B,
+	0x2A,
+	0x5,
+}
+
+
+MAX_COLLECTION_NAME_LENGTH :: [64]byte
 MAX_SESSION_TIME: time.Duration : 86400000000000 //1 day in nanoseconds
 MAX_COLLECTION_TO_DISPLAY :: 20 // for TREE command, max number of constants before prompting user to print
 // MAX_SESSION_TIME: time.Duration : 60000000000 //1 minute in nano seconds only used for testing
@@ -241,6 +284,7 @@ BannedUserNames := []string {
 	"sys",
 	"administrator",
 	"superuser",
+	"OstrichDB",
 }
 
 
@@ -249,27 +293,4 @@ BannedUserNames := []string {
 CSV_CLU :: "_CSV_IMPORT"
 
 
-//DELETE WHEN DONE IMPLEMENTING SECURITY UPDATE
-//The comment next to each command is the permission level that each command needs to perform the command on a collection
-//If a collection is locked with the 'Inaccessible' permission then  the only command that will work on that collection is 'UNLOCK'
-// "WHERE", //Read-Only or Read-Write
-// "COUNT", //Read-Only or Read-Write
-// "FETCH", //Read-Only or Read-Write
-// "SIZE_OF", //Read-Only or Read-Write
-// "TYPE_OF", //Read-Only or Read-Write
-// "VALIDATE", //Read-Write for now because validation system is stil broken and will quarantine the collection. Todo: set to Read-Only later
-// //---------------------
-// "ISOLATE", //Read-Write
-// "BACKUP", //Read-Write
-// "ERASE", //Read-Write
-// "RENAME", //Read-Write
-// "SET", //Read-Write
-// "PURGE", //Read-Write
-// "CHANGE_TYPE", //Read-Write
-// "LOCK", //Read-Write
-// //---------------------
-// "UNLOCK", //Read-Only or Inaccessible
-
-// "EXPORT", //Not yes implemented. Todo: set to Read-Only later
-// "TREE", //todo: TREE should be allowed but if a collection is set to inaccessable then that collection should not be shown
-// "NEW", //todo: NEW should be allowed but if a collection is set to inaccessable then NEW should not work on clusters/records in that collection
+encWarningMsg :: "WARNING: OstrichDB has detected that the encryption status of one or more core collections has changed. This could be due to a critical error or a security breach. OstrichDB will now attempt to re-encrypt the affected collections. If this process fails, OstrichDB will exit and you will need to delete OstrichDB and reinstall. Please contact support if you have any questions."

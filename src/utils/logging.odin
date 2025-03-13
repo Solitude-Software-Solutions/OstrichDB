@@ -29,7 +29,13 @@ create_log_files :: proc() -> int {
 
 	runtimeFile, openError := os.open(RUNTIME_LOG_PATH, os.O_CREATE, 0o666)
 	if openError != 0 {
-		error1 := new_err(.CANNOT_CREATE_FILE, get_err_msg(.CANNOT_CREATE_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_CREATE_FILE,
+			get_err_msg(.CANNOT_CREATE_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error creating runtime log file", "create_log_files")
 		return -1
