@@ -2450,7 +2450,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						currentPerm, err := metadata.OST_GET_METADATA_VALUE(
 							colName,
 							"# Permission",
-							1,
+							.STANDARD_PUBLIC,
 						)
 						fmt.printfln(
 							"Unlocking collection: %s%s%s",
