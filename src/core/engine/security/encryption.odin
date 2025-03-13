@@ -59,6 +59,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 	case .STANDARD_PUBLIC:
 		//Public Standard Collection
 		file = utils.concat_collection_name(colName)
+		break
 	case .SECURE_PRIVATE:
 		//Private Secure Collection
 		file = fmt.tprintf(
@@ -67,16 +68,23 @@ OST_ENCRYPT_COLLECTION :: proc(
 			colName,
 			const.OST_FILE_EXTENSION,
 		)
+		break
 	case .CONFIG_PRIVATE:
 		//Private Config Collection
 		file = const.OST_CONFIG_PATH
+		break
 	case .HISTORY_PRIVATE:
 		//Private History Collection
 		file = const.OST_HISTORY_PATH
+		break
 	case .ID_PRIVATE:
 		//Private ID Collection
 		file = const.OST_ID_PATH
-	//case 5: Todo: Add case for benchmark collections and quarantine collections
+		break
+	case .ISOLATE_PUBLIC:
+		file = fmt.tprintf("%s%s", const.OST_QUARANTINE_PATH, colName)
+		break
+	//case 5: Todo: Add case for benchmark collections
 	case:
 		fmt.printfln("Invalid File Type Passed in procedure: %s", #procedure)
 		return -1, nil
@@ -118,7 +126,10 @@ OST_ENCRYPT_COLLECTION :: proc(
 	}
 
 	return 0, dst
+
+	// return 0, []u8{} //debugging line
 }
+
 
 //TODO: Incomplete procedure - Marshall
 // //Used go through each collection wether private or public. Check if its ecrypted and if not encrypt it.

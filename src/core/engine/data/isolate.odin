@@ -25,7 +25,7 @@ File Description:
 //references to quarantine all throughout. Just know its the same thing. - SchoolyB
 
 //moves the passed in collection file from the collections dir to the quarantine dir
-OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
+OST_PERFORM_ISOLATION :: proc(fn: string) -> (int, string) {
 	using const
 
 	collectionPath := utils.concat_collection_name(fn)
@@ -46,9 +46,9 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	//TODO: So on mac this is throwing an error below but its working as intended. IDK why lol - Schooly
 	//The Odin compiler on Darwin expects a bool return from os.rename
 	// when ODIN_OS == .Darwin {
-	// 	if err != false {
+	// 	if err == true {
 	// 		fmt.printfln("Error moving file to quarantine: %s", err)
-	// 		return -2
+	// 		return -2 , ""
 	// 	}
 	// }
 	//
@@ -58,7 +58,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	idRemovaleResult := OST_REMOVE_ISOLATED_CLUSTER_IDS(idsAsStr)
 	if !idRemovaleResult {
 		utils.log_err("Error removing isolated cluster IDs", #procedure)
-		return -3
+		return -3, ""
 	}
 
 	delete(idsAsStr)
@@ -70,13 +70,13 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	//THe Odin compiler on Linux doesnt expect a bool return from os.rename
 	when ODIN_OS == .Linux {
 		if err != os.ERROR_NONE {
-			return -1
+			return -1, ""
 		}
 	}
 
 
 	result := OST_APPEND_QUARANTINE_METADATA(fn, isolationPath)
-	return result
+	return result, quarantineFilename
 }
 
 

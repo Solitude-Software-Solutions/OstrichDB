@@ -86,7 +86,15 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 				}
 				state = 1
 				break
-			case WHERE, HELP:
+			case WHERE:
+				if token == CLUSTER || token == RECORD {
+					cmd.t_token = token
+				} else {
+					append(&cmd.l_token, token)
+					break
+				}
+				break
+			case HELP:
 				cmd.t_token = token
 				break
 			case COUNT:

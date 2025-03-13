@@ -40,7 +40,8 @@ CollectionType :: enum {
 	CONFIG_PRIVATE  = 2, //Enc/Dec with systems master key
 	HISTORY_PRIVATE = 3, //Enc/Dec with systems master key
 	ID_PRIVATE      = 4, //Enc/Dec with systems master key
-	//Todo: Add Quaratine, backup, and benchmark
+	ISOLATE_PUBLIC  = 5, //Enc/Dec with users master key
+	//Todo: Add backup, and benchmark
 }
 
 

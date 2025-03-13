@@ -436,28 +436,35 @@ OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
 
 //returns the string value of the passed metadata field
 // colType: 1 = public(standard), 2 = history, 3 = config, 4 = ids
-OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: string, err: int) {
+OST_GET_METADATA_VALUE :: proc(
+	fn, field: string,
+	colType: types.CollectionType,
+) -> (
+	value: string,
+	err: int,
+) {
 	using const
 	using utils
 
 	file: string
-	switch (colType) {
-	case 1:
+	#partial switch (colType) {
+	case .STANDARD_PUBLIC:
 		file = concat_collection_name(fn)
 		break
-	case 2:
-		file = OST_HISTORY_PATH
-		break
-	case 3:
+	case .CONFIG_PRIVATE:
 		file = OST_CONFIG_PATH
 		break
-	case 4:
+	case .HISTORY_PRIVATE:
+		file = OST_HISTORY_PATH
+		break
+	case .ID_PRIVATE:
 		file = OST_ID_PATH
 		break
 	}
 
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
+		fmt.println("Error reading file: ", file)
 		utils.log_err("Error reading file", #procedure)
 		return "", 1
 	}
@@ -467,9 +474,10 @@ OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: strin
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
+	// fmt.println("lines: ", lines)
 	// Check if the metadata header is present
 	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
-		// fmt.println("Lines[0]: ", lines[0])
+		fmt.println("Lines[0]: ", lines[0])
 		log_err("Missing metadata start marker", #procedure)
 		return "", -1
 	}
@@ -494,7 +502,7 @@ OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: strin
 		log_err("Invalid metadata header length", #procedure)
 		return "", -3
 	}
-	// fmt.println("Field: ", field)
+
 	for i in 1 ..< 6 {
 		if strings.has_prefix(lines[i], field) {
 			val := strings.split(lines[i], ": ")
@@ -521,7 +529,7 @@ OST_CHANGE_METADATA_VALUE :: proc(
 
 	file: string
 
-	switch (colType) {
+	#partial switch (colType) {
 	case .STANDARD_PUBLIC:
 		file = concat_collection_name(fn)
 		break
@@ -537,6 +545,7 @@ OST_CHANGE_METADATA_VALUE :: proc(
 	case .ID_PRIVATE:
 		file = OST_ID_PATH
 		break
+	//TODO: add case for benchmark collection
 
 	}
 

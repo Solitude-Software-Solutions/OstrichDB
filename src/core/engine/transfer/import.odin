@@ -2,8 +2,10 @@ package transfer
 
 import "../../../utils"
 import "../../const"
+import "../../types"
 import "../data"
 import "../data/metadata"
+import "../security"
 import "core:encoding/csv"
 import "core:fmt"
 import "core:os"
@@ -25,25 +27,25 @@ __import_csv__ :: proc(fn: string) {
 
 	collectionPath := utils.concat_collection_name(fn)
 	csvClusterName := fmt.tprintf("%s_%s", fn, const.CSV_CLU)
-	csvFile := fmt.tprintf("./%s.csv", fn)
+	csvFile := fmt.tprintf("./%s.csv", strings.to_upper(fn))
 
 	head, body, recordCount := OST_GET_CSV_DATA(csvFile)
-	inferSucces, types := OST_INFER_CSV_RECORD_TYPES(head, recordCount)
+	inferSucces, csvTypes := OST_INFER_CSV_RECORD_TYPES(head, recordCount)
 	if !inferSucces {
 		fmt.printfln("Failed to infer record types")
 		return
 	}
 
-	OST_CREATE_COLLECTION(fn, .STANDARD_PUBLIC) //create a collection with the name of the .csv file
+	OST_CREATE_COLLECTION(strings.to_upper(fn), .STANDARD_PUBLIC) //create a collection with the name of the .csv file
 	id := OST_GENERATE_ID(true)
-	OST_CREATE_CLUSTER(fn, csvClusterName, id)
+	OST_CREATE_CLUSTER(strings.to_upper(fn), csvClusterName, id)
 
 
 	cols := OST_ORGANIZE_CSV_INTO_COLUMNS(body, len(head))
 
 	for colIndex := 0; colIndex < len(cols) && colIndex < len(head); colIndex += 1 {
 		columnName := head[colIndex]
-		columnType := types[columnName]
+		columnType := csvTypes[columnName]
 
 		columnValues := (fmt.tprintf("%v", cols[colIndex]))
 
@@ -57,11 +59,14 @@ __import_csv__ :: proc(fn: string) {
 	}
 
 	metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+	security.OST_ENCRYPT_COLLECTION(fn, .STANDARD_PUBLIC, types.system_user.m_k.valAsBytes, false)
+
 
 	delete(head)
 	delete(body)
-	delete(types)
+	delete(csvTypes)
 	delete(cols)
+
 
 }
 

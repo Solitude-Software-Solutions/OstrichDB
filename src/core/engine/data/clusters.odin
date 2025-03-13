@@ -912,6 +912,7 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	return true
 }
 
+//TODO: This is returning and innacurate size. Need to fix
 OST_GET_CLUSTER_SIZE :: proc(fn: string, cn: string) -> (size: int, success: bool) {
 	using const
 	using utils

@@ -65,7 +65,7 @@ Creates a new collection file with metadata within the DB
 OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	switch (colType) 
+	#partial switch (colType) 
 	{
 	case .STANDARD_PUBLIC:
 		//standard cluster file
