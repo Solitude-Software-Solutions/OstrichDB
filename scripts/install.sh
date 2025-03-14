@@ -4,7 +4,7 @@ set -e
 # Configuration
 PROGRAM_NAME="OstrichDB"
 REPO="Solitude-Software-Solutions/OstrichDB"
-RELEASE_TAG="Pre_Rel_v0.7.2_dev"  #Change this to the persepective next pre_release tag
+RELEASE_TAG="Pre_Rel_v8.0.0_dev"  #Change this to the persepective next pre_release tag
 RELEASE_URL="https://github.com/${REPO}/archive/refs/tags/${RELEASE_TAG}.tar.gz"
 BUILD_SCRIPT="scripts/build.sh"
 

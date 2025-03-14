@@ -23,7 +23,7 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 ### **Prerequisites:**
 - A Unix-based system (macOS, Linux).
-- The Odin programming language installed, built, and properly set in the system's PATH.
+- The Odin programming language installed, built, and properly set in the system's PATH. Ideal Odin Version: `dev-2024-11:764c32fd3`
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
 - If you are an "End User" you will need `curl` installed on your system.
 
