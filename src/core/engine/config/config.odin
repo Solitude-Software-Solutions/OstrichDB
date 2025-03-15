@@ -147,7 +147,7 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, "false", BOOLEAN) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_FIVE, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_FIVE, "true", BOOLEAN) == 0 { 	//server mode on by default while working on it
 		successCount += 1
 	}
 	if OST_APPEND_CONFIG_RECORD(CONFIG_SIX, "false", BOOLEAN) == 0 {
