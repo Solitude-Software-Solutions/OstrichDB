@@ -55,8 +55,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 	//Semi global Server shit
 	ServerConfig := types.Server_Config {
-		port = 8082,
+		port = 8042,
 	}
+
+
 	defer delete(cmd.l_token)
 
 
@@ -87,6 +89,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case REBUILD:
 		log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
 		OST_REBUILD()
+	case SERVE, SERVER:
+		//first kill localhost:8042
+		libc.system("stty -echo")
+		// libc.system("kill -9 $(lsof -ti :8042)")
+		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
+		libc.system("stty echo")
+		fmt.printfln("Launching OstrichDB server...")
+		serverResult := server.OST_START_SERVER(ServerConfig)
+		if serverResult == 0 {
+			fmt.printfln("Server stopped. Returning to OstrichDB command line...")
+		} else {
+			fmt.printfln("Server stopped with errors. Returning to OstrichDB command line...")
+		}
+		break
 	// Used to completley destroy the program and all its files, rebuilds after on macOs and Linux
 	case DESTROY:
 		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
@@ -1364,44 +1380,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								"Invalid value. Valid values for config limit_history are: 'true' or 'false'",
 							)
 							return 1
-						}
-						break
-					case "SERVER_ON":
-						if value == "true" || value == "false" {
-							fmt.printfln(
-								"Setting config: %s%s%s to %s%s%s",
-								BOLD_UNDERLINE,
-								configName,
-								RESET,
-								BOLD_UNDERLINE,
-								value,
-								RESET,
-							)
-
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FIVE, value)
-							if success == false {
-								fmt.printfln("Failed to set SERVER config to %s", value)
-							} else {
-								fmt.printfln("Successfully set SERVER config to %s", value)
-								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 4)
-								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 5)
-								if data.OST_READ_RECORD_VALUE(
-									   OST_CONFIG_PATH,
-									   CONFIG_CLUSTER,
-									   BOOLEAN,
-									   CONFIG_FIVE,
-								   ) ==
-								   "true" {
-									fmt.printfln("Server Mode is now ON")
-									server.OST_START_SERVER(ServerConfig)
-								} else {
-									fmt.printfln("Server is now OFF")
-								}
-							}
-						} else {
-							fmt.println(
-								"Invalid value. Valid values for config server are: 'true' or 'false'",
-							)
 						}
 						break
 					case:
