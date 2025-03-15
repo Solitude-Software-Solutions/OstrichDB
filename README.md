@@ -176,6 +176,9 @@ These operations allow you to perform more complex operations.
 - **`WHERE`**: Searches for the location of a single or several record(s) or cluster(s). DOES NOT WORK WITH COLLECTIONS.
 - **`VALIDATE`**: Validates a collection file for any errors or corruption.
 - **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
+- **`LOCK`**: Used to change the access mode of a collection. Using `UNLOCK {collection_name} -r` sets a collection to Read-Only. Removing the `-r` will set a collection to Inaccessible.
+- **`UNLOCK`**: Changes the access mode of a collection to the default Read-Write.
+- **IMPORT`**: Allows the user to import a .csv file into OstrichDB. This will create a new collection thay shares the name of the .csv file.
 ---
 
 ### **Parameters**
@@ -268,10 +271,7 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
 - More configuration options
 - Database file compression and zipping
 - Several new command tokens:
-  - `IMPORT`: Load data from external sources(CSV, etc.)
   - `EXPORT`: Export data to various formats
-  - `LOCK`: Prevent data modification
-  - `UNLOCK`: Allow data modification
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
 - Enhanced security (database encryption/decryption, secure deletion)
