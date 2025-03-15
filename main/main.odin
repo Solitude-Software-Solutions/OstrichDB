@@ -29,9 +29,6 @@ main :: proc() {
 	using types
 	using security
 
-	Config := Server_Config {
-		port = 8083,
-	}
 
 	data.main()
 	utils.main()
@@ -70,11 +67,7 @@ main :: proc() {
 	} else {
 		OstrichEngine.Initialized = false
 	}
-	// if config.OST_READ_CONFIG_VALUE(CONFIG_FIVE) == "true" {
-	// server.OST_START_SERVER(Config) //When testing the server, uncomment this line and comment out the client.OST_TEST_CLIENT(Config) line
-	// }
 	// client.OST_TEST_CLIENT(Config) //When testing the client, uncomment this line and comment out the server.OST_START_SERVER(Config) line
-	// OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	fmt.println("Starting OstrichDB DBMS")
 	engine.OST_START_ENGINE()
 
