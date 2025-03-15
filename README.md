@@ -178,7 +178,7 @@ These operations allow you to perform more complex operations.
 - **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
 - **`LOCK`**: Used to change the access mode of a collection. Using `UNLOCK {collection_name} -r` sets a collection to Read-Only. Removing the `-r` will set a collection to Inaccessible.
 - **`UNLOCK`**: Changes the access mode of a collection to the default Read-Write.
-- **IMPORT`**: Allows the user to import a .csv file into OstrichDB. This will create a new collection thay shares the name of the .csv file.
+- **`IMPORT`**: Allows the user to import a .csv file into OstrichDB. This will create a new collection thay shares the name of the .csv file.
 ---
 
 ### **Parameters**
@@ -253,13 +253,13 @@ When setting a record value, you must specify the records data type by using the
 
 ## **Configs**
 OstrichDB has a configuration file that allows the user to customize the DBMS to their liking.
-- **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is off)
-- **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is off)
-- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is on)
-- **`SERVER_ON`**: Enable of disable the server mode. (Defualt is off)
+- **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is false)
+- **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is false)
+- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is true)
+- **`SERVER_ON`**: Enable of disable the server mode. (Defualt is false)
 
 **Note: ALL configs must be set using the following command:**
-Values are either `TRUE` or `FALSE`
+Values can only be `true` or `false`
 
 ```
 SET CONFIG {CONFIG_NAME} TO {VALUE}
@@ -269,21 +269,17 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
 ## **Future Plans**
 
 - More configuration options
-- Database file compression and zipping
 - Several new command tokens:
   - `EXPORT`: Export data to various formats
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
-- Enhanced security (database encryption/decryption, secure deletion)
-- Command chaining for complex operations
+- Command chaining for even more complex operations
 - Server-based architecture improvements
 - External API support for popular programming languages
 - Windows support
 - Integration with the planned Feather query language!
 
-
 ---
-
 
 ## **Contributing**
 
