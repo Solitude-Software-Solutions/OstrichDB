@@ -50,10 +50,10 @@ OST_HANDLE_GET_REQ :: proc(
 	// Handle different path GET routes patterns
 
 	// when fetching unqueryied data the first segment will always be the word collection
-	// fmt.println("Length of segments in path: %d", len(pathSegments)) //debugging
+
 
 	switch (pathSegments[0]) {
-	case "collection":
+	case "c":
 		if len(pathSegments) == 2 {
 			// Get entire collection
 			collectionName = pathSegments[1]
@@ -107,24 +107,22 @@ OST_HANDLE_HEAD_REQ :: proc(
 	types.HttpStatus,
 	string,
 ) {
-	// fmt.printfln("Method: %s", m) //debugging
-	// fmt.printfln("Path: %s", p) //debugging
-	// fmt.printfln("Headers: %s", h) //debugging
+
+
 	if m != "HEAD" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Method not allowed\n"
 	}
 	//The responsebody is NOT returned in the HEAD request. Only used to calculate the content length
 	status, responseBody := OST_HANDLE_GET_REQ("GET", p, h)
-	// fmt.printfln("Status code: %s", status.code) //debugging
-	// fmt.printfln("Response body: %s", responseBody) //debugging
+
 
 	if status.code != .OK {
 		return status, ""
 	}
 	pathSegments := OST_PATH_SPLITTER(p)
-	// fmt.printfln("Path segments: %s", pathSegments) //debugging
-	// fmt.printfln("Length of path segments: %ss", len(pathSegments)) //debugging
+
+
 	//there is no path, so we are just fetching the root
 	contentLength := len(responseBody)
 
@@ -227,9 +225,6 @@ OST_HANDLE_PUT_REQ :: proc(
 				}, fmt.tprintf("New CLUSTER: %s created sucessfully", clusterName)
 			}
 		case 6:
-			// fmt.println("collectionName: ", collectionName) //debugging
-			// fmt.println("clusterName: ", clusterName) //debugging
-			// fmt.println("recordName: ", recordName) //debugging
 			// in the event of something like: /collection/collection_name/cluster/cluster_name/record/record_name
 			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
@@ -384,7 +379,6 @@ OST_HANDLE_POST_REQ :: proc(
 			"Method not allowed\n"
 	}
 
-	// fmt.println("Path: ", p) //debugging
 
 	segments := OST_PATH_SPLITTER(p)
 
