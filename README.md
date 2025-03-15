@@ -148,6 +148,7 @@ These operations perform simple tasks without needing additional arguments.
 - **`EXIT`**: Ends the session and closes the DBMS.
 - **`RESTART`**: Restarts the program.
 - **`REBUILD`**: Rebuilds the DBMS and restarts the program.
+- **`SERVE/SERVER`**: Turns on the OstrichDB server allowing http requests to be made.
 - **`HELP`**: Displays general help information or detailed help when chained with specific tokens.
 - **`TREE`**: Displays the entire data structure in a tree format.
 - **`CLEAR`**: Clears the console screen.
@@ -256,7 +257,7 @@ OstrichDB has a configuration file that allows the user to customize the DBMS to
 - **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is false)
 - **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is false)
 - **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is true)
-- **`SERVER_ON`**: Enable of disable the server mode. (Defualt is false)
+
 
 **Note: ALL configs must be set using the following command:**
 Values can only be `true` or `false`
