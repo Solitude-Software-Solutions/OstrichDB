@@ -24,12 +24,19 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	router = OST_NEW_ROUTER()
 
 
-	//test routes
-
-	//todo: all these are test routes. will end up linking with SDK and allowing user to define routes
-	//todo: seems like only one route can be added at a time. If more than one is added we
-	// get "Method Not Found"...idk why - Marshall Burns aka SchoolyB
+	//OstrichDB version route
 	OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
+	//Collection creation route
+	OST_ADD_ROUTE(router, .POST, "/c/*", OST_HANDLE_POST_REQ)
+	//Collection deletion route
+	OST_ADD_ROUTE(router, .DELETE, "/c/*", OST_HANDLE_DELETE_REQ)
+
+	//Cluster creation route
+	OST_ADD_ROUTE(router, .POST, "/c/*/cl/*", OST_HANDLE_POST_REQ)
+
+
+	//Record creation route
+	OST_ADD_ROUTE(router, .POST, "/c/*/cl/*/r/*?type=*", OST_HANDLE_POST_REQ)
 	// OST_ADD_ROUTE(router, .HEAD, "/c/foo/cl/bar", OST_HANDLE_HEAD_REQ)
 	// OST_ADD_ROUTE(router, .GET, "/c/foo/cl/bar", OST_HANDLE_GET_REQ)
 	// OST_ADD_ROUTE(
@@ -140,5 +147,6 @@ OST_HANDLE_SEVER_KILL_INPUT :: proc() {
 		return
 	} else {
 		fmt.println("Invalid input. Enter 'kill' or 'exit' to stop the server")
+		OST_HANDLE_SEVER_KILL_INPUT()
 	}
 }

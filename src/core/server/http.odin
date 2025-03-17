@@ -22,10 +22,7 @@ OST_PARSE_REQUEST :: proc(
 	path: string,
 	headers: map[string]string,
 ) {
-
-
 	requestAsStr := string(requestData)
-
 	lines := strings.split(requestAsStr, "\r\n")
 
 	//  if the request is empty, return

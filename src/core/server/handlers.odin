@@ -366,6 +366,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 }
 
 
+//Handles POST requests from the client
 OST_HANDLE_POST_REQ :: proc(
 	m, p: string,
 	h: map[string]string,
@@ -374,6 +375,7 @@ OST_HANDLE_POST_REQ :: proc(
 	types.HttpStatus,
 	string,
 ) {
+	fmt.println("Handling POST request")
 	if m != "POST" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Method not allowed\n"
@@ -382,12 +384,133 @@ OST_HANDLE_POST_REQ :: proc(
 
 	segments := OST_PATH_SPLITTER(p)
 
-	if len(segments) < 3 {
+	if len(segments) < 2 {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Invalid path format\n"
 	}
 
 	switch segments[0] {
+	case "c":
+		switch (len(segments)) {
+		case 2:
+			collectionName := strings.to_upper(segments[1])
+			fmt.println("Attempting to create collection:", collectionName) // Debug print
+
+			// Check if collection already exists
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				data.OST_CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
+				return types.HttpStatus {
+					code = .OK,
+					text = types.HttpStatusText[.OK],
+				}, fmt.tprintf("New COLLECTION: %s created successfully", collectionName)
+			} else {
+				return types.HttpStatus {
+					code = .BAD_REQUEST,
+					text = types.HttpStatusText[.BAD_REQUEST],
+				}, fmt.tprintf("COLLECTION: %s already exists", collectionName)
+			}
+		case 4:
+			fmt.println("Creating cluster") // Debug print
+			collectionName := strings.to_upper(segments[1])
+			clusterName := strings.to_upper(segments[3])
+
+			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				return types.HttpStatus {
+					code = .NOT_FOUND,
+					text = types.HttpStatusText[.NOT_FOUND],
+				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
+			}
+
+			if !data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName) {
+				id := data.OST_GENERATE_ID(true)
+				data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
+				return types.HttpStatus {
+					code = .OK,
+					text = types.HttpStatusText[.OK],
+				}, fmt.tprintf("New CLUSTER: %s created successfully", clusterName)
+			} else {
+				return types.HttpStatus {
+					code = .BAD_REQUEST,
+					text = types.HttpStatusText[.BAD_REQUEST],
+				}, fmt.tprintf("CLUSTER: %s already exists", clusterName)
+			}
+		case 6:
+			fmt.println("Creating record")
+
+			pathAndQuery := strings.split(p, "?")
+			if len(pathAndQuery) != 2 {
+				return types.HttpStatus {
+						code = .BAD_REQUEST,
+						text = types.HttpStatusText[.BAD_REQUEST],
+					},
+					"Query parameters required\n"
+			}
+
+			query := pathAndQuery[1]
+			queryParams := parse_query_string(query) //found below this proc
+
+			recordType, typeExists := queryParams["type"]
+			recordValue, valueExists := queryParams["value"]
+
+			if !typeExists {
+				return types.HttpStatus {
+						code = .BAD_REQUEST,
+						text = types.HttpStatusText[.BAD_REQUEST],
+					},
+					"Record type required\n"
+			}
+			recordType = strings.to_upper(recordType)
+			collectionName := strings.to_upper(segments[1])
+			clusterName := strings.to_upper(segments[3])
+			recordName := strings.to_upper(segments[5])
+
+
+			colExists := data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+			if !colExists {
+				return types.HttpStatus {
+					code = .NOT_FOUND,
+					text = types.HttpStatusText[.NOT_FOUND],
+				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
+			}
+
+			if !data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName) {
+				return types.HttpStatus {
+					code = .NOT_FOUND,
+					text = types.HttpStatusText[.NOT_FOUND],
+				}, fmt.tprintf("CLUSTER: %s not found", clusterName)
+			}
+
+
+			if !data.OST_CHECK_IF_RECORD_EXISTS(collectionName, clusterName, recordName) {
+				if data.OST_APPEND_RECORD_TO_CLUSTER(
+					   collectionName,
+					   clusterName,
+					   recordName,
+					   recordValue,
+					   recordType,
+				   ) ==
+				   0 {
+					fmt.println("Record appended successfully")
+				} else {
+					fmt.println("Record append failed")
+					return types.HttpStatus {
+							code = .SERVER_ERROR,
+							text = types.HttpStatusText[.SERVER_ERROR],
+						},
+						"Failed to create record\n"
+				}
+			}
+
+
+		case:
+			fmt.println("Error: Invalid path format")
+			return types.HttpStatus {
+					code = .BAD_REQUEST,
+					text = types.HttpStatusText[.BAD_REQUEST],
+				},
+				"Invalid path format\n"
+		}
+		break
 	case "batch":
 		if segments[1] == "collection" {
 			switch (len(segments)) {

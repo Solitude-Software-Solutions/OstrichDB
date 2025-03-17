@@ -230,9 +230,10 @@ RouteHandler :: proc(
 
 
 Route :: struct {
-	m: HttpMethod, //method
-	p: string, //path
-	h: RouteHandler, //handler
+	m:         HttpMethod, //method
+	p:         string, //path
+	h:         RouteHandler, //handler
+	isDynamic: bool,
 }
 Router :: struct {
 	routes: [dynamic]Route,
