@@ -67,7 +67,6 @@ main :: proc() {
 	} else {
 		OstrichEngine.Initialized = false
 	}
-	// client.OST_TEST_CLIENT(Config) //When testing the client, uncomment this line and comment out the server.OST_START_SERVER(Config) line
 	fmt.println("Starting OstrichDB DBMS")
 	engine.OST_START_ENGINE()
 
