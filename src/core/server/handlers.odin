@@ -375,304 +375,299 @@ OST_HANDLE_POST_REQ :: proc(
 	types.HttpStatus,
 	string,
 ) {
+	collectionName, clusterName, recordName, recordType: string
+
 	fmt.println("Handling POST request")
 	if m != "POST" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Method not allowed\n"
 	}
 
-
 	segments := OST_PATH_SPLITTER(p)
+
 
 	if len(segments) < 2 {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Invalid path format\n"
 	}
 
-	switch segments[0] {
-	case "c":
-		switch (len(segments)) {
-		case 2:
-			collectionName := strings.to_upper(segments[1])
-			fmt.println("Attempting to create collection:", collectionName) // Debug print
+	//Creating a new collection
+	if len(segments) == 2 && segments[0] == "c" {
+		collectionName = strings.to_upper(segments[1])
+		fmt.println("Attempting to create collection:", collectionName) // Debug print
 
-			// Check if collection already exists
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-				data.OST_CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
-				return types.HttpStatus {
-					code = .OK,
-					text = types.HttpStatusText[.OK],
-				}, fmt.tprintf("New COLLECTION: %s created successfully", collectionName)
-			} else {
-				return types.HttpStatus {
-					code = .BAD_REQUEST,
-					text = types.HttpStatusText[.BAD_REQUEST],
-				}, fmt.tprintf("COLLECTION: %s already exists", collectionName)
-			}
-		case 4:
-			fmt.println("Creating cluster") // Debug print
-			collectionName := strings.to_upper(segments[1])
-			clusterName := strings.to_upper(segments[3])
-
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-				return types.HttpStatus {
-					code = .NOT_FOUND,
-					text = types.HttpStatusText[.NOT_FOUND],
-				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
-			}
-
-			if !data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName) {
-				id := data.OST_GENERATE_ID(true)
-				data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
-				return types.HttpStatus {
-					code = .OK,
-					text = types.HttpStatusText[.OK],
-				}, fmt.tprintf("New CLUSTER: %s created successfully", clusterName)
-			} else {
-				return types.HttpStatus {
-					code = .BAD_REQUEST,
-					text = types.HttpStatusText[.BAD_REQUEST],
-				}, fmt.tprintf("CLUSTER: %s already exists", clusterName)
-			}
-		case 6:
-			fmt.println("Creating record")
-
-			pathAndQuery := strings.split(p, "?")
-			if len(pathAndQuery) != 2 {
-				return types.HttpStatus {
-						code = .BAD_REQUEST,
-						text = types.HttpStatusText[.BAD_REQUEST],
-					},
-					"Query parameters required\n"
-			}
-
-			query := pathAndQuery[1]
-			queryParams := parse_query_string(query) //found below this proc
-
-			recordType, typeExists := queryParams["type"]
-			recordValue, valueExists := queryParams["value"]
-
-			if !typeExists {
-				return types.HttpStatus {
-						code = .BAD_REQUEST,
-						text = types.HttpStatusText[.BAD_REQUEST],
-					},
-					"Record type required\n"
-			}
-			recordType = strings.to_upper(recordType)
-			collectionName := strings.to_upper(segments[1])
-			clusterName := strings.to_upper(segments[3])
-			recordName := strings.to_upper(segments[5])
-
-
-			colExists := data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
-			if !colExists {
-				return types.HttpStatus {
-					code = .NOT_FOUND,
-					text = types.HttpStatusText[.NOT_FOUND],
-				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
-			}
-
-			if !data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName) {
-				return types.HttpStatus {
-					code = .NOT_FOUND,
-					text = types.HttpStatusText[.NOT_FOUND],
-				}, fmt.tprintf("CLUSTER: %s not found", clusterName)
-			}
-
-
-			if !data.OST_CHECK_IF_RECORD_EXISTS(collectionName, clusterName, recordName) {
-				if data.OST_APPEND_RECORD_TO_CLUSTER(
-					   collectionName,
-					   clusterName,
-					   recordName,
-					   recordValue,
-					   recordType,
-				   ) ==
-				   0 {
-					fmt.println("Record appended successfully")
-				} else {
-					fmt.println("Record append failed")
-					return types.HttpStatus {
-							code = .SERVER_ERROR,
-							text = types.HttpStatusText[.SERVER_ERROR],
-						},
-						"Failed to create record\n"
-				}
-			}
-
-
-		case:
-			fmt.println("Error: Invalid path format")
+		if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			data.OST_CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
 			return types.HttpStatus {
-					code = .BAD_REQUEST,
-					text = types.HttpStatusText[.BAD_REQUEST],
-				},
-				"Invalid path format\n"
+				code = .OK,
+				text = types.HttpStatusText[.OK],
+			}, fmt.tprintf("New COLLECTION: %s created successfully", collectionName)
+		} else {
+			return types.HttpStatus {
+				code = .BAD_REQUEST,
+				text = types.HttpStatusText[.BAD_REQUEST],
+			}, fmt.tprintf("COLLECTION: %s already exists", collectionName)
 		}
-		break
-	case "batch":
-		if segments[1] == "collection" {
-			switch (len(segments)) {
-			case 3:
-				// /batch/collection/foo&bar&baz
-				names := strings.split(segments[2], "&")
+	}
 
-				success, str := data.OST_HANDLE_COLLECTION_BATCH_REQ(names, .NEW)
-				if success == 0 {
-					return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
-						"Collections created successfully\n"
-				} else {
-					return types.HttpStatus {
-							code = .SERVER_ERROR,
-							text = types.HttpStatusText[.SERVER_ERROR],
-						},
-						"Failed to create collections\n"
-				}
-			case 5:
-				// /batch/collection/foo/cluster/foo&bar or /batch/collection/foo&bar/cluster/foo&bar
-				if strings.contains(segments[2], "&") {
-					collectionNames := strings.split(segments[2], "&")
-					clusternNames := strings.split(segments[4], "&")
-					success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
-						collectionNames,
-						clusternNames,
-						.NEW,
-					)
-					if success == 0 {
-						return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
-							"Clusters created successfully\n"
-					} else {
-						return types.HttpStatus {
-								code = .SERVER_ERROR,
-								text = types.HttpStatusText[.SERVER_ERROR],
-							},
-							"Failed to create clusters\n"
-					}
-				} else {
-					//create a slice with a single collection name in the event the batch is for a single collection
-					collectionNames := make([]string, 1)
-					collectionNames[0] = segments[2]
-					clusterNames := strings.split(segments[4], "&")
+	//Creating a new cluster
+	if len(segments) == 4 && segments[0] == "c" {
+		fmt.println("Creating cluster") // Debug print
+		collectionName = strings.to_upper(segments[1])
+		clusterName = strings.to_upper(segments[3])
+		colFilePath := utils.concat_collection_name(collectionName)
 
-					success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
-						collectionNames,
-						clusterNames,
-						.NEW,
-					)
-					if success == 0 {
-						return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
-							"Clusters created successfully\n"
-					} else {
-						return types.HttpStatus {
-								code = .SERVER_ERROR,
-								text = types.HttpStatusText[.SERVER_ERROR],
-							},
-							"Failed to create clusters\n"
-					}
-				}
-			case 7:
-				// Handle batch record creation with multiple possible formats:
-				// Single type for all records:
-				// /batch/collection/foo&bar/cluster/baz/record/name1&name2?type=string&value=hello
-				// Different types per record:
-				// /batch/collection/foo/cluster/bar/record/name1&name2?types=string&bool&values=hello&true
+		if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			return types.HttpStatus {
+				code = .NOT_FOUND,
+				text = types.HttpStatusText[.NOT_FOUND],
+			}, fmt.tprintf("COLLECTION: %s not found", collectionName)
+		}
 
 
-				if segments[1] != "collection" || segments[4] != "cluster" {
-					return types.HttpStatus {
-							code = .BAD_REQUEST,
-							text = types.HttpStatusText[.BAD_REQUEST],
-						},
-						"Invalid path format for batch record creation\n"
-				}
+		if !data.OST_CHECK_IF_CLUSTER_EXISTS(colFilePath, clusterName) {
+			id := data.OST_GENERATE_ID(true)
+			data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
+			return types.HttpStatus {
+				code = .OK,
+				text = types.HttpStatusText[.OK],
+			}, fmt.tprintf("New CLUSTER: %s created successfully", clusterName)
+		} else {
+			return types.HttpStatus {
+				code = .BAD_REQUEST,
+				text = types.HttpStatusText[.BAD_REQUEST],
+			}, fmt.tprintf("CLUSTER: %s already exists", clusterName)
+		}
+
+	}
+
+	//Creating a new record
+	if len(segments) == 6 && segments[0] == "c" && segments[4] == "r" {
+		fmt.println("Creating record")
+		queryString := strings.split(p, "?")
+		queryTypeSplit := strings.split(queryString[1], "=")
+		recordNameSplit := strings.split(segments[5], "?")
+
+		collectionName = strings.to_upper(segments[1])
+		clusterName = strings.to_upper(segments[3])
+		recordName = strings.to_upper(recordNameSplit[0])
+		recordType = strings.to_upper(queryTypeSplit[1])
+		colFilePath := utils.concat_collection_name(collectionName)
+
+		// fmt.println("collectionName: ", collectionName) // debugging
+		// fmt.println("clusterName: ", clusterName) // debugging
+		// fmt.println("recordName: ", recordName) // debugging
+		// fmt.println("recordType: ", recordType) // debugging
 
 
-				collectionNames := strings.split(segments[3], "&")
-				clusterNames := strings.split(segments[5], "&")
+		colExists := data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+		if !colExists {
+			fmt.printfln("COLLECTION: %s not found", collectionName)
+			return types.HttpStatus {
+				code = .NOT_FOUND,
+				text = types.HttpStatusText[.NOT_FOUND],
+			}, fmt.tprintf("COLLECTION: %s not found", collectionName)
+		}
 
-				if segments[5] != "record" {
-					return types.HttpStatus {
-							code = .BAD_REQUEST,
-							text = types.HttpStatusText[.BAD_REQUEST],
-						},
-						"Invalid path format for batch record creation\n"
-				}
+		fmt.println("Looking in: ", colFilePath)
+		if !data.OST_CHECK_IF_CLUSTER_EXISTS(colFilePath, clusterName) {
+			fmt.printfln("CLUSTER: %s not found", clusterName)
+			return types.HttpStatus {
+				code = .NOT_FOUND,
+				text = types.HttpStatusText[.NOT_FOUND],
+			}, fmt.tprintf("CLUSTER: %s not found", clusterName)
+		}
 
-				pathAndQuery := strings.split(p, "?")
-				if len(pathAndQuery) != 2 {
-					return types.HttpStatus {
-							code = .BAD_REQUEST,
-							text = types.HttpStatusText[.BAD_REQUEST],
-						},
-						"Query parameters required for batch record creation\n"
-				}
 
-				query := pathAndQuery[1]
-				queryParams := parse_query_string(query)
-				recordNames := strings.split(segments[6], "&")
-
-				// Check for single type/value format
-				singleType, hasSingleType := queryParams["type"]
-				singleValue, hasSingleValue := queryParams["value"]
-
-				// Check for multiple types/values format
-				multiTypes, hasMultiTypes := queryParams["types"]
-				multiValues, hasMultiValues := queryParams["values"]
-
-				recordTypeArray: []string
-				recordValueArray: []string
-
-				if hasSingleType && hasSingleValue {
-					// Use the same type and value for all records
-					recordTypeArray = make([]string, len(recordNames))
-					recordValueArray = make([]string, len(recordNames))
-					for i := 0; i < len(recordNames); i += 1 {
-						recordTypeArray[i] = singleType
-						recordValueArray[i] = singleValue
-					}
-				} else if hasMultiTypes && hasMultiValues {
-					// Use different types and values for each record
-					recordTypeArray = strings.split(multiTypes, "&")
-					recordValueArray = strings.split(multiValues, "&")
-
-					if len(recordTypeArray) != len(recordNames) ||
-					   len(recordValueArray) != len(recordNames) {
-						return types.HttpStatus {
-							code = .BAD_REQUEST,
-							text = types.HttpStatusText[.BAD_REQUEST],
-						}, fmt.tprintf("Number of types (%d) and values (%d) must match number of records (%d)\n", len(recordTypeArray), len(recordValueArray), len(recordNames))
-					}
-				} else {
-					return types.HttpStatus {
-							code = .BAD_REQUEST,
-							text = types.HttpStatusText[.BAD_REQUEST],
-						},
-						"Must provide either 'type&value' or 'types&values' in query parameters\n"
-				}
-
-				success, str := data.OST_HANDLE_RECORD_BATCH_REQ(
-					collectionNames,
-					clusterNames,
-					recordNames,
-					recordTypeArray,
-					recordValueArray,
-					.NEW,
-				)
-
-				if success == 0 {
-					return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
-						"Records created successfully\n"
-				} else {
-					return types.HttpStatus {
-							code = .SERVER_ERROR,
-							text = types.HttpStatusText[.SERVER_ERROR],
-						},
-						"Failed to create records\n"
-				}
+		if !data.OST_CHECK_IF_RECORD_EXISTS(colFilePath, clusterName, recordName) {
+			fmt.printfln("RECORD: %s not found...attempting to create", recordName)
+			if data.OST_APPEND_RECORD_TO_CLUSTER(
+				   colFilePath,
+				   clusterName,
+				   recordName,
+				   "",
+				   recordType,
+			   ) ==
+			   0 {
+				fmt.println("Record appended successfully")
+				return types.HttpStatus {
+					code = .OK,
+					text = types.HttpStatusText[.OK],
+				}, fmt.tprintf("New RECORD: %s created successfully", recordName)
+			} else {
+				fmt.println("Record append failed")
+				return types.HttpStatus {
+						code = .SERVER_ERROR,
+						text = types.HttpStatusText[.SERVER_ERROR],
+					},
+					"Failed to create record\n"
 			}
 		}
 	}
+
+
+	// case "batch":
+	// 	if segments[1] == "collection" {
+	// 		switch (len(segments)) {
+	// 		case 3:
+	// 			// /batch/collection/foo&bar&baz
+	// 			names := strings.split(segments[2], "&")
+
+	// 			success, str := data.OST_HANDLE_COLLECTION_BATCH_REQ(names, .NEW)
+	// 			if success == 0 {
+	// 				return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+	// 					"Collections created successfully\n"
+	// 			} else {
+	// 				return types.HttpStatus {
+	// 						code = .SERVER_ERROR,
+	// 						text = types.HttpStatusText[.SERVER_ERROR],
+	// 					},
+	// 					"Failed to create collections\n"
+	// 			}
+	// 		case 5:
+	// 			// /batch/collection/foo/cluster/foo&bar or /batch/collection/foo&bar/cluster/foo&bar
+	// 			if strings.contains(segments[2], "&") {
+	// 				collectionNames := strings.split(segments[2], "&")
+	// 				clusternNames := strings.split(segments[4], "&")
+	// 				success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
+	// 					collectionNames,
+	// 					clusternNames,
+	// 					.NEW,
+	// 				)
+	// 				if success == 0 {
+	// 					return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+	// 						"Clusters created successfully\n"
+	// 				} else {
+	// 					return types.HttpStatus {
+	// 							code = .SERVER_ERROR,
+	// 							text = types.HttpStatusText[.SERVER_ERROR],
+	// 						},
+	// 						"Failed to create clusters\n"
+	// 				}
+	// 			} else {
+	// 				//create a slice with a single collection name in the event the batch is for a single collection
+	// 				collectionNames := make([]string, 1)
+	// 				collectionNames[0] = segments[2]
+	// 				clusterNames := strings.split(segments[4], "&")
+
+	// 				success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
+	// 					collectionNames,
+	// 					clusterNames,
+	// 					.NEW,
+	// 				)
+	// 				if success == 0 {
+	// 					return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+	// 						"Clusters created successfully\n"
+	// 				} else {
+	// 					return types.HttpStatus {
+	// 							code = .SERVER_ERROR,
+	// 							text = types.HttpStatusText[.SERVER_ERROR],
+	// 						},
+	// 						"Failed to create clusters\n"
+	// 				}
+	// 			}
+	// 		case 7:
+	// 			// Handle batch record creation with multiple possible formats:
+	// 			// Single type for all records:
+	// 			// /batch/collection/foo&bar/cluster/baz/record/name1&name2?type=string&value=hello
+	// 			// Different types per record:
+	// 			// /batch/collection/foo/cluster/bar/record/name1&name2?types=string&bool&values=hello&true
+
+
+	// 			if segments[1] != "collection" || segments[4] != "cluster" {
+	// 				return types.HttpStatus {
+	// 						code = .BAD_REQUEST,
+	// 						text = types.HttpStatusText[.BAD_REQUEST],
+	// 					},
+	// 					"Invalid path format for batch record creation\n"
+	// 			}
+
+
+	// 			collectionNames := strings.split(segments[3], "&")
+	// 			clusterNames := strings.split(segments[5], "&")
+
+	// 			if segments[5] != "record" {
+	// 				return types.HttpStatus {
+	// 						code = .BAD_REQUEST,
+	// 						text = types.HttpStatusText[.BAD_REQUEST],
+	// 					},
+	// 					"Invalid path format for batch record creation\n"
+	// 			}
+
+	// 			pathAndQuery := strings.split(p, "?")
+	// 			if len(pathAndQuery) != 2 {
+	// 				return types.HttpStatus {
+	// 						code = .BAD_REQUEST,
+	// 						text = types.HttpStatusText[.BAD_REQUEST],
+	// 					},
+	// 					"Query parameters required for batch record creation\n"
+	// 			}
+
+	// 			query := pathAndQuery[1]
+	// 			queryParams := parse_query_string(query)
+	// 			recordNames := strings.split(segments[6], "&")
+
+	// 			// Check for single type/value format
+	// 			singleType, hasSingleType := queryParams["type"]
+	// 			singleValue, hasSingleValue := queryParams["value"]
+
+	// 			// Check for multiple types/values format
+	// 			multiTypes, hasMultiTypes := queryParams["types"]
+	// 			multiValues, hasMultiValues := queryParams["values"]
+
+	// 			recordTypeArray: []string
+	// 			recordValueArray: []string
+
+	// 			if hasSingleType && hasSingleValue {
+	// 				// Use the same type and value for all records
+	// 				recordTypeArray = make([]string, len(recordNames))
+	// 				recordValueArray = make([]string, len(recordNames))
+	// 				for i := 0; i < len(recordNames); i += 1 {
+	// 					recordTypeArray[i] = singleType
+	// 					recordValueArray[i] = singleValue
+	// 				}
+	// 			} else if hasMultiTypes && hasMultiValues {
+	// 				// Use different types and values for each record
+	// 				recordTypeArray = strings.split(multiTypes, "&")
+	// 				recordValueArray = strings.split(multiValues, "&")
+
+	// 				if len(recordTypeArray) != len(recordNames) ||
+	// 				   len(recordValueArray) != len(recordNames) {
+	// 					return types.HttpStatus {
+	// 						code = .BAD_REQUEST,
+	// 						text = types.HttpStatusText[.BAD_REQUEST],
+	// 					}, fmt.tprintf("Number of types (%d) and values (%d) must match number of records (%d)\n", len(recordTypeArray), len(recordValueArray), len(recordNames))
+	// 				}
+	// 			} else {
+	// 				return types.HttpStatus {
+	// 						code = .BAD_REQUEST,
+	// 						text = types.HttpStatusText[.BAD_REQUEST],
+	// 					},
+	// 					"Must provide either 'type&value' or 'types&values' in query parameters\n"
+	// 			}
+
+	// 			success, str := data.OST_HANDLE_RECORD_BATCH_REQ(
+	// 				collectionNames,
+	// 				clusterNames,
+	// 				recordNames,
+	// 				recordTypeArray,
+	// 				recordValueArray,
+	// 				.NEW,
+	// 			)
+
+	// 			if success == 0 {
+	// 				return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
+	// 					"Records created successfully\n"
+	// 			} else {
+	// 				return types.HttpStatus {
+	// 						code = .SERVER_ERROR,
+	// 						text = types.HttpStatusText[.SERVER_ERROR],
+	// 					},
+	// 					"Failed to create records\n"
+	// 			}
+	// 		}
+	// 	}
+	// }
 	return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 		"Invalid path\n"
 }

@@ -37,6 +37,7 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 
 	//Record creation route
 	OST_ADD_ROUTE(router, .POST, "/c/*/cl/*/r/*?type=*", OST_HANDLE_POST_REQ)
+	// OST_ADD_ROUTE(router, .POST, "/c/*/cl/*/r/*?type=*", OST_HANDLE_POST_REQ)
 	// OST_ADD_ROUTE(router, .HEAD, "/c/foo/cl/bar", OST_HANDLE_HEAD_REQ)
 	// OST_ADD_ROUTE(router, .GET, "/c/foo/cl/bar", OST_HANDLE_GET_REQ)
 	// OST_ADD_ROUTE(
