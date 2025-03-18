@@ -34,7 +34,9 @@ OST_ADD_ROUTE :: proc(
 		p = path,
 		h = handler,
 	}
+
 	append(&router.routes, route)
+
 }
 
 //This finds the route that matches the path and calls appropriate handler

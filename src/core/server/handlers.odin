@@ -311,6 +311,8 @@ OST_HANDLE_DELETE_REQ :: proc(
 	string,
 ) {
 
+	fmt.println("Handling DELETE request")
+
 	if m != "DELETE" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Invalid method\n"
@@ -329,14 +331,10 @@ OST_HANDLE_DELETE_REQ :: proc(
 		recordName = strings.to_upper(pathSegments[5])
 	}
 
-	collectionNamePath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
-		collectionName,
-		const.OST_FILE_EXTENSION,
-	)
+	collectionNamePath := utils.concat_collection_name(collectionName)
 
-
+	fmt.println("pathSegments: ", pathSegments)
+	fmt.println("len(pathSegments): ", len(pathSegments))
 	switch (segments) {
 	case 2:
 		// /collection/collecion_name

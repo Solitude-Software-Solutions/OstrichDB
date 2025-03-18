@@ -1,5 +1,6 @@
 package server
 import "../../utils"
+import "../const"
 import "../types"
 import "core:c/libc"
 import "core:fmt"
@@ -20,26 +21,33 @@ router: ^types.Router
 isRunning := true
 
 OST_START_SERVER :: proc(config: types.Server_Config) -> int {
+	using const
 	isRunning = true
 	router = OST_NEW_ROUTER()
-
+	defer free(router)
 
 	//OstrichDB version route
 	OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
-	//Collection creation,fetching, and deletion routes
-	OST_ADD_ROUTE(router, .GET, "/c/*", OST_HANDLE_GET_REQ)
-	OST_ADD_ROUTE(router, .POST, "/c/*", OST_HANDLE_POST_REQ)
-	// OST_ADD_ROUTE(router, .DELETE, "/c/*", OST_HANDLE_DELETE_REQ)
 
+	//TODO: For some odd reason it seems the order in which I call the ADD_ROUTE proc matters
+	//If DELETE is called after the other two, DELETE will not work....
+
+	//Collection creation,fetching, and deletion routes
+	OST_ADD_ROUTE(router, .DELETE, C_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
+	OST_ADD_ROUTE(router, .GET, C_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
+	OST_ADD_ROUTE(router, .POST, C_DYNAMIC_BASE, OST_HANDLE_POST_REQ)
 
 	//Cluster creation,fetching, and deletion routes
-	OST_ADD_ROUTE(router, .GET, "/c/*/cl/*", OST_HANDLE_GET_REQ)
-	OST_ADD_ROUTE(router, .POST, "/c/*/cl/*", OST_HANDLE_POST_REQ)
-
+	OST_ADD_ROUTE(router, .DELETE, CL_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
+	OST_ADD_ROUTE(router, .GET, CL_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
+	OST_ADD_ROUTE(router, .POST, CL_DYNAMIC_BASE, OST_HANDLE_POST_REQ)
 
 	//Record creation,fetching, and deletion routes
-	OST_ADD_ROUTE(router, .GET, "/c/*/cl/*/r/*", OST_HANDLE_GET_REQ)
-	OST_ADD_ROUTE(router, .POST, "/c/*/cl/*/r/*?type=*", OST_HANDLE_POST_REQ)
+	OST_ADD_ROUTE(router, .DELETE, R_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
+	OST_ADD_ROUTE(router, .GET, R_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
+	OST_ADD_ROUTE(router, .POST, R_DYNAMIC_TYPE_QUERY, OST_HANDLE_POST_REQ)
+
+
 	// OST_ADD_ROUTE(router, .POST, "/c/*/cl/*/r/*?type=*", OST_HANDLE_POST_REQ)
 	// OST_ADD_ROUTE(router, .HEAD, "/c/foo/cl/bar", OST_HANDLE_HEAD_REQ)
 	// OST_ADD_ROUTE(router, .GET, "/c/foo/cl/bar", OST_HANDLE_GET_REQ)

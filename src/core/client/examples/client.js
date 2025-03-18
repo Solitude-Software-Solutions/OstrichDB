@@ -21,22 +21,27 @@ TL;DR Store you db information in to variables and pass them to the fetch calls.
 */
 
 const collectionName = "js_collection";
-const clusterName = "test";
-const recordName = "test_record";
+const clusterName = "js_cluster";
+const recordName = "js_record";
 const recordType = "STRING";
-const path = `http://localhost:8042`;
+
+const pathRoot = `http://localhost:8042`;
 let data;
 
-//Uncomment the method you want to use
-const method = "GET";
+// Note: Uncomment the method you want to use or hard code them into the 'method' key in the
+// respective fetch call in the 'requestAction' object below. Leanr more here:
+// https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch
+
+// const method = "GET";
 // const method = "POST";
 // const method = "DELETE";
+const method = "PUT";
+// const method = "HEAD";
 
 function ost_get_version() {
-  fetch(`${path}/version`)
+  fetch(`${pathRoot}/version`)
     .then((response) => {
       if (response.ok) {
-        // Instead of parsing as JSON, handle as OstrichDB's native format
         return response.text();
       } else {
         return response.text();
@@ -57,7 +62,7 @@ const requestAction = {
   // Create a new collection
   0: async (collectionName) => {
     try {
-      const response = await fetch(`${path}/c/${collectionName}`, {
+      const response = await fetch(`${pathRoot}/c/${collectionName}`, {
         method: `${method}`,
         headers: { "Content-Type": "text/plain" },
       });
@@ -83,7 +88,7 @@ const requestAction = {
   1: async () => {
     try {
       const response = await fetch(
-        `${path}/c/${collectionName}/cl/${clusterName}`,
+        `${pathRoot}/c/${collectionName}/cl/${clusterName}`,
         {
           method: `${method}`,
           headers: {
@@ -109,9 +114,9 @@ const requestAction = {
   // Create a new record
   2: async () => {
     if (method == "POST") {
-      fullFetchPath = `${path}/c/${collectionName}/cl/${clusterName}/r/${recordName}?type=${recordType}`;
+      fullFetchPath = `${pathRoot}/c/${collectionName}/cl/${clusterName}/r/${recordName}?type=${recordType}`;
     } else if (method == "GET") {
-      fullFetchPath = `${path}/c/${collectionName}/cl/${clusterName}/r/${recordName}`;
+      fullFetchPath = `${pathRoot}/c/${collectionName}/cl/${clusterName}/r/${recordName}`;
     }
     console.log(fullFetchPath);
 
@@ -142,6 +147,6 @@ const requestAction = {
 // ost_get_version();
 
 // These 3 calls can handle: GET & POST requests
-// requestAction[0](collectionName); //action on a collection
+requestAction[0](collectionName); //action on a collection
 // requestAction[1](collectionName, clusterName); //action on a cluster
-requestAction[2](collectionName, clusterName, recordName, recordType); //action on a record
+// requestAction[2](collectionName, clusterName, recordName, recordType); //action on a record

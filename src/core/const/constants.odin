@@ -295,4 +295,8 @@ BannedUserNames := []string {
 CSV_CLU :: "_CSV_IMPORT"
 
 
-encWarningMsg :: "WARNING: OstrichDB has detected that the encryption status of one or more core collections has changed. This could be due to a critical error or a security breach. OstrichDB will now attempt to re-encrypt the affected collections. If this process fails, OstrichDB will exit and you will need to delete OstrichDB and reinstall. Please contact support if you have any questions."
+//SERVER DYNAMIC ROUTE CONSTANTS
+C_DYNAMIC_BASE :: "/c/*"
+CL_DYNAMIC_BASE :: "/c/*/cl/*"
+R_DYNAMIC_BASE :: "/c/*/cl/*/r/*"
+R_DYNAMIC_TYPE_QUERY :: "/c/*/cl/*/r/*?type=*"
