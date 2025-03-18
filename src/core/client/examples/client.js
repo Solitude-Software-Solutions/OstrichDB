@@ -9,12 +9,28 @@ File Description:
             to interact with the OstrichDB REST API.
 *********************************************************/
 
+/*
+Developer Notes: At the present time OstrichDBs server creates ALL routes
+meant to do work on a database(collection) itself of its subcomponents dynamically.
+This means that request paths need to be constructed the way they are below to work...
+This might or might not change in the future.
+
+TL;DR Store you db information in to variables and pass them to the fetch calls.
+
+- Marshall Burns
+*/
+
 const collectionName = "js_collection";
-const clusterName = "js_cluster";
-const recordName = "js_record";
+const clusterName = "test";
+const recordName = "test_record";
 const recordType = "STRING";
 const path = `http://localhost:8042`;
-// const record
+let data;
+
+//Uncomment the method you want to use
+const method = "GET";
+// const method = "POST";
+// const method = "DELETE";
 
 function ost_get_version() {
   fetch(`${path}/version`)
@@ -37,23 +53,30 @@ function ost_get_version() {
 }
 
 //Object containing POST request functions
-const postReqAction = {
+const requestAction = {
   // Create a new collection
   0: async (collectionName) => {
     try {
       const response = await fetch(`${path}/c/${collectionName}`, {
-        method: "POST",
+        method: `${method}`,
         headers: { "Content-Type": "text/plain" },
       });
       console.log(
-        "Collection Creation POST Request Response Status:",
+        `${method} Request On Collection Response Status:`,
         response.status,
       );
       if (response.ok) {
-        return response.text();
+        if (method == "GET") {
+          let data = await response.text();
+          console.log("Received data from OstrichDB:", data);
+        }
+        return data;
       }
     } catch (error) {
-      console.error("Error creating collection:", error);
+      console.error(
+        `Error Occured using method ${method} on a collection`,
+        error,
+      );
     }
   },
   // Create a new cluster
@@ -62,49 +85,63 @@ const postReqAction = {
       const response = await fetch(
         `${path}/c/${collectionName}/cl/${clusterName}`,
         {
-          method: "POST",
+          method: `${method}`,
           headers: {
             "Content-Type": "text/plain",
           },
         },
       );
       console.log(
-        "Cluster Creation POST Request Response Status:",
+        `${method} Request On Cluster Response Status:`,
         response.status,
       );
       if (response.ok) {
-        return response.text();
+        if (method == "GET") {
+          let data = await response.text();
+          console.log("Received data from OstrichDB:", data);
+        }
+        return data;
       }
     } catch (error) {
-      console.error("Error creating cluster:", error);
+      console.error(`Error Occured using method ${method} on a cluster`, error);
     }
   },
   // Create a new record
   2: async () => {
+    if (method == "POST") {
+      fullFetchPath = `${path}/c/${collectionName}/cl/${clusterName}/r/${recordName}?type=${recordType}`;
+    } else if (method == "GET") {
+      fullFetchPath = `${path}/c/${collectionName}/cl/${clusterName}/r/${recordName}`;
+    }
+    console.log(fullFetchPath);
+
     try {
-      const response = await fetch(
-        `${path}/c/${collectionName}/cl/${clusterName}/r/${recordName}?type=${recordType}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain",
-          },
+      const response = await fetch(fullFetchPath, {
+        method: `${method}`,
+        headers: {
+          "Content-Type": "text/plain",
         },
-      );
+      });
       console.log(
-        "Record Creation POST Request Response Status:",
+        `${method} Request On Record Response Status:`,
         response.status,
       );
       if (response.ok) {
-        return response.text();
+        if (method == "GET") {
+          let data = await response.text();
+          console.log("Received data from OstrichDB:", data);
+        }
+        return data;
       }
     } catch (error) {
-      console.error("Error creating record:", error);
+      console.error(`Error Occured using method ${method}on a record`, error);
     }
   },
 };
+// Get the version of OstrichDB
+// ost_get_version();
 
-ost_get_version(); // Get the version of OstrichDB
-postReqAction[0](collectionName); // create a new collection
-postReqAction[1](collectionName, clusterName); // create a new cluster
-postReqAction[2](collectionName, clusterName, recordName, recordType); // create a new record
+// These 3 calls can handle: GET & POST requests
+// requestAction[0](collectionName); //action on a collection
+// requestAction[1](collectionName, clusterName); //action on a cluster
+requestAction[2](collectionName, clusterName, recordName, recordType); //action on a record
