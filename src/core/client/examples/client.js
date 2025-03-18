@@ -15,30 +15,32 @@ meant to do work on a database(collection) itself of its subcomponents dynamical
 This means that request paths need to be constructed the way they are below to work...
 This might or might not change in the future.
 
-TL;DR Store you db information in to variables and pass them to the fetch calls.
+TL;DR Store you db information in to variables and pass them to the fetch calls
 
 - Marshall Burns
 */
 
+//Default values. Feel freee to change them or creatte your own variables for your own use case.
 const collectionName = "js_collection";
 const clusterName = "js_cluster";
 const recordName = "js_record";
 const recordType = "STRING";
 const recordValue = "Hello-World!";
 
-const pathRoot = `http://localhost:8042`;
+const pathRoot = `http://localhost:8042`; //DO NOT CHANGE THIS
 let data;
 
-// Note: Uncomment the method you want to use or hard code them into the 'method' key in the
-// respective fetch call in the 'requestAction' object below. Leanr more here:
+// Note: Uncomment the method you want to use or hard code the particular one you want into the 'method' key in the
+// respective fetch call in the 'requestAction' object below. Learn more here:
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch
 
-// const method = "GET";
-// const method = "POST";
-const method = "DELETE";
-// const method = "PUT";
 // const method = "HEAD";
+// const method = "POST";
+// const method = "PUT";
+// const method = "GET";
+// const method = "DELETE";
 
+//Simply fetch the current version of OstrichDB on the server
 function ost_get_version() {
   fetch(`${pathRoot}/version`)
     .then((response) => {
@@ -49,19 +51,20 @@ function ost_get_version() {
       }
     })
     .then((data) => {
-      // Process the OstrichDB data format
       console.log("Received data from OstrichDB:", data);
-      // Add parsing logic specific to OstrichDB's format here
     })
     .catch((error) => {
       console.error("Error fetching from OstrichDB:", error);
     });
 }
 
-//Object containing POST request functions
+// This objecy contains 3 anonymous functions that are called based on the key passed to it.
+// Handle GET, POST, HEAD, PUT, DELETE requests on the server.
+// Note: PUT requests only work on records. To be used when setting a records value.
+
 const requestAction = {
-  // Create a new collection
   0: async () => {
+    //Action to be performed on a collection
     try {
       const response = await fetch(`${pathRoot}/c/${collectionName}`, {
         method: `${method}`,
@@ -75,6 +78,9 @@ const requestAction = {
         if (method == "GET") {
           let data = await response.text();
           console.log("Received data from OstrichDB:", data);
+          console.log(response.headers);
+        } else if (method == "HEAD") {
+          console.log("Received data from OstrichDB:", response.headers);
         }
         return data;
       }
@@ -85,8 +91,8 @@ const requestAction = {
       );
     }
   },
-  // Create a new cluster
   1: async () => {
+    //Action to be performed on a cluster
     try {
       const response = await fetch(
         `${pathRoot}/c/${collectionName}/cl/${clusterName}`,
@@ -105,6 +111,8 @@ const requestAction = {
         if (method == "GET") {
           let data = await response.text();
           console.log("Received data from OstrichDB:", data);
+        } else if (method == "HEAD") {
+          console.log("Received data from OstrichDB:", response.headers);
         }
         return data;
       }
@@ -112,11 +120,12 @@ const requestAction = {
       console.error(`Error Occured using method ${method} on a cluster`, error);
     }
   },
-  // Create a new record. Records require a bit more TLC
   2: async () => {
+    //Action to be performed on a record
     if (method === "POST") {
+      //Depending on the request method the path for the fetch request is constructed differently for records
       fullFetchPath = `${pathRoot}/c/${collectionName}/cl/${clusterName}/r/${recordName}?type=${recordType}`;
-    } else if (method === "GET" || method === "DELETE") {
+    } else if (method === "GET" || method === "DELETE" || method === "HEAD") {
       fullFetchPath = `${pathRoot}/c/${collectionName}/cl/${clusterName}/r/${recordName}`;
     } else if (method === "PUT") {
       fullFetchPath = `${pathRoot}/c/${collectionName}/cl/${clusterName}/r/${recordName}?type=${recordType}&value=${recordValue}`;
@@ -138,6 +147,8 @@ const requestAction = {
         if (method == "GET") {
           let data = await response.text();
           console.log("Received data from OstrichDB:", data);
+        } else if (method == "HEAD") {
+          console.log("Received data from OstrichDB:", response.headers);
         }
         return data;
       }
@@ -146,10 +157,10 @@ const requestAction = {
     }
   },
 };
-// Get the version of OstrichDB
-// ost_get_version();
 
-// These 3 calls can handle: GET & POST requests
-requestAction[0](); //action on a collection
+ost_get_version();
+// Note: Uncomment the function call you want to use.
+
+// requestAction[0](); //action on a collection
 // requestAction[1](); //action on a cluster
 // requestAction[2](); //action on a record
