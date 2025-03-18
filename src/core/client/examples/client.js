@@ -35,8 +35,8 @@ let data;
 
 // const method = "GET";
 // const method = "POST";
-// const method = "DELETE";
-const method = "PUT";
+const method = "DELETE";
+// const method = "PUT";
 // const method = "HEAD";
 
 function ost_get_version() {
@@ -150,6 +150,6 @@ const requestAction = {
 // ost_get_version();
 
 // These 3 calls can handle: GET & POST requests
-// requestAction[0](); //action on a collection
+requestAction[0](); //action on a collection
 // requestAction[1](); //action on a cluster
-requestAction[2](); //action on a record
+// requestAction[2](); //action on a record
