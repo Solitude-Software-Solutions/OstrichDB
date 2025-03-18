@@ -9,3 +9,4 @@ ols.json
 .vs
 .DS_Store
 .ostrichdb
+.env
