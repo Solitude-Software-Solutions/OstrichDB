@@ -24,6 +24,7 @@ const collectionName = "js_collection";
 const clusterName = "js_cluster";
 const recordName = "js_record";
 const recordType = "STRING";
+const recordValue = "Hello-World!";
 
 const pathRoot = `http://localhost:8042`;
 let data;
@@ -60,7 +61,7 @@ function ost_get_version() {
 //Object containing POST request functions
 const requestAction = {
   // Create a new collection
-  0: async (collectionName) => {
+  0: async () => {
     try {
       const response = await fetch(`${pathRoot}/c/${collectionName}`, {
         method: `${method}`,
@@ -111,14 +112,16 @@ const requestAction = {
       console.error(`Error Occured using method ${method} on a cluster`, error);
     }
   },
-  // Create a new record
+  // Create a new record. Records require a bit more TLC
   2: async () => {
-    if (method == "POST") {
+    if (method === "POST") {
       fullFetchPath = `${pathRoot}/c/${collectionName}/cl/${clusterName}/r/${recordName}?type=${recordType}`;
-    } else if (method == "GET") {
+    } else if (method === "GET" || method === "DELETE") {
       fullFetchPath = `${pathRoot}/c/${collectionName}/cl/${clusterName}/r/${recordName}`;
+    } else if (method === "PUT") {
+      fullFetchPath = `${pathRoot}/c/${collectionName}/cl/${clusterName}/r/${recordName}?type=${recordType}&value=${recordValue}`;
     }
-    console.log(fullFetchPath);
+    console.log("Full Fetch Path:", fullFetchPath);
 
     try {
       const response = await fetch(fullFetchPath, {
@@ -139,7 +142,7 @@ const requestAction = {
         return data;
       }
     } catch (error) {
-      console.error(`Error Occured using method ${method}on a record`, error);
+      console.error(`Error Occured using method ${method} on a record`, error);
     }
   },
 };
@@ -147,6 +150,6 @@ const requestAction = {
 // ost_get_version();
 
 // These 3 calls can handle: GET & POST requests
-requestAction[0](collectionName); //action on a collection
-// requestAction[1](collectionName, clusterName); //action on a cluster
-// requestAction[2](collectionName, clusterName, recordName, recordType); //action on a record
+// requestAction[0](); //action on a collection
+// requestAction[1](); //action on a cluster
+requestAction[2](); //action on a record

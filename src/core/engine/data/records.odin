@@ -1284,54 +1284,57 @@ OST_PARSE_RECORD :: proc(record: string) -> types.Record {
 }
 
 //deletes a arecord from a cluster
-OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string) -> bool {
+OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string, isOnServer: bool) -> bool {
 	using utils
 	collection_path := concat_collection_name(fn)
-	fmt.printfln(
-		"Are you sure that you want to delete Record: %s%s%s?\nThis action can not be undone.",
-		utils.BOLD_UNDERLINE,
-		rn,
-		utils.RESET,
-	)
-	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-	buf: [64]byte
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading user input", #procedure)
-		return false
-	}
 
-	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-	cap := strings.to_upper(confirmation)
+	if !isOnServer {
+		fmt.printfln(
+			"Are you sure that you want to delete Record: %s%s%s?\nThis action can not be undone.",
+			utils.BOLD_UNDERLINE,
+			rn,
+			utils.RESET,
+		)
+		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+		buf: [64]byte
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error1 := utils.new_err(
+				.CANNOT_READ_INPUT,
+				utils.get_err_msg(.CANNOT_READ_INPUT),
+				#file,
+				#procedure,
+				#line,
+			)
+			utils.throw_err(error1)
+			utils.log_err("Error reading user input", #procedure)
+			return false
+		}
 
-	switch cap {
-	case const.NO:
-		utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
-		return false
-	case const.YES:
-	// Continue with deletion
-	case:
-		utils.log_runtime_event(
-			"User entered invalid input",
-			"User entered invalid input when trying to delete record",
-		)
-		error2 := utils.new_err(
-			.INVALID_INPUT,
-			utils.get_err_msg(.INVALID_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-		return false
+		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+		cap := strings.to_upper(confirmation)
+
+		switch cap {
+		case const.NO:
+			utils.log_runtime_event("User canceled deletion", "User canceled deletion of record")
+			return false
+		case const.YES:
+		// Continue with deletion
+		case:
+			utils.log_runtime_event(
+				"User entered invalid input",
+				"User entered invalid input when trying to delete record",
+			)
+			error2 := utils.new_err(
+				.INVALID_INPUT,
+				utils.get_err_msg(.INVALID_INPUT),
+				#file,
+				#procedure,
+				#line,
+			)
+			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			return false
+		}
 	}
 
 

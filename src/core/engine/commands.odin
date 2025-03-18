@@ -834,7 +834,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, ERASE, .STANDARD_PUBLIC)
 
-			if data.OST_ERASE_COLLECTION(collectionName) == true {
+			if data.OST_ERASE_COLLECTION(collectionName, false) == true {
 				fmt.printfln(
 					"Collection: %s%s%s erased successfully",
 					BOLD_UNDERLINE,
@@ -878,7 +878,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// 	return -1
 				// }
 
-				if data.OST_ERASE_CLUSTER(collectionName, cluster) == true {
+				if data.OST_ERASE_CLUSTER(collectionName, cluster, false) == true {
 					fmt.printfln(
 						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
 						BOLD_UNDERLINE,
@@ -973,7 +973,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// case -1:
 				// 	return -1
 				// }
-				if data.OST_ERASE_RECORD(collectionName, clusterName, recordName) == true {
+				if data.OST_ERASE_RECORD(collectionName, clusterName, recordName, false) == true {
 					fmt.printfln(
 						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
 						BOLD_UNDERLINE,

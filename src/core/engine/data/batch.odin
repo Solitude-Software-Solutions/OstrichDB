@@ -44,7 +44,7 @@ OST_HANDLE_COLLECTION_BATCH_REQ :: proc(
 		return 0, ""
 	case .ERASE:
 		for name in collectionNames {
-			if !OST_ERASE_COLLECTION(strings.to_upper(name)) {
+			if !OST_ERASE_COLLECTION(strings.to_upper(name), false) {
 				return 1, ""
 			}
 			return 0, ""
@@ -115,7 +115,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 	case .ERASE:
 		for i in colNames {
 			for j in cluNames {
-				if !OST_ERASE_CLUSTER(i, j) {
+				if !OST_ERASE_CLUSTER(i, j, true) {
 					return 1, ""
 				} else {
 					return 0, "NO WAY THAT WORKED."
@@ -195,7 +195,7 @@ OST_HANDLE_RECORD_BATCH_REQ :: proc(
 		for i in colNames {
 			for j in cluNames {
 				for k in recNames {
-					if !OST_ERASE_RECORD(i, j, k) {
+					if !OST_ERASE_RECORD(i, j, k, true) {
 						return 1, "Error encountered while erasing records"
 
 					} else {

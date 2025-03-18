@@ -452,55 +452,60 @@ OST_CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 }
 
 
-OST_ERASE_CLUSTER :: proc(fn: string, cn: string) -> bool {
+OST_ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 	using utils
-
 	buf: [64]byte
 	file: string
 	collectionPath := concat_collection_name(fn)
-
-	fmt.printfln(
-		"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
-		utils.BOLD,
-		cn,
-		utils.RESET,
-		utils.BOLD,
-		fn,
-		utils.RESET,
-	)
-	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
+	if !isOnServer {
+		fmt.printfln(
+			"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
+			utils.BOLD,
+			cn,
+			utils.RESET,
+			utils.BOLD,
+			fn,
+			utils.RESET,
 		)
-		throw_err(error1)
-		return false
+		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error1 := new_err(
+				.CANNOT_READ_INPUT,
+				get_err_msg(.CANNOT_READ_INPUT),
+				#file,
+				#procedure,
+				#line,
+			)
+			throw_err(error1)
+			return false
+		}
+
+		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+		cap := strings.to_upper(confirmation)
+
+		switch cap {
+		case const.NO:
+			log_runtime_event("User canceled deletion", "User canceled deletion of database")
+			return false
+		case const.YES:
+		// Continue with deletion
+		case:
+			log_runtime_event(
+				"User entered invalid input",
+				"User entered invalid input when trying to delete cluster",
+			)
+			error2 := new_err(
+				.INVALID_INPUT,
+				get_err_msg(.INVALID_INPUT),
+				#file,
+				#procedure,
+				#line,
+			)
+			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			return false
+		}
 	}
-
-	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-	cap := strings.to_upper(confirmation)
-
-	switch cap {
-	case const.NO:
-		log_runtime_event("User canceled deletion", "User canceled deletion of database")
-		return false
-	case const.YES:
-	// Continue with deletion
-	case:
-		log_runtime_event(
-			"User entered invalid input",
-			"User entered invalid input when trying to delete cluster",
-		)
-		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #file, #procedure, #line)
-		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-		return false
-	}
-
 	data, readSuccess := read_file(collectionPath, #procedure)
 	defer delete(data)
 

@@ -188,7 +188,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 }
 
 
-OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
+OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 	using utils
 
 	buf: [64]byte
@@ -197,45 +197,52 @@ OST_ERASE_COLLECTION :: proc(fn: string) -> bool {
 		return false
 	}
 
-	fmt.printfln(
-		"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
-		BOLD_UNDERLINE,
-		fn,
-		RESET,
-	)
-	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
+	if !isOnServer {
+		fmt.printfln(
+			"Are you sure that you want to delete Collection: %s%s%s?\nThis action can not be undone.",
+			BOLD_UNDERLINE,
+			fn,
+			RESET,
 		)
-		throw_err(error1)
-		log_err("Error reading user input", #procedure)
+		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
+		n, inputSuccess := os.read(os.stdin, buf[:])
+		if inputSuccess != 0 {
+			error1 := new_err(
+				.CANNOT_READ_INPUT,
+				get_err_msg(.CANNOT_READ_INPUT),
+				#file,
+				#procedure,
+				#line,
+			)
+			throw_err(error1)
+			log_err("Error reading user input", #procedure)
+		}
+
+		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
+		cap := strings.to_upper(confirmation)
+
+		switch (cap) {
+		case const.NO:
+			log_runtime_event("User canceled deletion", "User canceled deletion of collection")
+			return false
+		case const.YES:
+		// Continue with deletion
+		case:
+			log_runtime_event(
+				"User entered invalid input",
+				"User entered invalid input when trying to delete collection",
+			)
+			error2 := new_err(
+				.INVALID_INPUT,
+				get_err_msg(.INVALID_INPUT),
+				#file,
+				#procedure,
+				#line,
+			)
+			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
+			return false
+		}
 	}
-
-	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-	cap := strings.to_upper(confirmation)
-
-	switch (cap) {
-	case const.NO:
-		log_runtime_event("User canceled deletion", "User canceled deletion of collection")
-		return false
-	case const.YES:
-	// Continue with deletion
-	case:
-		log_runtime_event(
-			"User entered invalid input",
-			"User entered invalid input when trying to delete collection",
-		)
-		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #file, #procedure, #line)
-		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-		return false
-	}
-
 	collectionPath := concat_collection_name(fn)
 
 	// Delete the file

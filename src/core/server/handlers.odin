@@ -188,7 +188,7 @@ OST_HANDLE_PUT_REQ :: proc(
 
 	switch (pathSegments[0]) 
 	{
-	case "collection":
+	case "c":
 		switch (segments) 
 		{
 		case 2:
@@ -233,12 +233,8 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
 			}
-			collectionNamePath := fmt.tprintf(
-				"%s%s%s",
-				const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
-				collectionName,
-				const.OST_FILE_EXTENSION,
-			)
+			collectionNamePath := utils.concat_collection_name(collectionName)
+
 			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionNamePath, clusterName)
 			if !cluExists {
 				return types.HttpStatus {
@@ -246,7 +242,6 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("CLUSTER: %s not found", clusterName)
 			}
-			fmt.println("recordName: ", recordName)
 			recExists = data.OST_CHECK_IF_RECORD_EXISTS(
 				collectionNamePath,
 				clusterName,
@@ -272,6 +267,7 @@ OST_HANDLE_PUT_REQ :: proc(
 					collectionName,
 					clusterName,
 					slicedRecordName,
+					true,
 				)
 				if eraseSuccess {
 					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
@@ -284,6 +280,10 @@ OST_HANDLE_PUT_REQ :: proc(
 					switch (appendSuccess) {
 					case 0:
 						fmt.println("Record appended successfully")
+						return types.HttpStatus {
+							code = .OK,
+							text = types.HttpStatusText[.OK],
+						}, fmt.tprintf("New RECORD: %s created sucessfully", slicedRecordName)
 					case:
 						fmt.println("Record append failed")
 					}
@@ -338,21 +338,21 @@ OST_HANDLE_DELETE_REQ :: proc(
 	switch (segments) {
 	case 2:
 		// /collection/collecion_name
-		data.OST_ERASE_COLLECTION(collectionName)
+		data.OST_ERASE_COLLECTION(collectionName, true)
 		return types.HttpStatus {
 			code = .OK,
 			text = types.HttpStatusText[.OK],
 		}, fmt.tprintf("COLLECTION: %s erased successfully", collectionName)
 	case 4:
 		// /collection/collection_name/cluster/cluster_name
-		data.OST_ERASE_CLUSTER(collectionName, clusterName)
+		data.OST_ERASE_CLUSTER(collectionName, clusterName, true)
 		return types.HttpStatus {
 			code = .OK,
 			text = types.HttpStatusText[.OK],
 		}, fmt.tprintf("CLUSTER: %s erased successfully", clusterName)
 	case 6:
 		// /collection/collection_name/cluster/cluster_name/record/record_name
-		data.OST_ERASE_RECORD(collectionName, clusterName, recordName)
+		data.OST_ERASE_RECORD(collectionName, clusterName, recordName, true)
 		return types.HttpStatus {
 			code = .OK,
 			text = types.HttpStatusText[.OK],
