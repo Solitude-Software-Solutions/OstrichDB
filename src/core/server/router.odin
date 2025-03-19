@@ -66,9 +66,9 @@ OST_HANDLE_REQUEST :: proc(
 		}
 	}
 
-	fmt.println("Method: ", method) //debugging
-	fmt.println("Path: ", path) //debugging
-	fmt.println("Headers: ", headers) //debugging
+	// fmt.println("Method: ", method) //debugging
+	// fmt.println("Path: ", path) //debugging
+	// fmt.println("Headers: ", headers) //debugging
 
 	return types.HttpStatus{code = .NOT_FOUND, text = types.HttpStatusText[.NOT_FOUND]},
 		"404 Not Found\n"

@@ -5,14 +5,14 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            This is an example client to show how to use JavaScript
-            to interact with the OstrichDB API layer. Use Node.js to
-            run the example client.
+            This is an example vanilla Javascript client that demonstrates how
+            to interact with the OstrichDB API layer. You can use this client in
+            whole OR as a reference to create your own client if you wish.
 *********************************************************/
 
 /*
-Developer Notes: At the present time OstrichDBs server creates ALL routes
-meant to do work on a database(collection) itself of its subcomponents dynamically.
+Developer Note: At the present time OstrichDBs server creates ALL routes
+meant to do work on a database(collection) itself or its subcomponents dynamically.
 This means that request paths need to be constructed the way they are below to work...
 This might or might not change in the future.
 
@@ -42,24 +42,23 @@ let data;
 // const method = "DELETE";
 
 //Simply fetch the current version of OstrichDB on the server
-function ost_get_version() {
-  fetch(`${pathRoot}/version`)
-    .then((response) => {
-      if (response.ok) {
-        return response.text();
-      } else {
-        return response.text();
-      }
-    })
-    .then((data) => {
-      console.log("Received data from OstrichDB:", data);
-    })
-    .catch((error) => {
-      console.error("Error fetching from OstrichDB:", error);
+async function ost_get_version() {
+  try {
+    const response = fetch(`${pathRoot}/version`, {
+      method: "GET",
+      headers: { "Content-Type": "text/plain" },
     });
+    console.log("Fetching OstrichDB Version...");
+    if (response.ok) {
+      let data = await response.text();
+      console.log("Received data from OstrichDB:", data);
+    }
+  } catch (error) {
+    console.error("Error fetching OstrichDB Version:", error);
+  }
 }
 
-// This objecy contains 3 anonymous functions that are called based on the key passed to it.
+// This object contains 3 anonymous functions that are called based on the key passed to it.
 // Handle GET, POST, HEAD, PUT, DELETE requests on the server.
 // Note: PUT requests only work on records. To be used when setting a records value.
 
@@ -159,9 +158,9 @@ const requestAction = {
   },
 };
 
-ost_get_version();
 // Note: Uncomment the function call you want to use.
 
+// ost_get_version(); //Gets current local version of OstrichDB
 // requestAction[0](); //action on a collection
 // requestAction[1](); //action on a cluster
 // requestAction[2](); //action on a record

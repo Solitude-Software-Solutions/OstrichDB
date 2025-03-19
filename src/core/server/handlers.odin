@@ -108,7 +108,6 @@ OST_HANDLE_HEAD_REQ :: proc(
 	string,
 ) {
 
-
 	if m != "HEAD" {
 		return types.HttpStatus{code = .BAD_REQUEST, text = types.HttpStatusText[.BAD_REQUEST]},
 			"Method not allowed\n"
@@ -122,10 +121,8 @@ OST_HANDLE_HEAD_REQ :: proc(
 	}
 	pathSegments := OST_PATH_SPLITTER(p)
 
-
 	//there is no path, so we are just fetching the root
 	contentLength := len(responseBody)
-
 
 	headers := fmt.tprintf(
 		"Server: %s/%s\n" +
@@ -333,8 +330,6 @@ OST_HANDLE_DELETE_REQ :: proc(
 
 	collectionNamePath := utils.concat_collection_name(collectionName)
 
-	fmt.println("pathSegments: ", pathSegments)
-	fmt.println("len(pathSegments): ", len(pathSegments))
 	switch (segments) {
 	case 2:
 		// /collection/collecion_name
