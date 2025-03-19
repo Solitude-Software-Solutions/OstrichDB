@@ -1,3 +1,6 @@
+import requests
+#Ensure you have the requests lib or whatever other lib you plan on making HTTP requests from your Python code
+
 '''
 /********************************************************
 Author: Marshall A Burns
@@ -9,23 +12,25 @@ File Description:
             This is an example vanilla PYTHON client that demonstrates how
             to interact with the OstrichDB API layer. You can use this client in
             whole OR as a reference to create your own client if you wish.
+            For more information about OstrichDB example clients see the README.md file
+            in the 'client' directory.
 *********************************************************/
 '''
 
 '''
-Developer Notes: At the present time OstrichDBs server creates ALL routes
+Developer Note: At the present time OstrichDBs server creates ALL routes
 meant to do work on a database(collection) itself or its subcomponents dynamically.
 This means that request paths need to be constructed the way they are below to work...
-This might or might not change in the future.
+This might or might not change in the future. These examples are crude and do not represent
+the best way to do things nor do they represent the final product of working with OstrichDBs API.
 
-TL;DR Store your db information in variables and pass them to the request calls
 
-- Marshall Burns
+TL;DR:
+Store you db information in to variables and pass them to the fetch calls, The API might change
+drastically in the future so dont get to comfortable with this for now.
+
+  - Marshall Burns
 '''
-
-
-#Ensure you have the requests lib or whatever other lib you plan on making HTTP requests from your Python code
-import requests
 
 # Default values. Feel free to change them or create your own variables for your own use case.
 collectionName = "python_collection"
@@ -61,7 +66,6 @@ def ost_get_version():
 
 # Perform an action on a database(collection) as a whole
 def collection_action(method):
-    """Action to be performed on a collection"""
     try:
         response = requests.request(
             method,
@@ -82,7 +86,6 @@ def collection_action(method):
 
 # Perform an action on a specific cluster within a database(collection)
 def cluster_action(method):
-    """Action to be performed on a cluster"""
     try:
         response = requests.request(
             method,
@@ -103,7 +106,6 @@ def cluster_action(method):
 
 # Perform an action on a specific record within a specific cluster within a database(collection)
 def record_action(method):
-    """Action to be performed on a record"""
     # Depending on the request method the path for the request is constructed differently for records
     if method == "POST":
         full_path = f"{pathRoot}/c/{collectionName}/cl/{clusterName}/r/{recordName}?type={recordType}"

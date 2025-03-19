@@ -5,20 +5,26 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            This is an example vanilla Javascript client that demonstrates how
+            This is an example vanilla JAVASCRIPT client that demonstrates how
             to interact with the OstrichDB API layer. You can use this client in
             whole OR as a reference to create your own client if you wish.
+            For more information about OstrichDB example clients see the README.md file
+            in the 'client' directory.
 *********************************************************/
 
 /*
 Developer Note: At the present time OstrichDBs server creates ALL routes
 meant to do work on a database(collection) itself or its subcomponents dynamically.
 This means that request paths need to be constructed the way they are below to work...
-This might or might not change in the future.
+This might or might not change in the future. These examples are crude and do not represent
+the best way to do things nor do they represent the final product of working with OstrichDBs API.
 
-TL;DR Store you db information in to variables and pass them to the fetch calls
 
-- Marshall Burns
+TL;DR:
+Store you db information in to variables and pass them to the fetch calls, The API might change
+drastically in the future so dont get to comfortable with this for now.
+
+  - Marshall Burns
 */
 
 //Default values. Feel freee to change them or creatte your own variables for your own use case.
