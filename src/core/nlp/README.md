@@ -5,13 +5,13 @@
 1. Ensure you have Go Installed and Setup properly
 2. Run `go mod init main` (optional if the project is not already initialized)
 3. Run `go mod tidy` to install dependencies(optional since there are no dependencies at this point)
-4. Run `go build -buildmode c-shared -o llm.dylib`(For macOS) **Note:** Ensure the package name in your go file is `main`
-5. Run `odin build llm.odin -file && ./llm` (For macOS)
+4. Run `go build -buildmode c-shared -o nlp.dylib`(For macOS) **Note:** Ensure the package name in your go file is `main`
+5. Run `odin build nlp.odin -file && ./nlp` (For macOS)
 
 **Note:** When you make changes to either the Go or Odin code, you need to delete the following files:
-- `llm.dylib` (For macOS)
-- `llm.h` (For all platforms)
-- `llm` Or whatever executable file Odin built
+- `nlp.dylib` (For macOS)
+- `nlp.h` (For all platforms)
+- `nlp` Or whatever executable file Odin built
 
 Then you need to re-run steps 4 and 5 from above.
 
