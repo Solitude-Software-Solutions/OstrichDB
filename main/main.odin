@@ -1,6 +1,5 @@
 package main
 
-import "../src/core/client"
 import "../src/core/const"
 import "../src/core/engine"
 import "../src/core/engine/config"
