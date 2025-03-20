@@ -10,3 +10,4 @@ ols.json
 .DS_Store
 .ostrichdb
 .env
+*.dylib
