@@ -10,4 +10,7 @@ ols.json
 .DS_Store
 .ostrichdb
 .env
+
+#Ignore the go binaries in NLP package
 *.dylib
+*main
