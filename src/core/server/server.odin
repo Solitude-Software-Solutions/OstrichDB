@@ -20,6 +20,7 @@ File Description:
 router: ^types.Router
 isRunning := true
 
+//The isAutoServing flag is added for NLP. Auto serving will be set to true by default.
 OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	using const
 	isRunning = true
@@ -81,7 +82,7 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	}
 
 	//Start a thread to handle user input for killing the server
-	thread.run(OST_HANDLE_SEVER_KILL_INPUT)
+	thread.run(OST_HANDLE_SERVER_KILL_INPUT)
 	defer net.close(net.TCP_Socket(listen_socket))
 
 	fmt.printf(
@@ -153,17 +154,17 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 	}
 }
 
-OST_HANDLE_SEVER_KILL_INPUT :: proc() {
-	fmt.println("Enter 'kill' or 'exit' to stop the server")
+OST_HANDLE_SERVER_KILL_INPUT :: proc() {
+	utils.show_server_kill_msg()
 	input := utils.get_input(false)
 	if input == "kill" || input == "exit" {
 		fmt.println("Stopping OstrichDB server...")
 		isRunning = false
-		//ping the server to essentially refresh it to ensure it stops thus breaking the sever main loop
+		//ping the server to essentially refresh it to ensure it stops thus breaking the server main loop
 		libc.system("nc -zv localhost 8042")
 		return
 	} else {
-		fmt.println("Invalid input. Enter 'kill' or 'exit' to stop the server")
-		OST_HANDLE_SEVER_KILL_INPUT()
+		fmt.printfln("Invalid input")
+		OST_HANDLE_SERVER_KILL_INPUT()
 	}
 }
