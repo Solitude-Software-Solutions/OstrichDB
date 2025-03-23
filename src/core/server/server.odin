@@ -28,10 +28,7 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	defer free(router)
 
 	//OstrichDB version route
-	// OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
-
-	//TODO: For some odd reason it seems the order in which I call the ADD_ROUTE proc matters
-	//If DELETE is called after the other two, DELETE will not work....
+	OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
 
 	//Collection creation,fetching, and deletion routes
 	OST_ADD_ROUTE(router, .HEAD, C_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
@@ -53,13 +50,7 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	OST_ADD_ROUTE(router, .DELETE, R_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
 
 
-	// OST_ADD_ROUTE(
-	// 	router,
-	// 	.PUT,
-	// 	"/c/foo/cl/bar/r/baz?type=string&value=goodbye",
-	// 	OST_HANDLE_PUT_REQ,
-	// )
-	// OST_ADD_ROUTE(router, .DELETE, "/c/foo", OST_HANDLE_DELETE_REQ)
+	//TODO: Need to come back to batch requests...
 	// OST_ADD_ROUTE(
 	// 	router,
 	// 	.POST,
