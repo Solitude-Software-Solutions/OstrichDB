@@ -92,7 +92,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case SERVE, SERVER:
 		//first kill localhost:8042
 		libc.system("stty -echo")
-		// libc.system("kill -9 $(lsof -ti :8042)")
 		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
 		libc.system("stty echo")
 		fmt.printfln("Launching OstrichDB server...")
@@ -1322,15 +1321,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							help.OST_SET_HELP_MODE()
 						} else {
 							fmt.println(
-								"Invalid value. Valid values for config help_verbose are: 'true' or 'false'",
+								"Invalid value. Valid values for config HELP_VERBOSE are: 'true' or 'false'",
 							)
-							return 1
 						}
 						break
 					case "SUPPRESS_ERRORS":
 						if value == "true" || value == "false" {
-
-
 							fmt.printfln(
 								"Setting config: %s%s%s to %s%s%s",
 								BOLD_UNDERLINE,
@@ -1352,9 +1348,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							break
 						} else {
 							fmt.println(
-								"Invalid value. Valid values for config suppress_errors are: 'true' or 'false'",
+								"Invalid value. Valid values for config SUPPRESS_ERRORS are: 'true' or 'false'",
 							)
-							return 1
 						}
 						break
 					case "LIMIT_HISTORY":
@@ -1377,9 +1372,32 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							break
 						} else {
 							fmt.println(
-								"Invalid value. Valid values for config limit_history are: 'true' or 'false'",
+								"Invalid value. Valid values for config LIMIT_HISTORY are: 'true' or 'false'",
 							)
-							return 1
+						}
+						break
+					case "AUTO_SERVE":
+						if value == "true" || value == "false" {
+							fmt.printfln(
+								"Setting config: %s%s%s to %s%s%s",
+								BOLD_UNDERLINE,
+								configName,
+								RESET,
+								BOLD_UNDERLINE,
+								value,
+								RESET,
+							)
+							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FIVE, value)
+							if success == false {
+								fmt.printfln("Failed to set AUTO_SERVE config to %s", value)
+							} else {
+								fmt.printfln("Successfully set AUTO_SERVE config to %s", value)
+							}
+							break
+						} else {
+							fmt.println(
+								"Invalid value. Valid values for config AUTO_SERVE are: 'true' or 'false'",
+							)
 						}
 						break
 					case:

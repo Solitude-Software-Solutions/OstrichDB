@@ -72,7 +72,7 @@ CONFIG_ONE :: "ENGINE_INIT"
 CONFIG_TWO :: "ENGINE_LOGGING"
 CONFIG_THREE :: "USER_LOGGED_IN"
 CONFIG_FOUR :: "HELP_IS_VERBOSE"
-CONFIG_FIVE :: "SERVER_MODE_ON"
+CONFIG_FIVE :: "AUTO_SERVE" //whenever cli tool starts it runs the server if this is set to true
 CONFIG_SIX :: "ERROR_SUPPRESSION" //whether errors are printed to the console or not
 CONFIG_SEVEN :: "LIMIT_HISTORY" //whether or not to limit how the number of commands are stored in the users history cluster
 

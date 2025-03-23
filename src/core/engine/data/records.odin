@@ -249,7 +249,7 @@ OST_READ_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 			#line,
 		)
 		utils.throw_err(error2)
-		utils.log_err("Unable to find cluster/valid structur", #procedure)
+		utils.log_err("Unable to find cluster/valid structure", #procedure)
 		return ""
 	}
 

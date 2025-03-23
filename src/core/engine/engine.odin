@@ -2,6 +2,7 @@ package engine
 
 import "../../utils"
 import "../const"
+import "../server"
 import "../types"
 import "./config"
 import "./data"
@@ -53,6 +54,12 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 //Starts the OstrichDB engine:
 //Session timer, sign in, and command line
 OST_START_ENGINE :: proc() -> int {
+	using const
+
+	ServerConfig := types.Server_Config {
+		port = 8042,
+	}
+
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
 	switch (types.OstrichEngine.Initialized) 
@@ -79,8 +86,56 @@ OST_START_ENGINE :: proc() -> int {
 					"User Signed In",
 					"User successfully logged into OstrichDB",
 				)
-				result := OST_ENGINE_COMMAND_LINE()
-				return result
+
+				//Check to see if the server AUTO_SERVE config value is true. If so start server
+				security.OST_DECRYPT_COLLECTION(
+					"",
+					.CONFIG_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+				)
+
+
+				autoServeConfigValue := data.OST_READ_RECORD_VALUE(
+					OST_CONFIG_PATH,
+					CONFIG_CLUSTER,
+					BOOLEAN,
+					CONFIG_FIVE,
+				)
+				if strings.contains(autoServeConfigValue, "true") {
+					fmt.println("The OstrichDB server is starting...\n")
+					fmt.println(
+						"If you do not want the server to automatically start by default follow the instructions below:",
+					)
+					fmt.println(
+						"1. Enter 'kill' or 'quit' to stop the server and be returned to the OstrichDB command line",
+					)
+					fmt.println("2. Use command: 'SET CONFIG AUTO_SERVE TO false'\n\n")
+					security.OST_ENCRYPT_COLLECTION(
+						"",
+						.CONFIG_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
+					serverDone := server.OST_START_SERVER(ServerConfig)
+					if serverDone == 0 {
+						fmt.println("\n\n")
+						cmdLineDone := OST_ENGINE_COMMAND_LINE()
+						if cmdLineDone == 0 {
+							return cmdLineDone
+						}
+					}
+				} else {
+					// if the AUTO_SERVE config value is false, then continue starting command line
+					security.OST_ENCRYPT_COLLECTION(
+						"",
+						.CONFIG_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
+					fmt.println("Starting command line")
+					result := OST_ENGINE_COMMAND_LINE()
+					return result
+				}
 			case false:
 				fmt.printfln("Sign in failed. Please try again.")
 				security.OST_ENCRYPT_COLLECTION(
