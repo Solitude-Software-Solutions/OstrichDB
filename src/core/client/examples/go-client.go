@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 )
+
 /*********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -33,7 +34,6 @@ drastically in the future so dont get to comfortable with this for now.
 
   - Marshall Burns
 */
-
 
 // Default values. Feel free to change them or create your own variables for your own use case.
 const (
@@ -69,6 +69,36 @@ func ost_get_version() (string, error) {
 func collection_action(method string) (string, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(method, fmt.Sprintf("%s/c/%s", pathRoot, collectionName), nil)
+	if err != nil {
+		return "", fmt.Errorf("error creating request: %v", err)
+	}
+	req.Header.Set("Content-Type", "text/plain")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("error performing request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	fmt.Printf("%s Request On Collection Response Status: %d\n", method, resp.StatusCode)
+	if resp.StatusCode == http.StatusOK {
+		if method == "GET" {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return "", fmt.Errorf("error reading response: %v", err)
+			}
+			fmt.Printf("Received data from OstrichDB: %s\n", string(body))
+			return string(body), nil
+		} else if method == "HEAD" {
+			fmt.Printf("Received data from OstrichDB: %v\n", resp.Header)
+		}
+	}
+	return "", nil
+}
+
+func test_collection_action(method string) (string, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest(method, fmt.Sprintf("%s/c/%s", pathRoot, "foo"), nil)
 	if err != nil {
 		return "", fmt.Errorf("error creating request: %v", err)
 	}
@@ -182,16 +212,17 @@ func main() {
 	// For these latter 3 blocks pass one of the following methods: "GET", "POST", "PUT", "DELETE", "HEAD"
 	// Each action func call returns 'result' and 'error' values.
 	// If you want to handle the result, you can do so. Currently, the 'result' is not being handled.
-	// if _, err := collection_action("POST"); err != nil { // Perform an action on the collection
-	// fmt.Printf("Error: %v\n", err)
-	// 	}
 
-	// 	if _, err := cluster_action("POST"); err != nil { // Perform an action on the cluster
-	// 		fmt.Printf("Error: %v\n", err)
-	// 	}
+	if _, err := collection_action("POST"); err != nil { // Perform an action on the collection
+		fmt.Printf("Error: %v\n", err)
+	}
 
-	// if _, err := record_action("POST"); err != nil { // Perform an action on the record
-	//
-	//		fmt.Printf("Error: %v\n", err)
-	//	}
+	if _, err := cluster_action("POST"); err != nil { // Perform an action on the cluster
+		fmt.Printf("Error: %v\n", err)
+	}
+
+	if _, err := record_action("POST"); err != nil { // Perform an action on the record
+		fmt.Printf("Error: %v\n", err)
+	}
+
 }
