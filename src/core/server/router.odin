@@ -88,42 +88,6 @@ OST_HANDLE_REQUEST :: proc(
 }
 
 
-//Helper proc used to match routes with dynamic paths
-// is_path_match :: proc(routePath: string, requestPath: string) -> bool {
-// 	// Split the route and request paths into segments
-// 	routeSegments := strings.split(strings.trim_prefix(routePath, "/"), "/")
-// 	requestSegments := strings.split(strings.trim_prefix(requestPath, "/"), "/")
-// 	// fmt.println("len(requestSegments): ", len(requestSegments)) //debugging
-// 	for segment, i in requestSegments {
-// 		fmt.println("Request Segment: ", segment) //debugging
-// 		// fmt.println("Request Segment Index: ", i) //debugging
-// 	}
-
-
-// 	//If a query parameter is present in the last segment, split it off so that
-// 	//it is not included in the comparison
-// 	if len(requestSegments) == 6 && strings.contains(requestSegments[5], "?") {
-// 		requestSegments[5] = strings.split(requestSegments[5], "?")[0]
-// 	}
-
-// 	fmt.println("Request Segments: ", requestSegments) //debugging
-// 	defer delete(routeSegments)
-// 	defer delete(requestSegments)
-
-// 	//if the length of the route and request segments are not equal, return false
-// 	if len(routeSegments) != len(requestSegments) do return false
-
-
-// 	// Iterate through the segments and compare them
-// 	for segment, i in routeSegments {
-// 		if segment == "*" do continue // Skip wildcard segments. This is allows for dynamic paths
-// 		if segment == "?" do continue //skip segments with query parameters
-// 		if segment != requestSegments[i] do return false // If the segments don't match, return false
-// 	}
-// 	return true
-// }
-
-
 is_path_match :: proc(routePath: string, requestPath: string) -> bool {
 	// Split the route and request paths into segments
 	routeSegments := strings.split(strings.trim_prefix(routePath, "/"), "/")

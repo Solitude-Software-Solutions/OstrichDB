@@ -53,8 +53,6 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	OST_ADD_ROUTE(router, .DELETE, R_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
 
 
-	// OST_ADD_ROUTE(router, .HEAD, "/c/foo/cl/bar", OST_HANDLE_HEAD_REQ)
-
 	// OST_ADD_ROUTE(
 	// 	router,
 	// 	.PUT,
