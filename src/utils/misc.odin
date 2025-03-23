@@ -76,3 +76,13 @@ get_line_number :: proc(line: int) -> string {
 show_source_file :: proc(file: string) -> string {
 	return fmt.tprintln("Source File: %s%s%s", BOLD, file, RESET)
 }
+
+show_server_kill_msg :: proc() {
+	fmt.printfln(
+		"Enter %s'kill'%s or %s'exit'%s to stop the server",
+		BOLD_UNDERLINE,
+		RESET,
+		BOLD_UNDERLINE,
+		RESET,
+	)
+}
