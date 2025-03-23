@@ -27,29 +27,29 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	defer free(router)
 
 	//OstrichDB version route
-	OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
+	// OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
 
 	//TODO: For some odd reason it seems the order in which I call the ADD_ROUTE proc matters
 	//If DELETE is called after the other two, DELETE will not work....
 
 	//Collection creation,fetching, and deletion routes
-	// OST_ADD_ROUTE(router, .HEAD, C_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
+	OST_ADD_ROUTE(router, .HEAD, C_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
 	OST_ADD_ROUTE(router, .POST, C_DYNAMIC_BASE, OST_HANDLE_POST_REQ)
-	// OST_ADD_ROUTE(router, .GET, C_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
-	// OST_ADD_ROUTE(router, .DELETE, C_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
+	OST_ADD_ROUTE(router, .GET, C_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
+	OST_ADD_ROUTE(router, .DELETE, C_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
 
 	//Cluster creation,fetching, and deletion routes
-	// OST_ADD_ROUTE(router, .HEAD, CL_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
+	OST_ADD_ROUTE(router, .HEAD, CL_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
 	OST_ADD_ROUTE(router, .POST, CL_DYNAMIC_BASE, OST_HANDLE_POST_REQ)
-	// OST_ADD_ROUTE(router, .GET, CL_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
-	// OST_ADD_ROUTE(router, .DELETE, CL_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
+	OST_ADD_ROUTE(router, .GET, CL_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
+	OST_ADD_ROUTE(router, .DELETE, CL_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
 
-	//Record creation,fetching, and deletion routes
-	// OST_ADD_ROUTE(router, .HEAD, R_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
+	// //Record creation,fetching, and deletion routes
+	OST_ADD_ROUTE(router, .HEAD, R_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
 	OST_ADD_ROUTE(router, .POST, R_DYNAMIC_TYPE_QUERY, OST_HANDLE_POST_REQ)
-	// OST_ADD_ROUTE(router, .PUT, R_DYNAMIC_TYPE_VALUE_QUERY, OST_HANDLE_PUT_REQ)
-	// OST_ADD_ROUTE(router, .GET, R_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
-	// OST_ADD_ROUTE(router, .DELETE, R_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
+	OST_ADD_ROUTE(router, .PUT, R_DYNAMIC_TYPE_VALUE_QUERY, OST_HANDLE_PUT_REQ)
+	OST_ADD_ROUTE(router, .GET, R_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
+	OST_ADD_ROUTE(router, .DELETE, R_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
 
 
 	// OST_ADD_ROUTE(router, .HEAD, "/c/foo/cl/bar", OST_HANDLE_HEAD_REQ)
@@ -136,7 +136,9 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 
 		// Handle the request using router
+		fmt.printfln("passing %s router: ", #procedure, router)
 		status, response_body := OST_HANDLE_REQUEST(router, method, path, headers)
+
 
 		// Build and send response
 		response := OST_BUILD_RESPONSE(status, response_headers, response_body)

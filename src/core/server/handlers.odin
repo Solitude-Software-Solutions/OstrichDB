@@ -183,10 +183,10 @@ OST_HANDLE_PUT_REQ :: proc(
 	recordName := strings.split(pathSegments[5], "?")
 	slicedRecordName := strings.to_upper(recordName[0])
 
-	switch (pathSegments[0]) 
+	switch (pathSegments[0])
 	{
 	case "c":
-		switch (segments) 
+		switch (segments)
 		{
 		case 2:
 			// In the event of something like: /collection/collecion_name

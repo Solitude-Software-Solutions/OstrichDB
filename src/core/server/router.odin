@@ -49,16 +49,28 @@ OST_HANDLE_REQUEST :: proc(
 	status: types.HttpStatus,
 	response: string,
 ) {
-	// for route in router.routes {
-	// 	if strings.compare(path, route.p) == 0 {
-	// 		return route.h(method, path, headers)
-	// 	}
-	// }
-
+	using types
+	validMethod: types.HttpMethod
 
 	for route in router.routes {
-		// if strings.compare(method, route.m) != 0 do continue
+		//First match the method
+		if strings.contains(method, "GET") {
+			validMethod = .GET
+		} else if strings.contains(method, "POST") {
+			validMethod = .POST
+		} else if strings.contains(method, "PUT") {
+			validMethod = .PUT
+		} else if strings.contains(method, "DELETE") {
+			validMethod = .DELETE
+		} else if strings.contains(method, "HEAD") {
+			validMethod = .HEAD
+		}
 
+		if route.m != validMethod {
+			continue
+		}
+
+		// if strings.compare(method, route.m) != 0 do continue
 		// Use dynamic path matching
 		pathMatch := is_path_match(route.p, path)
 		if pathMatch {
@@ -66,6 +78,7 @@ OST_HANDLE_REQUEST :: proc(
 		}
 	}
 
+	// fmt.println("router: ", router) //debugging
 	// fmt.println("Method: ", method) //debugging
 	// fmt.println("Path: ", path) //debugging
 	// fmt.println("Headers: ", headers) //debugging

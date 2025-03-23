@@ -84,6 +84,9 @@ OST_BUILD_RESPONSE :: proc(
 	response = strings.concatenate(
 		[]string{response, fmt.tprintf("Content-Length: %d\r\n", len(body))},
 	)
+
+	response = strings.concatenate([]string{response, "Connection: close\r\n"})
+    
 	// Add custom headers
 	for key, value in headers {
 		response = strings.concatenate([]string{response, fmt.tprintf("%s: %s\r\n", key, value)})
