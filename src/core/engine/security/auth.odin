@@ -127,7 +127,6 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	authPassed := OST_CROSS_CHECK_MESH(preMesh, postMesh)
 	switch authPassed {
 	case true:
-		OST_START_SESSION_TIMER()
 		fmt.printfln("\n\n%sSucessfully signed in!%s", GREEN, RESET)
 		fmt.printfln("Welcome, %s%s%s!\n", BOLD_UNDERLINE, usernameCapitalized, RESET)
 		USER_SIGNIN_STATUS = true
@@ -201,7 +200,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param) 
+		switch (param)
 		{
 		case 0:
 			types.USER_SIGNIN_STATUS = false
