@@ -47,7 +47,8 @@ type Response struct {
 
 const defaultOllamaURL = "http://localhost:11434/api/chat"
 
-func talkToOllama(url string, ollamaReq Request) (*Response, error) {
+//creates a temporay client that sends request to the local ollama endpoint
+func talk_to_ollama(url string, ollamaReq Request) (*Response, error) {
 	js, err := json.Marshal(&ollamaReq)
 	if err != nil {
 		return nil, err
@@ -67,7 +68,7 @@ func talkToOllama(url string, ollamaReq Request) (*Response, error) {
 	return &ollamaResp, err
 }
 
-func loadDocumentation() (string, error) {
+func load_training_docs() (string, error) {
 	trainingDir := "./training_data"
 
 	docFiles := []string{

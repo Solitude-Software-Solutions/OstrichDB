@@ -9,7 +9,6 @@ All collection files within OstrichDB follow a very strict set of rules. These r
 - All collections MUST containt a metadata header.
 - The metadata header MUST be in the following format:
 
-```plaintext
 @@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@
 # File Format Version: [Current version of OstrichDB]
 # Permission: [Read-Write, Read-Only or Inaccessible] // Default is Read-Write
@@ -18,7 +17,7 @@ All collection files within OstrichDB follow a very strict set of rules. These r
 # File Size: [Size of collection in bytes] // Excludes metadata header size
 # Checksum: [Checksum value]
 @@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@
-```
+
 - A collection CAN have a single or multiple clusters.
 
 ## Cluster Rules
@@ -29,13 +28,13 @@ All collection files within OstrichDB follow a very strict set of rules. These r
 - Clusters MUST have a `cluster_name` and `cluster_id` record
 - Each cluster MUST have one line of whitespace after the `cluster_id` record.
 - Newly created clusters MUST abid by the following format:
-```plaintext
+
 {
   cluster_name :identifier: [Name of cluster]
   cluster_id :identifier: [ID of cluster]
 
 },
-```
+
 - Aside from the `cluster_name` and `cluster_id` records, clusters can be empty or contain data.
 
 ## Record Rules
@@ -43,9 +42,9 @@ All collection files within OstrichDB follow a very strict set of rules. These r
 - Records within a cluster CANNOT share the same name.
 - Records MUST have a name, type, and value.
 - A record is a single line of text in the following format:
-```plaintext
+
 [record_name] :type: [Value]
-```
+
 - Records are ONLY allowed to have the following datatypes:
   - `CHAR`
   - `STRING`
@@ -73,7 +72,7 @@ All collection files within OstrichDB follow a very strict set of rules. These r
 
 The following is how an example collection with a single cluster that contains two records would look like:
 
-```plaintext
+
 @@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@
 # File Format Version: Pre_Rel_v0.8.0_dev
 # Permission: Read-Write
@@ -91,7 +90,7 @@ The following is how an example collection with a single cluster that contains t
   AGE :INTEGER: 25
 
 },
-```
+
 
 ## Common Sense Rules
 
