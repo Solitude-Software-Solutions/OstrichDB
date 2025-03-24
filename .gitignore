@@ -15,3 +15,4 @@ ols.json
 *.dylib
 *main
 *go.sum
+*go.mod
