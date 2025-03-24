@@ -1,3 +1,21 @@
+# Getting The OstrichDB NLP Module Working
+
+## Setup
+1. Ensure Ollama is installed and setup properly
+2. If it doesn't exist, create a `ModelFile` in the `OstrichDB/core/nlp` dir
+3. Navigate to the directory where the `ModelFile` is located
+3. Run `ollama create ostrichdb1 -f ModelFile` to generate the model
+
+The next two stpes can be done depending on how you want to interact with the NLP module
+
+### Using Go code
+4. Build the Go code using `go build`
+5. Run the generated Go executable `./main`
+
+### Using Ollama Itself
+4. Run `ollama run ostrichdb1` to run the model
+
+
 # Importing Golang Code Into Odin Code For OstrichDB
 
 ## Setup
