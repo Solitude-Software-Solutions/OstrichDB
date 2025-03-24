@@ -14,4 +14,4 @@ ols.json
 #Ignore the go binaries in NLP package
 *.dylib
 *main
-go.sum
+*go.sum
