@@ -11,8 +11,9 @@ ols.json
 .ostrichdb
 .env
 
-#Ignore the go binaries in NLP package
+#Ignore the Golang related files in NLP package
 *.dylib
 *main
 *go.sum
 *go.mod
+*ModelFile
