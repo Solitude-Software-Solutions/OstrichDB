@@ -277,12 +277,13 @@ BatchOperation :: struct {
 	record:         Record, //this will allow for the name,type and value of the record
 }
 
+//global error suppression
 errSupression: ErrorSuppression
 ErrorSuppression :: struct {
 	enabled: bool, //uses the OST_READ_CONFIG_VALUE to get the value of the error suppression config then set true or false
 }
 
-
+//Server logging stuff
 benchmark_result: Benchmark_Result
 Benchmark_Result :: struct {
 	op_name:        string,
@@ -292,10 +293,22 @@ Benchmark_Result :: struct {
 	success:        bool,
 }
 
+//Server logging stuff
+new_event: ServerEvent
+ServerEvent :: struct {
+	Name:           string,
+	Description:    string,
+	Type:           ServerEventType,
+	Timestamp:      time.Time,
+	isRequestEvent: bool,
+	Route:          Route,
+	StatusCode:     HttpStatusCode,
+}
 
-//DE Stuff
-temp_DE: DE_Process
-DE_Process :: struct {
-	// contxt: aes.Context_GCM,
-	tag: []u8, //Warn: This shit is prob super unsafe
+
+ServerEventType :: enum {
+	ROUTINE        = 1,
+	WARNING        = 2,
+	ERROR          = 3,
+	CRITICAL_ERROR = 4,
 }
