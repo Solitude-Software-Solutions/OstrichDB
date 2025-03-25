@@ -40,36 +40,46 @@ OST_CREATE_SERVER_LOG_FILE :: proc() -> int {
 	return 0
 }
 
-//creates a new server event
-OST_CREATE_NEW_EVENT :: proc() -> types.ServerEvent {
-	newEvent := new(types.ServerEvent)
-	return newEvent^
-}
 
 OST_SET_EVENT_INFORMATION :: proc(
-	newEvent: types.ServerEvent,
 	name, desc: string,
 	type: types.ServerEventType,
 	time: time.Time,
 	isRequestEvent: bool,
 	path: string,
 	method: types.HttpMethod,
-) -> (
-	event: types.ServerEvent,
-) {
-	event.Name = name
-	event.Description = desc
-	event.Type = type
-	event.Timestamp = time
-	event.isRequestEvent = isRequestEvent
-	event.Route.p = path
-	event.Route.m = method
+) ->
+    types.ServerEvent {
+    newEvent := new(types.ServerEvent)
+	newEvent.Name = name
+	newEvent.Description = desc
+	newEvent.Type = type
+	newEvent.Timestamp = time
+	newEvent.isRequestEvent = isRequestEvent
+	newEvent.Route.p = path
+	newEvent.Route.m = method
 
-	return newEvent
+	return newEvent^
+}
+
+OST_PRINT_EVENT_INFORMATION :: proc(event: types.ServerEvent) {
+	fmt.println("Event Name: ", event.Name)
+	fmt.println("Event Description: ", event.Description)
+	fmt.println("Event Type: ", event.Type)
+	fmt.println("Event Timestamp: ", event.Timestamp)
+	fmt.println("Event is a request: ", event.isRequestEvent)
+	if event.isRequestEvent == true {
+		fmt.println("Path used in request event: ", event.Route.p)
+		fmt.println("Method used in request event: ", event.Route.m)
+	}
+	fmt.println("\n")
 }
 
 //Takes in an event and writes the events data to the log file
-OST_LOG_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
+OST_LOG_AND_PRINT_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
+    OST_PRINT_EVENT_INFORMATION(event)
+
+    //Logging shit
 	logMsg := fmt.tprintf(
 		"Server Event Triggered: ",
 		event.Name,
@@ -99,7 +109,6 @@ OST_LOG_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
 		concatLogMsg = strings.concatenate([]string{logMsg, routeInfo})
 	}
 
-
 	LogMessage := transmute([]u8)concatLogMsg
 
 	serverEventLogFile, openSuccess := os.open(
@@ -125,14 +134,3 @@ OST_LOG_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
 }
 
 
-OST_SHOW_EVENT_INFORMATION :: proc(event: types.ServerEvent) {
-	fmt.println("Event Name: ", event.Name)
-	fmt.println("Event Description: ", event.Description)
-	fmt.println("Event Type: ", event.Type)
-	fmt.println("Event Timestamp: ", event.Timestamp)
-	fmt.println("Event is a request: ", event.isRequestEvent)
-	if event.isRequestEvent == true {
-		fmt.println("Path used in request event: ", event.Route.p)
-		fmt.println("Method used in request event: ", event.Route.m)
-	}
-}

@@ -79,7 +79,7 @@ show_source_file :: proc(file: string) -> string {
 
 show_server_kill_msg :: proc() {
 	fmt.printfln(
-		"Enter %s'kill'%s or %s'exit'%s to stop the server",
+		"Enter %s'kill'%s or %s'exit'%s to stop the server\n",
 		BOLD_UNDERLINE,
 		RESET,
 		BOLD_UNDERLINE,
