@@ -189,12 +189,71 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 	}
 	if n > 0 {
 		enteredStr := string(buf[:n])
-		//trim the string of any whitespace or newline characters
 
-		//Shoutout to the OdinLang Discord for helping me with this...
+		//trim the string of any whitespace or newline characters at the beginning and end
 		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
 			return r == '\r' || r == '\n'
 		})
+
+		//At the first instance of a space in the username, warn then prompt again
+		for r in enteredStr {
+			if r == ' ' {
+				fmt.printfln(
+					"%sWarning:%sThe entered username: %s%s%s contains spaces. Please enter a username that does NOT contain spaces.\n",
+					utils.YELLOW,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					enteredStr,
+					utils.RESET,
+				)
+				OST_GET_USERNAME(true)
+			}
+		}
+
+		// Ensure there are no invalid special characters in the username
+		for r in enteredStr {
+			if r == '!' ||
+			   r == '@' ||
+			   r == '#' ||
+			   r == '$' ||
+			   r == '%' ||
+			   r == '^' ||
+			   r == '&' ||
+			   r == '.' ||
+			   r == '*' ||
+			   r == '_' ||
+			   r == '(' ||
+			   r == ')' ||
+			   r == '+' ||
+			   r == '=' ||
+			   r == '[' ||
+			   r == ']' ||
+			   r == '{' ||
+			   r == '}' ||
+			   r == '|' ||
+			   r == ';' ||
+			   r == ':' ||
+			   r == '"' ||
+			   r == '\'' ||
+			   r == '<' ||
+			   r == '>' ||
+			   r == ',' ||
+			   r == '/' ||
+			   r == '?' {
+				fmt.printfln(
+					"%sWarning:%sThe entered username: %s%s%s contains special characters. Please enter a username that does NOT contain special characters.",
+					utils.YELLOW,
+					utils.RESET,
+					utils.BOLD_UNDERLINE,
+					enteredStr,
+					utils.RESET,
+				)
+				fmt.println("The only valid special character is '-'.\n")
+				OST_GET_USERNAME(true)
+			}
+		}
+
+
 		if (len(enteredStr) > 32) {
 			fmt.printfln(
 				"Username is too long. Please enter a username that is 32 characters or less",

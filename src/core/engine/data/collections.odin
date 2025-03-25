@@ -291,7 +291,7 @@ OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 		return 1
 	}
 	//CHECK#3: check if the file name is valid
-	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+-="
+	invalidChars := "[]{}()<>;:.,?/\\|`~!@#$%^&*+="
 	for c := 0; c < len(fn); c += 1 {
 		if strings.contains_any(fn, invalidChars) {
 			fmt.printfln("Invalid character(s) found in file name: %s", fn)
