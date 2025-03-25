@@ -26,13 +26,13 @@ Please ensure that you have the proper dependencies installed for each example.
 - [-requests](https://pypi.org/project/requests/)
 
 ### JavaScript
-No additional dependencies are required as it useds the built-in (`fetch`)[https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch] API.
+No additional dependencies are required as it useds the built-in (fetch)[https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch] API.
 
 ### Go
-No additional dependencies are required as it uses the built-in (`net/http`)[https://pkg.go.dev/net/http] package.
+No additional dependencies are required as it uses the built-in (net/http)[https://pkg.go.dev/net/http] package.
 
 ### Odin
-No additional dependencies are required as it uses the built-in (`core:net`)[https://pkg.odin-lang.org/core/net/] package.
+No additional dependencies are required as it uses the built-in (core:net)[https://pkg.odin-lang.org/core/net/] package.
 
 ## Usage
 1. Ensure the OstrichDB server is running. It runs on: `localhost:8042`
