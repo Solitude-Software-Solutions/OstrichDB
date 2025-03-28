@@ -17,3 +17,4 @@ ols.json
 *go.sum
 *go.mod
 *ModelFile
+*.json
