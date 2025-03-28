@@ -2,14 +2,11 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
-	"io"
-
-
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -25,9 +22,7 @@ File Description:
             The main entry point for the OstrichDB AI Assistant.
 *********************************************************/
 
-
 func main() {
-	ctx := context.Background()
 
 	config := zap.NewDevelopmentConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -51,17 +46,17 @@ func main() {
 		}
 
 		// Process regular queries
-		_, err := process_nlp_query(ctx, input)
+		_, err := process_nlp_query(input)
 		if err != nil {
 			logger.Error(err, "Failed to process query")
 			fmt.Println("Sorry, I couldn't understand that query. Please try again.")
 			continue
 		}
-		// fmt.Println("OstrichDB AI Response as plaintext:", response)
 
+		// Do work
 
-
-
+		foo:=run_ostrichdb_ai_agent()
+		fmt.Println("run_ostrichdb_ai_agent() result: ", foo)
 	}
 }
 
@@ -77,7 +72,7 @@ func new_nlp_client() http.Client{
 }
 
 //Create a new client http request that will be sent over the OstrichDB server. Returns a request
-func new_nlp_request(method, path string) (*http.Request, error){
+func new_nlp_request(method string, path string) (*http.Request, error){
 	request,requestError:= http.NewRequest(method , path, nil)
 	if requestError != nil{
 		return request, fmt.Errorf("Error creating request: %v", requestError)
@@ -122,10 +117,60 @@ func handle_server_response(response *http.Response, method string) int {
 }
 
 
-func run() int{
-	path:= ""
-	method:= "POST"
-	request, reqError := new_nlp_request(path,method)
+func run_ostrichdb_ai_agent() int{
+
+	var path string
+
+	//Find the response.json file and parse out its key data
+	parsedData, success := parse_response()
+	if !success{
+		fmt.Println("JSON data was NOT parsed correctly.")
+	}
+
+	//Retrieve the key information needed to build a path
+	m:= get_value(parsedData, "command")
+	col:= get_value(parsedData, "collection_name")
+	clu:= get_value(parsedData, "cluster_name")
+	rec:= get_value(parsedData, "record_name")
+
+
+	//Convert the interfaces to strings
+	method := m.(string)
+	colName := col.(string)
+	cluName := clu.(string)
+	recName := rec.(string)
+
+
+
+	//If not collection name is provided that the request is invalid as all request need to have atleast a collection name
+	if len(colName) == 0{
+		fmt.Println("Invalid path provided")
+		return 1
+	}
+
+	//if only a collectio name is provided then the user only wants
+	//to do work on that collection, set path accordingly
+	if len(colName) != 0 && len(cluName) == 0 && len(recName) == 0 {
+		path = pathRoot + "/c/" + colName
+	}
+
+
+	//if cluster name is provided BUT NO record name is provided
+	//then the user is only wanting to do work on a cluster, set path accordingly
+	if len(cluName) != 0 && len(recName) == 0 {
+		path = pathRoot + "/c/" + colName + "/cl/" + cluName
+	}
+
+
+	//if cluster name is provided AND A record name IS provided
+	//then the user wants to do work on a record. set path accordingly
+	if len(cluName) != 0 && len(recName) != 0{
+		path = pathRoot + "/c/" + colName + "/cl/" + cluName + "/r/" + recName
+
+	}
+
+
+	request, reqError := new_nlp_request(method, path)
 	if reqError != nil{
 		return -1
 	}
@@ -140,6 +185,8 @@ func run() int{
 		return -3
 	}
 
+	//Delete the response.json file when all work is done.
+	// delete_response()
 	return 0
 }
 

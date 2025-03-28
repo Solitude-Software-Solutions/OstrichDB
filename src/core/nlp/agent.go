@@ -1,55 +1,32 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 )
-
-/*********************************************************
+/*
+********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            This file contains the code that creates the OstrichDB AI agent.
-            The agent will be able to answer questions based on the OstrichDB documentation,
-            and perform queries on through OstrichDB.
-*********************************************************/
+
+	This file contains the code that creates the OstrichDB AI agent.
+	The agent will be able to answer questions based on the OstrichDB documentation,
+	and perform queries on through OstrichDB.
+
+********************************************************
+*/
+
+const responseFile = "../../../bin/response.json"
 
 // Takes a natural language query, sends it to the LLM, and returns the response.
-func process_nlp_query(ctx context.Context, query string) (string, error) {
-	// Prepare the system message with schema context
-	docs, err := load_training_docs()
-	if err != nil {
-		return "", fmt.Errorf("error loading documentation: %w", err)
-	}
+func process_nlp_query(query string) (string, error) {
 
-	// fmt.Println("Documentation loaded, size:", len(docs), "bytes")// debugging
-
-	// Create a simple, direct system prompt that requests JSON responses
-	systemPrompt := "You are OstrichDB AI, an assistant for OstrichDB. Answer questions based on the OstrichDB documentation. Format your responses as valid JSON with fields for 'command', 'target', and 'parameters'. Any information that is missing from the users prompt you can generate yourself."
-
-	// Create messages for the LLM
-	systemMsg := Message{
-		Role:    "system",
-		Content: systemPrompt,
-	}
-
-	// Add documentation as context
-	docsMsg := Message{
-		Role:    "user",
-		Content: "Here is the OstrichDB documentation:\n\n" + docs,
-	}
-
-	// Add acknowledgment
-	ackMsg := Message{
-		Role:    "assistant",
-		Content: "I've received the OstrichDB documentation and will use it to answer questions.",
-	}
-
-	// Add the user query
+	// Add the user query message
 	userMsg := Message{
 		Role:    "user",
 		Content: query,
@@ -57,15 +34,16 @@ func process_nlp_query(ctx context.Context, query string) (string, error) {
 
 	// Create the request
 	req := Request{
-		Model:    "ostrichdb1",
+		Model:    "ostrichdb:2.5",
 		Stream:   false,
-		Messages: []Message{systemMsg, docsMsg, ackMsg, userMsg},
+		Messages: []Message{userMsg},
 	}
 
 	fmt.Println("Sending request to Ollama...")
 
 	// Send to LLM
 	resp, err := talk_to_ollama(defaultOllamaURL, req)
+
 	if err != nil {
 		return "Error communicating with LLM: " + err.Error(), nil
 	}
@@ -74,71 +52,110 @@ func process_nlp_query(ctx context.Context, query string) (string, error) {
 		return "Received nil response from Ollama", nil
 	}
 
-	fmt.Println("Received response from Ollama")
-	keyDataMap,e:=gather_key_data(resp)
-	if e != nil{
-		fmt.Println("HEY FUCKFACE THIS BROKE!!!")
-		return "",nil
-	}
-	fmt.Printf("Printing Key Data map: \n\n")
-	fmt.Println(keyDataMap)
+	//store the response so further work can be done with it
+	store_response(resp.Message.Content)
 
-
-	return resp.Message.Content, nil
+	return "Successfully recieved and stored AI response.", nil
 }
 
-func gather_key_data(agentResponse *Response) (map[string]interface{}, error) {
-	fmt.Printf("Received the following response from the AI Agent:\n %s\n", agentResponse.Message.Content)
-
-	// Create a map to store the parsed JSON data
-	var responseData map[string]interface{}
-
-	// Attempt to parse the JSON response
-	err := json.Unmarshal([]byte(agentResponse.Message.Content), &responseData)
+// stores the llms response as json in the response.json file
+func store_response(resp string) int {
+	data := []byte(resp)
+	err := os.WriteFile(responseFile, data, 0644)
 	if err != nil {
-		fmt.Printf("failed to parse agent response as JSON: %v\n", err)
-		return nil, err
+		fmt.Println("There was an issue creating the response.json file")
+		return -1
+	}
+	fmt.Println("Successfully stored response.")
+	return 0
+}
+
+// called whenever work with the response.json file is completed.
+func delete_response() int {
+	deleteErr := os.Remove(responseFile)
+	if deleteErr != nil {
+		fmt.Println("There was an issue deleting the response.json file")
+		return -1
+	}
+	fmt.Println("Successfully deleted response.")
+	return 0
+}
+
+// looks over the response.json file and parses it.
+// The parsed data is store into an interface then returned along with a success value
+func parse_response() (parsedData interface{}, success bool) {
+	success = false
+	content, err := os.ReadFile(responseFile)
+	if err != nil {
+		return "", false
 	}
 
-	// Extract collection information
-	if collectionName, ok := responseData["collection_name"].(string); ok {
-		fmt.Printf("Collection Name: %s\n", collectionName)
+	// Parse into a generic interface{}
+	var data interface{}
+	err = json.Unmarshal(content, &data)
+	if err != nil {
+		return "", false
 	}
 
-	// Extract cluster information
-	if clusters, ok := responseData["clusters"].([]interface{}); ok {
-		fmt.Printf("Number of Clusters: %d\n", len(clusters))
+	return data, true
+}
 
-		for i, cluster := range clusters {
-			clusterMap, ok := cluster.(map[string]interface{})
-			if !ok {
-				continue
-			}
+func print_json_response(v interface{}, indent string) {
+	switch val := v.(type) {
+	//in the event of an interface of type string
+	case map[string]interface{}:
+		fmt.Println("{")
+		for k, v := range val {
+			fmt.Printf("%s  %q: ", indent, k)
+			print_json_response(v, indent+"  ")
+		}
+		fmt.Printf("%s}\n", indent)
+		//in the event of an generic interface
+	case []interface{}:
+		fmt.Println("[")
+		for _, item := range val {
+			fmt.Printf("%s  ", indent)
+			print_json_response(item, indent+"  ")
+		}
+		fmt.Printf("%s]\n", indent)
+	default:
+		fmt.Println(val)
+	}
+}
 
-			if clusterName, ok := clusterMap["cluster_name"].(string); ok {
-				fmt.Printf("Cluster %d Name: %s\n", i+1, clusterName)
-			}
+// Helper returns the value of the passed in key by traversing the nested JSON structure
+func get_value(data interface{}, key string) interface{} {
+	// First check if we're dealing with a map
+	if m, ok := data.(map[string]interface{}); ok {
+		// Try to get the value directly
+		if val, exists := m[key]; exists {
+			return val
+		}
 
-			// Extract records from this cluster
-			if records, ok := clusterMap["records"].([]interface{}); ok {
-				fmt.Printf("  Number of Records in Cluster %d: %d\n", i+1, len(records))
-
-				for j, record := range records {
-					recordMap, ok := record.(map[string]interface{})
-					if !ok {
-						continue
-					}
-
-					name, _ := recordMap["name"].(string)
-					dataType, _ := recordMap["type"].(string)
-					value := recordMap["value"]
-
-					fmt.Printf("  Record %d: Name=%s, Type=%s, Value=%v\n",
-						j+1, name, dataType, value)
+		// If not found directly, search recursively in each nested object
+		for _, v := range m {
+			// If the value is a map or slice, search within it
+			if nestedMap, ok := v.(map[string]interface{}); ok {
+				if result := get_value(nestedMap, key); result != nil {
+					return result
 				}
+			} else if nestedSlice, ok := v.([]interface{}); ok {
+				for _, item := range nestedSlice {
+					if result := get_value(item, key); result != nil {
+						return result
+					}
+				}
+			}
+		}
+	} else if s, ok := data.([]interface{}); ok {
+		// If we're dealing with a slice, search each element
+		for _, item := range s {
+			if result := get_value(item, key); result != nil {
+				return result
 			}
 		}
 	}
 
-	return responseData, nil
+	// Key not found
+	return nil
 }
