@@ -215,6 +215,3 @@ OST_DECODE_M_K :: proc(m_k: []byte) -> []byte {
 	return decodedKey
 }
 
-// OST_M_K_STIRNG_TO_BYTE :: proc(m_k: string) -> []byte {
-// 	return transmute([]byte)m_k
-// }

@@ -53,7 +53,7 @@ OST_DECRYPT_COLLECTION :: proc(
 
 	#partial switch (colType) {
 	case .STANDARD_PUBLIC:
-		file = utils.concat_collection_name(colName)
+		file = utils.concat_standard_collection_name(colName)
 		break
 	case .SECURE_PRIVATE:
 		file = fmt.tprintf(

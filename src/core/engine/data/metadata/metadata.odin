@@ -347,7 +347,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	using const
 	using utils
 
-	file := concat_collection_name(fn)
+	file := concat_standard_collection_name(fn)
 
 	data, readSuccess := read_file(file, #procedure)
 	if !readSuccess {
@@ -449,7 +449,7 @@ OST_GET_METADATA_VALUE :: proc(
 	file: string
 	#partial switch (colType) {
 	case .STANDARD_PUBLIC:
-		file = concat_collection_name(fn)
+		file = concat_standard_collection_name(fn)
 		break
 	case .CONFIG_PRIVATE:
 		file = OST_CONFIG_PATH
@@ -531,7 +531,7 @@ OST_CHANGE_METADATA_VALUE :: proc(
 
 	#partial switch (colType) {
 	case .STANDARD_PUBLIC:
-		file = concat_collection_name(fn)
+		file = concat_standard_collection_name(fn)
 		break
 	case .SECURE_PRIVATE:
 		file = fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, fn, ".ost")

@@ -29,7 +29,7 @@ main :: proc() {
 	using security
 
 
-	data.main()
+	data.main() 
 	utils.main()
 
 

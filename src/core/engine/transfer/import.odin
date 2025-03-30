@@ -25,7 +25,7 @@ File Description:
 __import_csv__ :: proc(fn: string) {
 	using data
 
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_standard_collection_name(fn)
 	csvClusterName := fmt.tprintf("%s_%s", fn, const.CSV_CLU)
 	csvFile := fmt.tprintf("./%s.csv", strings.to_upper(fn))
 

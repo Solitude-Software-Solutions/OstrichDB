@@ -359,7 +359,7 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 		return -1
 	}
 
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_standard_collection_name(fn)
 
 
 	if !OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn) {
@@ -1195,7 +1195,7 @@ OST_UPDATE_RECORD_IN_FILE :: proc(
 OST_FETCH_RECORD :: proc(fn: string, cn: string, rn: string) -> (types.Record, bool) {
 	clusterContent: string
 	recordContent: string
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_standard_collection_name(fn)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
 	if !clusterExists {
@@ -1286,7 +1286,7 @@ OST_PARSE_RECORD :: proc(record: string) -> types.Record {
 //deletes a arecord from a cluster
 OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string, isOnServer: bool) -> bool {
 	using utils
-	collection_path := concat_collection_name(fn)
+	collection_path := concat_standard_collection_name(fn)
 
 	if !isOnServer {
 		fmt.printfln(
@@ -1463,7 +1463,7 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 	collectionPath: string
 	if isCounting == true {
-		collectionPath = utils.concat_collection_name(fn)
+		collectionPath = utils.concat_standard_collection_name(fn)
 
 	} else if isCounting == false {
 		collectionPath = fmt.tprintf(
@@ -1526,7 +1526,7 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 
 //reads over the passed in collection file and returns the number of records in that collection
 OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_standard_collection_name(fn)
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
 		return -1
@@ -1565,7 +1565,7 @@ OST_COUNT_RECORDS_IN_COLLECTION :: proc(fn: string) -> int {
 
 //deletes the data value of the passed in record but keeps the name and type
 OST_PURGE_RECORD :: proc(fn, cn, rn: string) -> bool {
-	collection_path := utils.concat_collection_name(fn)
+	collection_path := utils.concat_standard_collection_name(fn)
 	// Read the entire file
 	data, readSuccess := utils.read_file(collection_path, #procedure)
 	if !readSuccess {

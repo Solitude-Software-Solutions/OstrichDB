@@ -230,7 +230,7 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
 			}
-			collectionNamePath := utils.concat_collection_name(collectionName)
+			collectionNamePath := utils.concat_standard_collection_name(collectionName)
 
 			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionNamePath, clusterName)
 			if !cluExists {
@@ -328,7 +328,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 		recordName = strings.to_upper(pathSegments[5])
 	}
 
-	collectionNamePath := utils.concat_collection_name(collectionName)
+	collectionNamePath := utils.concat_standard_collection_name(collectionName)
 
 	switch (segments) {
 	case 2:
@@ -408,7 +408,7 @@ OST_HANDLE_POST_REQ :: proc(
 		fmt.println("Creating cluster") // Debug print
 		collectionName = strings.to_upper(segments[1])
 		clusterName = strings.to_upper(segments[3])
-		colFilePath := utils.concat_collection_name(collectionName)
+		colFilePath := utils.concat_standard_collection_name(collectionName)
 
 		if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 			return types.HttpStatus {
@@ -445,7 +445,7 @@ OST_HANDLE_POST_REQ :: proc(
 		clusterName = strings.to_upper(segments[3])
 		recordName = strings.to_upper(recordNameSplit[0])
 		recordType = strings.to_upper(queryTypeSplit[1])
-		colFilePath := utils.concat_collection_name(collectionName)
+		colFilePath := utils.concat_standard_collection_name(collectionName)
 
 		// fmt.println("collectionName: ", collectionName) // debugging
 		// fmt.println("clusterName: ", clusterName) // debugging

@@ -27,10 +27,7 @@ File Description:
             user accounts.
 *********************************************************/
 
-SIGN_IN_ATTEMPTS: int
-FAILED_SIGN_IN_TIMER := time.MIN_DURATION //this will be used to track the time between failed sign in attempts. this timeer will start after the 5th failed attempt in a row
-
-
+//Generates the 'secure' directory for storing user credentials.
 OST_GEN_SECURE_DIR :: proc() -> int {
 	using utils
 
@@ -54,7 +51,7 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 	return 0
 }
 
-//This will handle initial setup of the admin account on first run of the program
+//Handle initial setup of the admin account on first run of the program
 OST_INIT_ADMIN_SETUP :: proc() -> int {
 	using types
 	using data
@@ -406,13 +403,13 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 }
 
 //Stores the entered user credentials in the users secure collection file/cluster
-// cn- cluster name, id- cluster id, dn- data name, d- data
-OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: string) -> int {
+// cn- cluster name, id- cluster id, rn- record name, rd- record data
+OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, rn: string, rd: string) -> int {
 	using metadata
 	using const
 	using utils
 
-	secureFilePath := fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, fn, OST_FILE_EXTENSION)
+	secureFilePath := concat_secure_collection_name(fn)
 
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
@@ -431,7 +428,7 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, dn: string, d: str
 
 
 	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
-	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, dn, d, "identifier", id)
+	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, rn, rd, "identifier", id)
 
 	OST_UPDATE_METADATA_AFTER_OPERATION(secureFilePath)
 	return 0
@@ -811,7 +808,6 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 		return false
 	}
 
-	// Remove the users histrory cluster
 	// OST_ERASE_HISTORY_CLUSTER(username) //TODO: Need to rewrite this proc due to moving the onld one to a different file
 	log_runtime_event(
 		"User deleted",
@@ -821,7 +817,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 }
 
 
-//I mean I know what it does but I'm not sure why I wrote it
+//I mean I know what it does but I'm not sure why I wrote it. Not being used currently...
 OST_ADD_USERS_TO_LIST :: proc() -> [dynamic]string {
 	//remember to free mem when calling
 	userArr := make([dynamic]string)

@@ -320,7 +320,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						cmd.l_token[0],
 						RESET,
 					)
-					fileName := concat_collection_name(cmd.l_token[0])
+					fileName := concat_standard_collection_name(cmd.l_token[0])
 					OST_UPDATE_METADATA_ON_CREATE(fileName)
 
 					OST_ENCRYPT_COLLECTION(
@@ -430,7 +430,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					log_err("Failed to create new cluster.", #procedure)
 					break
 				}
-				fn = concat_collection_name(collectionName)
+				fn = concat_standard_collection_name(collectionName)
 				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 			} else {
 				fmt.printfln(
@@ -476,7 +476,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
-			colPath := concat_collection_name(collectionName)
+			colPath := concat_standard_collection_name(collectionName)
 
 			if OF_TYPE in cmd.p_token && cmd.isUsingDotNotation == true {
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[OF_TYPE])
@@ -518,7 +518,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							data.OST_SET_RECORD_VALUE(colPath, clusterName, recordName, NULL)
 						}
 
-						fn := concat_collection_name(collectionName)
+						fn := concat_standard_collection_name(collectionName)
 						OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 						break
 					case -1, 1:
@@ -695,7 +695,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					fn := concat_collection_name(collectionName)
+					fn := concat_standard_collection_name(collectionName)
 
 					OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 				} else {
@@ -924,7 +924,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 				}
-				fn := concat_collection_name(collectionName)
+				fn := concat_standard_collection_name(collectionName)
 				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 			} else {
 				fmt.println(
@@ -1190,7 +1190,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 
-				file := utils.concat_collection_name(collectionName)
+				file := utils.concat_standard_collection_name(collectionName)
 
 				setValueSuccess := data.OST_SET_RECORD_VALUE(
 					file,
@@ -1274,7 +1274,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 				}
 
-				fn := concat_collection_name(collectionName)
+				fn := concat_standard_collection_name(collectionName)
 				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
 			}
 			OST_ENCRYPT_COLLECTION(
@@ -1697,7 +1697,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					RESET,
 				)
-				file := concat_collection_name(collectionName)
+				file := concat_standard_collection_name(collectionName)
 				OST_UPDATE_METADATA_AFTER_OPERATION(file)
 				break
 			case false:
@@ -1838,7 +1838,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, SIZE_OF, .STANDARD_PUBLIC)
 
-			file_path := concat_collection_name(collectionName)
+			file_path := concat_standard_collection_name(collectionName)
 			actual_size, metadata_size := OST_SUBTRACT_METADATA_SIZE(file_path)
 			if actual_size != -1 {
 				fmt.printf(
@@ -1977,7 +1977,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, TYPE_OF, .STANDARD_PUBLIC)
 
-			colPath := concat_collection_name(collectionName)
+			colPath := concat_standard_collection_name(collectionName)
 			rType, success := data.OST_GET_RECORD_TYPE(colPath, clusterName, recordName)
 			if !success {
 				fmt.printfln(
@@ -2039,7 +2039,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
-				colPath := concat_collection_name(collectionName)
+				colPath := concat_standard_collection_name(collectionName)
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, CHANGE_TYPE, .STANDARD_PUBLIC)
 
@@ -2317,7 +2317,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					case true:
 						lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
 						if lockSuccess {
-							filePath := concat_collection_name(colName)
+							filePath := concat_standard_collection_name(colName)
 							osPermSuccess := security.OST_SET_OS_PERMISSIONS(filePath, permission)
 							if !osPermSuccess {
 								fmt.printfln(

@@ -33,7 +33,7 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	defer free(router)
 
 
-	//OstrichDB GET version static route nad
+	//OstrichDB GET version static route and server logging
 	OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
 	versionRouteEvent:=OST_SET_EVENT_INFORMATION("Add Route","Added '/version' static GET route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
 	OST_LOG_AND_PRINT_SERVER_EVENT(versionRouteEvent)

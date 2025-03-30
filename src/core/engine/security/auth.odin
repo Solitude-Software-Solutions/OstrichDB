@@ -36,6 +36,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	userName := n
 	if len(userName) == 0 {
 		fmt.printfln("Username cannot be empty. Please try again.")
+		log_err("User did not provide a username during authentication", #procedure)
+		log_runtime_event("Blank username","User did not provide a username duing authentication")
 		return false
 	}
 	usernameCapitalized := strings.to_upper(userName)
@@ -44,6 +46,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		fmt.println(
 			"There is no account within OstrichDB associated with the entered username. Please try again.",
 		)
+		log_runtime_event("Invalid username provided","Invalid username entered during authentication")
 		log_err("User entered a username that does not exist in the database", #procedure)
 		return false
 	}
@@ -73,10 +76,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	//Voodoo??
 	userMKStr := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "m_k")
-	// user.m_k.valAsStr = userMKStr
 	user.m_k.valAsBytes = OST_DECODE_M_K(transmute([]byte)userMKStr)
-
-
 	user.username.Value = strings.clone(usernameCapitalized)
 
 	//PRE-MESHING START=======================================================================================================
@@ -113,6 +113,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	if len(enteredPassword) == 0 {
 		fmt.printfln("Password cannot be empty. Please try again.")
+		log_err("User did not provide a password during authentication", #procedure)
+		log_runtime_event("Blank password provided","User did not provide a password during authentication")
 		return false
 	}
 
@@ -161,6 +163,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	case false:
 		fmt.printfln("%sAuth Failed. Password was incorrect please try again.%s", RED, RESET)
 		types.USER_SIGNIN_STATUS = false
+		log_runtime_event("Authentication failed","User entered incorrect password during authentication")
+		log_err("User failed to authenticate with the provided credentials", #procedure)
 		OST_RUN_SIGNIN()
 
 	}
@@ -190,6 +194,7 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 		return true
 	}
 
+	utils.log_err("Pre & post password mesh's did not match during authentication",#procedure)
 	return false
 }
 

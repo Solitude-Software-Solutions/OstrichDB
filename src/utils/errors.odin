@@ -147,26 +147,26 @@ throw_err :: proc(err: Error) -> int {
 	if types.errSupression.enabled { 	//if error supression is off return
 		return 0
 	} else {
-		// fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
-		// fmt.printfln(
-		// 	"ERROR%s occured in...\nFile: [%s%s%s]\nOstrichDB Procedure: [%s%s%s] @ Line: [%s%d%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
-		// 	RESET,
-		// 	BOLD,
-		// 	err.file,
-		// 	RESET,
-		// 	BOLD,
-		// 	err.procedure,
-		// 	RESET,
-		// 	BOLD,
-		// 	err.line,
-		// 	RESET,
-		// 	BOLD,
-		// 	err.type,
-		// 	RESET,
-		// 	BOLD,
-		// 	err.message,
-		// 	RESET,
-		// )
+		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
+		fmt.printfln(
+			"ERROR%s occured in...\nFile: [%s%s%s]\nOstrichDB Procedure: [%s%s%s] @ Line: [%s%d%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+			RESET,
+			BOLD,
+			err.file,
+			RESET,
+			BOLD,
+			err.procedure,
+			RESET,
+			BOLD,
+			err.line,
+			RESET,
+			BOLD,
+			err.type,
+			RESET,
+			BOLD,
+			err.message,
+			RESET,
+		)
 		return 1
 	}
 }
@@ -177,27 +177,20 @@ throw_custom_err :: proc(err: Error, custom_message: string) -> int {
 	if types.errSupression.enabled {
 		return 0
 	} else {
-		// fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
-		// fmt.printfln(
-		// 	"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
-		// 	RESET,
-		// 	BOLD,
-		// 	err.procedure,
-		// 	RESET,
-		// 	BOLD,
-		// 	err.type,
-		// 	RESET,
-		// 	BOLD,
-		// 	custom_message,
-		// 	RESET,
-		// )
+		fmt.printfln("%s%s[ERROR ERROR ERROR ERROR]%s", RED, BOLD, RESET)
+		fmt.printfln(
+			"ERROR%s occured in procedure: [%s%s%s]\nInternal Error Type: %s[%v]%s\nError Message: [%s%s%s]",
+			RESET,
+			BOLD,
+			err.procedure,
+			RESET,
+			BOLD,
+			err.type,
+			RESET,
+			BOLD,
+			custom_message,
+			RESET,
+		)
 		return 1
 	}
 }
-
-/*
-Example Error Usage:
-
-    error2:= new_err(.ENTERED_USERNAME_NOT_FOUND, get_err_msg(.ENTERED_USERNAME_NOT_FOUND), #procedure)
-    throw_err(error2)
-*/

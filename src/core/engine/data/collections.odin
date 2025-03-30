@@ -72,7 +72,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		if OST_PERFORM_COLLECTION_NAME_CHECK(fn) == 1 {
 			return false
 		}
-		collectionPath := utils.concat_collection_name(fn)
+		collectionPath := utils.concat_standard_collection_name(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
 		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, colType)
@@ -243,7 +243,7 @@ OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 			return false
 		}
 	}
-	collectionPath := concat_collection_name(fn)
+	collectionPath := concat_standard_collection_name(fn)
 
 	// Delete the file
 	deleteSuccess := os.remove(collectionPath)
@@ -355,7 +355,7 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 		return false
 	}
 
-	name := utils.concat_collection_name(new)
+	name := utils.concat_standard_collection_name(new)
 	renamed := os.rename(colPath, name)
 
 	when ODIN_OS == .Linux {
@@ -378,7 +378,7 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	fileStart := -1
 	startingPoint := "BTM@@@@@@@@@@@@@@@" //has to be half of the metadata header end mark and not the full thing..IDK why - Marshall
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
 		error1 := utils.new_err(
@@ -507,7 +507,7 @@ OST_COUNT_COLLECTIONS :: proc() -> int {
 OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 	using utils
 
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_standard_collection_name(fn)
 
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(collectionPath)

@@ -28,7 +28,7 @@ File Description:
 OST_PERFORM_ISOLATION :: proc(fn: string) -> (int, string) {
 	using const
 
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_standard_collection_name(fn)
 
 	// Generate a unique filename for the quarantined file
 	timestamp := time.now()

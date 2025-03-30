@@ -58,7 +58,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 	switch (colType) {
 	case .STANDARD_PUBLIC:
 		//Public Standard Collection
-		file = utils.concat_collection_name(colName)
+		file = utils.concat_standard_collection_name(colName)
 		break
 	case .SECURE_PRIVATE:
 		//Private Secure Collection

@@ -22,7 +22,7 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	using const
 	using utils
 	//retirve the data from the src collection file
-	srcPath := utils.concat_collection_name(src)
+	srcPath := utils.concat_standard_collection_name(src)
 	f, readSuccess := os.read_entire_file(srcPath)
 	if !readSuccess {
 		error1 := new_err(

@@ -80,13 +80,25 @@ open_file :: proc(
 }
 
 
-//helper used for updating collection file metadata from the command line
-concat_collection_name :: proc(colFileName: string) -> string {
+//helper that concats a collections name to the standard collection path.
+concat_standard_collection_name :: proc(colFileName: string) -> string {
 	return strings.clone(
 		fmt.tprintf(
 			"%s%s%s",
 			const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
 			colFileName,
+			const.OST_FILE_EXTENSION,
+		),
+	)
+}
+
+//helper that concats a collections name to the standard collection path for secure collections.
+concat_secure_collection_name :: proc(userName: string) -> string {
+	return strings.clone(
+		fmt.tprintf(
+			"%ssecure_%s%s",
+			const.OST_SECURE_COLLECTION_PATH,
+			userName,
 			const.OST_FILE_EXTENSION,
 		),
 	)

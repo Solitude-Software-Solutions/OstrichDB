@@ -49,7 +49,7 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 
 	Severity_Code = 0
 	data_integrity_checks.File_Size.Compliant = true
-	fileInfo := metadata.OST_GET_FS(concat_collection_name(fn))
+	fileInfo := metadata.OST_GET_FS(concat_standard_collection_name(fn))
 	fileSize := fileInfo.size
 	// fmt.println("File size: ", fileSize) //debugging
 
@@ -93,7 +93,7 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 	using types
 
 	data_integrity_checks.Checksum.Compliant = true
-	filePath := utils.concat_collection_name(fn)
+	filePath := utils.concat_standard_collection_name(fn)
 
 	data, err := utils.read_file(filePath, #procedure)
 	defer delete(data)

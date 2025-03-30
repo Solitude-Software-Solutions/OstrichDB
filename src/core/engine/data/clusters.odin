@@ -28,7 +28,7 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 	IDs := make([dynamic]i64)
 	idsStringArray := make([dynamic]string)
 
-	fullPath := concat_collection_name(fn)
+	fullPath := concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(fullPath)
 	if !readSuccess {
 		error1 := new_err(
@@ -71,7 +71,7 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 	using utils
 
 	if fn != "" {
-		fullPath := concat_collection_name(fn)
+		fullPath := concat_standard_collection_name(fn)
 		data, readSuccess := os.read_entire_file(fullPath)
 		if !readSuccess {
 			error1 := new_err(
@@ -285,7 +285,7 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 OST_RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 	using utils
 
-	collectionPath := concat_collection_name(fn)
+	collectionPath := concat_standard_collection_name(fn)
 	// check if the desired new cluster name already exists
 	if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, new) {
 		fmt.printfln(
@@ -377,7 +377,7 @@ OST_RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 OST_CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 	using utils
 
-	collectionPath := concat_collection_name(fn)
+	collectionPath := concat_standard_collection_name(fn)
 
 	clusterExist := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, clusterName)
 	if clusterExist {
@@ -456,7 +456,7 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 	using utils
 	buf: [64]byte
 	file: string
-	collectionPath := concat_collection_name(fn)
+	collectionPath := concat_standard_collection_name(fn)
 	if !isOnServer {
 		fmt.printfln(
 			"Are you sure that you want to delete Cluster: %s%s%s from Collection: %s%s%s?\nThis action can not be undone.",
@@ -590,7 +590,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	using utils
 
 	clusterContent: string
-	collectionPath := concat_collection_name(fn)
+	collectionPath := concat_standard_collection_name(fn)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
 	switch clusterExists 
@@ -661,7 +661,7 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 
 	buf := make([]byte, 64)
 	defer delete(buf)
-	filePath := concat_collection_name(fn)
+	filePath := concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(filePath)
 	if !readSuccess {
 		throw_err(
@@ -719,7 +719,7 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 	using const
 	using utils
 
-	file := concat_collection_name(fn)
+	file := concat_standard_collection_name(fn)
 
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
@@ -773,7 +773,7 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 	using utils
 
-	file := concat_collection_name(fn)
+	file := concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
 		utils.log_err("Failed to read collection file", #procedure)
@@ -808,7 +808,7 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	using const
 	using utils
 
-	collectionPath := concat_collection_name(fn)
+	collectionPath := concat_standard_collection_name(fn)
 
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(collectionPath)
@@ -922,7 +922,7 @@ OST_GET_CLUSTER_SIZE :: proc(fn: string, cn: string) -> (size: int, success: boo
 	using const
 	using utils
 
-	collectionPath := concat_collection_name(fn)
+	collectionPath := concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
 		return 0, false

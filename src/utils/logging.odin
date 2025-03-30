@@ -18,7 +18,6 @@ File Description:
 
 
 main :: proc() {
-	// os.make_directory("./")
 	os.make_directory(const.LOG_DIR_PATH)
 	create_log_files()
 }

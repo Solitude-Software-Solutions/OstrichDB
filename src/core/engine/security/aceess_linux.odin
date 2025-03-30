@@ -61,7 +61,7 @@ OST_SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
 	case "Inaccessible":
 		mode = 0o000 // No permissions
 	}
-	path := utils.concat_collection_name(fn)
+	path := utils.concat_standard_collection_name(fn)
 	if ODIN_OS == .Linux {
 		// linuxPath := strings.clone_to_cstring(path)
 		//Todo: Finish this shit for linux and windows
