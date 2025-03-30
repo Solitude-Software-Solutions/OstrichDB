@@ -26,16 +26,11 @@ File Description:
 
 //Ensure that the user is an admin before allowing an operation
 OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
-	userCollection := fmt.tprintf(
-		"%ssecure_%s%s",
-		const.OST_SECURE_COLLECTION_PATH,
-		user.username.Value,
-		const.OST_FILE_EXTENSION,
-	)
+	secCollection := utils.concat_secure_collection_name(user.username.Value)
 	userCluster := strings.to_upper(user.username.Value)
 	isAdmin := false
 
-	userRoleVal := data.OST_READ_RECORD_VALUE(userCollection, userCluster, "identifier", "role")
+	userRoleVal := data.OST_READ_RECORD_VALUE(secCollection, userCluster, "identifier", "role")
 
 
 	if userRoleVal == "admin" {

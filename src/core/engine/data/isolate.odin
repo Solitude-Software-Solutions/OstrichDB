@@ -154,7 +154,7 @@ OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, isolationPath: string) -> int
 }
 
 //TODO:
-//in the event that a cluster id in a normal collectionn file
+//in the event that a cluster id in a standard collectionn file
 // is modified, the check systsem bugs out. its looking for an exact match of the cluster
 // id so if that is modified there can be no match thus the id is not found and removed...
 OST_REMOVE_ISOLATED_CLUSTER_IDS :: proc(idsAsStr: [dynamic]string) -> bool {

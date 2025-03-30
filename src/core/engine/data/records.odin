@@ -1692,7 +1692,7 @@ OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
 }
 
 
-//todo: finish this for normal collection records after done with user records
+//todo: finish this for standard collection records after done with user records
 // OST_SCAN_FOR_RECORD_VALUE :: proc(rv: string) -> (string, bool) {}
 
 // See issue #https://github.com/Solitude-Software-Solutions/OstrichDB/issues/214

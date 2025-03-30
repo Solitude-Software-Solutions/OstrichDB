@@ -700,7 +700,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	using const
 	using utils
 
-	file := fmt.tprintf("%ssecure_%s%s", OST_SECURE_COLLECTION_PATH, username, OST_FILE_EXTENSION)
+	file := utils.concat_secure_collection_name(username)
 
 
 	// NOTE: This check is reliant on the value stored in memory. if this becomes is a problem remove it and uncomment the line below

@@ -317,8 +317,8 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 		}
 		break
 	case 1:
-		secColPath, openSuccess := os.open(const.OST_SECURE_COLLECTION_PATH)
-		secureCollections, readSuccess := os.read_dir(secColPath, -1)
+		secCollection, openSuccess := os.open(const.OST_SECURE_COLLECTION_PATH)
+		secureCollections, readSuccess := os.read_dir(secCollection, -1)
 
 		for collection in secureCollections {
 			if collection.name == fmt.tprintf("%s%s", fn, const.OST_FILE_EXTENSION) {
@@ -409,7 +409,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	return strings.clone(str)
 }
 
-//Returns an array of all public collections
+//Returns an array of all standard collections
 OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
 	using const
 
@@ -484,7 +484,7 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (bool, string) {
 	return found, ""
 }
 
-//gets the number of public collections
+//gets the number of standard collections
 OST_COUNT_COLLECTIONS :: proc() -> int {
 	using const
 

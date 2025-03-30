@@ -62,12 +62,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 		break
 	case .SECURE_PRIVATE:
 		//Private Secure Collection
-		file = fmt.tprintf(
-			"%ssecure_%s%s",
-			const.OST_SECURE_COLLECTION_PATH,
-			colName,
-			const.OST_FILE_EXTENSION,
-		)
+		file := utils.concat_secure_collection_name(colName)
 		break
 	case .CONFIG_PRIVATE:
 		//Private Config Collection
@@ -194,14 +189,14 @@ OST_ENCRYPT_COLLECTION :: proc(
 
 // 	//Secure collections
 // 	secDir, _ := os.open(const.OST_SECURE_COLLECTION_PATH)
-// 	secFiles, _ := os.read_dir(secDir, -1)
-// 	for file in secFiles {
+// 	secCollections, _ := os.read_dir(secDir, -1)
+// 	for file in secCollections {
 // 		totalCollections += 1
-// 		secFileWithoutExt := strings.trim_right(file.name, const.OST_FILE_EXTENSION)
-// 		secFileWithoutPrefix := strings.trim_left(secFileWithoutExt, "secure_")
-// 		fmt.printfln("Checking if %s is encrypted\n", secFileWithoutPrefix)
+// 		secCollectionWithoutExt := strings.trim_right(file.name, const.OST_FILE_EXTENSION)
+// 		secCollectionWithoutPrefix := strings.trim_left(secCollectionWithoutExt, "secure_")
+// 		fmt.printfln("Checking if %s is encrypted\n", secCollectionWithoutPrefix)
 // 		seccColCheckSuccess, _ := OST_ENCRYPT_COLLECTION(
-// 			secFileWithoutPrefix,
+// 			secCollectionWithoutPrefix,
 // 			.SECURE_PRIVATE,
 // 			types.system_user.m_k.valAsBytes,
 // 			true,
@@ -214,7 +209,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 // 	}
 
 
-// 	//Standard Public collections
+// 	//Standard collections
 // 	standardPublicDir, _ := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
 // 	standardFiles, _ := os.read_dir(standardPublicDir, -1)
 

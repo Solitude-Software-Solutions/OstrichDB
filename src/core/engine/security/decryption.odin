@@ -56,12 +56,7 @@ OST_DECRYPT_COLLECTION :: proc(
 		file = utils.concat_standard_collection_name(colName)
 		break
 	case .SECURE_PRIVATE:
-		file = fmt.tprintf(
-			"%ssecure_%s%s",
-			const.OST_SECURE_COLLECTION_PATH,
-			colName,
-			const.OST_FILE_EXTENSION,
-		)
+		file := utils.concat_secure_collection_name(colName)
 		break
 	case .CONFIG_PRIVATE:
 		file = const.OST_CONFIG_PATH

@@ -114,14 +114,9 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 		return 0
 	} else {
 		//secure file
+		secCollection := concat_secure_collection_name(cn)
 
-		secFile := fmt.tprintf(
-			"%ssecure_%s%s",
-			const.OST_SECURE_COLLECTION_PATH,
-			cn,
-			const.OST_FILE_EXTENSION,
-		)
-		data, readSuccess := os.read_entire_file(secFile)
+		data, readSuccess := os.read_entire_file(secCollection)
 		if !readSuccess {
 			error1 := new_err(
 				.CANNOT_READ_FILE,

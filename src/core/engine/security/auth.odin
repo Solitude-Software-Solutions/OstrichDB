@@ -37,7 +37,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	if len(userName) == 0 {
 		fmt.printfln("Username cannot be empty. Please try again.")
 		log_err("User did not provide a username during authentication", #procedure)
-		log_runtime_event("Blank username","User did not provide a username duing authentication")
+		log_runtime_event("Blank username", "User did not provide a username duing authentication")
 		return false
 	}
 	usernameCapitalized := strings.to_upper(userName)
@@ -46,17 +46,15 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		fmt.println(
 			"There is no account within OstrichDB associated with the entered username. Please try again.",
 		)
-		log_runtime_event("Invalid username provided","Invalid username entered during authentication")
+		log_runtime_event(
+			"Invalid username provided",
+			"Invalid username entered during authentication",
+		)
 		log_err("User entered a username that does not exist in the database", #procedure)
 		return false
 	}
 
-	secColPath := fmt.tprintf(
-		"%ssecure_%s%s",
-		OST_SECURE_COLLECTION_PATH,
-		userName,
-		OST_FILE_EXTENSION,
-	)
+	secCollection := utils.concat_secure_collection_name(userName)
 
 	//decrypt the user secure collection
 	decSuccess, _ := OST_DECRYPT_COLLECTION(
@@ -65,7 +63,12 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.system_user.m_k.valAsBytes,
 	)
 
-	userRole := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "role")
+	userRole := data.OST_READ_RECORD_VALUE(
+		secCollection,
+		usernameCapitalized,
+		"identifier",
+		"role",
+	)
 	if userRole == "admin" {
 		user.role.Value = "admin"
 	} else if userRole == "user" {
@@ -75,17 +78,22 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	}
 
 	//Voodoo??
-	userMKStr := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "m_k")
+	userMKStr := data.OST_READ_RECORD_VALUE(
+		secCollection,
+		usernameCapitalized,
+		"identifier",
+		"m_k",
+	)
 	user.m_k.valAsBytes = OST_DECODE_M_K(transmute([]byte)userMKStr)
 	user.username.Value = strings.clone(usernameCapitalized)
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
-	salt := data.OST_READ_RECORD_VALUE(secColPath, usernameCapitalized, "identifier", "salt")
+	salt := data.OST_READ_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "salt")
 
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
 	providedHash := data.OST_READ_RECORD_VALUE(
-		secColPath,
+		secCollection,
 		usernameCapitalized,
 		"identifier",
 		"hash",
@@ -96,7 +104,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	preMesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
 	//PRE-MESHING END=========================================================================================================
 	algoMethod := data.OST_READ_RECORD_VALUE(
-		secColPath,
+		secCollection,
 		usernameCapitalized,
 		"identifier",
 		"store_method",
@@ -114,7 +122,10 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	if len(enteredPassword) == 0 {
 		fmt.printfln("Password cannot be empty. Please try again.")
 		log_err("User did not provide a password during authentication", #procedure)
-		log_runtime_event("Blank password provided","User did not provide a password during authentication")
+		log_runtime_event(
+			"Blank password provided",
+			"User did not provide a password during authentication",
+		)
 		return false
 	}
 
@@ -144,7 +155,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 		//Master Key shit
 		mkValueRead := data.OST_READ_RECORD_VALUE(
-			secColPath,
+			secCollection,
 			usernameCapitalized,
 			"identifier",
 			"m_k",
@@ -163,7 +174,10 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	case false:
 		fmt.printfln("%sAuth Failed. Password was incorrect please try again.%s", RED, RESET)
 		types.USER_SIGNIN_STATUS = false
-		log_runtime_event("Authentication failed","User entered incorrect password during authentication")
+		log_runtime_event(
+			"Authentication failed",
+			"User entered incorrect password during authentication",
+		)
 		log_err("User failed to authenticate with the provided credentials", #procedure)
 		OST_RUN_SIGNIN()
 
@@ -194,7 +208,7 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 		return true
 	}
 
-	utils.log_err("Pre & post password mesh's did not match during authentication",#procedure)
+	utils.log_err("Pre & post password mesh's did not match during authentication", #procedure)
 	return false
 }
 
@@ -236,19 +250,18 @@ OST_USER_LOGOUT :: proc(param: int) {
 //shorter version of sign in but exclusively for checking passwords for certain db actions
 OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	succesfulValidation := false
-
-	secColPath := fmt.tprintf(
-		"%ssecure_%s%s",
-		const.OST_SECURE_COLLECTION_PATH,
-		types.user.username.Value,
-		const.OST_FILE_EXTENSION,
-	)
+	secCollection := utils.concat_secure_collection_name(types.user.username.Value)
 
 	//PRE-MESHING START
-	salt := data.OST_READ_RECORD_VALUE(secColPath, types.user.username.Value, "identifier", "salt")
+	salt := data.OST_READ_RECORD_VALUE(
+		secCollection,
+		types.user.username.Value,
+		"identifier",
+		"salt",
+	)
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
 	providedHash := data.OST_READ_RECORD_VALUE(
-		secColPath,
+		secCollection,
 		types.user.username.Value,
 		"identifier",
 		"hash",
@@ -259,7 +272,7 @@ OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 
 
 	algoMethod := data.OST_READ_RECORD_VALUE(
-		secColPath,
+		secCollection,
 		types.user.username.Value,
 		"identifier",
 		"store_method",
