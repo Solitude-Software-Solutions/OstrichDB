@@ -116,7 +116,8 @@ TokenType :: enum {
 	// ALL_OFF,
 }
 
-Token := [TokenType]string {
+//Used partial because INVALID is not an actual token to be used
+Token := #partial [TokenType]string {
 	.EXIT           = "EXIT",
 	.LOGOUT         = "LOGOUT",
 	.RESTART        = "RESTART",

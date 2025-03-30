@@ -65,7 +65,7 @@ Creates a new collection file with metadata within the DB
 OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	#partial switch (colType) 
+	#partial switch (colType)
 	{
 	case .STANDARD_PUBLIC:
 		//standard cluster file
@@ -222,10 +222,10 @@ OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 		cap := strings.to_upper(confirmation)
 
 		switch (cap) {
-		case const.NO:
+		case types.Token[.NO]:
 			log_runtime_event("User canceled deletion", "User canceled deletion of collection")
 			return false
-		case const.YES:
+		case types.Token[.YES]:
 		// Continue with deletion
 		case:
 			log_runtime_event(

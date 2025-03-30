@@ -475,10 +475,10 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 		cap := strings.to_upper(confirmation)
 
 		switch cap {
-		case const.NO:
+		case types.Token[.NO]:
 			log_runtime_event("User canceled deletion", "User canceled deletion of database")
 			return false
-		case const.YES:
+		case types.Token[.NO]:
 		// Continue with deletion
 		case:
 			log_runtime_event(
@@ -583,7 +583,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	collectionPath := concat_standard_collection_name(fn)
 
 	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
-	switch clusterExists 
+	switch clusterExists
 	{
 	case false:
 		fmt.printfln(

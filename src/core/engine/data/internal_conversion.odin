@@ -214,7 +214,7 @@ OST_CONVERT_RECORD_TO_UUID_ARRAY :: proc(rValue: string) -> ([dynamic]string, bo
 
 //Cannot be a null array
 OST_CONVERT_RECORD_TO_NULL :: proc(rValue: string) -> (string, bool) {
-	if rValue == const.NULL {
+	if rValue == types.Token[.NULL] {
 		return rValue, true
 	} else {
 		fmt.printfln("Failed to parse null")
@@ -290,14 +290,14 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 	}
 
 	switch (newType) {
-	case STRING:
+	case types.Token[.STRING]:
 		//New type is STRING
 		switch (oldType) {
-		case INTEGER, FLOAT, BOOLEAN:
+		case types.Token[.INTEGER], types.Token[.FLOAT], types.Token[.BOOLEAN]:
 			//Old type is INTEGER, FLOAT, or BOOLEAN
 			value := utils.append_qoutations(value)
 			return value, true
-		case STRING_ARRAY:
+		case types.Token[.STRING_ARRAY]:
 			value := strings.trim_prefix(value, "[")
 			value = strings.trim_suffix(value, "]")
 			if len(value) > 0 {
@@ -307,10 +307,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case INTEGER:
+	case types.Token[.INTEGER]:
 		//New type is INTEGER
 		switch (oldType) {
-		case STRING:
+		case types.Token[.STRING]:
 			//Old type is STRING
 			_, ok := strconv.parse_int(value, 10)
 			if !ok {
@@ -320,10 +320,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case FLOAT:
+	case types.Token[.FLOAT]:
 		//New type is FLOAT
 		switch (oldType) {
-		case STRING:
+		case types.Token[.STRING]:
 			//Old type is STRING
 			_, ok := strconv.parse_f64(value)
 			if !ok {
@@ -333,10 +333,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case BOOLEAN:
+	case types.Token[.BOOLEAN]:
 		//New type is BOOLEAN
 		switch (oldType) {
-		case STRING:
+		case types.Token[.STRING]:
 			//Old type is STRING
 			lowerStr := strings.to_lower(strings.trim_space(value))
 			if lowerStr == "true" || lowerStr == "false" {
@@ -347,7 +347,7 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 			return "", false
 		}
 	//ARRAY CONVERSIONS
-	case STRING_ARRAY:
+	case  types.Token[.STRING_ARRAY]:
 		// New type is STRING_ARRAY
 		switch (oldType) {
 		case STRING:
@@ -372,7 +372,7 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 	case BOOLEAN_ARRAY:
 		// New type is BOOLEAN_ARRAY
 		switch (oldType) {
-		case BOOLEAN:
+		case types.Token[.BOOLEAN]:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes

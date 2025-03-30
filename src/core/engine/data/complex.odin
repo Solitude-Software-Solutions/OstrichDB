@@ -33,46 +33,46 @@ OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 	arrayValues := OST_PARSE_ARRAY(strArray)
 
 	switch (rType) {
-	case INTEGER_ARRAY:
+	case types.Token[.INTEGER_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_int(i)
 			verified = parseSuccess
 		}
 		return verified
-	case FLOAT_ARRAY:
+	case types.Token[.FLOAT_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_f64(i)
 			verified = parseSuccess
 		}
 		return verified
-	case BOOLEAN_ARRAY:
+	case types.Token[.BOOLEAN_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_bool(i)
 			verified = parseSuccess
 		}
 		return verified
-	case DATE_ARRAY:
+	case types.Token[.DATE_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := OST_PARSE_DATE(i)
 			verified = parseSuccess
 		}
 		return verified
-	case TIME_ARRAY:
+	case types.Token[.TIME_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := OST_PARSE_TIME(i)
 			verified = parseSuccess
 		}
 		return verified
-	case DATETIME_ARRAY:
+	case types.Token[.DATETIME_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := OST_PARSE_DATETIME(i)
 			verified = parseSuccess
 		}
 		return verified
-	case STRING_ARRAY, CHAR_ARRAY:
+	case types.Token[.STRING_ARRAY], types.Token[.CHAR_ARRAY]:
 		verified = true
 		return verified
-	case UUID_ARRAY:
+	case types.Token[.UUID_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := OST_PARSE_UUID(i)
 			verified = parseSuccess

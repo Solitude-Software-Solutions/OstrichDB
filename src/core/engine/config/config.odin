@@ -135,7 +135,7 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 
 	successCount := 0
 	// Append all the records to the config cluster
-	if OST_APPEND_CONFIG_RECORD(CONFIG_ONE, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_ONE, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
 	if OST_APPEND_CONFIG_RECORD(CONFIG_TWO, "false", BOOLEAN) == 0 {

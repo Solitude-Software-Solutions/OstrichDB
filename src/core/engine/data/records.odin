@@ -360,7 +360,7 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 
 	rExists := OST_CHECK_IF_RECORD_EXISTS(collectionPath, cn, new)
 
-	switch rExists 
+	switch rExists
 	{
 	case true:
 		fmt.printfln(
@@ -494,19 +494,19 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 	for type in const.VALID_RECORD_TYPES {
 		if rType == type {
 			//evaluate the shorthand type name and assign the full type name to the record
-			switch (rType) 
+			switch (rType)
 			{
-			case const.STR:
-				record.type = const.STRING
+			case types.Token[.STR]:
+				record.type = types.Token[.STRING]
 				break
-			case const.INT:
-				record.type = const.INTEGER
+			case types.Token[.INT]:
+				record.type = types.Token[.INTEGER]
 				break
-			case const.FLT:
-				record.type = const.FLOAT
+			case types.Token[.FLT]:
+				record.type = types.Token[.FLOAT]
 				break
-			case const.BOOL:
-				record.type = const.BOOLEAN
+			case types.Token[.BOOL]:
+				record.type = types.Token[.BOOLEAN]
 				break
 			case const.CHAR:
 				record.type = const.CHAR
