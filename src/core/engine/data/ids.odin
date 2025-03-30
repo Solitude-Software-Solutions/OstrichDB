@@ -54,12 +54,9 @@ OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 }
 //same as above but for the cluster_id cluster
 OST_CHECK_IF_CLUSTER_ID_EXISTS :: proc(id: i64) -> bool {
-	// fmt.printfln("checking if id: %d exists", id) //debugging
 	idStr := fmt.tprintf("%d", id)
-	// fmt.println("Checking if cluster id %s exists", idStr) //debugging
 	//this is incorrect, record names are not the same as the id values
 	_, idFound := OST_SCAN_FOR_ID_RECORD_VALUE(const.CLUSTER_ID_CLUSTER, "CLUSTER_ID", idStr)
-	// fmt.println("id was found: ", idFound) //debugging
 	return idFound
 }
 
@@ -97,7 +94,6 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 	switch (idType) 
 	{
 	case 0:
-		// fmt.printfln("Appending cluster id: %s to id clusters", idStr) //debugging
 		id.clusterIdCount = OST_COUNT_RECORDS_IN_CLUSTER("ids", CLUSTER_ID_CLUSTER, false)
 
 		idCountStr := strconv.itoa(idBuf[:], id.clusterIdCount)

@@ -114,7 +114,6 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
 	if !readSuccess {
-		fmt.println("Failed to read file") //debugging
 		return -1
 	}
 
@@ -169,7 +168,6 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 	new_content := strings.join(new_lines[:], "\n")
 	writeSuccess := utils.write_to_file(fn, transmute([]byte)new_content, #procedure)
 	if !writeSuccess {
-		fmt.println("Failed to write to file") //debugging
 		return -1
 	}
 	return 0
@@ -247,7 +245,6 @@ extract_csv_field :: proc(csvRecords: [dynamic]string, iterations: int) -> [dyna
 	arr: [dynamic]string
 	for rec in csvRecords {
 		field = strings.split_n(rec, ",", iterations)
-		// fmt.printfln("Field: %v", sfield) //debugging
 		for f in field {
 			append(&arr, strings.clone(f))
 		}

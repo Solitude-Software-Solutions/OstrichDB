@@ -74,11 +74,6 @@ OST_APPEND_RECORD_TO_CLUSTER :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 	if !readSuccess {
 		return -1
 	}
-	// fmt.println("passing fn:, ", fn) //debugging
-	// fmt.println("passing cn:, ", cn) //debugging
-	// fmt.println("passing rn:, ", rn) //debugging
-	// fmt.println("passing rd:, ", rd) //debugging
-	// fmt.println("passing rType:, ", rType) //debugging
 	content := string(data)
 	lines := strings.split(content, "\n")
 	defer delete(lines)
@@ -156,11 +151,7 @@ OST_APPEND_CREDENTIAL_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -
 	if !readSuccess {
 		return -1
 	}
-	// fmt.println("passing fn:, ", fn) //debugging
-	// fmt.println("passing cn:, ", cn) //debugging
-	// fmt.println("passing rn:, ", rn) //debugging
-	// fmt.println("passing rd:, ", rd) //debugging
-	// fmt.println("passing rType:, ", rType) //debugging
+
 	content := string(data)
 	lines := strings.split(content, "\n")
 	defer delete(lines)
@@ -435,7 +426,6 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 				}
 
 				// Add the modified cluster to the new content
-				// fmt.printfln("New Cluster: %s", newCluster) //debugging
 				append(&newContent, ..newCluster[:])
 				append(&newContent, "}")
 				append(&newContent, ",\n\n")
@@ -1472,12 +1462,6 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 			fn,
 			const.OST_FILE_EXTENSION,
 		)
-		// fmt.printfln(
-		// 	"%s procedure is counting records in cluster: %s within collection: %s",
-		// 	#procedure,
-		// 	cn,
-		// 	fn,
-		// ) //debugging
 	}
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
@@ -1488,14 +1472,12 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 
 	content := string(data)
 	clusters := strings.split(content, "},")
-	// fmt.printfln("clusters: %s", clusters) //debugging
 	for cluster in clusters {
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			lines := strings.split(cluster, "\n")
 			recordCount := 0
 
 			for line in lines {
-				// fmt.printfln("line: %s", line) //debugging
 				trimmedLine := strings.trim_space(line)
 				if len(trimmedLine) > 0 &&
 				   !strings.has_prefix(trimmedLine, "cluster_name") &&
@@ -1504,11 +1486,9 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 				   !strings.contains(trimmedLine, const.METADATA_START) &&
 				   !strings.contains(trimmedLine, const.METADATA_END) &&
 				   strings.contains(trimmedLine, ":") {
-					// fmt.printfln("trimmedLine: %s", trimmedLine) //debugging
 					recordCount += 1
 				}
 			}
-			// fmt.printfln("Record count: %d", recordCount) //debugging
 			return recordCount
 		}
 	}

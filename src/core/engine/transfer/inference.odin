@@ -255,7 +255,6 @@ OST_INFER_CSV_RECORD_TYPES :: proc(
 		}
 	}
 
-	// fmt.printfln("TypeMap: %v", typeMap) //debugging
 	return success, typeMap
 }
 
@@ -290,7 +289,6 @@ convert_case :: proc(str: string) -> [dynamic]string {
 	append(&arr, SNK)
 	append(&arr, KEB)
 
-	// fmt.printfln("Arr: %v", arr) //debugging
 	return arr
 }
 

@@ -479,7 +479,6 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (bool, string) {
 	for file in files {
 		if file.name == fmt.tprintf("secure_%s%s", fn, const.OST_FILE_EXTENSION) {
 			found = true
-			// fmt.println("Found secure collection: ", file.name) //debugging
 		}
 	}
 	return found, ""

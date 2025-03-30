@@ -149,7 +149,6 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 						idStr := strings.trim_space(strings.split(lines[j], ":")[2])
 						ID, ok := strconv.parse_i64(idStr)
 						if ok {
-							// fmt.println("ID found: ", ID) //debugging
 							return ID
 						} else {
 							log_err("Error parsing cluster ID", #procedure)
@@ -249,8 +248,6 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
 OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
-	// fmt.println("Reading collection file: ", fn) //debugging
-	// fmt.println("Checking if cluster exists: ", cn) //debugging
 	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
 
@@ -318,7 +315,6 @@ OST_RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 			nameStart += len("cluster_name :identifier:")
 			// Find the end of the line
 			nameEnd := strings.index(cluster[nameStart:], "\n")
-			// fmt.println("nameEnd: ", nameEnd) //debugging
 			if nameEnd != -1 {
 				// Extract the actual cluster name
 				cluster_name := strings.trim_space(cluster[nameStart:][:nameEnd])
@@ -342,7 +338,6 @@ OST_RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 		}
 	}
 
-	// fmt.println("new content: ", string(newContent[:])) //debugging
 
 	if !clusterFound {
 		throw_err(

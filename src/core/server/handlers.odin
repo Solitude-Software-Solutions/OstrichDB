@@ -183,10 +183,10 @@ OST_HANDLE_PUT_REQ :: proc(
 	recordName := strings.split(pathSegments[5], "?")
 	slicedRecordName := strings.to_upper(recordName[0])
 
-	switch (pathSegments[0])
+	switch (pathSegments[0]) 
 	{
 	case "c":
-		switch (segments)
+		switch (segments) 
 		{
 		case 2:
 			// In the event of something like: /collection/collecion_name
@@ -387,7 +387,6 @@ OST_HANDLE_POST_REQ :: proc(
 	//Creating a new collection
 	if len(segments) == 2 && segments[0] == "c" {
 		collectionName = strings.to_upper(segments[1])
-		fmt.println("Attempting to create collection:", collectionName) // Debug print
 
 		if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 			data.OST_CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
@@ -405,7 +404,6 @@ OST_HANDLE_POST_REQ :: proc(
 
 	//Creating a new cluster
 	if len(segments) == 4 && segments[0] == "c" {
-		fmt.println("Creating cluster") // Debug print
 		collectionName = strings.to_upper(segments[1])
 		clusterName = strings.to_upper(segments[3])
 		colFilePath := utils.concat_standard_collection_name(collectionName)
@@ -446,11 +444,6 @@ OST_HANDLE_POST_REQ :: proc(
 		recordName = strings.to_upper(recordNameSplit[0])
 		recordType = strings.to_upper(queryTypeSplit[1])
 		colFilePath := utils.concat_standard_collection_name(collectionName)
-
-		// fmt.println("collectionName: ", collectionName) // debugging
-		// fmt.println("clusterName: ", clusterName) // debugging
-		// fmt.println("recordName: ", recordName) // debugging
-		// fmt.println("recordType: ", recordType) // debugging
 
 
 		colExists := data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)

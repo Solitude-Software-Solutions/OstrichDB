@@ -21,9 +21,6 @@ File Description:
 //split the passed in "array" which is actually a string from the command line at each comma, store into a slice and return it
 OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 	result := strings.split(strArr, ",")
-	// for i in result { 	//debugging
-	// 	fmt.println("Parsing Array value: ", i)
-	// }
 	return result
 }
 

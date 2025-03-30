@@ -2454,7 +2454,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							colName,
 							RESET,
 						)
-						// fmt.printfln("Current permission: %s%s%s", BOLD, currentPerm, RESET) //debugging
 						unlockSuccess := data.OST_UNLOCK_COLLECTION(colName, currentPerm)
 						break
 					}

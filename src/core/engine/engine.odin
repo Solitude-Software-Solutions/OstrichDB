@@ -183,7 +183,6 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			false,
 		)
 		cmd := OST_PARSE_COMMAND(input)
-		// fmt.printfln("Command: %v", cmd) //debugging
 
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := security.OST_GET_SESSION_DURATION()

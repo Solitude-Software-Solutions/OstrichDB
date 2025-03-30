@@ -26,7 +26,6 @@ OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 	//See GitHub issue #199 for more information about why this is commented out
 
 	// idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
-	// // fmt.println("IDs found in collection: ", idsFoundInCollection) //debugging
 	// defer delete(idsFoundInCollection)
 	// defer delete(idsAsStringArray)
 
@@ -51,7 +50,6 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 	data_integrity_checks.File_Size.Compliant = true
 	fileInfo := metadata.OST_GET_FS(concat_standard_collection_name(fn))
 	fileSize := fileInfo.size
-	// fmt.println("File size: ", fileSize) //debugging
 
 	if fileSize > MAX_FILE_SIZE {
 		utils.log_err("File size is too large", #procedure)
@@ -67,12 +65,6 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	data_integrity_checks.File_Format.Compliant = true
 	clusterScanSuccess, invalidClusterFound := OST_SCAN_CLUSTER_STRUCTURE(fn)
 	headerScanSuccess, invalidHeaderFound := metadata.OST_SCAN_METADATA_HEADER_FORMAT(fn)
-	// fmt.println(
-	// 	"Cluster scan success: ",
-	// 	clusterScanSuccess,
-	// 	"Invalid header success: ",
-	// 	headerScanSuccess,
-	// ) //debugging
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
 		utils.log_err("Cluster structure is not compliant", #procedure)
 		data_integrity_checks.File_Format.Compliant = false
@@ -82,10 +74,6 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 		utils.log_err("Header format is not compliant", #procedure)
 		data_integrity_checks.File_Format.Compliant = false
 	}
-	// fmt.println(
-	// 	"Collection format check getting: ",
-	// 	data_integrity_checks.File_Format.Compliant,
-	// ) //debugging
 	return data_integrity_checks.File_Format.Compliant
 }
 
@@ -111,17 +99,13 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 	storedChecksum := ""
 
 	for line in lines {
-		// fmt.println("Line: ", line) //debugging
 		if strings.contains(line, "# Checksum:") {
-			// fmt.println("found line with checksum") //debugging
 			storedChecksum = strings.split(line, ": ")[1]
 			break
 		}
 	}
 
 	currentChecksum := metadata.OST_GENERATE_CHECKSUM(filePath)
-	// fmt.println("Stored checksum: ", storedChecksum) //debugging
-	// fmt.println("Current checksum: ", currentChecksum) //debugging
 
 	if storedChecksum != currentChecksum {
 		utils.log_err("Checksums do not match", #procedure)

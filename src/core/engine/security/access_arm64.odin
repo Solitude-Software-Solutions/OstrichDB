@@ -32,9 +32,7 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 		user.username.Value,
 		const.OST_FILE_EXTENSION,
 	)
-	fmt.println("User Collection: ", userCollection) //debugging
 	userCluster := strings.to_upper(user.username.Value)
-	fmt.println("User Cluster: ", userCluster) //debugging
 	isAdmin := false
 
 	userRoleVal := data.OST_READ_RECORD_VALUE(userCollection, userCluster, "identifier", "role")
@@ -170,9 +168,7 @@ OST_OPERATION_IS_ALLOWED :: proc(
 	operation: ^types.CommandOperation,
 ) -> bool {
 	operationIsAllowed := false
-	// fmt.println("Permission Value from collection file: ", permissionValue) //debugging
 	for i := 0; i < len(operation.permissionStr); i += 1 {
-		// fmt.println("This operation can be performed on a collection that is set to: ", perm) //debugging
 		if permissionValue == operation.permissionStr[i] {
 			operationIsAllowed = true
 			break
@@ -189,27 +185,18 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 	command, colName: string,
 	colType: types.CollectionType,
 ) -> int {
-	// fmt.println(
-	// 	"proc OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION Getting passed colName: ",
-	// 	colName,
-	// ) //debugging
+
 
 	//Get the operation permission for the command
 	commandOperation := OST_SET_OPERATION_PERMISSIONS(command)
-	// fmt.println("commandOperation: ", commandOperation) //debugging
 	//Get the string representation array of the permission
 	commandPermissions := commandOperation.permissionStr
-	// fmt.println("commandPermissions: ", commandPermissions) //debugging
 	defer free(commandOperation)
 
 
 	permissionValue, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", colType)
-	// fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
-	// fmt.println("Permission Value from collection file: ", permissionValue) //debugging
 	for perm in commandPermissions {
-		// fmt.println("This operation can be performed on a collection that is set to: ", perm) //debugging
 		opIsAllowed := OST_OPERATION_IS_ALLOWED(permissionValue, commandOperation)
-		// fmt.println("opIsAllowed: ", opIsAllowed) //debugging
 		if !opIsAllowed {
 			fmt.printfln(
 				"%s%sYou do not have permission to perform this operation on this collection.%s",
@@ -232,9 +219,6 @@ OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 		"# Permission",
 		.STANDARD_PUBLIC,
 	)
-	fmt.println("lockstatus: ", lockStatus) //debugging
-	// fmt.println("Retrieved metadata Permission field successfully: ", success) //debugging
-	// fmt.println("Permission Value from collection file: ", lockStatus) //debugging
 	if lockStatus == "Read-Only" || lockStatus == "Inaccessible" {
 		isAlreadyLocked = true
 	}

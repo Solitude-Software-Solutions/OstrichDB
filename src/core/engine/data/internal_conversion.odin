@@ -403,7 +403,6 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 OST_HANDLE_TYPE_CHANGE :: proc(colPath, cn, rn, newType: string) -> bool {
 	using data
 
-	// fmt.printfln("%s is getting  newType: %s", #procedure, newType) //debugging
 	oldType, _ := OST_GET_RECORD_TYPE(colPath, cn, rn)
 	recordValue := OST_READ_RECORD_VALUE(colPath, cn, oldType, rn)
 

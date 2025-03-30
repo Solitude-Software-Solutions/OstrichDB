@@ -126,8 +126,6 @@ OST_ENCRYPT_COLLECTION :: proc(
 	}
 
 	return 0, dst
-
-	// return 0, []u8{} //debugging line
 }
 
 

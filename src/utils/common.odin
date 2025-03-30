@@ -114,13 +114,11 @@ get_input :: proc(isPassword: bool) -> string {
 		libc.system("stty echo")
 	}
 	n, err := os.read(os.stdin, buf[:])
-	// fmt.printf("Debug: Read %d bytes, err = %v\n", n, err)
 	if err != 0 {
 		fmt.println("Debug: Error occurred")
 		return ""
 	}
 	result := strings.trim_right(string(buf[:n]), "\r\n")
-	// fmt.printf("Debug: Returning result: '%s'\n", result)
 	libc.system("stty echo") //show input
 	return strings.clone(result)
 }
