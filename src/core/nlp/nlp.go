@@ -3,11 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 )
 /*********************************************************
@@ -26,6 +22,7 @@ type Request struct {
 	Messages []Message `json:"messages"`
 	Stream   bool      `json:"stream"`
 }
+
 
 type Message struct {
 	Role    string `json:"role"`
@@ -53,6 +50,7 @@ func talk_to_ollama(url string, ollamaReq Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	//Create a new client to send request to ollama endpoint
 	client := http.Client{}
 	httpReq, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(js))
 	if err != nil {
@@ -66,36 +64,4 @@ func talk_to_ollama(url string, ollamaReq Request) (*Response, error) {
 	ollamaResp := Response{}
 	err = json.NewDecoder(httpResp.Body).Decode(&ollamaResp)
 	return &ollamaResp, err
-}
-
-func load_training_docs() (string, error) {
-	trainingDir := "./training_data"
-
-	docFiles := []string{
-		"architecture.md",
-		"schema.md",
-		"rules.md",
-		"fun_facts.md",
-  		//TODO: Add more documentation files
-	}
-
-	var allDocs strings.Builder
-	allDocs.WriteString("# OSTRICHDB OFFICIAL DOCUMENTATION\n\n")
-
-	// Load each documentation file
-	for _, filename := range docFiles {
-		filePath := filepath.Join(trainingDir, filename)
-		content, err := os.ReadFile(filePath)
-		if err != nil {
-			return "", fmt.Errorf("error reading documentation file %s: %w", filename, err)
-		}
-
-		// Add file content to the combined documentation with clear section headers
-		allDocs.WriteString("\n\n## DOCUMENTATION SECTION: " + filename + "\n\n")
-		allDocs.Write(content)
-	}
-
-	allDocs.WriteString("\n\n## IMPORTANT INSTRUCTION\nThe above documentation contains ALL the information about OstrichDB. Do not make up or infer additional information.")
-
-	return allDocs.String(), nil
 }
