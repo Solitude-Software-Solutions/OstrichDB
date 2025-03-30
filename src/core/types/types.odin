@@ -1,4 +1,5 @@
 package types
+import "../types"
 import "core:crypto/aes"
 import "core:time"
 /********************************************************
@@ -13,13 +14,201 @@ File Description:
 
 
 Command :: struct {
-	c_token:            string, //command token
+	c_token:            TokenType, //command token
 	l_token:            [dynamic]string, //location token
 	p_token:            map[string]string, //parameter token
 	isUsingDotNotation: bool, //if the command is using dot notation
 	t_token:            string, //target token only needed for very specific commands like WHERE,HELP, and NEW USER
 }
 
+TokenType :: enum {
+	//Command tokens
+	INVALID,
+	EXIT,
+	LOGOUT,
+	RESTART,
+	REBUILD,
+	DESTROY,
+	VERSION,
+	HELP,
+	SERVE,
+	SERVER,
+	CLEAR,
+	TREE,
+	HISTORY,
+	WHERE,
+	NEW,
+	BACKUP,
+	ERASE,
+	RENAME,
+	FETCH,
+	COUNT,
+	SET,
+	PURGE,
+	SIZE_OF,
+	TYPE_OF,
+	CHANGE_TYPE,
+	ISOLATE,
+	VALIDATE,
+	BENCHMARK,
+	IMPORT,
+	EXPORT,
+	LOCK,
+	UNLOCK,
+	ENC,
+	ENCRYPT,
+	DEC,
+	DECRYPT,
+	USER,
+	CONFIG,
+	//Parameter tokens
+	OF_TYPE,
+	TO,
+	//Shorthand and traditional basic type tokens
+	STR,
+	STRING,
+	INT,
+	INTEGER,
+	FLT,
+	FLOAT,
+	BOOL,
+	BOOLEAN,
+	CHAR,
+	//shorthand and traditional complex types
+	STR_ARRAY,
+	STRING_ARRAY,
+	INT_ARRAY,
+	INTEGER_ARRAY,
+	FLT_ARRAY,
+	FLOAT_ARRAY,
+	BOOL_ARRAY,
+	BOOLEAN_ARRAY,
+	CHAR_ARRAY,
+	//More advance complex types...They follow ISO 8601 format
+	DATE,
+	TIME,
+	DATETIME,
+	DATE_ARRAY,
+	TIME_ARRAY,
+	DATETIME_ARRAY,
+	//Misc types
+	UUID,
+	UUID_ARRAY,
+	NULL,
+	// Lesser used target tokens
+	COLLECTION,
+	COLLECTIONS,
+	CLUSTER,
+	CLUSTERS,
+	RECORD,
+	RECORDS,
+	// General purpose misc tokens
+	CLPS,
+	CLP,
+	YES,
+	NO,
+	CONFIRM,
+	CANCEL,
+	//Not using any tokens below this point yet... - Marshall
+	// TEST,
+	// ALL,
+	// AND,
+	// ALL_OFF,
+}
+
+Token := [TokenType]string {
+	.EXIT           = "EXIT",
+	.LOGOUT         = "LOGOUT",
+	.RESTART        = "RESTART",
+	.REBUILD        = "REBUILD",
+	.DESTROY        = "DESTROY",
+	.VERSION        = "VERSION",
+	.HELP           = "HELP",
+	.SERVE          = "SERVE",
+	.SERVER         = "SERVER",
+	.CLEAR          = "CLEAR",
+	.TREE           = "TREE",
+	.HISTORY        = "HISTORY",
+	.WHERE          = "WHERE",
+	//Command Tokens
+	.NEW            = "NEW",
+	.BACKUP         = "BACKUP",
+	.ERASE          = "ERASE",
+	.RENAME         = "RENAME",
+	.FETCH          = "FETCH",
+	.COUNT          = "COUNT",
+	.SET            = "SET",
+	.PURGE          = "PURGE",
+	.SIZE_OF        = "SIZE_OF",
+	.TYPE_OF        = "TYPE_OF",
+	.CHANGE_TYPE    = "CHANGE_TYPE",
+	.ISOLATE        = "ISOLATE",
+	.VALIDATE       = "VALIDATE",
+	.BENCHMARK      = "BENCHMARK",
+	.IMPORT         = "IMPORT",
+	.EXPORT         = "EXPORT",
+	.LOCK           = "LOCK",
+	.UNLOCK         = "UNLOCK",
+	.ENC            = "ENC",
+	.ENCRYPT        = "ENCRYPT",
+	.DEC            = "DEC",
+	.DECRYPT        = "DECRYPT",
+	.USER           = "USER",
+	.CONFIG         = "CONFIG",
+	//Parameter tokens
+	.OF_TYPE        = "OF_TYPE",
+	.TO             = "TO",
+	//Shorthand and traditional basic type tokens
+	.STR            = "STR",
+	.STRING         = "STRING",
+	.INT            = "INT",
+	.INTEGER        = "INTEGER",
+	.FLT            = "FLT",
+	.FLOAT          = "FLOAT",
+	.BOOL           = "BOOL",
+	.BOOLEAN        = "BOOLEAN",
+	.CHAR           = "CHAR",
+	//shorthand and traditional complex types
+	.STR_ARRAY      = "[]STR",
+	.STRING_ARRAY   = "[]STRING",
+	.INT_ARRAY      = "[]INT",
+	.INTEGER_ARRAY  = "[]INTEGER",
+	.FLT_ARRAY      = "[]FLT",
+	.FLOAT_ARRAY    = "[]FLOAT",
+	.BOOL_ARRAY     = "[]BOOL",
+	.BOOLEAN_ARRAY  = "[]BOOLEAN",
+	.CHAR_ARRAY     = "[]CHAR",
+	//More advance complex types...They follow ISO 8601 format
+	.DATE           = "DATE",
+	.TIME           = "TIME",
+	.DATETIME       = "DATETIME",
+	.DATE_ARRAY     = "[]DATE",
+	.TIME_ARRAY     = "[]TIME",
+	.DATETIME_ARRAY = "[]DATETIME",
+	//Misc types
+	.UUID           = "UUID",
+	.UUID_ARRAY     = "[]UUID",
+	.NULL           = "NULL",
+	// Lesser used target tokens
+	.COLLECTION     = "COLLLECTION",
+	.COLLECTIONS    = "COLLECTIONS",
+	.CLUSTER        = "CLUSTER",
+	.CLUSTERS       = "CLUSTERS",
+	.RECORD         = "RECORD",
+	.RECORDS        = "RECORDS",
+	// General purpose misc tokens
+	.CLP            = "CLP",
+	.CLPS           = "CLPS",
+	.YES            = "YES",
+	.NO             = "NO",
+	.CONFIRM        = "CONFIRM",
+	.CANCEL         = "CANCEL",
+	//Not using any tokens below this point yet... - Marshall
+	// .TEST = "TEST",
+	// .ALL = "ALL",
+	// .AND = "AND",
+	// .ALL_OFF = "ALL_OFF",
+}
 
 Operation_Permssion_Requirement :: enum {
 	READ_ONLY,

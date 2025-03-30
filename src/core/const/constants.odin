@@ -78,139 +78,36 @@ CONFIG_FIVE :: "AUTO_SERVE" //whenever cli tool starts it runs the server if thi
 CONFIG_SIX :: "ERROR_SUPPRESSION" //whether errors are printed to the console or not
 CONFIG_SEVEN :: "LIMIT_HISTORY" //whether or not to limit how the number of commands are stored in the users history cluster
 
-
-//CLP TOKEN CONSTANTS
-//Todo: Just use an enum for this
-VERSION :: "VERSION"
-HELP :: "HELP" //help can also be a multi token command.
-WHERE :: "WHERE"
-EXIT :: "EXIT"
-RESTART :: "RESTART"
-REBUILD :: "REBUILD"
-SERVE :: "SERVE"
-SERVER :: "SERVER" //same as SERVE
-LOGOUT :: "LOGOUT"
-CLEAR :: "CLEAR"
-TREE :: "TREE"
-HISTORY :: "HISTORY"
-//Command Tokens
-NEW :: "NEW"
-BACKUP :: "BACKUP"
-ERASE :: "ERASE"
-RENAME :: "RENAME"
-FETCH :: "FETCH"
-COUNT :: "COUNT"
-SET :: "SET"
-PURGE :: "PURGE"
-SIZE_OF :: "SIZE_OF"
-TYPE_OF :: "TYPE_OF" //not the same as OF_TYPE. This is used as an command token to get the type of a record
-CHANGE_TYPE :: "CHANGE_TYPE"
-DESTROY :: "DESTROY"
-ISOLATE :: "ISOLATE"
-VALIDATE :: "VALIDATE"
-BENCHMARK :: "BENCHMARK"
-IMPORT :: "IMPORT"
-EXPORT :: "EXPORT"
-LOCK :: "LOCK"
-UNLOCK :: "UNLOCK"
-TEST :: "TEST" //Useful for testing new procdures for command line. i.e TEST FOO could just call a procedure you want to perform on the collection FOO
-ENC :: "ENC" //Encrypt a collection
-DEC :: "DEC" //Decrypt a collection
-//Target Tokens
-COLLECTION :: "COLLECTION"
-CLUSTER :: "CLUSTER"
-RECORD :: "RECORD"
-USER :: "USER"
-ALL :: "ALL"
-CONFIG :: "CONFIG" //special target exclusive to SET command
-//Special Target Tokens for the COUNT command
-COLLECTIONS :: "COLLECTIONS"
-CLUSTERS :: "CLUSTERS"
-RECORDS :: "RECORDS"
-//Modifier Tokens
-AND :: "AND"
-OF_TYPE :: "OF_TYPE"
-TYPE :: "TYPE"
-ALL_OF :: "ALL_OF"
-TO :: "TO"
-
-//Type Tokens
-STRING :: "STRING"
-STR :: "STR"
-//------------
-INTEGER :: "INTEGER"
-INT :: "INT"
-//------------
-FLOAT :: "FLOAT"
-FLT :: "FLT"
-//------------
-BOOLEAN :: "BOOLEAN"
-BOOL :: "BOOL"
-//------------
-CHAR :: "CHAR"
-//------------
-//COMPLEX TYPES
-STRING_ARRAY :: "[]STRING"
-STR_ARRAY :: "[]STR"
-INTEGER_ARRAY :: "[]INTEGER"
-INT_ARRAY :: "[]INT"
-FLOAT_ARRAY :: "[]FLOAT"
-FLT_ARRAY :: "[]FLT"
-BOOLEAN_ARRAY :: "[]BOOLEAN"
-BOOL_ARRAY :: "[]BOOL"
-CHAR_ARRAY :: "[]CHAR"
-//These follow ISO 8601 format
-DATE :: "DATE" //YYYY-MM-DD
-TIME :: "TIME" //HH:MM:SS
-DATETIME :: "DATETIME" //YYYY-MM-DDTHH:MM:SS
-DATE_ARRAY :: "[]DATE"
-TIME_ARRAY :: "[]TIME"
-DATETIME_ARRAY :: "[]DATETIME"
-//MISC TYPES
-UUID :: "UUID"
-UUID_ARRAY :: "[]UUID"
-NULL :: "NULL"
-
-//SPECIAL HELP TOKENS
-CLPS :: "CLPS"
-CLP :: "CLP"
-//INPUT CONFIRMATION CONSTANTS
-YES :: "YES"
-NO :: "NO"
-CONFIRM :: "CONFIRM"
-CANCEL :: "CANCEL"
-//FOR DOT NOTATION
-DOT :: "."
 //MISC CONSTANTS
 ost_carrot :: "OST>>>"
 VALID_RECORD_TYPES: []string : {
-	STRING,
-	INTEGER,
-	FLOAT,
-	BOOLEAN,
-	STR,
-	INT,
-	FLT,
-	BOOL,
-	CHAR,
-	STRING_ARRAY,
-	STR_ARRAY,
-	INTEGER_ARRAY,
-	INT_ARRAY,
-	FLOAT_ARRAY,
-	FLT_ARRAY,
-	BOOLEAN_ARRAY,
-	BOOL_ARRAY,
-	CHAR_ARRAY,
-	DATE,
-	TIME,
-	DATETIME,
-	DATE_ARRAY,
-	TIME_ARRAY,
-	DATETIME_ARRAY,
-	UUID,
-	UUID_ARRAY,
-	NULL,
+	"STRING",
+	"INTEGER",
+	"FLOAT",
+	"BOOLEAN",
+	"STR",
+	"INT",
+	"FLT",
+	"BOOL",
+	"CHAR",
+	"STRING_ARRAY",
+	"STR_ARRAY",
+	"INTEGER_ARRAY",
+	"INT_ARRAY",
+	"FLOAT_ARRAY",
+	"FLT_ARRAY",
+	"BOOLEAN_ARRAY",
+	"BOOL_ARRAY",
+	"CHAR_ARRAY",
+	"DATE",
+	"TIME",
+	"DATETIME",
+	"DATE_ARRAY",
+	"TIME_ARRAY",
+	"DATETIME_ARRAY",
+	"UUID",
+	"UUID_ARRAY",
+	"NULL",
 }
 
 METADATA_START :: "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@\n"

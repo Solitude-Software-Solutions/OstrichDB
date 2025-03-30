@@ -34,6 +34,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using const
 	using utils
 	using security
+	using types
 	// using data //cant use this when using utils namespace
 
 	//TODO: not even using these...
@@ -62,34 +63,34 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	defer delete(cmd.l_token)
 
 
-	switch (cmd.c_token) 
+	#partial switch (cmd.c_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
 	//Shows the current version of OstrichDB
-	case VERSION:
+	case .VERSION:
 		log_runtime_event("Used VERSION command", "User requested version information.")
 		fmt.printfln("Using OstrichDB Version: %s%s%s", BOLD, get_ost_version(), RESET)
 		break
 	//Safely kills the dbms
-	case EXIT:
+	case .EXIT:
 		//logout then exit the program
 		log_runtime_event("Used EXIT command", "User requested to exit the program.")
 		security.OST_USER_LOGOUT(1)
-	case LOGOUT:
+	case .LOGOUT:
 		//only returns user to signin.
 		log_runtime_event("Used LOGOUT command", "User requested to logout.")
 		fmt.printfln("Logging out...")
 		security.OST_USER_LOGOUT(0)
 		return 0
 	// Runs the restart script
-	case RESTART:
+	case .RESTART:
 		log_runtime_event("Used RESTART command", "User requested to restart OstrichDB.")
 		OST_RESTART()
-	case REBUILD:
+	case .REBUILD:
 		log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
 		OST_REBUILD()
-	case SERVE, SERVER:
+	case .SERVE, .SERVER:
 		//first kill localhost:8042
 		libc.system("stty -echo")
 		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
@@ -103,21 +104,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// Used to completley destroy the program and all its files, rebuilds after on macOs and Linux
-	case DESTROY:
+	case .DESTROY:
 		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
 		OST_DESTROY()
 	//Clears the terminal screen
-	case CLEAR:
+	case .CLEAR:
 		log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")
 		break
 	//Shows a tree-like structure of the dbms
-	case TREE:
+	case .TREE:
 		log_runtime_event("Used TREE command", "User requested to view a tree of the database.")
 		data.OST_GET_DATABASE_TREE()
 		break
 	// Shows the current users past command history
-	case HISTORY:
+	case .HISTORY:
 		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
 		OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
@@ -158,7 +159,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		delete(commandHistory)
 		break
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
-	case HELP:
+	case .HELP:
 		log_runtime_event("Used HELP command", "User requested help information.")
 		if len(cmd.t_token) == 0 {
 			log_runtime_event("Used HELP command", "User requested general help information.")
@@ -178,7 +179,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// specific record or cluster....but since all collections will be encrypted and no specific collection
 	// is provided to search through nothing will work. Will need to re-implement this command after creating
 	// some sort of DECRYPT_ALL_COLLECTIONS/ENCRYPT_ALL_COLLECTIONS command
-	// case WHERE:
+	// case .WHERE:
 	// 	log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
 	// 	switch (cmd.t_token) {
 	// 	case CLUSTER, RECORD:
@@ -254,7 +255,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// 	}
 	// 	break
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
-	case BACKUP:
+	case .BACKUP:
 		log_runtime_event("Used BACKUP command", "User requested to backup data.")
 		switch (len(cmd.l_token)) {
 		case 1:
@@ -304,7 +305,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	//NEW: Allows for the creation of new records, clusters, or collections
-	case NEW:
+	case .NEW:
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
@@ -575,7 +576,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
-	case RENAME:
+	case .RENAME:
 		log_runtime_event("Used RENAME command", "")
 		switch (len(cmd.l_token)) 
 		{
@@ -814,7 +815,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
-	case ERASE:
+	case .ERASE:
 		log_runtime_event("Used ERASE command", "")
 		switch (len(cmd.l_token)) 
 		{
@@ -1015,7 +1016,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
-	case FETCH:
+	case .FETCH:
 		log_runtime_event("Used FETCH command", "")
 		switch (len(cmd.l_token)) 
 		{
@@ -1157,7 +1158,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// SET: Allows for the setting of values within records or configs
-	case SET:
+	case .SET:
 		switch (len(cmd.l_token)) 
 		{
 		case 3:
@@ -1426,7 +1427,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.printfln("Note: The SET command can only be used on RECORDS and CONFIGS")
 		}
 	// COUNT: Allows for the counting of collections, clusters, or records
-	case COUNT:
+	case .COUNT:
 		log_runtime_event("Used COUNT command", "")
 		switch (cmd.t_token) 
 		{
@@ -1667,7 +1668,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	//PURGE: Removes all data from the provided collection, cluster, or record but maintains the structure
-	case PURGE:
+	case .PURGE:
 		collectionName, clusterName, recordName: string
 		log_runtime_event("Used PURGE command", "")
 		switch (len(cmd.l_token)) 
@@ -1820,7 +1821,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	//SIZE_OF: Allows for the retrieval of the size of collections, clusters, or records in bytes
-	case SIZE_OF:
+	case .SIZE_OF:
 		log_runtime_event("Used SIZE_OF command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
@@ -1957,7 +1958,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// TYPE_OF: Allows for the retrieval of the type of a record
-	case TYPE_OF:
+	case .TYPE_OF:
 		log_runtime_event("Used TYPE_OF command", "")
 		//only works on records
 		if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
@@ -2020,7 +2021,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// CHANGE_TYPE: Allows for the changing of a record's type
-	case CHANGE_TYPE:
+	case .CHANGE_TYPE:
 		//only works on records
 		switch (len(cmd.l_token)) {
 		case 3:
@@ -2116,7 +2117,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 	// // ISOLATE: Allows for the isolation of a collection so that it cannot be accessed via the CLI
-	case ISOLATE:
+	case .ISOLATE:
 		log_runtime_event("Used ISOLATE command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
@@ -2173,7 +2174,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 		break
 	//VALIDATE: Runs the data integrity check on a collection, if it passes GTG, if the the collection is isolated
-	// case VALIDATE:
+	// case .VALIDATE:
 	// 	switch (len(cmd.l_token)) {
 	// 	case 1:
 	// 		collectionName := cmd.l_token[0]
@@ -2223,7 +2224,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// 	}
 	// 	break
 	//BENCHMARK: Runs the benchmarking suite with or without parameters
-	case BENCHMARK:
+	case .BENCHMARK:
 		switch (len(cmd.l_token)) {
 		case 0:
 			benchmark.OST_RUN_BENCHMARK([]int{0, 0, 0}, true)
@@ -2252,14 +2253,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// //IMPORT: Imports foreign data into OstrichDB
-	case IMPORT:
+	case .IMPORT:
 		transfer.__import_csv__("CSV_FILE") //TODO: chang this to user input
 		break
-	case EXPORT:
+	case .EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")
 		break
 	//LOCK: Locks a collection with a flag or without a flag
-	case LOCK:
+	case .LOCK:
 		flag: string
 		switch len(cmd.l_token) {
 		case 1:
@@ -2400,7 +2401,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			false,
 		)
 		break
-	case UNLOCK:
+	case .UNLOCK:
 		//TODO: only admin users can use the UNLOCK command, this may change in the future but for now it is locked to admin users
 		switch (len(cmd.l_token)) {
 		case 1:
@@ -2478,7 +2479,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		//unlock is the only way to re-enable Read-Write access to a collection unless user deletes then creates a new one
 		break
-	case ENC:
+	case .ENC:
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
@@ -2506,7 +2507,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		break
-	case DEC:
+	case .DEC:
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]

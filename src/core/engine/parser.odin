@@ -30,7 +30,20 @@ OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	return false
 }
 
+
 //Takes the users input and parser it into a command. The command is then returned to the caller in engine.odin
+// Add this helper function
+OST_STRING_TO_TOKEN :: proc(str: string) -> types.TokenType {
+    str_upper := strings.to_upper(str)
+    for token, str_val in types.Token {
+        if str_upper == str_val {
+            return token
+        }
+    }
+    return .INVALID  // Add INVALID to your TokenType enum
+}
+
+// Update OST_PARSE_COMMAND to use TokenType
 OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	using const
 
@@ -48,7 +61,8 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 		return cmd
 	}
 
-	cmd.c_token = tokens[0] //setting the command token
+	// Convert first token to TokenType
+	cmd.c_token = OST_STRING_TO_TOKEN(tokens[0])
 	state := 0 //state machine exclusively used for parameter token shit
 	currentModifier := "" //stores the current modifier such as TO
 	collectingString := false
