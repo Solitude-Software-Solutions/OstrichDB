@@ -212,7 +212,7 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 	return false
 }
 
-//Handles logic for signing out a user
+//Handles logic for signing out a user and exiting the program
 //param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
 OST_USER_LOGOUT :: proc(param: int) {
 	security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
@@ -223,16 +223,13 @@ OST_USER_LOGOUT :: proc(param: int) {
 		switch (param)
 		{
 		case 0:
+		    //Logging out but keeps program running
 			OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
-			OST_STOP_SESSION_TIMER()
-			libc.system("./main.bin")
-
 		case 1:
-			//only used when logging out AND THEN exiting.
+		    //Exiting
 			OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
-			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)

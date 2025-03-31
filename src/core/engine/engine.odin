@@ -156,7 +156,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 	result := 0
 	fmt.println("Welcome to the OstrichDB DBMS Command Line")
 	utils.log_runtime_event("Entered DBMS command line", "")
-	for {
+	for types.USER_SIGNIN_STATUS == true {
 		//Command line start
 		buf: [1024]byte
 
@@ -199,6 +199,17 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 		//Command line end
 	}
+
+	//Re-engage the loop
+	if types.USER_SIGNIN_STATUS == false{
+    	security.OST_DECRYPT_COLLECTION(
+    		"",
+    		.CONFIG_PRIVATE,
+    		types.system_user.m_k.valAsBytes,
+    	)
+	   OST_START_ENGINE()
+	}
+
 	return result
 
 }
