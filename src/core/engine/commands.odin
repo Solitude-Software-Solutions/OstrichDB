@@ -481,7 +481,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			if Token[.OF_TYPE] in cmd.p_token && cmd.isUsingDotNotation == true {
 				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[Token[.OF_TYPE]])
-
 				if typeSuccess == 0 {
 					fmt.printfln(
 						"Creating record: %s%s%s of type: %s%s%s",

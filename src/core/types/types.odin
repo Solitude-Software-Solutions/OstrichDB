@@ -160,6 +160,7 @@ Token := #partial [TokenType]string {
 	.OF_TYPE        = "OF_TYPE",
 	.TO             = "TO",
 	//Shorthand and traditional basic type tokens
+	.CHAR           = "CHAR",
 	.STR            = "STR",
 	.STRING         = "STRING",
 	.INT            = "INT",
@@ -168,8 +169,8 @@ Token := #partial [TokenType]string {
 	.FLOAT          = "FLOAT",
 	.BOOL           = "BOOL",
 	.BOOLEAN        = "BOOLEAN",
-	.CHAR           = "CHAR",
 	//shorthand and traditional complex types
+	.CHAR_ARRAY     = "[]CHAR",
 	.STR_ARRAY      = "[]STR",
 	.STRING_ARRAY   = "[]STRING",
 	.INT_ARRAY      = "[]INT",
@@ -178,7 +179,6 @@ Token := #partial [TokenType]string {
 	.FLOAT_ARRAY    = "[]FLOAT",
 	.BOOL_ARRAY     = "[]BOOL",
 	.BOOLEAN_ARRAY  = "[]BOOLEAN",
-	.CHAR_ARRAY     = "[]CHAR",
 	//More advance complex types...They follow ISO 8601 format
 	.DATE           = "DATE",
 	.TIME           = "TIME",

@@ -489,51 +489,42 @@ OST_GET_DATABASE_TREE :: proc() {
 
 }
 
-//here is where the type that the user enters in their command is passed
+//Ensure the passed in type is valid. if a valid shorthand type is provided via the command line,
+//then the 'longhand' value is assigned, then returned
 OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
-	for type in const.VALID_RECORD_TYPES {
+    using types
+    using const
+
+	for type in VALID_RECORD_TYPES {
 		if rType == type {
-			//evaluate the shorthand type name and assign the full type name to the record
 			switch (rType)
-			{
-			case types.Token[.STR]:
-				record.type = types.Token[.STRING]
+			{ //The first 8 cases handle if the type is shorthand
+			case Token[.STR]:
+				record.type = Token[.STRING]
 				break
-			case types.Token[.INT]:
-				record.type = types.Token[.INTEGER]
+			case Token[.INT]:
+				record.type = Token[.INTEGER]
 				break
-			case types.Token[.FLT]:
-				record.type = types.Token[.FLOAT]
+			case Token[.FLT]:
+				record.type = Token[.FLOAT]
 				break
-			case types.Token[.BOOL]:
-				record.type = types.Token[.BOOLEAN]
+			case Token[.BOOL]:
+				record.type = Token[.BOOLEAN]
 				break
-			case types.Token[.CHAR]:
-				record.type = types.Token[.CHAR]
+			case Token[.STR_ARRAY]:
+				record.type = Token[.STRING_ARRAY]
 				break
-			case types.Token[.STR_ARRAY]:
-				record.type = types.Token[.STRING_ARRAY]
+			case Token[.INT_ARRAY]:
+				record.type =Token[.INTEGER_ARRAY]
 				break
-			case types.Token[.INT_ARRAY]:
-				record.type =types.Token[.INTEGER_ARRAY]
+			case Token[.FLT_ARRAY]:
+				record.type = Token[.FLOAT_ARRAY]
 				break
-			case types.Token[.FLT_ARRAY]:
-				record.type = types.Token[.FLOAT_ARRAY]
-				break
-			case types.Token[.BOOL_ARRAY]:
-				record.type = types.Token[.BOOLEAN_ARRAY]
-				break
-			case types.Token[.DATE]:
-				record.type = types.Token[.DATE]
-				break
-			case types.Token[.TIME]:
-				record.type = types.Token[.TIME]
-				break
-			case types.Token[.DATETIME]:
-				record.type = types.Token[.DATETIME]
+			case Token[.BOOL_ARRAY]:
+				record.type = Token[.BOOLEAN_ARRAY]
 				break
 			case:
-				//if the user enters the full type name
+				//The defualt case just sets the variable to the value so long as its valid
 				record.type = rType
 				break
 			}
