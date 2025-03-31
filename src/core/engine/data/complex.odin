@@ -296,7 +296,6 @@ OST_PARSE_UUID :: proc(uuid: string) -> (string, bool) {
 	return strings.to_lower(uuidStr), true
 }
 
-//No need to parse NULL data type but if there was it would have been here :)
 
 
 //TODO DONT DELETE THESE..THEY CAN BE USEDFUL IN THE TRANSFER package
