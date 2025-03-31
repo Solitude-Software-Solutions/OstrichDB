@@ -275,9 +275,9 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
 - Command chaining for even more complex operations
-- Server-based architecture improvements
-- External API support for popular programming languages
+- OstrichDB web application
 - Windows support
+- External API support for even more programming languages!
 - Integration with the planned Feather query language!
 
 ---
