@@ -1,10 +1,15 @@
 #!/bin/bash
 set -e
 
+# Author: Marshall A Burns
+# GitHub: @SchoolyB
+# License: Apache License 2.0 (see LICENSE file for details)
+# Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+
 # Configuration
 PROGRAM_NAME="OstrichDB"
 REPO="Solitude-Software-Solutions/OstrichDB"
-RELEASE_TAG="Pre_Rel_v8.0.0_dev"  #Change this to the persepective next pre_release tag
+RELEASE_TAG="Pre_Rel_v0.8.0_dev"  #Change this to the persepective next pre_release tag
 RELEASE_URL="https://github.com/${REPO}/archive/refs/tags/${RELEASE_TAG}.tar.gz"
 BUILD_SCRIPT="scripts/build.sh"
 
@@ -95,6 +100,28 @@ if [ $? -eq 0 ]; then
     echo "Installing OstrichDB to $INSTALL_DIR/ostrichdb"
     cp "../bin/main.bin" "$INSTALL_DIR/ostrichdb"
     chmod +x "$INSTALL_DIR/ostrichdb"
+    
+    # Create a launcher script that preserves all paths
+    echo "Creating launcher script..."
+    cat > "$INSTALL_DIR/ostrichdb_launcher" << 'EOF'
+#!/bin/bash
+# Launcher script for OstrichDB
+exec "$HOME/.ostrichdb/ostrichdb" "$@"
+EOF
+    chmod +x "$INSTALL_DIR/ostrichdb_launcher"
+
+    # Create a symlink to the launcher (not the actual binary)
+    if [[ "$OS" == "Darwin" || "$OS" == "Linux" ]]; then
+        if [ -d "/usr/local/bin" ] && [ -w "/usr/local/bin" ]; then
+            ln -sf "$INSTALL_DIR/ostrichdb_launcher" "/usr/local/bin/ostrichdb"
+            echo "Command: 'ostrichdb' is now available system-wide"
+        else
+            mkdir -p "$HOME/bin"
+            ln -sf "$INSTALL_DIR/ostrichdb_launcher" "$HOME/bin/ostrichdb"
+            echo "Command: 'ostrichdb' is available in $HOME/bin"
+            echo "Make sure $HOME/bin is in your PATH"
+        fi
+    fi
 else
     echo "$(tput setaf 1)Build failed$(tput sgr0)"
     exit 1
@@ -104,12 +131,24 @@ fi
 cd
 rm -rf "$TMP_DIR"
 
+# Verify the installation
+echo "Verifying installation..."
+if [ -x "$INSTALL_DIR/ostrichdb" ]; then
+    echo "✓ Executable found at $INSTALL_DIR/ostrichdb"
+else
+    echo "⚠️ Executable not found or not executable at $INSTALL_DIR/ostrichdb"
+fi
+
+# Force PATH update for current session
+export PATH="$INSTALL_DIR:$PATH"
+
 if command -v ostrichdb >/dev/null 2>&1; then
     echo "✅ Installation successful!"
-    echo "OstrichDB has been installed to $INSTALL_DIR/ostrichdb"
+    echo "OstrichDB has been installed to $INSTALL_DIR/"
     echo ""
     echo "To start using OstrichDB, open a new terminal and run:"
-    echo "    ostrichdb"
+    echo "ostrichdb"
+    echo "Note: Ensure your terminal's current working directory is your home directory."
 else
     echo "Warning: Installation complete, but the 'ostrichdb' command is not in your PATH."
     echo "Please restart your terminal or run:"
@@ -117,6 +156,16 @@ else
     echo ""
     echo "Then you can start OstrichDB by running:"
     echo "    ostrichdb"
+
+    echo ""
+    echo "Troubleshooting:"
+    echo "1. Try running the command with the full path: $INSTALL_DIR/ostrichdb"
+    echo "2. Check if the file exists and is executable:"
+    echo "   ls -la $INSTALL_DIR/ostrichdb"
+    echo "3. Verify your PATH includes $INSTALL_DIR:"
+    echo "   echo \$PATH"
+    echo "4. Manually add to PATH for this session:"
+    echo "   export PATH=\"$INSTALL_DIR:\$PATH\""
 fi
 
 echo ""
