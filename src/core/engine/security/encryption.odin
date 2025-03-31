@@ -62,7 +62,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 		break
 	case .SECURE_PRIVATE:
 		//Private Secure Collection
-		file := utils.concat_secure_collection_name(colName)
+		file = utils.concat_secure_collection_name(colName)
 		break
 	case .CONFIG_PRIVATE:
 		//Private Config Collection

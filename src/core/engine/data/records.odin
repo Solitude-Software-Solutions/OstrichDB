@@ -508,29 +508,29 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 			case types.Token[.BOOL]:
 				record.type = types.Token[.BOOLEAN]
 				break
-			case const.CHAR:
-				record.type = const.CHAR
+			case types.Token[.CHAR]:
+				record.type = types.Token[.CHAR]
 				break
-			case const.STR_ARRAY:
-				record.type = const.STRING_ARRAY
+			case types.Token[.STR_ARRAY]:
+				record.type = types.Token[.STRING_ARRAY]
 				break
-			case const.INT_ARRAY:
-				record.type = const.INTEGER_ARRAY
+			case types.Token[.INT_ARRAY]:
+				record.type =types.Token[.INTEGER_ARRAY]
 				break
-			case const.FLT_ARRAY:
-				record.type = const.FLOAT_ARRAY
+			case types.Token[.FLT_ARRAY]:
+				record.type = types.Token[.FLOAT_ARRAY]
 				break
-			case const.BOOL_ARRAY:
-				record.type = const.BOOLEAN_ARRAY
+			case types.Token[.BOOL_ARRAY]:
+				record.type = types.Token[.BOOLEAN_ARRAY]
 				break
-			case const.DATE:
-				record.type = const.DATE
+			case types.Token[.DATE]:
+				record.type = types.Token[.DATE]
 				break
-			case const.TIME:
-				record.type = const.TIME
+			case types.Token[.TIME]:
+				record.type = types.Token[.TIME]
 				break
-			case const.DATETIME:
-				record.type = const.DATETIME
+			case types.Token[.DATETIME]:
+				record.type = types.Token[.DATETIME]
 				break
 			case:
 				//if the user enters the full type name
@@ -895,28 +895,28 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 	ok: bool = false
 	setValueOk := false
 	switch (recordType) {
-	case INTEGER:
-		record.type = INTEGER
+	case types.Token[.INTEGER]:
+		record.type = recordType
 		valueAny, ok = OST_CONVERT_RECORD_TO_INT(rValue)
 		setValueOk = ok
 		break
-	case FLOAT:
-		record.type = FLOAT
+	case types.Token[.FLOAT]:
+		record.type = recordType
 		valueAny, ok = OST_CONVERT_RECORD_TO_FLOAT(rValue)
 		setValueOk = ok
 		break
-	case BOOLEAN:
-		record.type = BOOLEAN
+	case types.Token[.BOOLEAN]:
+		record.type = recordType
 		valueAny, ok = OST_CONVERT_RECORD_TO_BOOL(rValue)
 		setValueOk = ok
 		break
-	case STRING:
-		record.type = STRING
+	case types.Token[.STRING]:
+		record.type = recordType
 		valueAny = utils.append_qoutations(rValue)
 		setValueOk = true
 		break
-	case CHAR:
-		record.type = CHAR
+	case types.Token[.CHAR]:
+		record.type = recordType
 		if len(rValue) != 1 {
 			setValueOk = false
 			fmt.println("Failed to set record value")
@@ -931,9 +931,9 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 			setValueOk = true
 		}
 		break
-	case INTEGER_ARRAY:
-		record.type = INTEGER_ARRAY
-		verifiedValue := OST_VERIFY_ARRAY_VALUES(INTEGER_ARRAY, rValue)
+	case types.Token[.INTEGER_ARRAY]:
+		record.type = recordType
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(types.Token[.INTEGER_ARRAY], rValue)
 		if !verifiedValue {
 			fmt.printfln(
 				"Invalid value given. Must be an array of Type: %sINTEGER%s",
@@ -946,9 +946,9 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		valueAny = intArrayValue
 		setValueOk = ok
 		break
-	case FLOAT_ARRAY:
-		record.type = FLOAT_ARRAY
-		verifiedValue := OST_VERIFY_ARRAY_VALUES(FLOAT, rValue)
+	case types.Token[.FLOAT_ARRAY]:
+		record.type = recordType
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(types.Token[.FLOAT], rValue)
 		if !verifiedValue {
 			fmt.printfln(
 				"Invalid value given. Must be an array of Type: %sFLOAT%s",
@@ -961,9 +961,9 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		valueAny = fltArrayValue
 		setValueOk = ok
 		break
-	case BOOLEAN_ARRAY:
-		record.type = BOOLEAN_ARRAY
-		verifiedValue := OST_VERIFY_ARRAY_VALUES(BOOLEAN_ARRAY, rValue)
+	case types.Token[.BOOLEAN_ARRAY]:
+		record.type = recordType
+		verifiedValue := OST_VERIFY_ARRAY_VALUES(types.Token[.BOOLEAN_ARRAY], rValue)
 		if !verifiedValue {
 			fmt.printfln(
 				"Invalid value given. Must be an array of Type: %BOOLEAN%s",
@@ -976,77 +976,77 @@ OST_SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 		valueAny = boolArrayValue
 		setValueOk = ok
 		break
-	case STRING_ARRAY:
-		record.type = STRING_ARRAY
+	case types.Token[.STRING_ARRAY]:
+		record.type = recordType
 		stringArrayValue, ok := OST_CONVERT_RECORD_TO_STRING_ARRAY(rValue)
 		valueAny = stringArrayValue
 		setValueOk = ok
 		break
-	case CHAR_ARRAY:
-		record.type = CHAR_ARRAY
+	case types.Token[.CHAR_ARRAY]:
+		record.type = recordType
 		charArrayValue, ok := OST_CONVERT_RECORD_TO_CHAR_ARRAY(rValue)
 		valueAny = charArrayValue
 		setValueOk = ok
 		break
-	case DATE_ARRAY:
-		record.type = DATE_ARRAY
+	case types.Token[.DATE_ARRAY]:
+		record.type = recordType
 		dateArrayValue, ok := OST_CONVERT_RECORD_TO_DATE_ARRAY(rValue)
 		valueAny = dateArrayValue
 		setValueOk = ok
 		break
-	case TIME_ARRAY:
-		record.type = TIME_ARRAY
+	case types.Token[.TIME_ARRAY]:
+		record.type = recordType
 		timeArrayValue, ok := OST_CONVERT_RECORD_TO_TIME_ARRAY(rValue)
 		valueAny = timeArrayValue
 		setValueOk = ok
 		break
-	case DATETIME_ARRAY:
-		record.type = DATETIME_ARRAY
+	case types.Token[.DATETIME_ARRAY]:
+		record.type = recordType
 		dateTimeArrayValue, ok := OST_CONVERT_RECORD_TO_DATETIME_ARRAY(rValue)
 		valueAny = dateTimeArrayValue
 		setValueOk = ok
 		break
-	case DATE:
-		record.type = DATE
+	case types.Token[.DATE]:
+		record.type = types.Token[.DATE]
 		date, ok := OST_CONVERT_RECORD_TO_DATE(rValue)
 		if ok {
 			valueAny = date
 			setValueOk = ok
 		}
 		break
-	case TIME:
-		record.type = TIME
+	case types.Token[.TIME]:
+		record.type = types.Token[.TIME]
 		time, ok := OST_CONVERT_RECORD_TO_TIME(rValue)
 		if ok {
 			valueAny = time
 			setValueOk = ok
 		}
 		break
-	case DATETIME:
-		record.type = DATETIME
+	case types.Token[.DATETIME]:
+		record.type = recordType
 		dateTime, ok := OST_CONVERT_RECORD_TO_DATETIME(rValue)
 		if ok {
 			valueAny = dateTime
 			setValueOk = ok
 		}
 		break
-	case UUID:
-		record.type = UUID
+	case types.Token[.UUID]:
+		record.type = recordType
 		uuid, ok := OST_CONVERT_RECORD_TO_UUID(rValue)
 		if ok {
 			valueAny = uuid
 			setValueOk = ok
 		}
 		break
-	case UUID_ARRAY:
-		record.type = UUID_ARRAY
+	case types.Token[.UUID_ARRAY]:
+		record.type = recordType
 		uuidArrayValue, ok := OST_CONVERT_RECORD_TO_UUID_ARRAY(rValue)
 		valueAny = uuidArrayValue
 		setValueOk = ok
 		break
-	case NULL:
-		record.type = NULL
-		valueAny = NULL
+	case types.Token[.NULL]:
+		record.type = recordType
+		valueAny = recordType
 		setValueOk = true
 		break
 	}
@@ -1707,6 +1707,7 @@ OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
 //If the type is a []CHAR then remove the double qoutes and replace them with single qoutes
 //if []DATE, []TIME, []DATETIME then remove the qoutes and replace them with nothing
 OST_MODIFY_ARRAY_VALUES :: proc(fn, cn, rn, rType: string) -> (string, bool) {
+    using types
 	// Get the current record value
 	recordValue := OST_READ_RECORD_VALUE(fn, cn, rType, rn)
 	if recordValue == "" {
@@ -1733,12 +1734,12 @@ OST_MODIFY_ARRAY_VALUES :: proc(fn, cn, rn, rType: string) -> (string, bool) {
 		element := strings.trim_space(element)
 
 		switch rType {
-		case const.CHAR_ARRAY:
+		case Token[.CHAR_ARRAY]:
 			// Replace double quotes with single quotes
 			if strings.has_prefix(element, "\"") && strings.has_suffix(element, "\"") {
 				element = fmt.tprintf("'%s'", element[1:len(element) - 1])
 			}
-		case const.DATE_ARRAY, const.TIME_ARRAY, const.DATETIME_ARRAY:
+		case Token[.DATE_ARRAY], Token[.TIME_ARRAY], Token[.DATETIME_ARRAY]:
 			// Remove quotes entirely
 			if strings.has_prefix(element, "\"") && strings.has_suffix(element, "\"") {
 				element = element[1:len(element) - 1]

@@ -27,52 +27,53 @@ OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
 //checks that array values the user wants to store in a record is the correct type
 OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 	using const
+	using types
 
 	verified := false
 	//retrieve the record type
 	arrayValues := OST_PARSE_ARRAY(strArray)
 
 	switch (rType) {
-	case types.Token[.INTEGER_ARRAY]:
+	case Token[.INTEGER_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_int(i)
 			verified = parseSuccess
 		}
 		return verified
-	case types.Token[.FLOAT_ARRAY]:
+	case Token[.FLOAT_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_f64(i)
 			verified = parseSuccess
 		}
 		return verified
-	case types.Token[.BOOLEAN_ARRAY]:
+	case Token[.BOOLEAN_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := strconv.parse_bool(i)
 			verified = parseSuccess
 		}
 		return verified
-	case types.Token[.DATE_ARRAY]:
+	case Token[.DATE_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := OST_PARSE_DATE(i)
 			verified = parseSuccess
 		}
 		return verified
-	case types.Token[.TIME_ARRAY]:
+	case Token[.TIME_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := OST_PARSE_TIME(i)
 			verified = parseSuccess
 		}
 		return verified
-	case types.Token[.DATETIME_ARRAY]:
+	case Token[.DATETIME_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := OST_PARSE_DATETIME(i)
 			verified = parseSuccess
 		}
 		return verified
-	case types.Token[.STRING_ARRAY], types.Token[.CHAR_ARRAY]:
+	case Token[.STRING_ARRAY], Token[.CHAR_ARRAY]:
 		verified = true
 		return verified
-	case types.Token[.UUID_ARRAY]:
+	case Token[.UUID_ARRAY]:
 		for i in arrayValues {
 			_, parseSuccess := OST_PARSE_UUID(i)
 			verified = parseSuccess

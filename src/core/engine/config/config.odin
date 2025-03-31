@@ -132,31 +132,33 @@ OST_APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	using const
 	using utils
+	using types
+
+	bool:= Token[.BOOLEAN]
 
 	successCount := 0
 	// Append all the records to the config cluster
-	if OST_APPEND_CONFIG_RECORD(CONFIG_ONE, "false", Token[.BOOLEAN]) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_ONE, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_TWO, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_TWO, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_THREE, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_THREE, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_FIVE, "true", BOOLEAN) == 0 { 	//server mode on by default while working on it
+	if OST_APPEND_CONFIG_RECORD(CONFIG_FIVE, "true", bool) == 0 { 	//server mode on by default while working on it
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_SIX, "false", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_SIX, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_SEVEN, "true", BOOLEAN) == 0 {
+	if OST_APPEND_CONFIG_RECORD(CONFIG_SEVEN, "true", bool) == 0 {
 		successCount += 1
 	}
-
 
 	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
 
@@ -172,6 +174,7 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	using const
 	using utils
+	using types
 
 	result := data.OST_CHECK_IF_RECORD_EXISTS(OST_CONFIG_PATH, CONFIG_CLUSTER, rn)
 	if !result {
@@ -191,15 +194,15 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	//Standard value allocation
 	valueAny: any = 0
 	ok: bool
+
 	switch (recordType) {
-	case BOOLEAN:
+	case Token[.BOOLEAN]:
 		valueAny, ok = data.OST_CONVERT_RECORD_TO_BOOL(rValue)
 		break
-	case STRING:
+	case Token[.STRING]:
 		valueAny = rValue
 		ok = true
 		break
-
 	}
 
 	if ok != true {
@@ -215,7 +218,7 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 			fmt.tprintf(
 				"%sInvalid value given. Expected a value of type: %s%s%s",
 				BOLD_UNDERLINE,
-				CONFIG,
+				Token[.CONFIG],
 				RESET,
 			),
 		)
@@ -226,7 +229,6 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 
 	// Update the record in the file
 	success := data.OST_UPDATE_RECORD_IN_FILE(OST_CONFIG_PATH, CONFIG_CLUSTER, rn, valueAny)
-
 
 	return success
 }

@@ -7,6 +7,7 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+import "../../types"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -192,6 +193,8 @@ OST_INFER_CSV_RECORD_TYPES :: proc(
 	typeMap: map[string]string,
 ) {
 	using const
+	using types
+
 	success = false
 
 	intRes, intNames := check_if_common__(csvRecordNames, commonInts)
@@ -199,11 +202,11 @@ OST_INFER_CSV_RECORD_TYPES :: proc(
 		for name in intNames {
 			switch (recCount) {
 			case 0, 1:
-				typeMap[name] = INTEGER
+				typeMap[name] = Token[.INTEGER]
 				success = true
 				break
 			case:
-				typeMap[name] = INTEGER_ARRAY
+				typeMap[name] = Token[.INTEGER_ARRAY]
 				success = true
 			}
 		}
@@ -214,11 +217,11 @@ OST_INFER_CSV_RECORD_TYPES :: proc(
 		for name in floatNames {
 			switch (recCount) {
 			case 0, 1:
-				typeMap[name] = FLOAT
+				typeMap[name] = Token[.FLOAT]
 				success = true
 				break
 			case:
-				typeMap[name] = FLOAT_ARRAY
+				typeMap[name] = Token[.FLOAT_ARRAY]
 				success = true
 			}
 		}
@@ -229,11 +232,11 @@ OST_INFER_CSV_RECORD_TYPES :: proc(
 		for name in boolNames {
 			switch (recCount) {
 			case 0, 1:
-				typeMap[name] = BOOLEAN
+				typeMap[name] = Token[.BOOLEAN]
 				success = true
 				break
 			case:
-				typeMap[name] = BOOLEAN_ARRAY
+				typeMap[name] = Token[.BOOLEAN_ARRAY]
 				success = true
 			}
 		}
@@ -245,11 +248,11 @@ OST_INFER_CSV_RECORD_TYPES :: proc(
 
 			switch (recCount) {
 			case 0, 1:
-				typeMap[name] = STRING
+				typeMap[name] = Token[.STRING]
 				success = true
 				break
 			case:
-				typeMap[name] = STRING_ARRAY
+				typeMap[name] = Token[.STRING_ARRAY]
 				success = true
 			}
 		}

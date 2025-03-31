@@ -444,6 +444,8 @@ OST_CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 
 OST_ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 	using utils
+	using types
+
 	buf: [64]byte
 	file: string
 	collectionPath := concat_standard_collection_name(fn)
@@ -475,10 +477,10 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 		cap := strings.to_upper(confirmation)
 
 		switch cap {
-		case types.Token[.NO]:
+		case Token[.NO]:
 			log_runtime_event("User canceled deletion", "User canceled deletion of database")
 			return false
-		case types.Token[.NO]:
+		case Token[.NO]:
 		// Continue with deletion
 		case:
 			log_runtime_event(

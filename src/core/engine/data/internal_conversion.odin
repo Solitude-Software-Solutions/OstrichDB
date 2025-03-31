@@ -283,6 +283,7 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 	bool,
 ) {
 	using const
+	using types
 
 	//if the types are the same, no conversion is needed
 	if oldType == newType {
@@ -290,14 +291,14 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 	}
 
 	switch (newType) {
-	case types.Token[.STRING]:
+	case Token[.STRING]:
 		//New type is STRING
 		switch (oldType) {
-		case types.Token[.INTEGER], types.Token[.FLOAT], types.Token[.BOOLEAN]:
+		case Token[.INTEGER], Token[.FLOAT], Token[.BOOLEAN]:
 			//Old type is INTEGER, FLOAT, or BOOLEAN
 			value := utils.append_qoutations(value)
 			return value, true
-		case types.Token[.STRING_ARRAY]:
+		case Token[.STRING_ARRAY]:
 			value := strings.trim_prefix(value, "[")
 			value = strings.trim_suffix(value, "]")
 			if len(value) > 0 {
@@ -310,7 +311,7 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 	case types.Token[.INTEGER]:
 		//New type is INTEGER
 		switch (oldType) {
-		case types.Token[.STRING]:
+		case Token[.STRING]:
 			//Old type is STRING
 			_, ok := strconv.parse_int(value, 10)
 			if !ok {
@@ -320,10 +321,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case types.Token[.FLOAT]:
+	case Token[.FLOAT]:
 		//New type is FLOAT
 		switch (oldType) {
-		case types.Token[.STRING]:
+		case Token[.STRING]:
 			//Old type is STRING
 			_, ok := strconv.parse_f64(value)
 			if !ok {
@@ -333,10 +334,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case types.Token[.BOOLEAN]:
+	case Token[.BOOLEAN]:
 		//New type is BOOLEAN
 		switch (oldType) {
-		case types.Token[.STRING]:
+		case Token[.STRING]:
 			//Old type is STRING
 			lowerStr := strings.to_lower(strings.trim_space(value))
 			if lowerStr == "true" || lowerStr == "false" {
@@ -347,10 +348,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 			return "", false
 		}
 	//ARRAY CONVERSIONS
-	case  types.Token[.STRING_ARRAY]:
+	case  Token[.STRING_ARRAY]:
 		// New type is STRING_ARRAY
 		switch (oldType) {
-		case STRING:
+		case Token[.STRING]:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes
@@ -358,10 +359,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case INTEGER_ARRAY:
+	case  Token[.INTEGER_ARRAY]:
 		// New type is INTEGER_ARRAY
 		switch (oldType) {
-		case INTEGER:
+		case Token[.INTEGER]:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes
@@ -369,10 +370,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case BOOLEAN_ARRAY:
+	case Token[.BOOLEAN_ARRAY]:
 		// New type is BOOLEAN_ARRAY
 		switch (oldType) {
-		case types.Token[.BOOLEAN]:
+		case Token[.BOOLEAN]:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes
@@ -380,10 +381,10 @@ OST_CONVERT_SINGLE_VALUE :: proc(
 		case:
 			return "", false
 		}
-	case FLOAT_ARRAY:
+	case Token[.FLOAT_ARRAY]:
 		// New type is FLOAT_ARRAY
 		switch (oldType) {
-		case FLOAT:
+		case Token[.FLOAT]:
 			// Remove any existing quotes
 			value := strings.trim_prefix(strings.trim_suffix(value, "\""), "\"")
 			// Format as array with proper quotes

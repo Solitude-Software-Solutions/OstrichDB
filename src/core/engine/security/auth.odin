@@ -149,7 +149,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
 			OST_CONFIG_PATH,
 			CONFIG_CLUSTER,
-			BOOLEAN,
+			Token[.BOOLEAN],
 			CONFIG_THREE,
 		)
 
@@ -220,7 +220,7 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param) 
+		switch (param)
 		{
 		case 0:
 			OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)

@@ -110,6 +110,12 @@ VALID_RECORD_TYPES: []string : {
 	"NULL",
 }
 
+
+NO:: "NO"
+YES:: "YES"
+CANCEL::"CANCEL"
+CONFIRM :: "CONFIRM"
+
 METADATA_START :: "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@\n"
 METADATA_END :: "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@\n"
 

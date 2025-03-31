@@ -29,12 +29,12 @@ main :: proc() {
 	using security
 
 
-	data.main() 
+	data.main()
 	utils.main()
 
 
 	configFound := config.OST_CHECK_IF_CONFIG_FILE_EXISTS()
-	switch (configFound) 
+	switch (configFound)
 	{
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
@@ -60,7 +60,7 @@ main :: proc() {
 	}
 
 
-	if data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, BOOLEAN, CONFIG_ONE) == "true" {
+	if data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], CONFIG_ONE) == "true" {
 		OstrichEngine.Initialized = true
 		log_runtime_event("OstrichDB Engine Initialized", "")
 	} else {

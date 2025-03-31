@@ -32,7 +32,6 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 
 	userRoleVal := data.OST_READ_RECORD_VALUE(secCollection, userCluster, "identifier", "role")
 
-
 	if userRoleVal == "admin" {
 		isAdmin = true
 	}
@@ -44,6 +43,7 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 //ngl I hacked this shit together by looking at Odin's souce code for each os' sys package. - Marshall
 OST_SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
 	using os
+
 	mode: uint = 0o600 // default to file owner read/write
 	switch permission {
 	case "Read-Only":
@@ -87,6 +87,7 @@ OST_SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
 //Sets the permissions for a given operation
 OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
 	using const
+	using types
 
 	operation := new(types.CommandOperation)
 	opArr: [dynamic]string
@@ -94,19 +95,19 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 	//todo: TREE should be allowed but if a collection is set to inaccessable then that collection should not be shown
 
 	//these commands will work on a collection that is set to read only or read write
-	readWriteOrReadOnlyCommands := []string{WHERE, COUNT, FETCH, SIZE_OF, TYPE_OF, VALIDATE}
+	readWriteOrReadOnlyCommands := []string{Token[.WHERE], Token[.COUNT], Token[.FETCH], Token[.SIZE_OF], Token[.TYPE_OF], Token[.VALIDATE]}
 
 	//These commands will work on a collection that is set to read write
 	readWriteCommands := []string {
-		ISOLATE,
-		BACKUP,
-		ERASE,
-		RENAME,
-		SET,
-		PURGE,
-		CHANGE_TYPE,
-		LOCK,
-		NEW,
+		Token[.ISOLATE],
+		Token[.BACKUP],
+		Token[.ERASE],
+		Token[.RENAME],
+		Token[.SET],
+		Token[.PURGE],
+		Token[.CHANGE_TYPE],
+		Token[.LOCK],
+		Token[.NEW]
 	}
 
 
@@ -140,8 +141,8 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 
 
 	//check if the UNLOCK operation can be used on a collection that is set to 'Inaccessible' or 'Read-Only'
-	if opName == UNLOCK {
-		operation.name = UNLOCK
+	if opName == Token[.UNLOCK] {
+		operation.name = opName
 		operation.permission = [dynamic]types.Operation_Permssion_Requirement{}
 		append(&operation.permission, types.Operation_Permssion_Requirement.READ_ONLY)
 		append(&operation.permission, types.Operation_Permssion_Requirement.INACCESSABLE)
@@ -180,7 +181,6 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 	command, colName: string,
 	colType: types.CollectionType,
 ) -> int {
-
 
 	//Get the operation permission for the command
 	commandOperation := OST_SET_OPERATION_PERMISSIONS(command)
@@ -270,7 +270,7 @@ OST_EXEC_CMD_LINE_PERM_CHECK :: proc(
 		colName,
 		colType,
 	)
-	switch (permissionCheckResult) 
+	switch (permissionCheckResult)
 	{
 	case 0:
 		//If the permission check passes, re-encrypt the "secure" collection and continue with the operation

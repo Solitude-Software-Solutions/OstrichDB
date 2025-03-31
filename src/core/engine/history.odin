@@ -39,7 +39,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	limitOn := data.OST_READ_RECORD_VALUE(
 		const.OST_CONFIG_PATH,
 		const.CONFIG_CLUSTER,
-		BOOLEAN,
+		types.Token[.BOOLEAN],
 		const.CONFIG_SEVEN,
 	)
 

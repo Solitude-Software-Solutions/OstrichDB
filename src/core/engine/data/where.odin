@@ -28,9 +28,10 @@ File Description:
 OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 	using const
 	using utils
+	using types
 
 	// Early return for invalid target
-	if target == COLLECTION {
+	if target == Token[.COLLECTION] {
 		return false
 	}
 
@@ -51,7 +52,7 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 
 	// Search through collections
 	for collection in collectionNames {
-		if target == CLUSTER {
+		if target == Token[.CLUSTER] {
 			collectionPath := fmt.tprintf("%s%s", OST_PUBLIC_STANDARD_COLLECTION_PATH, collection)
 			if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
 				fmt.printfln(
@@ -66,7 +67,7 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 				found = true
 				// Remove the return here to continue searching
 			}
-		} else if target == RECORD {
+		} else if target == Token[.RECORD]{
 			colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
 			if success {
 				fmt.printfln(

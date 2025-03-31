@@ -658,7 +658,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation == true {
 				oldName := cmd.l_token[1]
 				collectionName = cmd.l_token[0]
-				newName := cmd.p_token[TO]
+				newName := cmd.p_token[Token[.TO]]
 
 				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
@@ -670,7 +670,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, RENAME, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.RENAME], .STANDARD_PUBLIC)
 
 				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
@@ -726,10 +726,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			newRName: string
 			collectionName: string //only here if using dot notation
 			clusterName: string //only here if using dot notation
-			if TO in cmd.p_token || cmd.isUsingDotNotation == true {
+			if Token[.TO] in cmd.p_token || cmd.isUsingDotNotation == true {
 				if cmd.isUsingDotNotation == true {
 					oldRName = cmd.l_token[2]
-					newRName = cmd.p_token[TO]
+					newRName = cmd.p_token[Token[.TO]]
 					collectionName = cmd.l_token[0]
 					clusterName = cmd.l_token[1]
 
@@ -750,11 +750,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						types.current_user.m_k.valAsBytes,
 					)
 
-					OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, RENAME, .STANDARD_PUBLIC)
+					OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.RENAME], .STANDARD_PUBLIC)
 
 				} else {
 					oldRName = cmd.l_token[0]
-					newRName = cmd.p_token[TO]
+					newRName = cmd.p_token[Token[.TO]]
 				}
 				result := data.OST_RENAME_RECORD(
 					strings.clone(collectionName),
@@ -832,7 +832,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, ERASE, .STANDARD_PUBLIC)
+			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
 
 			if data.OST_ERASE_COLLECTION(collectionName, false) == true {
 				fmt.printfln(
@@ -868,7 +868,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, ERASE, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
 
 				clusterID := data.OST_GET_CLUSTER_ID(collectionName, cluster)
 				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
@@ -964,7 +964,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, ERASE, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
 
 				clusterID := data.OST_GET_CLUSTER_ID(collectionName, clusterName)
 				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
@@ -1035,7 +1035,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, FETCH, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.FETCH], .STANDARD_PUBLIC)
 
 				str := data.OST_FETCH_COLLECTION(collectionName)
 				fmt.println(str)
@@ -1068,7 +1068,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, FETCH, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.FETCH], .STANDARD_PUBLIC)
 
 				clusterContent := data.OST_FETCH_CLUSTER(collectionName, clusterName)
 				fmt.printfln(clusterContent)
@@ -1110,7 +1110,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, FETCH, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.FETCH], .STANDARD_PUBLIC)
 
 				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
@@ -1163,7 +1163,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		{
 		case 3:
 			//Setting a standard records value
-			if TO in cmd.p_token && cmd.isUsingDotNotation {
+			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
@@ -1178,9 +1178,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, SET, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.SET], .STANDARD_PUBLIC)
 
-				value := cmd.p_token[TO] // Get the full string value that was collected by the parser
+				value := cmd.p_token[Token[.TO]] // Get the full string value that was collected by the parser
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
 					BOLD_UNDERLINE,
@@ -1211,13 +1211,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				I guess its not neeeded, if a user wants to have a single character string record who am I to stop them?
 				Remove at any time if needed - Marshall
 				*/
-				if rType == STRING && len(value) == 1 {
+				if rType == Token[.STRING] && len(value) == 1 {
 					conversionSuccess := data.OST_CHANGE_RECORD_TYPE(
 						file,
 						clusterName,
 						recordName,
 						value,
-						CHAR,
+						Token[.CHAR],
 					)
 					if conversionSuccess {
 						fmt.printfln(
@@ -1232,7 +1232,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 
 
-				if rType == NULL {
+				if rType == Token[.NULL] {
 					fmt.printfln(
 						"Cannot a value ssign to record: %s%s%s of type %sNULL%s",
 						BOLD_UNDERLINE,
@@ -1245,11 +1245,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 0
 				}
 
-				if rType == CHAR_ARRAY ||
-				   rType == DATE_ARRAY ||
-				   rType == TIME_ARRAY ||
-				   rType == DATETIME_ARRAY ||
-				   rType == UUID_ARRAY {
+				if rType == Token[.CHAR_ARRAY] ||
+				   rType == Token[.DATE_ARRAY] ||
+				   rType == Token[.TIME_ARRAY]||
+				   rType == Token[.DATETIME_ARRAY]||
+				   rType == Token[.UUID_ARRAY ] {
 					data.OST_MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
 				}
 
@@ -1287,13 +1287,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case 1:
 			switch (cmd.t_token) {
-			case CONFIG:
+			case Token[.CONFIG]:
 				log_runtime_event("Used SET command", "")
-				if TO in cmd.p_token {
+				if Token[.TO] in cmd.p_token {
 					configName := cmd.l_token[0]
-					value := cmd.p_token[TO]
+					value := cmd.p_token[Token[.TO]]
 
-					OST_EXEC_CMD_LINE_PERM_CHECK("", SET, .CONFIG_PRIVATE)
+					OST_EXEC_CMD_LINE_PERM_CHECK("", Token[.SET], .CONFIG_PRIVATE)
 
 					for key, val in cmd.p_token {
 						value = strings.to_lower(val)
@@ -1431,7 +1431,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used COUNT command", "")
 		switch (cmd.t_token)
 		{
-		case COLLECTIONS:
+		case Token[.COLLECTIONS]:
 			result := data.OST_COUNT_COLLECTIONS()
 			switch (result) {
 			case -1:
@@ -1448,7 +1448,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				break
 			}
 			break
-		case CLUSTERS:
+		case Token[.CLUSTERS]:
 			if len(cmd.l_token) == 1 {
 				collectionName := cmd.l_token[0]
 
@@ -1462,7 +1462,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, COUNT, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
 				result := data.OST_COUNT_CLUSTERS(collectionName)
 				switch (result)
@@ -1519,7 +1519,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 
 			break
-		case RECORDS:
+		case Token[.RECORDS]:
 			//in the event the users is counting the records in a specific cluster
 			if (len(cmd.l_token) >= 2 || cmd.isUsingDotNotation == true) {
 				collectionName := cmd.l_token[0]
@@ -1535,7 +1535,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, COUNT, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
 				result := data.OST_COUNT_RECORDS_IN_CLUSTER(
 					strings.clone(collectionName),
@@ -1609,7 +1609,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, COUNT, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
 				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collectionName)
 
@@ -1686,7 +1686,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, PURGE, .STANDARD_PUBLIC)
+			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
 			result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
 			switch result
@@ -1726,7 +1726,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, PURGE, .STANDARD_PUBLIC)
+			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
 			if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
 				result := data.OST_PURGE_CLUSTER(collectionName, clusterName)
@@ -1778,7 +1778,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, PURGE, .STANDARD_PUBLIC)
+			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
 			result := data.OST_PURGE_RECORD(collectionName, clusterName, recordName)
 			switch result {
@@ -1837,7 +1837,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, SIZE_OF, .STANDARD_PUBLIC)
+			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.SIZE_OF], .STANDARD_PUBLIC)
 
 			file_path := concat_standard_collection_name(collectionName)
 			actual_size, metadata_size := OST_SUBTRACT_METADATA_SIZE(file_path)
@@ -1873,7 +1873,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, SIZE_OF, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.SIZE_OF], .STANDARD_PUBLIC)
 
 				//TODO: This is returning an inaccurate size, need to fix
 				size, success := data.OST_GET_CLUSTER_SIZE(collectionName, clusterName)
@@ -1920,7 +1920,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, SIZE_OF, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.SIZE_OF], .STANDARD_PUBLIC)
 
 				size, success := data.OST_GET_RECORD_SIZE(collectionName, clusterName, recordName)
 				if success {
@@ -1976,7 +1976,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, TYPE_OF, .STANDARD_PUBLIC)
+			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.TYPE_OF], .STANDARD_PUBLIC)
 
 			colPath := concat_standard_collection_name(collectionName)
 			rType, success := data.OST_GET_RECORD_TYPE(colPath, clusterName, recordName)
@@ -2025,11 +2025,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		//only works on records
 		switch (len(cmd.l_token)) {
 		case 3:
-			if TO in cmd.p_token && cmd.isUsingDotNotation == true {
+			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation == true {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
-				newType := cmd.p_token[TO]
+				newType := cmd.p_token[Token[.TO]]
 
 				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
@@ -2042,7 +2042,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 				colPath := concat_standard_collection_name(collectionName)
 
-				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, CHANGE_TYPE, .STANDARD_PUBLIC)
+				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.CHANGE_TYPE], .STANDARD_PUBLIC)
 
 				type_is_valid := false
 				for type in VALID_RECORD_TYPES {
@@ -2057,23 +2057,22 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				}
 				//super fucking bad code but tbh its christmas eve and im tired - Marshall
-				if newType == INT || newType == INTEGER {
-					newType = INTEGER
-				} else if newType == STR || newType == STRING {
-					newType = STRING
-				} else if newType == BOOL || newType == BOOLEAN {
-					newType = BOOLEAN
-				} else if newType == FLT || newType == FLOAT {
-					newType = FLOAT
-				} else if newType == STRING_ARRAY || newType == STR_ARRAY {
-					newType = STRING_ARRAY
-					fmt.println("THIS SHOULD BE HAPPENING")
-				} else if newType == INT_ARRAY || newType == INTEGER_ARRAY {
-					newType = INTEGER_ARRAY
-				} else if newType == BOOL_ARRAY || newType == BOOLEAN_ARRAY {
-					newType = BOOLEAN_ARRAY
-				} else if newType == FLOAT_ARRAY || newType == FLT_ARRAY {
-					newType = FLOAT_ARRAY
+				if newType == Token[.INT] || newType == Token[.INTEGER] {
+					newType =  Token[.INTEGER]
+				} else if newType == Token[.STR] || newType == Token[.STRING]{
+					newType = Token[.STRING]
+				} else if newType == Token[.BOOL]|| newType == Token[.BOOLEAN] {
+					newType = Token[.BOOLEAN]
+				} else if newType == Token[.FLT] || newType == Token[.FLOAT] {
+					newType = Token[.FLOAT]
+				} else if newType == Token[.STR_ARRAY] || newType == Token[.STRING_ARRAY] {
+					newType =  Token[.STRING_ARRAY]
+				} else if newType == Token[.INT_ARRAY]|| newType == Token[.INTEGER_ARRAY] {
+					newType = Token[.INTEGER_ARRAY]
+				} else if newType == Token[.BOOL_ARRAY] || newType == Token[.BOOLEAN_ARRAY] {
+					newType = Token[.BOOLEAN_ARRAY]
+				} else if  newType == Token[.FLT_ARRAY] || newType == Token[.FLOAT_ARRAY] {
+					newType = Token[.FLOAT_ARRAY]
 				}
 
 				success := data.OST_HANDLE_TYPE_CHANGE(colPath, clusterName, recordName, newType)
@@ -2134,7 +2133,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, ISOLATE, .STANDARD_PUBLIC)
+			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.ISOLATE], .STANDARD_PUBLIC)
 
 			result, isolatedColName := data.OST_PERFORM_ISOLATION(collectionName)
 			fmt.println("isolatedNAme: ", isolatedColName)

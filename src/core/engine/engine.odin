@@ -62,7 +62,7 @@ OST_START_ENGINE :: proc() -> int {
 
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-	switch (types.OstrichEngine.Initialized) 
+	switch (types.OstrichEngine.Initialized)
 	{
 	case false:
 		//Continue with engine initialization
@@ -78,7 +78,7 @@ OST_START_ENGINE :: proc() -> int {
 				false,
 			)
 			userSignedIn := security.OST_RUN_SIGNIN()
-			switch (userSignedIn) 
+			switch (userSignedIn)
 			{
 			case true:
 				security.OST_START_SESSION_TIMER()
@@ -98,7 +98,7 @@ OST_START_ENGINE :: proc() -> int {
 				autoServeConfigValue := data.OST_READ_RECORD_VALUE(
 					OST_CONFIG_PATH,
 					CONFIG_CLUSTER,
-					BOOLEAN,
+					types.Token[.BOOLEAN],
 					CONFIG_FIVE,
 				)
 				if strings.contains(autoServeConfigValue, "true") {
@@ -187,7 +187,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := security.OST_GET_SESSION_DURATION()
 		maxDurationMet := security.OST_CHECK_SESSION_DURATION(sessionDuration)
-		switch (maxDurationMet) 
+		switch (maxDurationMet)
 		{
 		case false:
 			break

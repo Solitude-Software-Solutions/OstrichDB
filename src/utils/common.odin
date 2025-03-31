@@ -94,14 +94,26 @@ concat_standard_collection_name :: proc(colFileName: string) -> string {
 
 //helper that concats a collections name to the standard collection path for secure collections.
 concat_secure_collection_name :: proc(userName: string) -> string {
+if strings.contains(userName, "secure_"){
 	return strings.clone(
 		fmt.tprintf(
-			"%ssecure_%s%s",
+			"%s%s%s",
 			const.OST_SECURE_COLLECTION_PATH,
 			userName,
 			const.OST_FILE_EXTENSION,
 		),
 	)
+}else {
+    return strings.clone(
+    		fmt.tprintf(
+    			"%ssecure_%s%s",
+    			const.OST_SECURE_COLLECTION_PATH,
+    			userName,
+    			const.OST_FILE_EXTENSION,
+    		),
+	)
+}
+
 }
 
 //helper to get users input from the command line
@@ -158,7 +170,7 @@ get_date_and_time :: proc() -> (gmtDate: string, hour: string, minute: string, s
 	Second := strconv.append_int(sBuf[:], S, 10)
 
 
-	switch (mAsInt) 
+	switch (mAsInt)
 	{
 	case 1:
 		Month = "January"

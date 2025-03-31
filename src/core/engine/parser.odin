@@ -21,7 +21,9 @@ File Description:
 //checks if a token is a valid modifier only used in the parser
 OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	using const
-	validModifiers := []string{OF_TYPE, TO}
+	using types
+
+	validModifiers := []string{Token[.OF_TYPE], Token[.TO]}
 	for modifier in validModifiers {
 		if strings.to_upper(token) == modifier {
 			return true
@@ -30,22 +32,24 @@ OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
 	return false
 }
 
-
-//Takes the users input and parser it into a command. The command is then returned to the caller in engine.odin
-// Add this helper function
+//take the string representation of a token and returns the token itself
 OST_STRING_TO_TOKEN :: proc(str: string) -> types.TokenType {
-    str_upper := strings.to_upper(str)
-    for token, str_val in types.Token {
-        if str_upper == str_val {
-            return token
+    using types
+
+    upperStr := strings.to_upper(str)
+    for tokenStrRepresentation, index in Token {
+        if upperStr == tokenStrRepresentation { //if the passed in string and the token string representation are the same return the enum
+            return index
         }
     }
-    return .INVALID  // Add INVALID to your TokenType enum
+    return TokenType.INVALID
 }
 
-// Update OST_PARSE_COMMAND to use TokenType
+
+//Takes the users input and parser it into a command. The command is then returned to the caller in engine.odin
 OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	using const
+	using types
 
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
@@ -83,10 +87,10 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 		switch state {
 		case 0:
 			// Expecting target
-			switch (cmd.c_token) 
+			#partial switch (cmd.c_token)
 			{
-			case SET:
-				if token == CONFIG {
+			case TokenType.SET:
+				if token == Token[.CONFIG] {
 					cmd.t_token = token
 				} else {
 					cmd.t_token = cmd.t_token
@@ -100,23 +104,23 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 				}
 				state = 1
 				break
-			case WHERE:
-				if token == CLUSTER || token == RECORD {
+			case TokenType.WHERE:
+				if token == Token[.CLUSTER]|| token == Token[.RECORD] {
 					cmd.t_token = token
 				} else {
 					append(&cmd.l_token, token)
 					break
 				}
 				break
-			case HELP:
+			case TokenType.HELP:
 				cmd.t_token = token
 				break
-			case COUNT:
+			case TokenType.COUNT:
 				switch (token) {
-				case COLLECTIONS:
+				case Token[.COLLECTIONS]:
 					cmd.t_token = token
 					break
-				case CLUSTERS, RECORDS:
+				case  Token[.CLUSTERS], Token[.RECORDS]:
 					cmd.t_token = token
 					if strings.contains(token, ".") {
 						cmd.isUsingDotNotation = true
@@ -129,7 +133,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 				}
 				state = 1
 				break
-			case BENCHMARK:
+			case TokenType.BENCHMARK:
 				if strings.contains(token, ".") {
 					cmd.isUsingDotNotation = true
 					iterations := strings.split(strings.trim_space(token), ".")

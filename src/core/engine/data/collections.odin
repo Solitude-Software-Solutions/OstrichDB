@@ -190,6 +190,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 
 OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 	using utils
+	using types
 
 	buf: [64]byte
 	fileWithExt := strings.concatenate([]string{fn, const.OST_FILE_EXTENSION})
@@ -222,10 +223,10 @@ OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 		cap := strings.to_upper(confirmation)
 
 		switch (cap) {
-		case types.Token[.NO]:
+		case Token[.NO]:
 			log_runtime_event("User canceled deletion", "User canceled deletion of collection")
 			return false
-		case types.Token[.YES]:
+		case Token[.YES]:
 		// Continue with deletion
 		case:
 			log_runtime_event(

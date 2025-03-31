@@ -64,9 +64,9 @@ OST_SET_HELP_MODE :: proc() -> bool {
 	using types
 	using utils
 
-	value := data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, BOOLEAN, CONFIG_FOUR)
+	value := data.OST_READ_RECORD_VALUE(OST_CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], CONFIG_FOUR)
 
-	switch (value) 
+	switch (value)
 	{
 	case "true":
 		helpMode.isVerbose = true
@@ -115,7 +115,7 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 		)
 		return ""
 	}
-	switch (helpModeIsVerbose) 
+	switch (helpModeIsVerbose)
 	{
 	case true:
 		data, ok = os.read_entire_file(VERBOSE_HELP_FILE)
