@@ -9,6 +9,7 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+import "./security"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -36,12 +37,16 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	// History Collection file size limit.
 	// Doesnt measure bytes of the file but instead
 	// the num of records of the users command history cluster
+	//
+
+	security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	limitOn := data.OST_READ_RECORD_VALUE(
 		const.OST_CONFIG_PATH,
 		const.CONFIG_CLUSTER,
 		types.Token[.BOOLEAN],
 		const.CONFIG_SEVEN,
 	)
+	security.OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 
 	if limitOn == "true" {
 		limitReached := OST_CHECK_HISTORY_LIMIT_MET(&current_user)
