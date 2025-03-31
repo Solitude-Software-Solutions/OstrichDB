@@ -31,20 +31,24 @@ OST_SET_FFV :: proc() -> string {
 	return strings.clone(str)
 }
 
+
 //Gets the files size
 OST_GET_FS :: proc(file: string) -> os.File_Info {
 	fileSize, _ := os.stat(file)
 	return fileSize
 }
+
+
 //this will get the size of the file and then subtract the size of the metadata header
 //then return the difference
 OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	using const
 	using utils
+
 	fileInfo, err := os.stat(file)
 	if err != 0 {
 		utils.log_err("Error getting file info", #procedure)
-		return -1, -1
+		return -1,-1
 	}
 
 	totalSize := int(fileInfo.size)
@@ -52,7 +56,7 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
 		log_err("Error reading file", #procedure)
-		return -1, -1
+		return -2,-2
 	}
 	defer delete(data)
 
@@ -62,7 +66,7 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	metadataEnd := strings.index(content, METADATA_END)
 	if metadataEnd == -1 {
 		log_err("Metadata end marker not found", #procedure)
-		return -1, -1
+		return -3,-3
 	}
 
 	// Add length of end marker to get total metadata size
@@ -135,7 +139,7 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 		return false
 	}
 
-	dataAsStr := cast(string)rawData //todo: why in the hell did I use cast??? just use string() instead???
+	dataAsStr := cast(string)rawData
 	if strings.has_prefix(dataAsStr, "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@") {
 		log_err("Metadata header already present", #procedure)
 		return false

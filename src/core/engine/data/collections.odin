@@ -34,6 +34,26 @@ main :: proc() {
 }
 
 
+//Displays all collections. total also shows size of the data in bytes.
+//Todo: Not really a tree, was implemented before but i took it out because it was fucking up - Marshall
+OST_GET_COLLECTION_TREE :: proc() {
+	dir,_:= os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	collections,_:= os.read_dir(dir,1)
+	totalSize:i64
+
+	fmt.println("-----------------------------\n")
+	for collection in collections{
+	nameWithoutExtension := strings.trim_suffix(collection.name, const.OST_FILE_EXTENSION)
+	fmt.printfln("Name: %s       Bytes:%d", nameWithoutExtension, collection.size)
+	totalSize = totalSize + collection.size
+	}
+
+	fmt.println()
+	fmt.printfln("Grand Total: %d Bytes (Includes Metadata Header)", totalSize)
+	fmt.println("-----------------------------\n")
+
+}
+
 //used for the command line
 OST_CHOOSE_COLLECTION_NAME :: proc() {
 	buf: [1024]byte
@@ -411,7 +431,8 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 }
 
 //Returns an array of all standard collections
-OST_GET_ALL_COLLECTION_NAMES :: proc(showRecords: bool) -> [dynamic]string {
+//if args are false wont print anything just return the names
+OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection,showRecords: bool) -> [dynamic]string {
 	using const
 
 	collectionsDir, errOpen := os.open(OST_PUBLIC_STANDARD_COLLECTION_PATH)

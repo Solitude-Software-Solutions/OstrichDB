@@ -35,34 +35,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using utils
 	using security
 	using types
-	// using data //cant use this when using utils namespace
-
-	//TODO: not even using these...
-	incompleteCommandErr := new_err(
-		.INCOMPLETE_COMMAND,
-		get_err_msg(.INCOMPLETE_COMMAND),
-		#file,
-		#procedure,
-		#line,
-	)
-
-	invalidCommandErr := new_err(
-		.INVALID_COMMAND,
-		get_err_msg(.INVALID_COMMAND),
-		#file,
-		#procedure,
-		#line,
-	)
 
 	//Semi global Server shit
 	ServerConfig := types.Server_Config {
 		port = 8042,
 	}
 
-
 	defer delete(cmd.l_token)
-
-
 	#partial switch (cmd.c_token)
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
@@ -115,7 +94,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//Shows a tree-like structure of the dbms
 	case .TREE:
 		log_runtime_event("Used TREE command", "User requested to view a tree of the database.")
-		data.OST_GET_DATABASE_TREE()
+		data.OST_GET_COLLECTION_TREE()
 		break
 	// Shows the current users past command history
 	case .HISTORY:
@@ -2400,7 +2379,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		)
 		break
 	case .UNLOCK:
-		//TODO: only admin users can use the UNLOCK command, this may change in the future but for now it is locked to admin users
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]

@@ -475,19 +475,6 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 	return result
 }
 
-//Displays all collections as a tree. also shows size in bytes. DOES NOT subrtact metadata header sizes
-OST_GET_DATABASE_TREE :: proc() {
-	OST_GET_ALL_COLLECTION_NAMES(true)
-	// on MacOS, the below call always shows 64b as the size of all collections so need to always subract 64b from the total size even if there are no collections
-	//TODO: need to test on Linux
-	totalSize := metadata.OST_GET_FS(const.OST_PUBLIC_STANDARD_COLLECTION_PATH).size
-	sizeMinus64 := totalSize - 64
-
-	// output data size
-	fmt.printfln("Total Size of data: %d Bytes (Not counting metadata)", sizeMinus64)
-	fmt.println("-----------------------------\n")
-
-}
 
 //Ensure the passed in type is valid. if a valid shorthand type is provided via the command line,
 //then the 'longhand' value is assigned, then returned
