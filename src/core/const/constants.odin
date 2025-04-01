@@ -19,6 +19,7 @@ OST_DEV_MODE :: #config(OST_DEV_MODE, false)
 //See more here: https://github.com/Solitude-Software-Solutions/OstrichDB/issues/223
 //DO NOT TOUCH MF - Marshall
 when OST_DEV_MODE == true {
+    OST_ROOT :: "./"
 	OST_TMP_PATH :: "./tmp/"
 	OST_PRIVATE_PATH :: "./private/"
 	OST_PUBLIC_PATH :: "./public/"
@@ -37,6 +38,7 @@ when OST_DEV_MODE == true {
 	OST_RESTART_SCRIPT_PATH :: "../scripts/restart.sh"
 	OST_BUILD_SCRIPT_PATH :: "../scripts/local_build_run.sh"
 } else {
+    OST_ROOT :: "./.ostrichdb/"
 	OST_TMP_PATH :: "./.ostrichdb/tmp/"
 	OST_PRIVATE_PATH :: "./.ostrichdb/private/"
 	OST_PUBLIC_PATH :: "./.ostrichdb/public/"
