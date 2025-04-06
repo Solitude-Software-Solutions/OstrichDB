@@ -37,15 +37,15 @@ main :: proc() {
 //Displays all collections. total also shows size of the data in bytes.
 //Todo: Not really a tree, was implemented before but i took it out because it was fucking up - Marshall
 OST_GET_COLLECTION_TREE :: proc() {
-	dir,_:= os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
-	collections,_:= os.read_dir(dir,1)
-	totalSize:i64
+	dir, _ := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	collections, _ := os.read_dir(dir, 1)
+	totalSize: i64
 
 	fmt.println("-----------------------------\n")
-	for collection in collections{
-	nameWithoutExtension := strings.trim_suffix(collection.name, const.OST_FILE_EXTENSION)
-	fmt.printfln("Name: %s       Bytes:%d", nameWithoutExtension, collection.size)
-	totalSize = totalSize + collection.size
+	for collection in collections {
+		nameWithoutExtension := strings.trim_suffix(collection.name, const.OST_FILE_EXTENSION)
+		fmt.printfln("Name: %s       Bytes:%d", nameWithoutExtension, collection.size)
+		totalSize = totalSize + collection.size
 	}
 
 	fmt.println()
@@ -85,7 +85,7 @@ Creates a new collection file with metadata within the DB
 OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	#partial switch (colType)
+	#partial switch (colType) 
 	{
 	case .STANDARD_PUBLIC:
 		//standard cluster file
@@ -432,7 +432,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 
 //Returns an array of all standard collections
 //if args are false wont print anything just return the names
-OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection,showRecords: bool) -> [dynamic]string {
+OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection, showRecords: bool) -> [dynamic]string {
 	using const
 
 	collectionsDir, errOpen := os.open(OST_PUBLIC_STANDARD_COLLECTION_PATH)

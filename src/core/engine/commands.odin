@@ -42,7 +42,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	}
 
 	defer delete(cmd.l_token)
-	#partial switch (cmd.c_token)
+	#partial switch (cmd.c_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
@@ -376,7 +376,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				result := data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
 				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 
-				switch (result)
+				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
@@ -478,7 +478,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"",
 						rType,
 					)
-					switch (appendSuccess)
+					switch (appendSuccess) 
 					{
 					case 0:
 						fmt.printfln(
@@ -494,7 +494,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						//IF a records type is NULL, technically it cant hold a value, the word NULL in the value slot
 						// of a record is mostly a placeholder
 						if rType == Token[.NULL] {
-							data.OST_SET_RECORD_VALUE(colPath, clusterName, recordName, Token[.NULL])
+							data.OST_SET_RECORD_VALUE(
+								colPath,
+								clusterName,
+								recordName,
+								Token[.NULL],
+							)
 						}
 
 						fn := concat_standard_collection_name(collectionName)
@@ -556,7 +561,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case .RENAME:
 		log_runtime_event("Used RENAME command", "")
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			if Token[.TO] in cmd.p_token {
@@ -586,7 +591,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 				success := data.OST_RENAME_COLLECTION(oldName, newName)
-				switch (success)
+				switch (success) 
 				{
 				case true:
 					fmt.printf(
@@ -740,7 +745,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					oldRName,
 					newRName,
 				)
-				switch (result)
+				switch (result) 
 				{
 				case 0:
 					fmt.printfln(
@@ -795,7 +800,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case .ERASE:
 		log_runtime_event("Used ERASE command", "")
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			collectionName := cmd.l_token[0]
@@ -996,7 +1001,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case .FETCH:
 		log_runtime_event("Used FETCH command", "")
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
@@ -1137,7 +1142,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// SET: Allows for the setting of values within records or configs
 	case .SET:
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 3:
 			//Setting a standard records value
@@ -1225,9 +1230,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				if rType == Token[.CHAR_ARRAY] ||
 				   rType == Token[.DATE_ARRAY] ||
-				   rType == Token[.TIME_ARRAY]||
-				   rType == Token[.DATETIME_ARRAY]||
-				   rType == Token[.UUID_ARRAY ] {
+				   rType == Token[.TIME_ARRAY] ||
+				   rType == Token[.DATETIME_ARRAY] ||
+				   rType == Token[.UUID_ARRAY] {
 					data.OST_MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
 				}
 
@@ -1285,7 +1290,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						value,
 						RESET,
 					)
-					switch (configName)
+					switch (configName) 
 					{
 					case "HELP_VERBOSE":
 						if value == "true" || value == "false" {
@@ -1407,7 +1412,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// COUNT: Allows for the counting of collections, clusters, or records
 	case .COUNT:
 		log_runtime_event("Used COUNT command", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case Token[.COLLECTIONS]:
 			result := data.OST_COUNT_COLLECTIONS()
@@ -1443,7 +1448,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
 				result := data.OST_COUNT_CLUSTERS(collectionName)
-				switch (result)
+				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
@@ -1591,7 +1596,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collectionName)
 
-				switch result
+				switch result 
 				{
 				case -1:
 					fmt.printfln(
@@ -1649,7 +1654,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .PURGE:
 		collectionName, clusterName, recordName: string
 		log_runtime_event("Used PURGE command", "")
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			collectionName = cmd.l_token[0]
@@ -1667,7 +1672,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
 			result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
-			switch result
+			switch result 
 			{
 			case true:
 				fmt.printfln(
@@ -2036,20 +2041,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 				//super fucking bad code but tbh its christmas eve and im tired - Marshall
 				if newType == Token[.INT] || newType == Token[.INTEGER] {
-					newType =  Token[.INTEGER]
-				} else if newType == Token[.STR] || newType == Token[.STRING]{
+					newType = Token[.INTEGER]
+				} else if newType == Token[.STR] || newType == Token[.STRING] {
 					newType = Token[.STRING]
-				} else if newType == Token[.BOOL]|| newType == Token[.BOOLEAN] {
+				} else if newType == Token[.BOOL] || newType == Token[.BOOLEAN] {
 					newType = Token[.BOOLEAN]
 				} else if newType == Token[.FLT] || newType == Token[.FLOAT] {
 					newType = Token[.FLOAT]
 				} else if newType == Token[.STR_ARRAY] || newType == Token[.STRING_ARRAY] {
-					newType =  Token[.STRING_ARRAY]
-				} else if newType == Token[.INT_ARRAY]|| newType == Token[.INTEGER_ARRAY] {
+					newType = Token[.STRING_ARRAY]
+				} else if newType == Token[.INT_ARRAY] || newType == Token[.INTEGER_ARRAY] {
 					newType = Token[.INTEGER_ARRAY]
 				} else if newType == Token[.BOOL_ARRAY] || newType == Token[.BOOLEAN_ARRAY] {
 					newType = Token[.BOOLEAN_ARRAY]
-				} else if  newType == Token[.FLT_ARRAY] || newType == Token[.FLOAT_ARRAY] {
+				} else if newType == Token[.FLT_ARRAY] || newType == Token[.FLOAT_ARRAY] {
 					newType = Token[.FLOAT_ARRAY]
 				}
 
@@ -2231,8 +2236,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// //IMPORT: Imports foreign data into OstrichDB
 	case .IMPORT:
-	    transfer.OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
-		transfer.OST_HANDLE_IMPORT()
+		transfer.OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
+		importSuccess := transfer.OST_HANDLE_IMPORT()
+		if importSuccess {
+			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
+		} else {
+			fmt.printfln("%sFailed to import data%s", RED, RESET)
+		}
+
 		break
 	case .EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")
@@ -2410,7 +2421,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				} else {
 					passwordConfirmed := security.OST_CONFIRM_COLLECECTION_UNLOCK()
-					switch (passwordConfirmed)
+					switch (passwordConfirmed) 
 					{
 					case false:
 						fmt.printfln(

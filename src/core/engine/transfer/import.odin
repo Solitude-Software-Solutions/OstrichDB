@@ -23,160 +23,183 @@ File Description:
 
 
 //looks over the root directory to see if there any .csv or .json files
-OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES::proc() -> bool {
-    detected:= false
-    detectedCount := 0
-    fileNames:= make([dynamic]string)
-    defer delete(fileNames)
+OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES :: proc() -> bool {
+	detected := false
+	detectedCount := 0
+	fileNames := make([dynamic]string)
+	defer delete(fileNames)
 
-    dir, dirOpenErr:= os.open(const.OST_ROOT)
-    if dirOpenErr != nil{
-        fmt.println("ERROR: Unable to open root directory")
-        return false
-    }
+	dir, dirOpenErr := os.open(const.OST_ROOT)
+	if dirOpenErr != nil {
+		fmt.println("ERROR: Unable to open root directory")
+		return false
+	}
 
-    files, readDirErr:= os.read_dir(dir, 0)
-    if readDirErr != nil {
-        fmt.println("ERROR: Unable to read over root directory")
-        return false
-    }
+	files, readDirErr := os.read_dir(dir, 0)
+	if readDirErr != nil {
+		fmt.println("ERROR: Unable to read over root directory")
+		return false
+	}
 
-    for file in files{
-        if strings.contains(file.name, ".csv") || strings.contains(file.name, ".json"){
-            detectedCount += 1
-            append(&fileNames,file.name)
-        }
-    }
+	for file in files {
+		if strings.contains(file.name, ".csv") || strings.contains(file.name, ".json") {
+			detectedCount += 1
+			append(&fileNames, file.name)
+		}
+	}
 
-    if detectedCount != 0{
-        detected = true
-        fmt.printfln("OstrichDB detected %d possible import files in its root directory.", detectedCount)
-        for f in fileNames{
-            fmt.printfln("Name: %s ",f)
-        }
-        fmt.println("Would you like to import one of these files into OstrichDB? [Y/N]")
+	if detectedCount != 0 {
+		detected = true
+		fmt.printfln(
+			"OstrichDB detected %d possible import files in its root directory.",
+			detectedCount,
+		)
+		for f in fileNames {
+			fmt.printfln("Name: %s ", f)
+		}
+		fmt.println("Would you like to import one of these files into OstrichDB? [Y/N]")
 
-        confirmation:= utils.get_input(false)
-        if confirmation == "Y" || confirmation == "y"
-        {
-            success:= select_import_from_root(fileNames)
-            return success
+		confirmation := utils.get_input(false)
+		if confirmation == "Y" || confirmation == "y" {
+			success := select_import_from_root(fileNames)
+			return success
 
-        }else if confirmation == "N" || confirmation == "n"{
-            fmt.println("Ok, Please continue manually importing")
-        }else{
-            fmt.println("Please enter a valid input...[Y/N]")
-            OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
+		} else if confirmation == "N" || confirmation == "n" {
+			fmt.println("Ok, Please continue manually importing")
+			return false
+		} else {
+			fmt.println("Please enter a valid input...[Y/N]")
+			OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
 
-        }
-    }else{
-        fmt.println("OstrichDB was unable to detect any import files in its root directory")
-    }
+		}
+	} else {
+		fmt.println("OstrichDB was unable to detect any import files in its root directory")
+	}
 
-    return detected
+	return detected
 }
 
 //helper for above proc
-select_import_from_root::proc(fileNames:[dynamic]string) -> bool{
-    importSuccess:= false
+//TODO: this needs work. If the detection shows "main.csv" and the user enters that. the program cant find the file
+//because the file may be "./main.csv". This needs to be exact..
+select_import_from_root :: proc(fileNames: [dynamic]string) -> bool {
+	importSuccess := false
 
-    fmt.println("Please enter the name of the if you would like to import...")
-    fmt.println("To cancel this operation enter: 'cancel' or 'quit' ")
-    input:= utils.get_input(false)
+	fmt.println("Please enter the name of the file you would like to import...")
+	fmt.println("To cancel this operation enter: 'cancel' or 'quit' ")
+	input := utils.get_input(false)
 
-    if input == "cancel" || input == "quit"{
-        fmt.println("Canceling operation")
-        return importSuccess
-    }
+	if input == "cancel" || input == "quit" {
+		fmt.println("Canceling operation")
+		return importSuccess
+	}
 
-    for file in fileNames{
-        if input != file{
-            fmt.println("The provided name does not match any of the detected files.")
-            fmt.println("Please try again...")
-            select_import_from_root(fileNames)
-        }else if input == file{
-            fmt.printfln("Importing file: %s into OstrichDB", file)
-           importSuccess :=  OST_IMPORT_CSV_FILE(file)
-        }
-    }
-    return importSuccess
+	for file in fileNames {
+		if input != file {
+			fmt.println("The provided name does not match any of the detected files.")
+			fmt.println("Please try again...")
+			select_import_from_root(fileNames)
+		} else if input == file {
+			fmt.printfln("Importing file: %s into OstrichDB", file)
+			importSuccess := OST_IMPORT_CSV_FILE(file)
+		}
+	}
+	return importSuccess
 }
 
-OST_HANDLE_IMPORT ::proc() -> (success: bool){
-    success = false
-    name,size,importType:= OST_GET_IMPORT_FILE_INFO()
+OST_HANDLE_IMPORT :: proc() -> (success: bool) {
+	success = false
+	name, size, importType := OST_GET_IMPORT_FILE_INFO()
 
-    if OST_CONFIRM_IMPORT_EXISTS(name){
-        if OST_IMPORT_CSV_FILE(name){
-            success = true
-        }
-    }
-    return success
+	if OST_CONFIRM_IMPORT_EXISTS(name) {
+		//now ensure the file is not empty.
+
+		if OST_IMPORT_CSV_FILE(name) {
+			success = true
+		} else {
+			fmt.println("Import operation could not be completed. Please try again.")
+		}
+	}
+	return success
 }
 
 // returns the file import name, size, and type
 // type: 0 = .csv, 1 = .json , -1 = error
-OST_GET_IMPORT_FILE_INFO :: proc()-> (name:string, size:i64, importType:int){
-    using utils
+OST_GET_IMPORT_FILE_INFO :: proc() -> (name: string, size: i64, importType: int) {
+	using utils
 
-    name = ""
-    size = -1
-    importType = -1
+	name = ""
+	size = -1
+	importType = -1
 
-    fmt.println("Please enter the full path of the file you would like to import")
-    fmt.println("Note: This must be relative to the root or your OstrichDB install")
-    input:= utils.get_input(false)
-    fmt.printfln("Searching for import file: %s%s%s...", BOLD_UNDERLINE,input,RESET)
+	fmt.println("Please enter the full path of the file you would like to import.")
+	fmt.println("Note: This must be relative to the root of your OstrichDB install")
+	fmt.println("Enter 'cancel' or 'quit' to terminate this operation.")
+	input := utils.get_input(false)
 
-    fileFound := OST_CONFIRM_IMPORT_EXISTS(input)
-    if !fileFound{
-        fmt.printfln("%sERROR%s OstrichDB was unable to find the file: %s%s%s", RED,RESET, BOLD_UNDERLINE, input, RESET )
-        fmt.println("Please try again and make sure the file exists in the path provided.")
-        return name,size,importType
-    }else if fileFound{
-        fmt.printfln("OstrichDB successfully found file: %s%s%s!", BOLD_UNDERLINE,input,RESET)
-    }
+	if input == "cancel" ||
+	   input == "quit" ||
+	   input == strings.to_upper("cancel") ||
+	   input == strings.to_upper("quit") {
+		return name, size, importType
+	}
 
-    name = strings.trim_prefix("/",input) //this will need to trim everything left of the very last '/' in the file path
-    info := metadata.OST_GET_FS(input)
-    size = info.size
-    fmt.println("info: ",info)
-    fmt.println("name: ",name)
-    fmt.println("size: ",size)
+	fmt.printfln("Searching for import file: %s%s%s...", BOLD_UNDERLINE, input, RESET)
 
-    if strings.contains(input, ".csv"){
-        importType = 0
+	fileFound := OST_CONFIRM_IMPORT_EXISTS(input)
+	if !fileFound {
+		fmt.printfln(
+			"%sERROR%s OstrichDB was unable to find the file: %s%s%s",
+			RED,
+			RESET,
+			BOLD_UNDERLINE,
+			input,
+			RESET,
+		)
+		fmt.println("Please try again and make sure the file exists in the path provided.")
+		return name, size, importType
+	} else if fileFound {
+		fmt.printfln("OstrichDB successfully found file: %s%s%s!", BOLD_UNDERLINE, input, RESET)
+	}
 
-    }else if strings.contains(input, ".json"){
-        importType = 1
-    }
+	info := metadata.OST_GET_FS(input)
+	size = info.size
+	name = info.name
 
-    fmt.println("importType: ",importType)
-    return name,size,importType
+	// fmt.println("info: ", info) //debugging
+	// fmt.println("name: ", name) //debugging
+	// fmt.println("size: ", size) //debugging
+
+	if strings.contains(input, ".csv") {
+		importType = 0
+
+	} else if strings.contains(input, ".json") {
+		importType = 1
+	}
+
+	return name, size, importType
 }
 
 //USed to make sure the file the user wants to import exists
-OST_CONFIRM_IMPORT_EXISTS :: proc(importFilePath: string) -> bool{
-    fileExists := false
+OST_CONFIRM_IMPORT_EXISTS :: proc(importFilePath: string) -> bool {
+	fileExists := false
 
-    file, openSuccess := os.open(importFilePath, os.O_RDWR)
-    if openSuccess !=nil {
-        fileExists = true
-    }
+	file, openSuccess := os.open(importFilePath, os.O_RDWR)
+	if openSuccess == 0 {
+		fileExists = true
+	}
+	os.close(file)
 
-    os.close(file)
-    return fileExists
+	return fileExists
 }
 
 
 //Handles all logic for importing the passed in .csv file into OstrichDB as a new foriegn collection
-OST_IMPORT_CSV_FILE :: proc(fn: string) -> (success:bool) {
+OST_IMPORT_CSV_FILE :: proc(fn: string) -> (success: bool) {
 	using data
 	success = false
 
-	collectionPath := utils.concat_standard_collection_name(fn)
 	csvClusterName := fmt.tprintf("%s_%s", fn, const.CSV_CLU)
-	// csvFile := fmt.tprintf("./%s.csv", strings.to_upper(fn)) //old
 	csvFile := fn //new
 
 	head, body, recordCount := OST_GET_CSV_DATA(csvFile)
@@ -186,17 +209,24 @@ OST_IMPORT_CSV_FILE :: proc(fn: string) -> (success:bool) {
 		return success
 	}
 
-	colCreationSuccess:= OST_CREATE_COLLECTION(strings.to_upper(fn), .STANDARD_PUBLIC) //create a collection with the name of the .csv file
-	if !colCreationSuccess{
-    	fmt.println("Failed to create collection for import file")
-    	return success
+	//remove the file extension from file name
+	desiredColName := strings.trim_right(fn, ".csv")
+	collectionPath := utils.concat_standard_collection_name(desiredColName)
+
+	colCreationSuccess := OST_CREATE_COLLECTION(
+		strings.to_upper(desiredColName),
+		.STANDARD_PUBLIC,
+	) //create a collection with the name of the .csv file
+	if !colCreationSuccess {
+		fmt.println("Failed to create collection for import file")
+		return success
 	}
 
 	id := OST_GENERATE_ID(true)
-	cluCreationSuccess:= OST_CREATE_CLUSTER(strings.to_upper(fn), csvClusterName, id)
-	if cluCreationSuccess != 0{
-        fmt.println("Failed to create cluster within new import collection")
-    	return success
+	cluCreationSuccess := OST_CREATE_CLUSTER(strings.to_upper(desiredColName), csvClusterName, id)
+	if cluCreationSuccess != 0 {
+		fmt.println("Failed to create cluster within new import collection")
+		return success
 	}
 
 
@@ -209,23 +239,31 @@ OST_IMPORT_CSV_FILE :: proc(fn: string) -> (success:bool) {
 		columnValues := (fmt.tprintf("%v", cols[colIndex]))
 
 		if OST_APPEND_CSV_RECORD_INTO_OSTRICH(
-			collectionPath,
-			csvClusterName,
-			columnName,
-			columnType,
-			columnValues,
-		) != 0{
-		    fmt.println("Failed to append a CSV record into OstrichDB collection. Canceling operation")
+			   collectionPath,
+			   csvClusterName,
+			   columnName,
+			   columnType,
+			   columnValues,
+		   ) !=
+		   0 {
+			fmt.println(
+				"Failed to append a CSV record into OstrichDB collection. Canceling operation",
+			)
 			return success
 		}
 	}
 
 	metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
-	encryptSuccess, _ := security.OST_ENCRYPT_COLLECTION(fn, .STANDARD_PUBLIC, types.system_user.m_k.valAsBytes, false)
+	encryptSuccess, _ := security.OST_ENCRYPT_COLLECTION(
+		desiredColName,
+		.STANDARD_PUBLIC,
+		types.system_user.m_k.valAsBytes,
+		false,
+	)
 
-	if encryptSuccess != 0{
-	    fmt.println("Failed to encrypt CSV import collection")
-    	return success
+	if encryptSuccess != 0 {
+		fmt.println("Failed to encrypt CSV import collection")
+		return success
 	}
 
 
