@@ -18,3 +18,4 @@ ols.json
 *go.mod
 *ModelFile
 *.json
+*.csv
