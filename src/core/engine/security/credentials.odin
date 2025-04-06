@@ -196,7 +196,7 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 		for r in enteredStr {
 			if r == ' ' {
 				fmt.printfln(
-					"%sWarning:%sThe entered username: %s%s%s contains spaces. Please enter a username that does NOT contain spaces.\n",
+					"%sWARNING:%s The entered username: %s%s%s contains spaces. Please enter a username that does NOT contain spaces.\n",
 					utils.YELLOW,
 					utils.RESET,
 					utils.BOLD_UNDERLINE,
@@ -238,7 +238,7 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 			   r == '/' ||
 			   r == '?' {
 				fmt.printfln(
-					"%sWarning:%sThe entered username: %s%s%s contains special characters. Please enter a username that does NOT contain special characters.",
+					"%sWARNING:%s The entered username: %s%s%s contains special characters. Please enter a username that does NOT contain special characters.",
 					utils.YELLOW,
 					utils.RESET,
 					utils.BOLD_UNDERLINE,
