@@ -2236,14 +2236,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// //IMPORT: Imports foreign data formats into OstrichDB. Currently only supports .csv files
 	case .IMPORT:
-		transfer.OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
-		importSuccess := transfer.OST_HANDLE_IMPORT()
-		if importSuccess {
-			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
-		} else {
-			fmt.printfln("%sFailed to import data%s", RED, RESET)
+		detected, autoImportSuccess:=transfer.OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
+		if detected && autoImportSuccess == true{
+		  fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
+		  break
+		} else if detected == true && autoImportSuccess == false{ //files were detected but user wanted to continue manually or the import failed
+    		importSuccess := transfer.OST_HANDLE_IMPORT()
+    		if importSuccess {
+    			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
+    		} else {
+    			fmt.printfln("%sFailed to import data%s", RED, RESET)
+    		}
+    		break
 		}
-		break
+
+		fmt.println("detected: ", detected)
+		fmt.println("autoImportSuccess: ", autoImportSuccess)
+
+
 	case .EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")
 		break
