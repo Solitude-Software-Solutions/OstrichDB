@@ -45,7 +45,7 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
             echo "Updated $SHELL_CONFIG with PATH information"
         fi
     else
-        echo "Warning: Could not determine your shell configuration file."
+        echo "WARNING: Could not determine your shell configuration file."
         echo "Please manually add $INSTALL_DIR to your PATH."
     fi
 fi
@@ -100,7 +100,7 @@ if [ $? -eq 0 ]; then
     echo "Installing OstrichDB to $INSTALL_DIR/ostrichdb"
     cp "../bin/main.bin" "$INSTALL_DIR/ostrichdb"
     chmod +x "$INSTALL_DIR/ostrichdb"
-    
+
     # Create a launcher script that preserves all paths
     echo "Creating launcher script..."
     cat > "$INSTALL_DIR/ostrichdb_launcher" << 'EOF'
@@ -150,7 +150,7 @@ if command -v ostrichdb >/dev/null 2>&1; then
     echo "ostrichdb"
     echo "Note: Ensure your terminal's current working directory is your home directory."
 else
-    echo "Warning: Installation complete, but the 'ostrichdb' command is not in your PATH."
+    echo "WARNING: Installation complete, but the 'ostrichdb' command is not in your PATH."
     echo "Please restart your terminal or run:"
     echo "    source $SHELL_CONFIG"
     echo ""

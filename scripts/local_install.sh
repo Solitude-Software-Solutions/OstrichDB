@@ -45,7 +45,7 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
             echo "Updated $SHELL_CONFIG with PATH information"
         fi
     else
-        echo "Warning: Could not determine your shell configuration file."
+        echo "WARNING: Could not determine your shell configuration file."
         echo "Please manually add $INSTALL_DIR to your PATH."
     fi
 fi
@@ -139,7 +139,7 @@ if command -v ostrichdb >/dev/null 2>&1; then
     echo "ostrichdb"
     echo "Note: Ensure your terminals current working directory is your home directory."
 else
-    echo "Warning: Installation complete, but the 'ostrichdb' command is not in your PATH."
+    echo "WARNING: Installation complete, but the 'ostrichdb' command is not in your PATH."
     echo "Please restart your terminal or run:"
     echo "    source $SHELL_CONFIG"
     echo ""
