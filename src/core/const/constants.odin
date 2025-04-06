@@ -195,9 +195,7 @@ BannedUserNames := []string {
 }
 
 
-//IMPORT CONSTANTS
-//suffix that is added to the cluster name when a .csv file is imported
-CSV_CLU :: "_CSV_IMPORT"
+
 
 
 //SERVER DYNAMIC ROUTE CONSTANTS

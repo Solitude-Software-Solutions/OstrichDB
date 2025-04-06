@@ -218,7 +218,7 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath :..string ) -> (success: bool
 	   OST_IMPORT_CSV_FILE(name,fullPath[0])
 	}
 
-	csvClusterName := fmt.tprintf("%s_%s",strings.to_upper(desiredColName), const.CSV_CLU)
+	csvClusterName := strings.to_upper(desiredColName)
 	head, body, recordCount := OST_GET_CSV_DATA(fullPath[0])
 	inferSucces, csvTypes := OST_INFER_CSV_RECORD_TYPES(head, recordCount)
 	if !inferSucces {
@@ -253,7 +253,7 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath :..string ) -> (success: bool
 		if OST_APPEND_CSV_RECORD_INTO_OSTRICH(
 			   collectionPath,
 			   csvClusterName,
-			   columnName,
+			   strings.to_upper(columnName),
 			   columnType,
 			   columnValues,
 		   ) !=
