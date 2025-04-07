@@ -83,7 +83,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 
 	//update the history file size, date last modified and checksum
-	OST_UPDATE_METADATA_AFTER_OPERATION(const.HISTORY_PATH)
+	UPDATE_METADATA_AFTER_OPERATIONS(const.HISTORY_PATH)
 }
 
 

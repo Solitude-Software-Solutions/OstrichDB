@@ -24,7 +24,7 @@ main :: proc() {
 	using const
 
 	//Create the core dirs and files OstrichDB needs to function
-	metadata.OST_CREATE_FFVF()
+	metadata.CREATE_FFV_FILE()
 	os.make_directory(PRIVATE_PATH)
 	os.make_directory(PUBLIC_PATH)
 	os.make_directory(STANDARD_COLLECTION_PATH)
@@ -94,8 +94,8 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		}
 		collectionPath := utils.concat_standard_collection_name(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
-		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, colType)
+		metadata.APPEND_METADATA_HEADER(collectionPath)
+		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -108,7 +108,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 			utils.log_err("Error creating new collection file", #procedure)
 			return false
 		}
-		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 		defer os.close(createFile)
 		return true
 	case .SECURE_PRIVATE:
@@ -118,8 +118,8 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		}
 		collectionPath := fmt.tprintf("%s%s%s", const.SECURE_COLLECTION_PATH, fn, const.OST_EXT)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
-		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
+		metadata.APPEND_METADATA_HEADER(collectionPath)
+		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -132,15 +132,15 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 		defer os.close(createFile)
 		return true
 
 	case .CONFIG_PRIVATE:
 		collectionPath := const.CONFIG_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
-		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, colType)
+		metadata.APPEND_METADATA_HEADER(collectionPath)
+		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -153,15 +153,15 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 		defer os.close(createFile)
 		return true
 
 	case .HISTORY_PRIVATE:
 		collectionPath := const.HISTORY_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
-		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
+		metadata.APPEND_METADATA_HEADER(collectionPath)
+		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -174,15 +174,15 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 		defer os.close(createFile)
 		return true
 
 	case .ID_PRIVATE:
 		collectionPath := const.ID_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
-		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
-		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
+		metadata.APPEND_METADATA_HEADER(collectionPath)
+		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
 		if createSuccess != 0 {
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
@@ -195,7 +195,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 			utils.log_err("Error creating .ost file", #procedure)
 			return false
 		}
-		metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 		defer os.close(createFile)
 		return true
 	}
@@ -581,7 +581,7 @@ OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm:
 		return false, ""
 	}
 	fmt.printfln("%s() is getting... fn:%s, val:%s, flag:%s ", #procedure, fn, val, flag)
-	success := metadata.OST_CHANGE_METADATA_VALUE(fn, val, 1, .STANDARD_PUBLIC)
+	success := metadata.CHANGE_METADATA_MEMBER_VALUE(fn, val, 1, .STANDARD_PUBLIC)
 	return success, val
 }
 
@@ -589,10 +589,10 @@ OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm:
 OST_UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
 	success := false
 	if currentPerm == "Inaccessible" {
-		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)
+		success = metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)
 		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
 	} else if currentPerm == "Read-Only" {
-		success = metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)
+		success = metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)
 		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
 	} else {
 		fmt.printfln(

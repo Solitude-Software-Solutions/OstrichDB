@@ -95,7 +95,14 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 	//todo: TREE should be allowed but if a collection is set to inaccessable then that collection should not be shown
 
 	//these commands will work on a collection that is set to read only or read write
-	readWriteOrReadOnlyCommands := []string{Token[.WHERE], Token[.COUNT], Token[.FETCH], Token[.SIZE_OF], Token[.TYPE_OF], Token[.VALIDATE]}
+	readWriteOrReadOnlyCommands := []string {
+		Token[.WHERE],
+		Token[.COUNT],
+		Token[.FETCH],
+		Token[.SIZE_OF],
+		Token[.TYPE_OF],
+		Token[.VALIDATE],
+	}
 
 	//These commands will work on a collection that is set to read write
 	readWriteCommands := []string {
@@ -107,7 +114,7 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 		Token[.PURGE],
 		Token[.CHANGE_TYPE],
 		Token[.LOCK],
-		Token[.NEW]
+		Token[.NEW],
 	}
 
 
@@ -189,7 +196,11 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 	defer free(commandOperation)
 
 
-	permissionValue, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", colType)
+	permissionValue, success := metadata.GET_METADATA_MEMBER_VALUE(
+		colName,
+		"# Permission",
+		colType,
+	)
 	for perm in commandPermissions {
 		opIsAllowed := OST_OPERATION_IS_ALLOWED(permissionValue, commandOperation)
 		if !opIsAllowed {
@@ -209,7 +220,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 //Used to check if a collection is already locked before attempting to lock it again
 OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
-	lockStatus, success := metadata.OST_GET_METADATA_VALUE(
+	lockStatus, success := metadata.GET_METADATA_MEMBER_VALUE(
 		colName,
 		"# Permission",
 		.STANDARD_PUBLIC,
@@ -270,7 +281,7 @@ OST_EXEC_CMD_LINE_PERM_CHECK :: proc(
 		colName,
 		colType,
 	)
-	switch (permissionCheckResult)
+	switch (permissionCheckResult) 
 	{
 	case 0:
 		//If the permission check passes, re-encrypt the "secure" collection and continue with the operation

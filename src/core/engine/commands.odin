@@ -301,7 +301,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 					fileName := concat_standard_collection_name(cmd.l_token[0])
-					OST_UPDATE_METADATA_ON_CREATE(fileName)
+					UPDATE_METADATA_UPON_CREATION(fileName)
 
 					OST_ENCRYPT_COLLECTION(
 						cmd.l_token[0],
@@ -411,7 +411,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					break
 				}
 				fn = concat_standard_collection_name(collectionName)
-				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 			} else {
 				fmt.printfln(
 					"Invalid command. Correct Usage: NEW <collection_name>.<cluster_name>",
@@ -503,7 +503,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						}
 
 						fn := concat_standard_collection_name(collectionName)
-						OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+						UPDATE_METADATA_AFTER_OPERATIONS(fn)
 						break
 					case -1, 1:
 						fmt.printfln(
@@ -681,7 +681,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					fn := concat_standard_collection_name(collectionName)
 
-					OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+					UPDATE_METADATA_AFTER_OPERATIONS(fn)
 				} else {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
@@ -909,7 +909,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 				}
 				fn := concat_standard_collection_name(collectionName)
-				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
@@ -1259,7 +1259,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 
 				fn := concat_standard_collection_name(collectionName)
-				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 			}
 			OST_ENCRYPT_COLLECTION(
 				cmd.l_token[0],
@@ -1294,12 +1294,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					{
 					case "HELP_VERBOSE":
 						if value == "true" || value == "false" {
-							success := config.OST_UPDATE_CONFIG_VALUE(HELP_IS_VERBOSE, value)
+							success := config.UPDATE_CONFIG_VALUE(HELP_IS_VERBOSE, value)
 							if success == false {
 								fmt.printfln("Failed to set HELP config to %s", value)
 							} else {
-								AUTO_OST_UPDATE_METADATA_VALUE(CONFIG_PATH, 4)
-								AUTO_OST_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
+								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 4)
+								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
 								fmt.printfln("Successfully set HELP config to %s", value)
 							}
 							help.OST_SET_HELP_MODE()
@@ -1320,7 +1320,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-							success := config.OST_UPDATE_CONFIG_VALUE(ERROR_SUPPRESSION, value)
+							success := config.UPDATE_CONFIG_VALUE(ERROR_SUPPRESSION, value)
 							if success == false {
 								fmt.printfln("Failed to set SUPPRESS_ERRORS config to %s", value)
 							} else {
@@ -1347,7 +1347,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-							success := config.OST_UPDATE_CONFIG_VALUE(LIMIT_HISTORY, value)
+							success := config.UPDATE_CONFIG_VALUE(LIMIT_HISTORY, value)
 							if success == false {
 								fmt.printfln("Failed to set LIMIT_HISTORY config to %s", value)
 							} else {
@@ -1371,7 +1371,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-							success := config.OST_UPDATE_CONFIG_VALUE(AUTO_SERVE, value)
+							success := config.UPDATE_CONFIG_VALUE(AUTO_SERVE, value)
 							if success == false {
 								fmt.printfln("Failed to set AUTO_SERVE config to %s", value)
 							} else {
@@ -1682,7 +1682,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 				file := concat_standard_collection_name(collectionName)
-				OST_UPDATE_METADATA_AFTER_OPERATION(file)
+				UPDATE_METADATA_AFTER_OPERATIONS(file)
 				break
 			case false:
 				fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
@@ -1823,7 +1823,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.SIZE_OF], .STANDARD_PUBLIC)
 
 			file_path := concat_standard_collection_name(collectionName)
-			actual_size, metadata_size := OST_SUBTRACT_METADATA_SIZE(file_path)
+			actual_size, metadata_size := SUBTRACT_METADATA_SIZE(file_path)
 			if actual_size != -1 {
 				fmt.printf(
 					"Size of collection %s: %d bytes (excluding %d bytes of metadata)\n",
@@ -2439,7 +2439,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						)
 						return 1
 					case true:
-						currentPerm, err := metadata.OST_GET_METADATA_VALUE(
+						currentPerm, err := metadata.GET_METADATA_MEMBER_VALUE(
 							colName,
 							"# Permission",
 							.STANDARD_PUBLIC,

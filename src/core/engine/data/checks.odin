@@ -48,7 +48,7 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 
 	Severity_Code = 0
 	data_integrity_checks.File_Size.Compliant = true
-	fileInfo := metadata.OST_GET_FS(concat_standard_collection_name(fn))
+	fileInfo := metadata.GET_FS(concat_standard_collection_name(fn))
 	fileSize := fileInfo.size
 
 	if fileSize > MAX_FILE_SIZE {
@@ -64,7 +64,7 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 
 	data_integrity_checks.File_Format.Compliant = true
 	clusterScanSuccess, invalidClusterFound := OST_SCAN_CLUSTER_STRUCTURE(fn)
-	headerScanSuccess, invalidHeaderFound := metadata.OST_SCAN_METADATA_HEADER_FORMAT(fn)
+	headerScanSuccess, invalidHeaderFound := metadata.SCAN_METADATA_HEADER_FORMAT(fn)
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
 		utils.log_err("Cluster structure is not compliant", #procedure)
 		data_integrity_checks.File_Format.Compliant = false
@@ -105,7 +105,7 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 		}
 	}
 
-	currentChecksum := metadata.OST_GENERATE_CHECKSUM(filePath)
+	currentChecksum := metadata.GENERATE_CHECKSUM(filePath)
 
 	if storedChecksum != currentChecksum {
 		utils.log_err("Checksums do not match", #procedure)

@@ -27,15 +27,15 @@ main :: proc() {
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 	OST_CREATE_CLUSTER_BLOCK(const.CONFIG_PATH, id, const.CONFIG_CLUSTER)
 
-	appendSuccess := OST_APPEND_ALL_CONFIG_RECORDS()
+	appendSuccess := APPEND_ALL_CONFIG_RECORDS()
 	if !appendSuccess {
 		utils.log_err("Failed to append all config records", #procedure)
 		fmt.println("ERROR: Failed to append all config records")
 		fmt.println("Please rebuild OstrichDB")
 	}
-
 }
 
+//TODO NOT USING THIS
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	using utils
 	configExists: bool
@@ -64,7 +64,7 @@ OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 
 //used to first append config records to the config cluster when the config file is created
 //essentially the same as data.APPEND_RECORD_TO_CLUSTER but explicitly for the config collection file and no print statements.
-OST_APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
+APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	using const
 	using utils
 
@@ -129,7 +129,7 @@ OST_APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 }
 
 
-OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
+APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	using const
 	using utils
 	using types
@@ -138,29 +138,29 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 
 	successCount := 0
 	// Append all the records to the config cluster
-	if OST_APPEND_CONFIG_RECORD(ENGINE_INIT, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(ENGINE_INIT, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(ENGINE_LOGGING, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(ENGINE_LOGGING, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(USER_LOGGED_IN, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(USER_LOGGED_IN, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(HELP_IS_VERBOSE, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(HELP_IS_VERBOSE, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(AUTO_SERVE, "true", bool) == 0 { 	//server mode on by default while working on it
+	if APPEND_CONFIG_RECORD(AUTO_SERVE, "true", bool) == 0 { 	//server mode on by default while working on it
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(ERROR_SUPPRESSION, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(ERROR_SUPPRESSION, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", bool) == 0 {
+	if APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", bool) == 0 {
 		successCount += 1
 	}
 
-	metadata.OST_UPDATE_METADATA_ON_CREATE(CONFIG_PATH)
+	metadata.UPDATE_METADATA_UPON_CREATION(CONFIG_PATH)
 
 	if successCount != 7 {
 		return false
@@ -171,7 +171,7 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 
 //used to update a config value when a user uses the SET command
 //essentially the same as the data.OST_SET_RECORD_VALUE proc but explicitly for the config collection file.
-OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
+UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	using const
 	using utils
 	using types

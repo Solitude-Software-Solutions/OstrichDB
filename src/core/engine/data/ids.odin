@@ -81,7 +81,7 @@ OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 	OST_CREATE_CLUSTER_BLOCK(const.ID_PATH, cluTwoid, USER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
-	metadata.OST_UPDATE_METADATA_ON_CREATE(ID_PATH)
+	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)
 }
 
 //appends eiter a user id or a cluster id to their respective clusters in the id collection

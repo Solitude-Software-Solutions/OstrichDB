@@ -193,7 +193,7 @@ OST_GET_IMPORT_FILE_INFO :: proc(
 		)
 	}
 
-	info := metadata.OST_GET_FS(input)
+	info := metadata.GET_FS(input)
 	size = info.size
 	name = info.name
 	fullPath = info.fullpath
@@ -293,7 +293,7 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool)
 		}
 	}
 
-	metadata.OST_UPDATE_METADATA_ON_CREATE(collectionPath)
+	metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 	encryptSuccess, _ := security.OST_ENCRYPT_COLLECTION(
 		desiredColName,
 		.STANDARD_PUBLIC,

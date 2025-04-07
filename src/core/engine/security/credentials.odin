@@ -121,7 +121,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
 
-	engineInit := config.OST_UPDATE_CONFIG_VALUE(ENGINE_INIT, "true")
+	engineInit := config.UPDATE_CONFIG_VALUE(ENGINE_INIT, "true")
 
 	switch (engineInit) 
 	{
@@ -132,10 +132,10 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-	metadata.OST_UPDATE_METADATA_ON_CREATE(HISTORY_PATH)
-	metadata.OST_UPDATE_METADATA_ON_CREATE(ID_PATH)
-	metadata.OST_UPDATE_METADATA_ON_CREATE(CONFIG_PATH)
-	metadata.OST_UPDATE_METADATA_ON_CREATE(
+	metadata.UPDATE_METADATA_UPON_CREATION(HISTORY_PATH)
+	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)
+	metadata.UPDATE_METADATA_UPON_CREATION(CONFIG_PATH)
+	metadata.UPDATE_METADATA_UPON_CREATION(
 		fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, inituserName, OST_EXT),
 	)
 
@@ -430,7 +430,7 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, rn: string, rd: st
 	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
 	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, rn, rd, "identifier", id)
 
-	OST_UPDATE_METADATA_AFTER_OPERATION(secureFilePath)
+	UPDATE_METADATA_AFTER_OPERATIONS(secureFilePath)
 	return 0
 }
 

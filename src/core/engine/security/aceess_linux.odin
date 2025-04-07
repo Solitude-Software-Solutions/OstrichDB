@@ -185,7 +185,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 	defer free(commandOperation)
 
 
-	permissionValue, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+	permissionValue, success := metadata.GET_METADATA_MEMBER_VALUE(colName, "# Permission", 1)
 	for perm in commandPermissions {
 		opIsAllowed := OST_OPERATION_IS_ALLOWED(permissionValue, commandOperation)
 		if !opIsAllowed {
@@ -204,7 +204,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) ->
 //Used to check if a collection is already locked before attempting to lock it again
 OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
-	lockStatus, success := metadata.OST_GET_METADATA_VALUE(colName, "# Permission", 1)
+	lockStatus, success := metadata.GET_METADATA_MEMBER_VALUE(colName, "# Permission", 1)
 	if lockStatus == "Read-Only" || lockStatus == "Inaccessible" {
 		isAlreadyLocked = true
 	}
