@@ -25,7 +25,7 @@ main :: proc() {
 	OST_CREATE_COLLECTION("", .CONFIG_PRIVATE)
 	id := OST_GENERATE_ID(true)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
-	OST_CREATE_CLUSTER_BLOCK(const.OST_CONFIG_PATH, id, const.CONFIG_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK(const.CONFIG_PATH, id, const.CONFIG_CLUSTER)
 
 	appendSuccess := OST_APPEND_ALL_CONFIG_RECORDS()
 	if !appendSuccess {
@@ -39,7 +39,7 @@ main :: proc() {
 OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	using utils
 	configExists: bool
-	binDir, e := os.open(const.OST_PRIVATE_PATH)
+	binDir, e := os.open(const.PRIVATE_PATH)
 	defer os.close(binDir)
 
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)
@@ -68,7 +68,7 @@ OST_APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	using const
 	using utils
 
-	fn := OST_CONFIG_PATH
+	fn := CONFIG_PATH
 	cn := CONFIG_CLUSTER
 
 	data, readSuccess := utils.read_file(fn, #procedure)
@@ -134,33 +134,33 @@ OST_APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	using utils
 	using types
 
-	bool:= Token[.BOOLEAN]
+	bool := Token[.BOOLEAN]
 
 	successCount := 0
 	// Append all the records to the config cluster
-	if OST_APPEND_CONFIG_RECORD(CONFIG_ONE, "false", bool) == 0 {
+	if OST_APPEND_CONFIG_RECORD(ENGINE_INIT, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_TWO, "false", bool) == 0 {
+	if OST_APPEND_CONFIG_RECORD(ENGINE_LOGGING, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_THREE, "false", bool) == 0 {
+	if OST_APPEND_CONFIG_RECORD(USER_LOGGED_IN, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_FOUR, "false", bool) == 0 {
+	if OST_APPEND_CONFIG_RECORD(HELP_IS_VERBOSE, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_FIVE, "true", bool) == 0 { 	//server mode on by default while working on it
+	if OST_APPEND_CONFIG_RECORD(AUTO_SERVE, "true", bool) == 0 { 	//server mode on by default while working on it
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_SIX, "false", bool) == 0 {
+	if OST_APPEND_CONFIG_RECORD(ERROR_SUPPRESSION, "false", bool) == 0 {
 		successCount += 1
 	}
-	if OST_APPEND_CONFIG_RECORD(CONFIG_SEVEN, "true", bool) == 0 {
+	if OST_APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", bool) == 0 {
 		successCount += 1
 	}
 
-	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(CONFIG_PATH)
 
 	if successCount != 7 {
 		return false
@@ -176,21 +176,21 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	using utils
 	using types
 
-	result := data.OST_CHECK_IF_RECORD_EXISTS(OST_CONFIG_PATH, CONFIG_CLUSTER, rn)
+	result := data.OST_CHECK_IF_RECORD_EXISTS(CONFIG_PATH, CONFIG_CLUSTER, rn)
 	if !result {
 		fmt.printfln("Config: %s%s% does not exist", BOLD_UNDERLINE, rn, RESET)
 		return false
 	}
 
 	// Read the collection file
-	res, readSuccess := read_file(OST_CONFIG_PATH, #procedure)
+	res, readSuccess := read_file(CONFIG_PATH, #procedure)
 	defer delete(res)
 	if !readSuccess {
 		fmt.printfln("Failed to read config file")
 		return false
 	}
 
-	recordType, getTypeSuccess := data.OST_GET_RECORD_TYPE(OST_CONFIG_PATH, CONFIG_CLUSTER, rn)
+	recordType, getTypeSuccess := data.OST_GET_RECORD_TYPE(CONFIG_PATH, CONFIG_CLUSTER, rn)
 	//Standard value allocation
 	valueAny: any = 0
 	ok: bool
@@ -228,7 +228,7 @@ OST_UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	}
 
 	// Update the record in the file
-	success := data.OST_UPDATE_RECORD_IN_FILE(OST_CONFIG_PATH, CONFIG_CLUSTER, rn, valueAny)
+	success := data.OST_UPDATE_RECORD_IN_FILE(CONFIG_PATH, CONFIG_CLUSTER, rn, valueAny)
 
 	return success
 }

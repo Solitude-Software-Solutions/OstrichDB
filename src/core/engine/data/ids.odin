@@ -68,20 +68,20 @@ OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 	cluOneid := OST_GENERATE_ID(true)
 
 	// doing this prevents the creation of cluster_id records each time the program starts up. Only allows it once
-	if OST_CHECK_IF_CLUSTER_EXISTS(OST_ID_PATH, CLUSTER_ID_CLUSTER) == true &&
-	   OST_CHECK_IF_CLUSTER_EXISTS(OST_ID_PATH, USER_ID_CLUSTER) == true {
+	if OST_CHECK_IF_CLUSTER_EXISTS(ID_PATH, CLUSTER_ID_CLUSTER) == true &&
+	   OST_CHECK_IF_CLUSTER_EXISTS(ID_PATH, USER_ID_CLUSTER) == true {
 		return
 	}
 	//create a cluster for cluster ids
-	OST_CREATE_CLUSTER_BLOCK(const.OST_ID_PATH, cluOneid, CLUSTER_ID_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK(const.ID_PATH, cluOneid, CLUSTER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
 
 	cluTwoid := OST_GENERATE_ID(true)
 	//create a cluster for user ids
-	OST_CREATE_CLUSTER_BLOCK(const.OST_ID_PATH, cluTwoid, USER_ID_CLUSTER)
+	OST_CREATE_CLUSTER_BLOCK(const.ID_PATH, cluTwoid, USER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
-	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_ID_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(ID_PATH)
 }
 
 //appends eiter a user id or a cluster id to their respective clusters in the id collection
@@ -100,7 +100,7 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 		recordName := fmt.tprintf("%s%s", "clusterID_", idCountStr)
 
 		appendSuccess := OST_APPEND_RECORD_TO_CLUSTER(
-			OST_ID_PATH,
+			ID_PATH,
 			CLUSTER_ID_CLUSTER,
 			recordName,
 			idStr,
@@ -114,7 +114,7 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 		recordName := fmt.tprintf("%s%s", "userID_", idCountStr)
 
 		appendSuccess := OST_APPEND_RECORD_TO_CLUSTER(
-			OST_ID_PATH,
+			ID_PATH,
 			USER_ID_CLUSTER,
 			recordName,
 			idStr,
@@ -133,11 +133,11 @@ OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
 	file, cn, rv: string
 
 	if isUserId {
-		file = const.OST_ID_PATH
+		file = const.ID_PATH
 		cn = const.USER_ID_CLUSTER
 		rv = id
 	} else {
-		file = const.OST_ID_PATH
+		file = const.ID_PATH
 		cn = const.CLUSTER_ID_CLUSTER
 		rv = id
 	}
@@ -233,7 +233,7 @@ OST_SCAN_FOR_ID_RECORD_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
 	success: bool
 
 
-	data, readSuccess := utils.read_file(const.OST_ID_PATH, #procedure)
+	data, readSuccess := utils.read_file(const.ID_PATH, #procedure)
 	if !readSuccess {
 		return "", false
 	}

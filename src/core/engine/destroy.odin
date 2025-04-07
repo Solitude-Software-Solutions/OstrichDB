@@ -67,10 +67,10 @@ OST_DESTROY :: proc() {
 
 
 	dirs := []string {
-		const.OST_PRIVATE_PATH,
-		const.OST_PUBLIC_PATH,
-		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
-		const.OST_SECURE_COLLECTION_PATH,
+		const.PRIVATE_PATH,
+		const.PUBLIC_PATH,
+		const.STANDARD_COLLECTION_PATH,
+		const.SECURE_COLLECTION_PATH,
 		const.LOG_DIR_PATH,
 		"./tmp/",
 	}

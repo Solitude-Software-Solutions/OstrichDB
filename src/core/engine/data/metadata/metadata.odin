@@ -48,7 +48,7 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	fileInfo, err := os.stat(file)
 	if err != 0 {
 		utils.log_err("Error getting file info", #procedure)
-		return -1,-1
+		return -1, -1
 	}
 
 	totalSize := int(fileInfo.size)
@@ -56,7 +56,7 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
 		log_err("Error reading file", #procedure)
-		return -2,-2
+		return -2, -2
 	}
 	defer delete(data)
 
@@ -66,7 +66,7 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	metadataEnd := strings.index(content, METADATA_END)
 	if metadataEnd == -1 {
 		log_err("Metadata end marker not found", #procedure)
-		return -3,-3
+		return -3, -3
 	}
 
 	// Add length of end marker to get total metadata size
@@ -281,10 +281,10 @@ OST_CREATE_FFVF :: proc() {
 	using utils
 
 	CURRENT_FFV := get_ost_version()
-	os.make_directory(const.OST_TMP_PATH)
+	os.make_directory(const.TMP_PATH)
 
-	tmpPath := OST_TMP_PATH
-	pathAndName := fmt.tprintf("%s%s", tmpPath, OST_FFVF_PATH)
+	tmpPath := TMP_PATH
+	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF_PATH)
 
 	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
 	defer os.close(file)
@@ -324,8 +324,8 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 	using const
 	using utils
 
-	FFVF := OST_FFVF_PATH
-	tmpPath := OST_TMP_PATH
+	FFVF := FFVF_PATH
+	tmpPath := TMP_PATH
 	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF)
 
 	ffvf, openSuccess := os.open(pathAndName)
@@ -455,13 +455,13 @@ OST_GET_METADATA_VALUE :: proc(
 		file = concat_standard_collection_name(fn)
 		break
 	case .CONFIG_PRIVATE:
-		file = OST_CONFIG_PATH
+		file = CONFIG_PATH
 		break
 	case .HISTORY_PRIVATE:
-		file = OST_HISTORY_PATH
+		file = HISTORY_PATH
 		break
 	case .ID_PRIVATE:
-		file = OST_ID_PATH
+		file = ID_PATH
 		break
 	}
 
@@ -536,16 +536,16 @@ OST_CHANGE_METADATA_VALUE :: proc(
 		file = concat_standard_collection_name(fn)
 		break
 	case .SECURE_PRIVATE:
-		file = fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, fn, ".ost")
+		file = fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, fn, ".ost")
 		break
 	case .CONFIG_PRIVATE:
-		file = OST_CONFIG_PATH
+		file = CONFIG_PATH
 		break
 	case .HISTORY_PRIVATE:
-		file = OST_HISTORY_PATH
+		file = HISTORY_PATH
 		break
 	case .ID_PRIVATE:
-		file = OST_ID_PATH
+		file = ID_PATH
 		break
 	//TODO: add case for benchmark collection
 

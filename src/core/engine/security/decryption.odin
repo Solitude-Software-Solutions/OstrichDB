@@ -59,13 +59,13 @@ OST_DECRYPT_COLLECTION :: proc(
 		file = utils.concat_secure_collection_name(colName)
 		break
 	case .CONFIG_PRIVATE:
-		file = const.OST_CONFIG_PATH
+		file = const.CONFIG_PATH
 		break
 	case .HISTORY_PRIVATE:
-		file = const.OST_HISTORY_PATH
+		file = const.HISTORY_PATH
 		break
 	case .ID_PRIVATE:
-		file = const.OST_ID_PATH
+		file = const.ID_PATH
 		break
 	}
 

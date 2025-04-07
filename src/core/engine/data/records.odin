@@ -267,16 +267,16 @@ OST_FETCH_EVERY_RECORD_BY_NAME :: proc(rName: string) -> [dynamic]string {
 	recordType: string
 	recordData: string
 
-	collectionDir, openDirSuccess := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	collectionDir, openDirSuccess := os.open(const.STANDARD_COLLECTION_PATH)
 	collections, readDirSuccess := os.read_dir(collectionDir, -1) //might not be -1
 
 	for collection in collections {
-		colPath := fmt.tprintf("%s%s", const.OST_PUBLIC_STANDARD_COLLECTION_PATH, collection.name)
+		colPath := fmt.tprintf("%s%s", const.STANDARD_COLLECTION_PATH, collection.name)
 		data, collectionReadSuccess := os.read_entire_file(colPath)
 		defer delete(data)
 		content := string(data)
 
-		colNameNoExt := strings.trim_right(collection.name, const.OST_FILE_EXTENSION)
+		colNameNoExt := strings.trim_right(collection.name, const.OST_EXT)
 		//getting the name of each cluster that the record name is found in per database
 		clusters := strings.split(content, "}")
 		for cluster in clusters {
@@ -360,7 +360,7 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 
 	rExists := OST_CHECK_IF_RECORD_EXISTS(collectionPath, cn, new)
 
-	switch rExists
+	switch rExists 
 	{
 	case true:
 		fmt.printfln(
@@ -479,13 +479,13 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 //Ensure the passed in type is valid. if a valid shorthand type is provided via the command line,
 //then the 'longhand' value is assigned, then returned
 OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
-    using types
-    using const
+	using types
+	using const
 
 	for type in VALID_RECORD_TYPES {
 		if rType == type {
-			switch (rType)
-			{ //The first 8 cases handle if the type is shorthand
+			switch (rType) 
+			{ 	//The first 8 cases handle if the type is shorthand
 			case Token[.STR]:
 				record.type = Token[.STRING]
 				break
@@ -502,7 +502,7 @@ OST_SET_RECORD_TYPE :: proc(rType: string) -> (string, int) {
 				record.type = Token[.STRING_ARRAY]
 				break
 			case Token[.INT_ARRAY]:
-				record.type =Token[.INTEGER_ARRAY]
+				record.type = Token[.INTEGER_ARRAY]
 				break
 			case Token[.FLT_ARRAY]:
 				record.type = Token[.FLOAT_ARRAY]
@@ -597,9 +597,9 @@ OST_FIND_RECORD_IN_CLUSTER :: proc(
 ) {
 	collectionPath := fmt.tprintf(
 		"%s%s%s",
-		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
+		const.STANDARD_COLLECTION_PATH,
 		strings.to_upper(collectionName),
-		const.OST_FILE_EXTENSION,
+		const.OST_EXT,
 	)
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
@@ -704,11 +704,7 @@ OST_SCAN_COLLECTION_FOR_RECORD :: proc(
 	cluName: string,
 	success: bool,
 ) {
-	collectionPath := fmt.tprintf(
-		"%s%s",
-		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
-		collectionName,
-	)
+	collectionPath := fmt.tprintf("%s%s", const.STANDARD_COLLECTION_PATH, collectionName)
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
@@ -757,7 +753,7 @@ OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 	defer delete(collections)
 	defer delete(clusters)
 
-	colDir, openDirSuccess := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	colDir, openDirSuccess := os.open(const.STANDARD_COLLECTION_PATH)
 
 	files, err := os.read_dir(colDir, 1)
 	if err != 0 {
@@ -776,10 +772,7 @@ OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 
 	for file in files {
 		if !strings.has_suffix(file.name, ".ost") do continue
-		filepath := strings.join(
-			[]string{const.OST_PUBLIC_STANDARD_COLLECTION_PATH, file.name},
-			"",
-		)
+		filepath := strings.join([]string{const.STANDARD_COLLECTION_PATH, file.name}, "")
 		data, readSuccess := os.read_entire_file(filepath)
 		if !readSuccess {
 			fmt.println("Error reading file:", file.name)
@@ -791,7 +784,7 @@ OST_SCAN_COLLECTIONS_FOR_RECORD :: proc(
 		foundMatches := OST_FIND_RECORD_MATCHES_IN_CLUSTERS(content, rName)
 
 		for match in foundMatches {
-			withoutExt := strings.split(file.name, const.OST_FILE_EXTENSION)
+			withoutExt := strings.split(file.name, const.OST_EXT)
 			append(&collections, withoutExt[0])
 			append(&clusters, match)
 		}
@@ -1397,7 +1390,7 @@ OST_PUSH_RECORDS_TO_ARRAY :: proc(cn: string) -> [dynamic]string {
 	histBuf: [1024]byte
 
 
-	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
+	data, readSuccess := utils.read_file(const.HISTORY_PATH, #procedure)
 	defer delete(data)
 	if !readSuccess {
 		return records
@@ -1434,12 +1427,7 @@ OST_COUNT_RECORDS_IN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
 		collectionPath = utils.concat_standard_collection_name(fn)
 
 	} else if isCounting == false {
-		collectionPath = fmt.tprintf(
-			"%s%s%s",
-			const.OST_PRIVATE_PATH,
-			fn,
-			const.OST_FILE_EXTENSION,
-		)
+		collectionPath = fmt.tprintf("%s%s%s", const.PRIVATE_PATH, fn, const.OST_EXT)
 	}
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
@@ -1606,9 +1594,9 @@ OST_GET_RECORD_SIZE :: proc(
 ) {
 	collection_path := fmt.tprintf(
 		"%s%s%s",
-		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
+		const.STANDARD_COLLECTION_PATH,
 		collection_name,
-		const.OST_FILE_EXTENSION,
+		const.OST_EXT,
 	)
 	data, read_success := utils.read_file(collection_path, #procedure)
 	if !read_success {
@@ -1640,7 +1628,7 @@ OST_GET_RECORD_SIZE :: proc(
 
 
 OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
-	data, readSuccess := utils.read_file(const.OST_HISTORY_PATH, #procedure)
+	data, readSuccess := utils.read_file(const.HISTORY_PATH, #procedure)
 	if !readSuccess {
 		return -1
 	}
@@ -1685,7 +1673,7 @@ OST_COUNT_RECORDS_IN_HISTORY_CLUSTER :: proc(username: string) -> int {
 //If the type is a []CHAR then remove the double qoutes and replace them with single qoutes
 //if []DATE, []TIME, []DATETIME then remove the qoutes and replace them with nothing
 OST_MODIFY_ARRAY_VALUES :: proc(fn, cn, rn, rType: string) -> (string, bool) {
-    using types
+	using types
 	// Get the current record value
 	recordValue := OST_READ_RECORD_VALUE(fn, cn, rType, rn)
 	if recordValue == "" {

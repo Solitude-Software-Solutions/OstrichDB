@@ -147,10 +147,10 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		current_user.role.Value = strings.clone(userRole)
 
 		userLoggedInValue := data.OST_READ_RECORD_VALUE(
-			OST_CONFIG_PATH,
+			CONFIG_PATH,
 			CONFIG_CLUSTER,
 			Token[.BOOLEAN],
-			CONFIG_THREE,
+			USER_LOGGED_IN,
 		)
 
 		//Master Key shit
@@ -167,8 +167,8 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 
 		if userLoggedInValue == "false" {
-			// config.OST_TOGGLE_CONFIG(const.CONFIG_THREE)
-			config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_THREE, "true")
+			// config.OST_TOGGLE_CONFIG(const.USER_LOGGED_IN)
+			config.OST_UPDATE_CONFIG_VALUE(const.USER_LOGGED_IN, "true")
 		}
 		break
 	case false:
@@ -216,19 +216,19 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 //param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
 OST_USER_LOGOUT :: proc(param: int) {
 	security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	loggedOut := config.OST_UPDATE_CONFIG_VALUE(const.CONFIG_THREE, "false")
+	loggedOut := config.OST_UPDATE_CONFIG_VALUE(const.USER_LOGGED_IN, "false")
 
 	switch loggedOut {
 	case true:
-		switch (param)
+		switch (param) 
 		{
 		case 0:
-		    //Logging out but keeps program running
+			//Logging out but keeps program running
 			OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 		case 1:
-		    //Exiting
+			//Exiting
 			OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")

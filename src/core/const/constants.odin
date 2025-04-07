@@ -13,58 +13,57 @@ File Description:
 
 //Defines is a command line constant pfor file paths
 //Read more about this here: https://odin-lang.org/docs/overview/#command-line-defines
-OST_DEV_MODE :: #config(OST_DEV_MODE, false)
+DEV_MODE :: #config(DEV_MODE, false)
 
 //Conditional file path constants thanks to the install debacle of Feb 2025 - Marshall
 //See more here: https://github.com/Solitude-Software-Solutions/OstrichDB/issues/223
 //DO NOT TOUCH MF - Marshall
-when OST_DEV_MODE == true {
-    OST_ROOT :: "./"
-	OST_TMP_PATH :: "./tmp/"
-	OST_PRIVATE_PATH :: "./private/"
-	OST_PUBLIC_PATH :: "./public/"
-	OST_PUBLIC_STANDARD_COLLECTION_PATH :: "./public/standard/"
-	OST_SECURE_COLLECTION_PATH :: "./private/secure/"
-	OST_BACKUP_PATH :: "./public/backups/"
-	OST_CONFIG_PATH :: "./private/config.ost"
-	OST_ID_PATH :: "./private/ids.ost"
-	OST_HISTORY_PATH :: "./private/history.ost"
-	OST_BENCHMARK_PATH :: "./private/benchmark/"
+when DEV_MODE == true {
+	ROOT_PATH :: "./"
+	TMP_PATH :: "./tmp/"
+	PRIVATE_PATH :: "./private/"
+	PUBLIC_PATH :: "./public/"
+	STANDARD_COLLECTION_PATH :: "./public/standard/"
+	SECURE_COLLECTION_PATH :: "./private/secure/"
+	BACKUP_PATH :: "./public/backups/"
+	CONFIG_PATH :: "./private/config.ost"
+	ID_PATH :: "./private/ids.ost"
+	HISTORY_PATH :: "./private/history.ost"
+	BENCHMARK_PATH :: "./private/benchmark/"
 	LOG_DIR_PATH :: "./logs/"
 	RUNTIME_LOG_PATH :: "./logs/runtime.log"
 	ERROR_LOG_PATH :: "./logs/errors.log"
 	SERVER_LOG_PATH :: "./logs/server_events.log"
-	OST_QUARANTINE_PATH :: "./public/quarantine/"
-	OST_RESTART_SCRIPT_PATH :: "../scripts/restart.sh"
-	OST_BUILD_SCRIPT_PATH :: "../scripts/local_build_run.sh"
+	QUARANTINE_PATH :: "./public/quarantine/"
+	RESTART_SCRIPT_PATH :: "../scripts/restart.sh"
+	BUILD_SCRIPT_PATH :: "../scripts/local_build_run.sh"
 } else {
-    OST_ROOT :: "./.ostrichdb/"
-	OST_TMP_PATH :: "./.ostrichdb/tmp/"
-	OST_PRIVATE_PATH :: "./.ostrichdb/private/"
-	OST_PUBLIC_PATH :: "./.ostrichdb/public/"
-	OST_PUBLIC_STANDARD_COLLECTION_PATH :: "./.ostrichdb/public/standard/"
-	OST_SECURE_COLLECTION_PATH :: "./.ostrichdb/private/secure/"
-	OST_BACKUP_PATH :: "./.ostrichdb/public/backups/"
-	OST_CONFIG_PATH :: "./.ostrichdb/private/config.ost"
-	OST_ID_PATH :: "./.ostrichdb/private/ids.ost"
-	OST_HISTORY_PATH :: "./.ostrichdb/private/history.ost"
-	OST_BENCHMARK_PATH :: "./.ostrichdb/private/benchmark/"
+	ROOT_PATH :: "./.ostrichdb/"
+	TMP_PATH :: "./.ostrichdb/tmp/"
+	PRIVATE_PATH :: "./.ostrichdb/private/"
+	PUBLIC_PATH :: "./.ostrichdb/public/"
+	STANDARD_COLLECTION_PATH :: "./.ostrichdb/public/standard/"
+	SECURE_COLLECTION_PATH :: "./.ostrichdb/private/secure/"
+	BACKUP_PATH :: "./.ostrichdb/public/backups/"
+	CONFIG_PATH :: "./.ostrichdb/private/config.ost"
+	ID_PATH :: "./.ostrichdb/private/ids.ost"
+	HISTORY_PATH :: "./.ostrichdb/private/history.ost"
+	BENCHMARK_PATH :: "./.ostrichdb/private/benchmark/"
 	LOG_DIR_PATH :: "./.ostrichdb/logs/"
 	RUNTIME_LOG_PATH :: "./.ostrichdb/logs/runtime.log"
 	ERROR_LOG_PATH :: "./.ostrichdb/logs/errors.log"
 	SERVER_LOG_PATH :: "./.ostrichdb/logs/server_events.log"
-	OST_QUARANTINE_PATH :: "./.ostrichdb/public/quarantine/"
-	OST_RESTART_SCRIPT_PATH :: "./.ostrichdb/restart.sh"
-	OST_BUILD_SCRIPT_PATH :: "./.ostrichdb/build_run.sh"
+	QUARANTINE_PATH :: "./.ostrichdb/public/quarantine/"
+	RESTART_SCRIPT_PATH :: "./.ostrichdb/restart.sh"
+	BUILD_SCRIPT_PATH :: "./.ostrichdb/build_run.sh"
 }
 
 //Non-changing PATH CONSTANTS
-
-OST_FFVF_PATH :: "ost_file_format_version.tmp"
+FFVF_PATH :: "ost_file_format_version.tmp"
 CONFIG_CLUSTER :: "OSTRICH_CONFIGS"
 CLUSTER_ID_CLUSTER :: "CLUSTER__IDS"
 USER_ID_CLUSTER :: "USER__IDS"
-OST_FILE_EXTENSION :: ".ost"
+OST_EXT :: ".ost"
 VERBOSE_HELP_FILE :: "../src/core/help/docs/verbose/verbose.md"
 SIMPLE_HELP_FILE :: "../src/core/help/docs/simple/simple.md"
 GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
@@ -72,18 +71,18 @@ CLPS_HELP_FILE :: "../src/core/help/docs/clps/clps.txt"
 
 
 //CONFIG FILE CONSTANTS
-CONFIG_ONE :: "ENGINE_INIT"
-CONFIG_TWO :: "ENGINE_LOGGING"
-CONFIG_THREE :: "USER_LOGGED_IN"
-CONFIG_FOUR :: "HELP_IS_VERBOSE"
-CONFIG_FIVE :: "AUTO_SERVE" //whenever cli tool starts it runs the server if this is set to true
-CONFIG_SIX :: "ERROR_SUPPRESSION" //whether errors are printed to the console or not
-CONFIG_SEVEN :: "LIMIT_HISTORY" //whether or not to limit how the number of commands are stored in the users history cluster
+ENGINE_INIT :: "ENGINE_INIT"
+ENGINE_LOGGING :: "ENGINE_LOGGING"
+USER_LOGGED_IN :: "USER_LOGGED_IN"
+HELP_IS_VERBOSE :: "HELP_IS_VERBOSE"
+AUTO_SERVE :: "AUTO_SERVE" //whenever cli tool starts it runs the server if this is set to true
+ERROR_SUPPRESSION :: "ERROR_SUPPRESSION" //whether errors are printed to the console or not
+LIMIT_HISTORY :: "LIMIT_HISTORY" //whether or not to limit how the number of commands are stored in the users history cluster
 
 //MISC CONSTANTS
 ost_carrot :: "OST>>>"
 VALID_RECORD_TYPES: []string : {
-    "CHAR",
+	"CHAR",
 	"STR",
 	"INT",
 	"FLT",
@@ -114,14 +113,13 @@ VALID_RECORD_TYPES: []string : {
 }
 
 
-NO:: "NO"
-YES:: "YES"
-CANCEL::"CANCEL"
+NO :: "NO"
+YES :: "YES"
+CANCEL :: "CANCEL"
 CONFIRM :: "CONFIRM"
 
 METADATA_START :: "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@\n"
 METADATA_END :: "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@\n"
-
 
 METADATA_HEADER: []string : {
 	METADATA_START,
@@ -193,10 +191,6 @@ BannedUserNames := []string {
 	"superuser",
 	"OstrichDB",
 }
-
-
-
-
 
 //SERVER DYNAMIC ROUTE CONSTANTS
 C_DYNAMIC_BASE :: "/c/*"

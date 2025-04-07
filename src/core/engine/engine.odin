@@ -62,7 +62,7 @@ OST_START_ENGINE :: proc() -> int {
 
 	//Initialize data integrity system
 	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-	switch (types.OstrichEngine.Initialized)
+	switch (types.OstrichEngine.Initialized) 
 	{
 	case false:
 		//Continue with engine initialization
@@ -78,7 +78,7 @@ OST_START_ENGINE :: proc() -> int {
 				false,
 			)
 			userSignedIn := security.OST_RUN_SIGNIN()
-			switch (userSignedIn)
+			switch (userSignedIn) 
 			{
 			case true:
 				security.OST_START_SESSION_TIMER()
@@ -96,10 +96,10 @@ OST_START_ENGINE :: proc() -> int {
 
 
 				autoServeConfigValue := data.OST_READ_RECORD_VALUE(
-					OST_CONFIG_PATH,
+					CONFIG_PATH,
 					CONFIG_CLUSTER,
 					types.Token[.BOOLEAN],
-					CONFIG_FIVE,
+					AUTO_SERVE,
 				)
 				if strings.contains(autoServeConfigValue, "true") {
 					fmt.println("The OstrichDB server is starting...\n")
@@ -187,7 +187,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := security.OST_GET_SESSION_DURATION()
 		maxDurationMet := security.OST_CHECK_SESSION_DURATION(sessionDuration)
-		switch (maxDurationMet)
+		switch (maxDurationMet) 
 		{
 		case false:
 			break
@@ -201,13 +201,9 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 	}
 
 	//Re-engage the loop
-	if types.USER_SIGNIN_STATUS == false{
-    	security.OST_DECRYPT_COLLECTION(
-    		"",
-    		.CONFIG_PRIVATE,
-    		types.system_user.m_k.valAsBytes,
-    	)
-	   OST_START_ENGINE()
+	if types.USER_SIGNIN_STATUS == false {
+		security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		OST_START_ENGINE()
 	}
 
 	return result
@@ -216,8 +212,8 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 //Used to restart the engine
 OST_RESTART :: proc() {
-	if const.OST_DEV_MODE == true {
-		libc.system(const.OST_RESTART_SCRIPT_PATH)
+	if const.DEV_MODE == true {
+		libc.system(const.RESTART_SCRIPT_PATH)
 		os.exit(0)
 	} else {
 		fmt.println("Using the RESTART command is only available in development mode.")
@@ -226,8 +222,8 @@ OST_RESTART :: proc() {
 
 //Used to rebuild and restart the engine
 OST_REBUILD :: proc() {
-	if const.OST_DEV_MODE == true {
-		libc.system(const.OST_BUILD_SCRIPT_PATH)
+	if const.DEV_MODE == true {
+		libc.system(const.BUILD_SCRIPT_PATH)
 		os.exit(0)
 	} else {
 		fmt.println("Using the REBUILD command is only available in development mode.")

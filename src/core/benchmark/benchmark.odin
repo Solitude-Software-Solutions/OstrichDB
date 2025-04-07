@@ -23,7 +23,7 @@ File Description:
 
 
 //Note to developers: In the main() procedure, the number of iterations passed for each benchmarking operation can be adjusted unless a comment states otherwise. - Marshall
-OST_RUN_BENCHMARK :: proc(iterations: []int, default: bool) {
+RUN_BENCHMARK :: proc(iterations: []int, default: bool) {
 	using utils
 
 	collectionIterations, clusterIterations, recordIterations: int
@@ -35,7 +35,7 @@ OST_RUN_BENCHMARK :: proc(iterations: []int, default: bool) {
 	fmt.println("---------------------------------------------------")
 	fmt.println("Running OstrichDB Benchmark Suites. Please wait...")
 	//Create the benchmark directory
-	os.make_directory(const.OST_BENCHMARK_PATH, 0o777)
+	os.make_directory(const.BENCHMARK_PATH, 0o777)
 
 
 	//default is set if a user passes a number of iterations per data object when using the BENCHMARK command
@@ -132,7 +132,7 @@ OST_RUN_BENCHMARK :: proc(iterations: []int, default: bool) {
 	delete(advancedResults)
 
 
-	os.remove(const.OST_BENCHMARK_PATH)
+	os.remove(const.BENCHMARK_PATH)
 }
 
 //Creates, fetches, and erases
@@ -263,7 +263,7 @@ B_CREATE_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dyn
 	names: [dynamic]string
 
 	// Get current collection count
-	if dir_handle, err := os.open(const.OST_BENCHMARK_PATH); err == 0 {
+	if dir_handle, err := os.open(const.BENCHMARK_PATH); err == 0 {
 		defer os.close(dir_handle)
 		if files, read_err := os.read_dir(dir_handle, 0); read_err == 0 {
 			defer delete(files)
@@ -1187,7 +1187,7 @@ B_CHANGE_RECORD_TYPE :: proc(fn, cn, rn, newType, newValue: string) -> int {
 concat_benchmark_collection :: proc(name: string) -> string {
 	using const
 
-	return strings.clone(fmt.tprintf("%s%s%s", OST_BENCHMARK_PATH, name, OST_FILE_EXTENSION))
+	return strings.clone(fmt.tprintf("%s%s%s", BENCHMARK_PATH, name, OST_EXT))
 }
 
 refresh_metadata :: proc(fn: string) {

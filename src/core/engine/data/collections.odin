@@ -25,11 +25,11 @@ main :: proc() {
 
 	//Create the core dirs and files OstrichDB needs to function
 	metadata.OST_CREATE_FFVF()
-	os.make_directory(OST_PRIVATE_PATH)
-	os.make_directory(OST_PUBLIC_PATH)
-	os.make_directory(OST_PUBLIC_STANDARD_COLLECTION_PATH)
-	os.make_directory(OST_QUARANTINE_PATH)
-	os.make_directory(OST_BACKUP_PATH)
+	os.make_directory(PRIVATE_PATH)
+	os.make_directory(PUBLIC_PATH)
+	os.make_directory(STANDARD_COLLECTION_PATH)
+	os.make_directory(QUARANTINE_PATH)
+	os.make_directory(BACKUP_PATH)
 	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
 }
 
@@ -37,13 +37,13 @@ main :: proc() {
 //Displays all collections. total also shows size of the data in bytes.
 //Todo: Not really a tree, was implemented before but i took it out because it was fucking up - Marshall
 OST_GET_COLLECTION_TREE :: proc() {
-	dir, _ := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	dir, _ := os.open(const.STANDARD_COLLECTION_PATH)
 	collections, _ := os.read_dir(dir, 1)
 	totalSize: i64
 
 	fmt.println("-----------------------------\n")
 	for collection in collections {
-		nameWithoutExtension := strings.trim_suffix(collection.name, const.OST_FILE_EXTENSION)
+		nameWithoutExtension := strings.trim_suffix(collection.name, const.OST_EXT)
 		fmt.printfln("Name: %s       Bytes:%d", nameWithoutExtension, collection.size)
 		totalSize = totalSize + collection.size
 	}
@@ -116,12 +116,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		if OST_PERFORM_COLLECTION_NAME_CHECK(fn) == 1 {
 			return false
 		}
-		collectionPath := fmt.tprintf(
-			"%s%s%s",
-			const.OST_SECURE_COLLECTION_PATH,
-			fn,
-			const.OST_FILE_EXTENSION,
-		)
+		collectionPath := fmt.tprintf("%s%s%s", const.SECURE_COLLECTION_PATH, fn, const.OST_EXT)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
 		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
@@ -142,7 +137,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		return true
 
 	case .CONFIG_PRIVATE:
-		collectionPath := const.OST_CONFIG_PATH
+		collectionPath := const.CONFIG_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
 		metadata.OST_CHANGE_METADATA_VALUE(fn, "Read-Write", 1, colType)
@@ -163,7 +158,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		return true
 
 	case .HISTORY_PRIVATE:
-		collectionPath := const.OST_HISTORY_PATH
+		collectionPath := const.HISTORY_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
 		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
@@ -184,7 +179,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		return true
 
 	case .ID_PRIVATE:
-		collectionPath := const.OST_ID_PATH
+		collectionPath := const.ID_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.OST_APPEND_METADATA_HEADER(collectionPath)
 		metadata.OST_CHANGE_METADATA_VALUE(fn, "Inaccessible", 1, colType)
@@ -213,7 +208,7 @@ OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 	using types
 
 	buf: [64]byte
-	fileWithExt := strings.concatenate([]string{fn, const.OST_FILE_EXTENSION})
+	fileWithExt := strings.concatenate([]string{fn, const.OST_EXT})
 	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
 		return false
 	}
@@ -328,21 +323,21 @@ OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	switch (type) {
 	case 0:
-		colPath, openSuccess := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
+		colPath, openSuccess := os.open(const.STANDARD_COLLECTION_PATH)
 		collections, readSuccess := os.read_dir(colPath, -1)
 
 		for collection in collections {
-			if collection.name == fmt.tprintf("%s%s", fn, const.OST_FILE_EXTENSION) {
+			if collection.name == fmt.tprintf("%s%s", fn, const.OST_EXT) {
 				return true
 			}
 		}
 		break
 	case 1:
-		secCollection, openSuccess := os.open(const.OST_SECURE_COLLECTION_PATH)
+		secCollection, openSuccess := os.open(const.SECURE_COLLECTION_PATH)
 		secureCollections, readSuccess := os.read_dir(secCollection, -1)
 
 		for collection in secureCollections {
-			if collection.name == fmt.tprintf("%s%s", fn, const.OST_FILE_EXTENSION) {
+			if collection.name == fmt.tprintf("%s%s", fn, const.OST_EXT) {
 				return true
 			}
 		}
@@ -355,12 +350,7 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 
 
 OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
-	colPath := fmt.tprintf(
-		"%s%s%s",
-		const.OST_PUBLIC_STANDARD_COLLECTION_PATH,
-		old,
-		const.OST_FILE_EXTENSION,
-	)
+	colPath := fmt.tprintf("%s%s%s", const.STANDARD_COLLECTION_PATH, old, const.OST_EXT)
 
 	file, readSuccess := os.read_entire_file_from_filename(colPath)
 	if !readSuccess {
@@ -435,7 +425,7 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection, showRecords: bool) -> [dynamic]string {
 	using const
 
-	collectionsDir, errOpen := os.open(OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	collectionsDir, errOpen := os.open(STANDARD_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -446,7 +436,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection, showRecords: bool) -> [dyna
 
 	//only did this to get the length of the collection names
 	for file in foundFiles {
-		if strings.contains(file.name, OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_EXT) {
 			append(&collectionNames, file.name)
 		}
 	}
@@ -481,9 +471,9 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection, showRecords: bool) -> [dyna
 	}
 
 	for file in foundFiles {
-		if strings.contains(file.name, OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_EXT) {
 			append(&collectionNames, file.name)
-			withoutExt := strings.split(file.name, OST_FILE_EXTENSION)
+			withoutExt := strings.split(file.name, OST_EXT)
 			fmt.println(withoutExt[0])
 			fmt.println("")
 			OST_LIST_CLUSTERS_IN_FILE(withoutExt[0], showRecords)
@@ -495,11 +485,11 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection, showRecords: bool) -> [dyna
 
 
 OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (bool, string) {
-	secDir, e := os.open(const.OST_SECURE_COLLECTION_PATH)
+	secDir, e := os.open(const.SECURE_COLLECTION_PATH)
 	files, readDirSuccess := os.read_dir(secDir, -1)
 	found := false
 	for file in files {
-		if file.name == fmt.tprintf("secure_%s%s", fn, const.OST_FILE_EXTENSION) {
+		if file.name == fmt.tprintf("secure_%s%s", fn, const.OST_EXT) {
 			found = true
 		}
 	}
@@ -510,14 +500,14 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (bool, string) {
 OST_COUNT_COLLECTIONS :: proc() -> int {
 	using const
 
-	collectionsDir, errOpen := os.open(OST_PUBLIC_STANDARD_COLLECTION_PATH)
+	collectionsDir, errOpen := os.open(STANDARD_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
 	defer delete(collectionNames)
 
 	for file in foundFiles {
-		if strings.contains(file.name, OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_EXT) {
 			append(&collectionNames, file.name)
 		}
 	}

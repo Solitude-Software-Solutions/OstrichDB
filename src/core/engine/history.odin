@@ -5,11 +5,11 @@ import "../../utils"
 import "../engine/data"
 import "../engine/data/metadata"
 import "../types"
+import "./security"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-import "./security"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -41,10 +41,10 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	limitOn := data.OST_READ_RECORD_VALUE(
-		const.OST_CONFIG_PATH,
+		const.CONFIG_PATH,
 		const.CONFIG_CLUSTER,
 		types.Token[.BOOLEAN],
-		const.CONFIG_SEVEN,
+		const.LIMIT_HISTORY,
 	)
 	security.OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 
@@ -63,7 +63,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	//append the last command to the history file
 	data.OST_APPEND_RECORD_TO_CLUSTER(
-		const.OST_HISTORY_PATH,
+		const.HISTORY_PATH,
 		current_user.username.Value,
 		strings.to_upper(recordName),
 		strings.to_upper(strings.clone(input)),
@@ -72,7 +72,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	//get value of the command that was just stored as a record
 	historyRecordValue := data.OST_READ_RECORD_VALUE(
-		const.OST_HISTORY_PATH,
+		const.HISTORY_PATH,
 		current_user.username.Value,
 		"COMMAND",
 		strings.to_upper(recordName),
@@ -83,7 +83,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 
 	//update the history file size, date last modified and checksum
-	OST_UPDATE_METADATA_AFTER_OPERATION(const.OST_HISTORY_PATH)
+	OST_UPDATE_METADATA_AFTER_OPERATION(const.HISTORY_PATH)
 }
 
 
@@ -91,7 +91,7 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	using const
 	using utils
 
-	data, readSuccess := os.read_entire_file(OST_HISTORY_PATH)
+	data, readSuccess := os.read_entire_file(HISTORY_PATH)
 	defer delete(data)
 	if !readSuccess {
 		throw_err(
@@ -140,7 +140,7 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
-	writeSuccess := os.write_entire_file(OST_HISTORY_PATH, newContent[:])
+	writeSuccess := os.write_entire_file(HISTORY_PATH, newContent[:])
 	if !writeSuccess {
 		throw_err(
 			new_err(
@@ -168,7 +168,7 @@ OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
 	using utils
 
 	// Read the entire file
-	data, readSuccess := os.read_entire_file(const.OST_HISTORY_PATH)
+	data, readSuccess := os.read_entire_file(const.HISTORY_PATH)
 	if !readSuccess {
 		throw_err(
 			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
@@ -256,7 +256,7 @@ OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
 		return false
 	}
 	//write the new content to the collection file
-	writeSuccess := os.write_entire_file(const.OST_HISTORY_PATH, newContent[:])
+	writeSuccess := os.write_entire_file(const.HISTORY_PATH, newContent[:])
 	if !writeSuccess {
 		throw_err(
 			new_err(

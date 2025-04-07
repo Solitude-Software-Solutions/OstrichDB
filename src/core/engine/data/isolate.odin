@@ -34,11 +34,11 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> (int, string) {
 	timestamp := time.now()
 	quarantineFilename := fmt.tprintf(
 		"%s_%v%s",
-		strings.trim_suffix(fn, OST_FILE_EXTENSION),
+		strings.trim_suffix(fn, OST_EXT),
 		timestamp,
-		OST_FILE_EXTENSION,
+		OST_EXT,
 	)
-	isolationPath := fmt.tprintf("%s%s", OST_QUARANTINE_PATH, quarantineFilename)
+	isolationPath := fmt.tprintf("%s%s", QUARANTINE_PATH, quarantineFilename)
 	// Move the file to quarantine
 	//
 

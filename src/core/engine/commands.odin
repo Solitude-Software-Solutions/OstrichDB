@@ -42,7 +42,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	}
 
 	defer delete(cmd.l_token)
-	#partial switch (cmd.c_token)
+	#partial switch (cmd.c_token) 
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
@@ -376,7 +376,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				result := data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
 				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 
-				switch (result)
+				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
@@ -478,7 +478,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"",
 						rType,
 					)
-					switch (appendSuccess)
+					switch (appendSuccess) 
 					{
 					case 0:
 						fmt.printfln(
@@ -561,7 +561,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case .RENAME:
 		log_runtime_event("Used RENAME command", "")
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			if Token[.TO] in cmd.p_token {
@@ -591,7 +591,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 				success := data.OST_RENAME_COLLECTION(oldName, newName)
-				switch (success)
+				switch (success) 
 				{
 				case true:
 					fmt.printf(
@@ -745,7 +745,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					oldRName,
 					newRName,
 				)
-				switch (result)
+				switch (result) 
 				{
 				case 0:
 					fmt.printfln(
@@ -800,7 +800,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case .ERASE:
 		log_runtime_event("Used ERASE command", "")
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			collectionName := cmd.l_token[0]
@@ -1001,7 +1001,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case .FETCH:
 		log_runtime_event("Used FETCH command", "")
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
@@ -1142,7 +1142,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// SET: Allows for the setting of values within records or configs
 	case .SET:
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 3:
 			//Setting a standard records value
@@ -1290,16 +1290,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						value,
 						RESET,
 					)
-					switch (configName)
+					switch (configName) 
 					{
 					case "HELP_VERBOSE":
 						if value == "true" || value == "false" {
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FOUR, value)
+							success := config.OST_UPDATE_CONFIG_VALUE(HELP_IS_VERBOSE, value)
 							if success == false {
 								fmt.printfln("Failed to set HELP config to %s", value)
 							} else {
-								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 4)
-								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 5)
+								AUTO_OST_UPDATE_METADATA_VALUE(CONFIG_PATH, 4)
+								AUTO_OST_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
 								fmt.printfln("Successfully set HELP config to %s", value)
 							}
 							help.OST_SET_HELP_MODE()
@@ -1320,7 +1320,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_SIX, value)
+							success := config.OST_UPDATE_CONFIG_VALUE(ERROR_SUPPRESSION, value)
 							if success == false {
 								fmt.printfln("Failed to set SUPPRESS_ERRORS config to %s", value)
 							} else {
@@ -1347,7 +1347,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_SEVEN, value)
+							success := config.OST_UPDATE_CONFIG_VALUE(LIMIT_HISTORY, value)
 							if success == false {
 								fmt.printfln("Failed to set LIMIT_HISTORY config to %s", value)
 							} else {
@@ -1371,7 +1371,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FIVE, value)
+							success := config.OST_UPDATE_CONFIG_VALUE(AUTO_SERVE, value)
 							if success == false {
 								fmt.printfln("Failed to set AUTO_SERVE config to %s", value)
 							} else {
@@ -1412,7 +1412,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// COUNT: Allows for the counting of collections, clusters, or records
 	case .COUNT:
 		log_runtime_event("Used COUNT command", "")
-		switch (cmd.t_token)
+		switch (cmd.t_token) 
 		{
 		case Token[.COLLECTIONS]:
 			result := data.OST_COUNT_COLLECTIONS()
@@ -1448,7 +1448,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
 				result := data.OST_COUNT_CLUSTERS(collectionName)
-				switch (result)
+				switch (result) 
 				{
 				case -1:
 					fmt.printfln(
@@ -1596,7 +1596,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collectionName)
 
-				switch result
+				switch result 
 				{
 				case -1:
 					fmt.printfln(
@@ -1654,7 +1654,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .PURGE:
 		collectionName, clusterName, recordName: string
 		log_runtime_event("Used PURGE command", "")
-		switch (len(cmd.l_token))
+		switch (len(cmd.l_token)) 
 		{
 		case 1:
 			collectionName = cmd.l_token[0]
@@ -1672,7 +1672,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
 			result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
-			switch result
+			switch result 
 			{
 			case true:
 				fmt.printfln(
@@ -2207,9 +2207,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// 	break
 	//BENCHMARK: Runs the benchmarking suite with or without parameters
 	case .BENCHMARK:
+		using benchmark
 		switch (len(cmd.l_token)) {
 		case 0:
-			benchmark.OST_RUN_BENCHMARK([]int{0, 0, 0}, true)
+			RUN_BENCHMARK([]int{0, 0, 0}, true)
 			break
 		case 3:
 			for token, i in cmd.l_token {
@@ -2223,10 +2224,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			colIteration := strconv.atoi(cmd.l_token[0])
 			clusterIteration := strconv.atoi(cmd.l_token[1])
 			recordIteration := strconv.atoi(cmd.l_token[2])
-			benchmark.OST_RUN_BENCHMARK(
-				[]int{colIteration, clusterIteration, recordIteration},
-				false,
-			)
+			RUN_BENCHMARK([]int{colIteration, clusterIteration, recordIteration}, false)
 			break
 		case:
 			fmt.printfln(
@@ -2236,18 +2234,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// //IMPORT: Imports foreign data formats into OstrichDB. Currently only supports .csv files
 	case .IMPORT:
-		detected, autoImportSuccess:=transfer.OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
-		if detected && autoImportSuccess == true{
-		  fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
-		  break
-		} else if detected == true && autoImportSuccess == false{ //files were detected but user wanted to continue manually or the import failed
-    		importSuccess := transfer.OST_HANDLE_IMPORT()
-    		if importSuccess {
-    			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
-    		} else {
-    			fmt.printfln("%sFailed to import data%s", RED, RESET)
-    		}
-    		break
+		detected, autoImportSuccess := transfer.OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
+		if detected && autoImportSuccess == true {
+			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
+			break
+		} else if detected == true && autoImportSuccess == false { 	//files were detected but user wanted to continue manually or the import failed
+			importSuccess := transfer.OST_HANDLE_IMPORT()
+			if importSuccess {
+				fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
+			} else {
+				fmt.printfln("%sFailed to import data%s", RED, RESET)
+			}
+			break
 		}
 
 		fmt.println("detected: ", detected)
@@ -2430,7 +2428,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				} else {
 					passwordConfirmed := security.OST_CONFIRM_COLLECECTION_UNLOCK()
-					switch (passwordConfirmed)
+					switch (passwordConfirmed) 
 					{
 					case false:
 						fmt.printfln(

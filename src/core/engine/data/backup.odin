@@ -41,8 +41,8 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	defer delete(data)
 
 	//create a backup file dest and write the src content to it
-	destNameAndPath := fmt.tprintf("%s%s", OST_BACKUP_PATH, dest)
-	destFullPath := fmt.tprintf("%s%s", destNameAndPath, OST_FILE_EXTENSION)
+	destNameAndPath := fmt.tprintf("%s%s", BACKUP_PATH, dest)
+	destFullPath := fmt.tprintf("%s%s", destNameAndPath, OST_EXT)
 
 	c, creationSuccess := os.open(destFullPath, os.O_CREATE | os.O_RDWR, 0o666)
 	defer os.close(c)

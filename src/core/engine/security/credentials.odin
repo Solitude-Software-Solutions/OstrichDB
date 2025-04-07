@@ -32,11 +32,11 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 	using utils
 
 	//perform a check to see if the secure directory already exists to prevent errors and overwriting
-	_, err := os.stat(const.OST_SECURE_COLLECTION_PATH)
+	_, err := os.stat(const.SECURE_COLLECTION_PATH)
 	if err == nil {
 		return 0
 	}
-	createDirSuccess := os.make_directory(const.OST_SECURE_COLLECTION_PATH)
+	createDirSuccess := os.make_directory(const.SECURE_COLLECTION_PATH)
 	if createDirSuccess != 0 {
 		error1 := utils.new_err(
 			.CANNOT_CREATE_DIRECTORY,
@@ -86,7 +86,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 
 	// //Create a cluster in the history collection that will hold this users command history
-	OST_CREATE_CLUSTER_BLOCK(OST_HISTORY_PATH, user.user_id, user.username.Value)
+	OST_CREATE_CLUSTER_BLOCK(HISTORY_PATH, user.user_id, user.username.Value)
 
 
 	//Create a secure collection for the user
@@ -121,9 +121,9 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
 
-	engineInit := config.OST_UPDATE_CONFIG_VALUE(CONFIG_ONE, "true")
+	engineInit := config.OST_UPDATE_CONFIG_VALUE(ENGINE_INIT, "true")
 
-	switch (engineInit)
+	switch (engineInit) 
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -132,11 +132,11 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_HISTORY_PATH)
-	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_ID_PATH)
-	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_CONFIG_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(HISTORY_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(ID_PATH)
+	metadata.OST_UPDATE_METADATA_ON_CREATE(CONFIG_PATH)
 	metadata.OST_UPDATE_METADATA_ON_CREATE(
-		fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, inituserName, OST_FILE_EXTENSION),
+		fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, inituserName, OST_EXT),
 	)
 
 	//Encrypt the the config, history, id, and new users secure collection
@@ -327,7 +327,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword
+	switch strongPassword 
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
@@ -503,7 +503,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p))
+	switch (len(p)) 
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -540,7 +540,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true)
+	switch (true) 
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -680,7 +680,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 	)
 
 // 	// Create history cluster.
-// 	data.OST_CREATE_CLUSTER_BLOCK(const.OST_HISTORY_PATH, user.user_id, new_user.username.Value)
+// 	data.OST_CREATE_CLUSTER_BLOCK(const.HISTORY_PATH, user.user_id, new_user.username.Value)
 
 // 	return 0
 // }
@@ -821,12 +821,12 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 OST_ADD_USERS_TO_LIST :: proc() -> [dynamic]string {
 	//remember to free mem when calling
 	userArr := make([dynamic]string)
-	secPath, openSuccess := os.open(const.OST_SECURE_COLLECTION_PATH)
+	secPath, openSuccess := os.open(const.SECURE_COLLECTION_PATH)
 	users, readSuccess := os.read_dir(secPath, -1)
 
 	for user in users {
 		//trim fat
-		nameWithoutSuffix := strings.trim_suffix(user.name, const.OST_FILE_EXTENSION)
+		nameWithoutSuffix := strings.trim_suffix(user.name, const.OST_EXT)
 		nameWithoutPrefix := strings.trim_prefix(nameWithoutSuffix, "secure_")
 		append(&userArr, nameWithoutPrefix)
 	}

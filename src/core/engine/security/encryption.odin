@@ -66,18 +66,18 @@ OST_ENCRYPT_COLLECTION :: proc(
 		break
 	case .CONFIG_PRIVATE:
 		//Private Config Collection
-		file = const.OST_CONFIG_PATH
+		file = const.CONFIG_PATH
 		break
 	case .HISTORY_PRIVATE:
 		//Private History Collection
-		file = const.OST_HISTORY_PATH
+		file = const.HISTORY_PATH
 		break
 	case .ID_PRIVATE:
 		//Private ID Collection
-		file = const.OST_ID_PATH
+		file = const.ID_PATH
 		break
 	case .ISOLATE_PUBLIC:
-		file = fmt.tprintf("%s%s", const.OST_QUARANTINE_PATH, colName)
+		file = fmt.tprintf("%s%s", const.QUARANTINE_PATH, colName)
 		break
 	//case 5: Todo: Add case for benchmark collections
 	case:
@@ -137,7 +137,7 @@ OST_ENCRYPT_COLLECTION :: proc(
 // 	notEncryted = 0
 
 // 	//Core private collections
-// 	privateDir, _ := os.open(const.OST_PRIVATE_PATH)
+// 	privateDir, _ := os.open(const.PRIVATE_PATH)
 // 	files, _ := os.read_dir(privateDir, -1)
 // 	for file in files {
 
@@ -188,11 +188,11 @@ OST_ENCRYPT_COLLECTION :: proc(
 
 
 // 	//Secure collections
-// 	secDir, _ := os.open(const.OST_SECURE_COLLECTION_PATH)
+// 	secDir, _ := os.open(const.SECURE_COLLECTION_PATH)
 // 	secCollections, _ := os.read_dir(secDir, -1)
 // 	for file in secCollections {
 // 		totalCollections += 1
-// 		secCollectionWithoutExt := strings.trim_right(file.name, const.OST_FILE_EXTENSION)
+// 		secCollectionWithoutExt := strings.trim_right(file.name, const.OST_EXT)
 // 		secCollectionWithoutPrefix := strings.trim_left(secCollectionWithoutExt, "secure_")
 // 		fmt.printfln("Checking if %s is encrypted\n", secCollectionWithoutPrefix)
 // 		seccColCheckSuccess, _ := OST_ENCRYPT_COLLECTION(
@@ -210,12 +210,12 @@ OST_ENCRYPT_COLLECTION :: proc(
 
 
 // 	//Standard collections
-// 	standardPublicDir, _ := os.open(const.OST_PUBLIC_STANDARD_COLLECTION_PATH)
+// 	standardPublicDir, _ := os.open(const.STANDARD_COLLECTION_PATH)
 // 	standardFiles, _ := os.read_dir(standardPublicDir, -1)
 
 // 	for file in standardFiles {
 // 		totalCollections += 1
-// 		standardFileWithoutExt := strings.trim_right(file.name, const.OST_FILE_EXTENSION)
+// 		standardFileWithoutExt := strings.trim_right(file.name, const.OST_EXT)
 // 		fmt.printfln("Checking if %s is encrypted", standardFileWithoutExt)
 // 		standardCheckSuccess, _ := OST_ENCRYPT_COLLECTION(
 // 			standardFileWithoutExt,
