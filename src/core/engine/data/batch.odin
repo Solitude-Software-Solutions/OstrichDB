@@ -19,7 +19,7 @@ File Description:
 
 //Used to create, delete, and fetch several collections
 //only used for NEW, ERASE, AND FETCH tokens. NOT RENAME!!!
-OST_HANDLE_COLLECTION_BATCH_REQ :: proc(
+HANDLE_COLLECTION_BATCH_REQ :: proc(
 	names: []string,
 	operation: types.BatchOperations,
 ) -> (
@@ -66,7 +66,7 @@ OST_HANDLE_COLLECTION_BATCH_REQ :: proc(
 
 
 //handles renaming several collection files
-OST_RENAME_COLLECTIONS_BATCH :: proc(oldNames: []string, newNames: []string) -> int {
+BATCH_RENAME_COLLECTIONS :: proc(oldNames: []string, newNames: []string) -> int {
 	if len(oldNames) != len(newNames) {
 		return 1
 	}
@@ -80,7 +80,7 @@ OST_RENAME_COLLECTIONS_BATCH :: proc(oldNames: []string, newNames: []string) -> 
 }
 
 
-OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
+HANDLE_CLUSTER_BATCH_REQ :: proc(
 	collectionNames, clusterNames: []string,
 	operation: types.BatchOperations,
 ) -> (
@@ -107,7 +107,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 		for i in colNames {
 			for j in cluNames {
 				id := OST_GENERATE_ID(true) //todo: this might be fucked. Passing true skips a check to see if the id is already in use...
-				if OST_CREATE_CLUSTER(strings.to_upper(i), j, id) != 0 {
+				if CREATE_CLUSTER(strings.to_upper(i), j, id) != 0 {
 					return 1, ""
 				}
 			}
@@ -115,7 +115,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 	case .ERASE:
 		for i in colNames {
 			for j in cluNames {
-				if !OST_ERASE_CLUSTER(i, j, true) {
+				if !ERASE_CLUSTER(i, j, true) {
 					return 1, ""
 				} else {
 					return 0, "NO WAY THAT WORKED."
@@ -125,7 +125,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 	case .FETCH:
 		for i in colNames {
 			for j in cluNames {
-				return 0, OST_FETCH_CLUSTER(i, j)
+				return 0, FETCH_CLUSTER(i, j)
 			}
 		}
 	}
@@ -134,7 +134,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 }
 
 //batch request for handling records
-OST_HANDLE_RECORD_BATCH_REQ :: proc(
+HANDLE_RECORD_BATCH_REQ :: proc(
 	collectionNames, clusterNames, recordNames, recordTypes, recordValues: []string,
 	operation: types.BatchOperations,
 ) -> (

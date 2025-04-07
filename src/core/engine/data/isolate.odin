@@ -54,7 +54,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> (int, string) {
 	//
 
 	//ID REMOVAL STUFF
-	idsAsInt, idsAsStr := OST_GET_ALL_CLUSTER_IDS(fn)
+	idsAsInt, idsAsStr := GET_ALL_CLUSTER_IDS(fn)
 	idRemovaleResult := OST_REMOVE_ISOLATED_CLUSTER_IDS(idsAsStr)
 	if !idRemovaleResult {
 		utils.log_err("Error removing isolated cluster IDs", #procedure)

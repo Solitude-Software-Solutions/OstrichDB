@@ -353,7 +353,7 @@ OST_RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 	collectionPath := utils.concat_standard_collection_name(fn)
 
 
-	if !OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn) {
+	if !CHECK_IF_CLUSTER_EXISTS(collectionPath, cn) {
 		fmt.printfln("Cluster with name:%s%s%s does not exist", utils.BOLD, cn, utils.RESET)
 		return -1
 	}
@@ -1158,7 +1158,7 @@ OST_FETCH_RECORD :: proc(fn: string, cn: string, rn: string) -> (types.Record, b
 	recordContent: string
 	collectionPath := utils.concat_standard_collection_name(fn)
 
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
+	clusterExists := CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
 	if !clusterExists {
 		fmt.printfln(
 			"Cluster %s%s%s does not exist in collection %s%s%s",
@@ -1257,23 +1257,9 @@ OST_ERASE_RECORD :: proc(fn: string, cn: string, rn: string, isOnServer: bool) -
 			utils.RESET,
 		)
 		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-		buf: [64]byte
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error1 := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#file,
-				#procedure,
-				#line,
-			)
-			utils.throw_err(error1)
-			utils.log_err("Error reading user input", #procedure)
-			return false
-		}
+		input := utils.get_input(false)
 
-		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-		cap := strings.to_upper(confirmation)
+		cap := strings.to_upper(input)
 
 		switch cap {
 		case const.NO:

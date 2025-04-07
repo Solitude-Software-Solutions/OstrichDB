@@ -265,7 +265,7 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool)
 	}
 
 	id := OST_GENERATE_ID(true)
-	cluCreationSuccess := OST_CREATE_CLUSTER(strings.to_upper(desiredColName), csvClusterName, id)
+	cluCreationSuccess := CREATE_CLUSTER(strings.to_upper(desiredColName), csvClusterName, id)
 	if cluCreationSuccess != 0 {
 		fmt.println("Failed to create cluster within new import collection")
 		return success

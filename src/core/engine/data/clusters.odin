@@ -22,7 +22,7 @@ File Description:
 
 
 //used to return the value of a ALL cluster ids of all clusters within the passed in file
-OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
+GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 	using utils
 	//the following dynamic arrays DO NOT get deleted at the end of the procedure. They are deleted in the calling procedure
 	IDs := make([dynamic]i64)
@@ -67,7 +67,7 @@ OST_GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 //used to return the value of a single cluster id of the passed in cluster
 //reads over a file, looks for the passed in cluster and returns its id
 //if fn is an empty string("") then its looking for a cluster in a secure file
-OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
+GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 	using utils
 
 	if fn != "" {
@@ -161,11 +161,11 @@ OST_GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 
 
 //Creates and appends a new cluster to the specified .ost file
-//todo: since I have the OST_CREATE_CLUSTER proc, idk if this is needed anymore
-OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: string) -> int {
+//todo: since I have the CREATE_CLUSTER proc, idk if this is needed anymore
+CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: string) -> int {
 	using utils
 
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
+	clusterExists := CHECK_IF_CLUSTER_EXISTS(fileName, clusterName)
 	if clusterExists == true {
 		utils.log_err("Cluster already exists in file", #procedure)
 		return 1
@@ -242,7 +242,7 @@ OST_CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: 
 
 //exclusivley used for checking if the name of a cluster exists...NOT the ID
 //fn- filename, cn- clustername
-OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
+CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
 
@@ -274,12 +274,12 @@ OST_CHECK_IF_CLUSTER_EXISTS :: proc(fn: string, cn: string) -> bool {
 	return false
 }
 
-OST_RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
+RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 	using utils
 
 	collectionPath := concat_standard_collection_name(fn)
 	// check if the desired new cluster name already exists
-	if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, new) {
+	if CHECK_IF_CLUSTER_EXISTS(collectionPath, new) {
 		fmt.printfln(
 			"Cluster with name:%s%s%s already exists in collection: %s%s%s",
 			BOLD_UNDERLINE,
@@ -364,12 +364,12 @@ OST_RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 
 
 //only used to create a cluster from the COMMAND LINE
-OST_CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
+CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 	using utils
 
 	collectionPath := concat_standard_collection_name(fn)
 
-	clusterExist := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, clusterName)
+	clusterExist := CHECK_IF_CLUSTER_EXISTS(collectionPath, clusterName)
 	if clusterExist {
 		return -1
 	}
@@ -442,7 +442,7 @@ OST_CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 }
 
 
-OST_ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
+ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 	using utils
 	using types
 
@@ -460,21 +460,9 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 			utils.RESET,
 		)
 		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error1 := new_err(
-				.CANNOT_READ_INPUT,
-				get_err_msg(.CANNOT_READ_INPUT),
-				#file,
-				#procedure,
-				#line,
-			)
-			throw_err(error1)
-			return false
-		}
+		input := utils.get_input(false)
 
-		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-		cap := strings.to_upper(confirmation)
+		cap := strings.to_upper(input)
 
 		switch cap {
 		case Token[.NO]:
@@ -577,15 +565,15 @@ OST_ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 }
 
 
-OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
+FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	using const
 	using utils
 
 	clusterContent: string
 	collectionPath := concat_standard_collection_name(fn)
 
-	clusterExists := OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
-	switch clusterExists
+	clusterExists := CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
+	switch clusterExists 
 	{
 	case false:
 		fmt.printfln(
@@ -647,7 +635,7 @@ OST_FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 }
 
 
-OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
+LIST_CLUSTERS_IN_COLLECTION :: proc(fn: string, showRecords: bool) -> int {
 	using const
 	using utils
 
@@ -707,7 +695,7 @@ OST_LIST_CLUSTERS_IN_FILE :: proc(fn: string, showRecords: bool) -> int {
 
 //scans each cluster in a collection file and ensures its proper structure.
 //Want this to return 0 and false if the scan was successful AND no invalid structures were found
-OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStructureFound: bool) {
+SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStructureFound: bool) {
 	using const
 	using utils
 
@@ -762,7 +750,7 @@ OST_SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStru
 }
 
 //counts the number of clusters in a collection file
-OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
+COUNT_CLUSTERS :: proc(fn: string) -> int {
 	using utils
 
 	file := concat_standard_collection_name(fn)
@@ -796,7 +784,7 @@ OST_COUNT_CLUSTERS :: proc(fn: string) -> int {
 //deletes all data from a cluster except identifier data such as cluster name and id
 //Dude...THIS IS A FUCKING MESS AND ITS ALL AI GENERATED AND WORKS LMAO
 // Added some comments to help explain as best as I can - SchoolyB
-OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
+PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	using const
 	using utils
 
@@ -910,7 +898,7 @@ OST_PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 }
 
 //TODO: This is returning and innacurate size. Need to fix
-OST_GET_CLUSTER_SIZE :: proc(fn: string, cn: string) -> (size: int, success: bool) {
+GET_CLUSTER_SIZE :: proc(fn: string, cn: string) -> (size: int, success: bool) {
 	using const
 	using utils
 
@@ -932,6 +920,3 @@ OST_GET_CLUSTER_SIZE :: proc(fn: string, cn: string) -> (size: int, success: boo
 
 	return 0, false
 }
-
-
-//removes a users history from the history collecion. Used when DELETING a user and tests

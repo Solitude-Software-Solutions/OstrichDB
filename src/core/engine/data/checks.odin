@@ -20,12 +20,12 @@ File Description:
 
 
 //perform cluster_id compliancy check on the passed collection
-OST_VALIDATE_IDS :: proc(fn: string) -> bool {
+VALIDATE_IDS :: proc(fn: string) -> bool {
 	types.data_integrity_checks.Cluster_IDs.Compliant = true // Assume compliant initially
 
 	//See GitHub issue #199 for more information about why this is commented out
 
-	// idsFoundInCollection, idsAsStringArray := OST_GET_ALL_CLUSTER_IDS(fn)
+	// idsFoundInCollection, idsAsStringArray := GET_ALL_CLUSTER_IDS(fn)
 	// defer delete(idsFoundInCollection)
 	// defer delete(idsAsStringArray)
 
@@ -41,7 +41,7 @@ OST_VALIDATE_IDS :: proc(fn: string) -> bool {
 }
 
 //perform file size check on the passed collection
-OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
+VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 	using const
 	using types
 	using utils
@@ -59,11 +59,11 @@ OST_VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 }
 
 //perform collection format check on the passed collection
-OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
+VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	using types
 
 	data_integrity_checks.File_Format.Compliant = true
-	clusterScanSuccess, invalidClusterFound := OST_SCAN_CLUSTER_STRUCTURE(fn)
+	clusterScanSuccess, invalidClusterFound := SCAN_CLUSTER_STRUCTURE(fn)
 	headerScanSuccess, invalidHeaderFound := metadata.SCAN_METADATA_HEADER_FORMAT(fn)
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
 		utils.log_err("Cluster structure is not compliant", #procedure)
@@ -77,7 +77,7 @@ OST_VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 	return data_integrity_checks.File_Format.Compliant
 }
 
-OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
+VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 	using types
 
 	data_integrity_checks.Checksum.Compliant = true
@@ -117,15 +117,15 @@ OST_VALIDATE_CHECKSUM :: proc(fn: string) -> bool {
 
 
 //performs all data integrity checks on the passed collection and returns the results
-OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
+VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	using types
 	using utils
 
 	checks := [dynamic]bool{} //gets free somewhere else
-	checkOneResult := OST_VALIDATE_IDS(fn)
-	checkTwoResult := OST_VALIDATE_FILE_SIZE(fn)
-	checkThreeResult := OST_VALIDATE_COLLECTION_FORMAT(fn)
-	checkFourResult := OST_VALIDATE_CHECKSUM(fn)
+	checkOneResult := VALIDATE_IDS(fn)
+	checkTwoResult := VALIDATE_FILE_SIZE(fn)
+	checkThreeResult := VALIDATE_COLLECTION_FORMAT(fn)
+	checkFourResult := VALIDATE_CHECKSUM(fn)
 	//integrity check one - cluster ids
 	switch checkOneResult {
 	case false:
@@ -197,11 +197,11 @@ OST_VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) 
 }
 
 //handles the results of the data integrity checks...duh
-OST_HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
+HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 	using types
 	using utils
 
-	integrityResults := OST_VALIDATE_DATA_INTEGRITY(fn)
+	integrityResults := VALIDATE_DATA_INTEGRITY(fn)
 	defer delete(integrityResults)
 	for result in integrityResults {
 		if result == false {

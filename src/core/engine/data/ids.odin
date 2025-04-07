@@ -68,17 +68,17 @@ OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
 	cluOneid := OST_GENERATE_ID(true)
 
 	// doing this prevents the creation of cluster_id records each time the program starts up. Only allows it once
-	if OST_CHECK_IF_CLUSTER_EXISTS(ID_PATH, CLUSTER_ID_CLUSTER) == true &&
-	   OST_CHECK_IF_CLUSTER_EXISTS(ID_PATH, USER_ID_CLUSTER) == true {
+	if CHECK_IF_CLUSTER_EXISTS(ID_PATH, CLUSTER_ID_CLUSTER) == true &&
+	   CHECK_IF_CLUSTER_EXISTS(ID_PATH, USER_ID_CLUSTER) == true {
 		return
 	}
 	//create a cluster for cluster ids
-	OST_CREATE_CLUSTER_BLOCK(const.ID_PATH, cluOneid, CLUSTER_ID_CLUSTER)
+	CREATE_CLUSTER_BLOCK(const.ID_PATH, cluOneid, CLUSTER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
 
 	cluTwoid := OST_GENERATE_ID(true)
 	//create a cluster for user ids
-	OST_CREATE_CLUSTER_BLOCK(const.ID_PATH, cluTwoid, USER_ID_CLUSTER)
+	CREATE_CLUSTER_BLOCK(const.ID_PATH, cluTwoid, USER_ID_CLUSTER)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
 	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)

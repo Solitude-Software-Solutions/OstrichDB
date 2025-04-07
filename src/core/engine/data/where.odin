@@ -54,7 +54,7 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 	for collection in collectionNames {
 		if target == Token[.CLUSTER] {
 			collectionPath := fmt.tprintf("%s%s", STANDARD_COLLECTION_PATH, collection)
-			if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
+			if CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
 				fmt.printfln(
 					"Cluster: %s%s%s -> Collection: %s%s%s",
 					BOLD_UNDERLINE,
@@ -117,7 +117,7 @@ OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
 		collectionPath := fmt.tprintf("%s%s", STANDARD_COLLECTION_PATH, collection)
 
 		// Check if it's a cluster name
-		if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
+		if CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
 			found = true
 			return found, collection, ""
 

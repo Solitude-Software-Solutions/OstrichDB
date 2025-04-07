@@ -321,6 +321,7 @@ SpecialUserCred :: struct {
 	valAsBytes: []u8,
 	valAsStr:   string,
 }
+
 //a users command history
 CommandHistory :: struct {
 	cHistoryNamePrefix: string, //will always be "history_"

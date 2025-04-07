@@ -18,7 +18,7 @@ File Description:
 *********************************************************/
 
 
-OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
+CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	using const
 	using utils
 	//retirve the data from the src collection file
@@ -75,27 +75,11 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	return true
 }
 
-OST_CHOOSE_BACKUP_NAME :: proc() -> string {
+CHOOSE_BACKUP_NAME :: proc() -> string {
 	using utils
-
-	buf: [1024]byte
 	fmt.printfln("What would you like to name your collection backup?")
-	n, inputSuccess := os.read(os.stdin, buf[:])
-
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error1)
-		log_err("Error reading input for backup collection name", #procedure)
-	}
-	str := strings.trim_right(string(buf[:n]), "\r\n")
-
-	return strings.clone(str)
+	input := utils.get_input(false)
+	return strings.clone(input)
 }
 
 //TODO: create a proc that deletes a backup of a collection

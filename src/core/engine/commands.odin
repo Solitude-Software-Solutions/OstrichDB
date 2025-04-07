@@ -94,7 +94,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//Shows a tree-like structure of the dbms
 	case .TREE:
 		log_runtime_event("Used TREE command", "User requested to view a tree of the database.")
-		data.OST_GET_COLLECTION_TREE()
+		data.GET_COLLECTION_TREE()
 		break
 	// Shows the current users past command history
 	case .HISTORY:
@@ -253,14 +253,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			//--------------Permissions Security stuff Start----------------//
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.BACKUP], .STANDARD_PUBLIC)
 
-			name := data.OST_CHOOSE_BACKUP_NAME()
-			// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+			name := data.CHOOSE_BACKUP_NAME()
+			// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 			// switch (checks)
 			// {
 			// case -1:
 			// 	return -1
 			// }
-			success := data.OST_CREATE_BACKUP_COLLECTION(name, cmd.l_token[0])
+			success := data.CREATE_BACKUP_COLLECTION(name, cmd.l_token[0])
 			if success {
 				fmt.printfln(
 					"Successfully backed up collection: %s%s%s.",
@@ -365,7 +365,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					RESET,
 				)
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
@@ -373,7 +373,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// }
 
 				id := data.OST_GENERATE_ID(true)
-				result := data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
+				result := data.CREATE_CLUSTER(collectionName, clusterName, id)
 				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
 
 				switch (result) 
@@ -655,7 +655,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.RENAME], .STANDARD_PUBLIC)
 
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
@@ -665,7 +665,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// 	return -1
 				// }
 
-				success := data.OST_RENAME_CLUSTER(collectionName, oldName, newName)
+				success := data.RENAME_CLUSTER(collectionName, oldName, newName)
 				if success {
 					fmt.printf(
 						"Successfully renamed cluster %s%s%s to %s%s%s in collection %s%s%s\n",
@@ -853,15 +853,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
 
-				clusterID := data.OST_GET_CLUSTER_ID(collectionName, cluster)
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				clusterID := data.GET_CLUSTER_ID(collectionName, cluster)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
 				// 	return -1
 				// }
 
-				if data.OST_ERASE_CLUSTER(collectionName, cluster, false) == true {
+				if data.ERASE_CLUSTER(collectionName, cluster, false) == true {
 					fmt.printfln(
 						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
 						BOLD_UNDERLINE,
@@ -949,8 +949,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
 
-				clusterID := data.OST_GET_CLUSTER_ID(collectionName, clusterName)
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				clusterID := data.GET_CLUSTER_ID(collectionName, clusterName)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
@@ -1053,7 +1053,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.FETCH], .STANDARD_PUBLIC)
 
-				clusterContent := data.OST_FETCH_CLUSTER(collectionName, clusterName)
+				clusterContent := data.FETCH_CLUSTER(collectionName, clusterName)
 				fmt.printfln(clusterContent)
 
 
@@ -1095,7 +1095,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.FETCH], .STANDARD_PUBLIC)
 
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
@@ -1447,7 +1447,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
-				result := data.OST_COUNT_CLUSTERS(collectionName)
+				result := data.COUNT_CLUSTERS(collectionName)
 				switch (result) 
 				{
 				case -1:
@@ -1712,7 +1712,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
 			if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
-				result := data.OST_PURGE_CLUSTER(collectionName, clusterName)
+				result := data.PURGE_CLUSTER(collectionName, clusterName)
 				switch result {
 				case true:
 					fmt.printfln(
@@ -1859,7 +1859,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.SIZE_OF], .STANDARD_PUBLIC)
 
 				//TODO: This is returning an inaccurate size, need to fix
-				size, success := data.OST_GET_CLUSTER_SIZE(collectionName, clusterName)
+				size, success := data.GET_CLUSTER_SIZE(collectionName, clusterName)
 				if success {
 					fmt.printf(
 						"Size of cluster %s.%s: %d bytes\n",
@@ -2173,7 +2173,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 	// 		OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, VALIDATE, .STANDARD_PUBLIC)
 
-	// 		result := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+	// 		result := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 
 	// 		if result == 0 {
 	// 			fmt.printfln(

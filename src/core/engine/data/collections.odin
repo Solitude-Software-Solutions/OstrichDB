@@ -36,7 +36,7 @@ main :: proc() {
 
 //Displays all collections. total also shows size of the data in bytes.
 //Todo: Not really a tree, was implemented before but i took it out because it was fucking up - Marshall
-OST_GET_COLLECTION_TREE :: proc() {
+GET_COLLECTION_TREE :: proc() {
 	dir, _ := os.open(const.STANDARD_COLLECTION_PATH)
 	collections, _ := os.read_dir(dir, 1)
 	totalSize: i64
@@ -56,22 +56,8 @@ OST_GET_COLLECTION_TREE :: proc() {
 
 //used for the command line
 OST_CHOOSE_COLLECTION_NAME :: proc() {
-	buf: [1024]byte
-	n, inputSuccess := os.read(os.stdin, buf[:])
-
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			utils.get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		utils.throw_err(error1)
-		utils.log_err("Error reading user input", #procedure)
-	}
-	name := strings.trim_right(string(buf[:n]), "\n")
-	_ = OST_CREATE_COLLECTION(strings.clone(name), .STANDARD_PUBLIC)
+	input := utils.get_input(false)
+	_ = OST_CREATE_COLLECTION(strings.clone(input), .STANDARD_PUBLIC)
 }
 
 /*
@@ -221,21 +207,9 @@ OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 			RESET,
 		)
 		fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error1 := new_err(
-				.CANNOT_READ_INPUT,
-				get_err_msg(.CANNOT_READ_INPUT),
-				#file,
-				#procedure,
-				#line,
-			)
-			throw_err(error1)
-			log_err("Error reading user input", #procedure)
-		}
+		input := utils.get_input(false)
 
-		confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-		cap := strings.to_upper(confirmation)
+		cap := strings.to_upper(input)
 
 		switch (cap) {
 		case Token[.NO]:
@@ -452,20 +426,10 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection, showRecords: bool) -> [dyna
 
 	if len(collectionNames) > MAX_COLLECTION_TO_DISPLAY {
 		fmt.printf("There is %d collections to display, display all? (y/N) ", len(collectionNames))
-		buf: [1024]byte
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#file,
-				#procedure,
-				#line,
-			)
-			utils.throw_err(error)
-			utils.log_err("Error reading user input", #procedure)
-		}
-		if buf[0] != 'y' {
+
+		input := utils.get_input(false)
+
+		if input != "y" || input != "Y" {
 			return collectionNames
 		}
 	}
@@ -476,7 +440,7 @@ OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection, showRecords: bool) -> [dyna
 			withoutExt := strings.split(file.name, OST_EXT)
 			fmt.println(withoutExt[0])
 			fmt.println("")
-			OST_LIST_CLUSTERS_IN_FILE(withoutExt[0], showRecords)
+			LIST_CLUSTERS_IN_COLLECTION(withoutExt[0], showRecords)
 		}
 	}
 

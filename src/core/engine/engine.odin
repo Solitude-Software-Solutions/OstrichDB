@@ -161,19 +161,8 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		buf: [1024]byte
 
 		fmt.print(const.ost_carrot, "\t")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#file,
-				#procedure,
-				#line,
-			)
-			utils.throw_err(error)
-			utils.log_err("Could not read user input from command line", #procedure)
-		}
-		input := strings.trim_right(string(buf[:n]), "\r\n")
+		input := utils.get_input(false)
+
 		security.OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		OST_APPEND_COMMAND_TO_HISTORY(input)
 		security.OST_ENCRYPT_COLLECTION(

@@ -25,7 +25,7 @@ main :: proc() {
 	OST_CREATE_COLLECTION("", .CONFIG_PRIVATE)
 	id := OST_GENERATE_ID(true)
 	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
-	OST_CREATE_CLUSTER_BLOCK(const.CONFIG_PATH, id, const.CONFIG_CLUSTER)
+	CREATE_CLUSTER_BLOCK(const.CONFIG_PATH, id, const.CONFIG_CLUSTER)
 
 	appendSuccess := APPEND_ALL_CONFIG_RECORDS()
 	if !appendSuccess {

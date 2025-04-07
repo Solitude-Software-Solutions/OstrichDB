@@ -86,7 +86,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 
 	// //Create a cluster in the history collection that will hold this users command history
-	OST_CREATE_CLUSTER_BLOCK(HISTORY_PATH, user.user_id, user.username.Value)
+	CREATE_CLUSTER_BLOCK(HISTORY_PATH, user.user_id, user.username.Value)
 
 
 	//Create a secure collection for the user
@@ -171,21 +171,11 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 
 	show_current_step("Set Up Username", "1", "3")
 	buf: [256]byte
-	n, inputSuccess := os.read(os.stdin, buf[:])
+	input := utils.get_input(false)
 
-	if inputSuccess != 0 {
-		error1 := new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error1)
-		log_err("Error reading input", #procedure)
-	}
-	if n > 0 {
-		enteredStr := string(buf[:n])
+
+	if len(input) > 0 {
+		enteredStr := input
 
 		//trim the string of any whitespace or newline characters at the beginning and end
 		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
@@ -296,22 +286,11 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	utils.show_current_step("Set Up Password", "2", "3")
 	buf: [256]byte
-	n, inputSuccess := os.read(os.stdin, buf[:])
+	input := utils.get_input(true)
 	enteredStr: string
-	if inputSuccess != 0 {
 
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error1)
-		log_err("Error reading input", #procedure)
-	}
-	if n > 0 {
-		enteredStr = string(buf[:n])
+	if len(input) > 0 {
+		enteredStr = input
 		//trim the string of any whitespace or newline characters
 
 		//Shoutout to the OdinLang Discord for helping me with this...
@@ -352,22 +331,12 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 	buf: [256]byte
 
 	fmt.printfln("Re-enter the password:")
-	n, inputSuccess := os.read(os.stdin, buf[:])
+	input := utils.get_input(true)
 	confirmation: string
 
-	if inputSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error1)
-		log_err("Error reading input", #procedure)
-	}
-	if n > 0 {
-		confirmation = string(buf[:n])
+
+	if len(input) > 0 {
+		confirmation = input
 		//trim the string of any whitespace or newline characters
 
 		//Shoutout to the OdinLang Discord for helping me with this...
@@ -427,7 +396,7 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, rn: string, rd: st
 	defer os.close(file)
 
 
-	data.OST_CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
+	data.CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
 	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, rn, rd, "identifier", id)
 
 	UPDATE_METADATA_AFTER_OPERATIONS(secureFilePath)
@@ -572,13 +541,9 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 	if user.role.Value == "admin" {
 // 		fmt.println("Please enter role you would like to assign the new account")
 // 		fmt.printf("1. Admin\n2. User\n3. Guest\n")
-// 		n, inputSuccess := os.read(os.stdin, buf[:])
-// 		if inputSuccess != 0 {
-// 			fmt.printfln("Error reading input")
-// 			return 1
-// 		}
+// 		input := utils.get_input(false)
 
-// 		inputToCap := strings.to_upper(strings.trim_right(string(buf[:n]), "\r\n"))
+// 		inputToCap := strings.to_upper(input)
 // 		if inputToCap == "1" || inputToCap == "ADMIN" {
 // 			new_user.role.Value = "admin"
 // 		} else if inputToCap == "2" || inputToCap == "USER" {
@@ -680,7 +645,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 	)
 
 // 	// Create history cluster.
-// 	data.OST_CREATE_CLUSTER_BLOCK(const.HISTORY_PATH, user.user_id, new_user.username.Value)
+// 	data.CREATE_CLUSTER_BLOCK(const.HISTORY_PATH, user.user_id, new_user.username.Value)
 
 // 	return 0
 // }
@@ -747,21 +712,8 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	)
 	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
 
-	n, inputSuccess := os.read(os.stdin, buf[:])
-	if inputSuccess != 0 {
-		error1 := new_err(
-			.CANNOT_READ_INPUT,
-			get_err_msg(.CANNOT_READ_INPUT),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error1)
-		return false
-	}
-
-	confirmation := strings.trim_right(string(buf[:n]), "\r\n")
-	cap := strings.to_upper(confirmation)
+	input := utils.get_input(false)
+	cap := strings.to_upper(input)
 
 	switch cap {
 	case const.NO:
@@ -780,7 +732,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 	}
 
 	//remove the users ID from both clusters in the ids.ost collection file.
-	id := data.OST_GET_CLUSTER_ID("", username)
+	id := data.GET_CLUSTER_ID("", username)
 	idStr := fmt.tprintf("%d", id)
 
 

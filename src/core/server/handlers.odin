@@ -68,7 +68,7 @@ OST_HANDLE_GET_REQ :: proc(
 			return types.HttpStatus {
 				code = .OK,
 				text = types.HttpStatusText[.OK],
-			}, data.OST_FETCH_CLUSTER(strings.to_upper(collectionName), strings.to_upper(clusterName))
+			}, data.FETCH_CLUSTER(strings.to_upper(collectionName), strings.to_upper(clusterName))
 		} else if len(pathSegments) == 6 {
 			collectionName = pathSegments[1]
 			clusterName = pathSegments[3]
@@ -212,10 +212,10 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("COLLECTION: %s not found", collectionName)
 			}
-			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName)
+			cluExists = data.CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName)
 			if !cluExists {
 				id := data.OST_GENERATE_ID(true)
-				data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
+				data.CREATE_CLUSTER(collectionName, clusterName, id)
 				return types.HttpStatus {
 					code = .OK,
 					text = types.HttpStatusText[.OK],
@@ -232,7 +232,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			}
 			collectionNamePath := utils.concat_standard_collection_name(collectionName)
 
-			cluExists = data.OST_CHECK_IF_CLUSTER_EXISTS(collectionNamePath, clusterName)
+			cluExists = data.CHECK_IF_CLUSTER_EXISTS(collectionNamePath, clusterName)
 			if !cluExists {
 				return types.HttpStatus {
 					code = .NOT_FOUND,
@@ -340,7 +340,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 		}, fmt.tprintf("COLLECTION: %s erased successfully", collectionName)
 	case 4:
 		// /collection/collection_name/cluster/cluster_name
-		data.OST_ERASE_CLUSTER(collectionName, clusterName, true)
+		data.ERASE_CLUSTER(collectionName, clusterName, true)
 		return types.HttpStatus {
 			code = .OK,
 			text = types.HttpStatusText[.OK],
@@ -416,9 +416,9 @@ OST_HANDLE_POST_REQ :: proc(
 		}
 
 
-		if !data.OST_CHECK_IF_CLUSTER_EXISTS(colFilePath, clusterName) {
+		if !data.CHECK_IF_CLUSTER_EXISTS(colFilePath, clusterName) {
 			id := data.OST_GENERATE_ID(true)
-			data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
+			data.CREATE_CLUSTER(collectionName, clusterName, id)
 			return types.HttpStatus {
 				code = .OK,
 				text = types.HttpStatusText[.OK],
@@ -456,7 +456,7 @@ OST_HANDLE_POST_REQ :: proc(
 		}
 
 		fmt.println("Looking in: ", colFilePath)
-		if !data.OST_CHECK_IF_CLUSTER_EXISTS(colFilePath, clusterName) {
+		if !data.CHECK_IF_CLUSTER_EXISTS(colFilePath, clusterName) {
 			fmt.printfln("CLUSTER: %s not found", clusterName)
 			return types.HttpStatus {
 				code = .NOT_FOUND,
@@ -499,7 +499,7 @@ OST_HANDLE_POST_REQ :: proc(
 	// 			// /batch/collection/foo&bar&baz
 	// 			names := strings.split(segments[2], "&")
 
-	// 			success, str := data.OST_HANDLE_COLLECTION_BATCH_REQ(names, .NEW)
+	// 			success, str := data.HANDLE_COLLECTION_BATCH_REQ(names, .NEW)
 	// 			if success == 0 {
 	// 				return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]},
 	// 					"Collections created successfully\n"
@@ -515,7 +515,7 @@ OST_HANDLE_POST_REQ :: proc(
 	// 			if strings.contains(segments[2], "&") {
 	// 				collectionNames := strings.split(segments[2], "&")
 	// 				clusternNames := strings.split(segments[4], "&")
-	// 				success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
+	// 				success, str := data.HANDLE_CLUSTER_BATCH_REQ(
 	// 					collectionNames,
 	// 					clusternNames,
 	// 					.NEW,
@@ -536,7 +536,7 @@ OST_HANDLE_POST_REQ :: proc(
 	// 				collectionNames[0] = segments[2]
 	// 				clusterNames := strings.split(segments[4], "&")
 
-	// 				success, str := data.OST_HANDLE_CLUSTER_BATCH_REQ(
+	// 				success, str := data.HANDLE_CLUSTER_BATCH_REQ(
 	// 					collectionNames,
 	// 					clusterNames,
 	// 					.NEW,
@@ -632,7 +632,7 @@ OST_HANDLE_POST_REQ :: proc(
 	// 					"Must provide either 'type&value' or 'types&values' in query parameters\n"
 	// 			}
 
-	// 			success, str := data.OST_HANDLE_RECORD_BATCH_REQ(
+	// 			success, str := data.HANDLE_RECORD_BATCH_REQ(
 	// 				collectionNames,
 	// 				clusterNames,
 	// 				recordNames,
