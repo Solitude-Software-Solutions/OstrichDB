@@ -55,7 +55,7 @@ OST_HANDLE_MAX_SESSION_DURATION_MET :: proc() {
 		utils.RESET,
 	)
 	//force logout
-	OST_USER_LOGOUT(0)
+	RUN_USER_LOGOUT(0)
 	utils.log_runtime_event(
 		"Max Session Time Met",
 		" User has been forced logged out due to reaching maximum session time.",

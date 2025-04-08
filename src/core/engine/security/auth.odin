@@ -24,7 +24,7 @@ File Description:
 *********************************************************/
 
 //This beffy S.O.B handles user authentication
-OST_RUN_SIGNIN :: proc() -> bool {
+RUN_USER_SIGNIN :: proc() -> bool {
 	using const
 	using types
 	using utils
@@ -63,12 +63,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.system_user.m_k.valAsBytes,
 	)
 
-	userRole := data.GET_RECORD_VALUE(
-		secCollection,
-		usernameCapitalized,
-		"identifier",
-		"role",
-	)
+	userRole := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "role")
 	if userRole == "admin" {
 		user.role.Value = "admin"
 	} else if userRole == "user" {
@@ -78,12 +73,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	}
 
 	//Voodoo??
-	userMKStr := data.GET_RECORD_VALUE(
-		secCollection,
-		usernameCapitalized,
-		"identifier",
-		"m_k",
-	)
+	userMKStr := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "m_k")
 	user.m_k.valAsBytes = OST_DECODE_M_K(transmute([]byte)userMKStr)
 	user.username.Value = strings.clone(usernameCapitalized)
 
@@ -92,16 +82,11 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	salt := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "salt")
 
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.GET_RECORD_VALUE(
-		secCollection,
-		usernameCapitalized,
-		"identifier",
-		"hash",
-	)
+	providedHash := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "hash")
 	pHashAsBytes := transmute([]u8)providedHash
 
 
-	preMesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
+	preMesh := MESH_SALT_AND_HASH(salt, pHashAsBytes)
 	//PRE-MESHING END=========================================================================================================
 	algoMethod := data.GET_RECORD_VALUE(
 		secCollection,
@@ -135,9 +120,9 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
 	newHash := OST_HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
 	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
-	postMesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
+	postMesh := MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================
-	authPassed := OST_CROSS_CHECK_MESH(preMesh, postMesh)
+	authPassed := CROSS_CHECK_MESH(preMesh, postMesh)
 	switch authPassed {
 	case true:
 		fmt.printfln("\n\n%sSucessfully signed in!%s", GREEN, RESET)
@@ -179,7 +164,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 			"User entered incorrect password during authentication",
 		)
 		log_err("User failed to authenticate with the provided credentials", #procedure)
-		OST_RUN_SIGNIN()
+		RUN_USER_SIGNIN()
 
 	}
 	OST_ENCRYPT_COLLECTION(
@@ -194,7 +179,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 //meshes the salt and hashed password , returns the mesh
 // s- salt , hp- hashed password
-OST_MESH_SALT_AND_HASH :: proc(s: string, hp: []u8) -> string {
+MESH_SALT_AND_HASH :: proc(s: string, hp: []u8) -> string {
 	mesh: string
 	hpStr := transmute(string)hp
 	mesh = strings.concatenate([]string{s, hpStr})
@@ -203,7 +188,7 @@ OST_MESH_SALT_AND_HASH :: proc(s: string, hp: []u8) -> string {
 
 //checks if the users information does exist in the user credentials file
 //cn- cluster name, un- username, s-salt , hp- hashed password
-OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
+CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 	if preMesh == postMesh {
 		return true
 	}
@@ -214,7 +199,7 @@ OST_CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 
 //Handles logic for signing out a user and exiting the program
 //param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
-OST_USER_LOGOUT :: proc(param: int) {
+RUN_USER_LOGOUT :: proc(param: int) {
 	security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	loggedOut := config.UPDATE_CONFIG_VALUE(const.USER_LOGGED_IN, "false")
 
@@ -245,17 +230,12 @@ OST_USER_LOGOUT :: proc(param: int) {
 
 
 //shorter version of sign in but exclusively for checking passwords for certain db actions
-OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
+VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	succesfulValidation := false
 	secCollection := utils.concat_secure_collection_name(types.user.username.Value)
 
 	//PRE-MESHING START
-	salt := data.GET_RECORD_VALUE(
-		secCollection,
-		types.user.username.Value,
-		"identifier",
-		"salt",
-	)
+	salt := data.GET_RECORD_VALUE(secCollection, types.user.username.Value, "identifier", "salt")
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
 	providedHash := data.GET_RECORD_VALUE(
 		secCollection,
@@ -264,7 +244,7 @@ OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 		"hash",
 	)
 	pHashAsBytes := transmute([]u8)providedHash
-	premesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
+	premesh := MESH_SALT_AND_HASH(salt, pHashAsBytes)
 	//PRE-MESHING END
 
 
@@ -282,10 +262,10 @@ OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
 	newHash := OST_HASH_PASSWORD(string(input), algoAsInt, true, false)
 	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
-	postmesh := OST_MESH_SALT_AND_HASH(salt, encodedHash)
+	postmesh := MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END
 
-	authPassed := OST_CROSS_CHECK_MESH(premesh, postmesh)
+	authPassed := CROSS_CHECK_MESH(premesh, postmesh)
 	switch authPassed {
 	case true:
 		succesfulValidation = true

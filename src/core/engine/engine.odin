@@ -66,7 +66,7 @@ OST_START_ENGINE :: proc() -> int {
 	{
 	case false:
 		//Continue with engine initialization
-		security.OST_INIT_ADMIN_SETUP()
+		security.HANDLE_FIRST_TIME_ACCOUNT_SETUP()
 		break
 
 	case true:
@@ -77,7 +77,7 @@ OST_START_ENGINE :: proc() -> int {
 				types.system_user.m_k.valAsBytes,
 				false,
 			)
-			userSignedIn := security.OST_RUN_SIGNIN()
+			userSignedIn := security.RUN_USER_SIGNIN()
 			switch (userSignedIn) 
 			{
 			case true:

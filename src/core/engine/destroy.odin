@@ -46,7 +46,7 @@ OST_DESTROY :: proc() {
 		fmt.println("Please enter your password to confirm the destruction of OstrichDB.")
 		j := utils.get_input(true)
 		password := string(j)
-		validatedPassword := security.OST_VALIDATE_USER_PASSWORD(password)
+		validatedPassword := security.VALIDATE_USER_PASSWORD(password)
 		switch (validatedPassword) {
 		case true:
 			fmt.printfln("%sDestroying OstrichDB...%s", utils.RED, utils.RESET)

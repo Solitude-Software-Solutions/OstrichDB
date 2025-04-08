@@ -25,7 +25,7 @@ File Description:
 
 
 //Ensure that the user is an admin before allowing an operation
-OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
+CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 	secCollection := utils.concat_secure_collection_name(user.username.Value)
 	userCluster := strings.to_upper(user.username.Value)
 	isAdmin := false
@@ -41,7 +41,7 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 
 
 //ngl I hacked this shit together by looking at Odin's souce code for each os' sys package. - Marshall
-OST_SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
+SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
 	using os
 
 	mode: uint = 0o600 // default to file owner read/write
@@ -85,7 +85,7 @@ OST_SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
 	return true // Changed from "err == 0" since err isn't defined
 }
 //Sets the permissions for a given operation
-OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
+SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
 	using const
 	using types
 
@@ -166,7 +166,7 @@ OST_SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation
 //Checks if an the passed in operation can be performed via the command line
 // permissionValue - the value from the metadata header field labeled: "Permission"
 // ^types.CommandOperation - the name of the operation and the permissions said operation requires
-OST_OPERATION_IS_ALLOWED :: proc(
+CHECK_ID_OPERATION_IS_ALLOWED :: proc(
 	permissionValue: string,
 	operation: ^types.CommandOperation,
 ) -> bool {
@@ -184,13 +184,13 @@ OST_OPERATION_IS_ALLOWED :: proc(
 
 //Handles all the logic from above and returns a 1 if the user does not have permission to perform the passed in operation
 //Performs Decryption of the secure collection, performs the check the re-encrypts the users secure collection
-OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
+PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 	command, colName: string,
 	colType: types.CollectionType,
 ) -> int {
 
 	//Get the operation permission for the command
-	commandOperation := OST_SET_OPERATION_PERMISSIONS(command)
+	commandOperation := SET_OPERATION_PERMISSIONS(command)
 	//Get the string representation array of the permission
 	commandPermissions := commandOperation.permissionStr
 	defer free(commandOperation)
@@ -202,7 +202,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 		colType,
 	)
 	for perm in commandPermissions {
-		opIsAllowed := OST_OPERATION_IS_ALLOWED(permissionValue, commandOperation)
+		opIsAllowed := CHECK_ID_OPERATION_IS_ALLOWED(permissionValue, commandOperation)
 		if !opIsAllowed {
 			fmt.printfln(
 				"%s%sYou do not have permission to perform this operation on this collection.%s",
@@ -218,7 +218,7 @@ OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 }
 
 //Used to check if a collection is already locked before attempting to lock it again
-OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
+GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
 	lockStatus, success := metadata.GET_METADATA_MEMBER_VALUE(
 		colName,
@@ -234,12 +234,12 @@ OST_GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 
 
 //Get user password before unlocking.
-OST_CONFIRM_COLLECECTION_UNLOCK :: proc() -> bool {
+CONFTIM_COLLECTION_UNLOCK_PASSWORD :: proc() -> bool {
 	passIsCorrect := false
 	fmt.println("Please enter your password to continue:")
 	input := utils.get_input(true)
 	password := string(input)
-	validatedPassword := OST_VALIDATE_USER_PASSWORD(password)
+	validatedPassword := VALIDATE_USER_PASSWORD(password)
 	switch (validatedPassword) {
 	case true:
 		passIsCorrect = true
@@ -253,7 +253,7 @@ OST_CONFIRM_COLLECECTION_UNLOCK :: proc() -> bool {
 
 
 //Performs the permission check on the collection before allowing the operation to be performed. Used on command line
-OST_EXEC_CMD_LINE_PERM_CHECK :: proc(
+EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 	colName, commandStr: string,
 	colType: types.CollectionType,
 ) -> int {
@@ -276,11 +276,7 @@ OST_EXEC_CMD_LINE_PERM_CHECK :: proc(
 	)
 
 	//Cross check the permissions set for the operation to be performed and the users role
-	permissionCheckResult := OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-		commandStr,
-		colName,
-		colType,
-	)
+	permissionCheckResult := PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(commandStr, colName, colType)
 	switch (permissionCheckResult) 
 	{
 	case 0:

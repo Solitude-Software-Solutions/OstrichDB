@@ -28,7 +28,7 @@ File Description:
 *********************************************************/
 
 //Generates the 'secure' directory for storing user credentials.
-OST_GEN_SECURE_DIR :: proc() -> int {
+GENERATE_SECURE_DIRECTORY :: proc() -> int {
 	using utils
 
 	//perform a check to see if the secure directory already exists to prevent errors and overwriting
@@ -52,25 +52,25 @@ OST_GEN_SECURE_DIR :: proc() -> int {
 }
 
 //Handle initial setup of the admin account on first run of the program
-OST_INIT_ADMIN_SETUP :: proc() -> int {
+HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	using types
 	using data
 	using const
 
 	buf: [256]byte
-	OST_GEN_SECURE_DIR()
-	OST_GEN_USER_ID()
+	GENERATE_SECURE_DIRECTORY()
+	GENERATE_USER_ID()
 	fmt.printfln("Welcome to the OstrichDB Database Management System")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
 
-	inituserName := OST_GET_USERNAME(true)
+	inituserName := CREATE_NEW_USERNAME(true)
 	fmt.printfln("Please enter a password for the admin account")
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
 	libc.system("stty -echo")
-	initpassword := OST_GET_PASSWORD(true)
+	initpassword := CREATE_NEW_USER_PASSWORD(true)
 	saltAsString := string(user.salt.valAsBytes)
 	hashAsString := string(user.hashedPassword.valAsBytes)
 
@@ -101,17 +101,17 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	user.m_k.valAsBytes = OST_DECODE_M_K(mk)
 
 	//Store all the user credentials within the secure collection
-	OST_STORE_USER_CREDS(
+	STORE_USER_CREDENTIALS(
 		inituserName,
 		user.username.Value,
 		user.user_id,
 		"user_name",
 		user.username.Value,
 	)
-	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "role", "admin")
-	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "salt", saltAsString)
-	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "hash", hashAsString)
-	OST_STORE_USER_CREDS(
+	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "role", "admin")
+	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "salt", saltAsString)
+	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "hash", hashAsString)
+	STORE_USER_CREDENTIALS(
 		inituserName,
 		user.username.Value,
 		user.user_id,
@@ -119,11 +119,11 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 		algoMethodAsString,
 	)
 
-	OST_STORE_USER_CREDS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
+	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
 
 	engineInit := config.UPDATE_CONFIG_VALUE(ENGINE_INIT, "true")
 
-	switch (engineInit)
+	switch (engineInit) 
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -152,11 +152,11 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 
 //Generates and returns a unique id
-OST_GEN_USER_ID :: proc() -> i64 {
+GENERATE_USER_ID :: proc() -> i64 {
 	userID := rand.int63_max(1e16 + 1)
 	if data.CHECK_IF_USER_ID_EXISTS(userID) == true {
 		utils.log_err("Generated ID already exists in user file", #procedure)
-		OST_GEN_USER_ID()
+		GENERATE_USER_ID()
 	}
 	types.user.user_id = userID
 	return userID
@@ -165,7 +165,7 @@ OST_GEN_USER_ID :: proc() -> i64 {
 
 //Prompts user to select a username, ensures it not too long/short or taken, then returns the username
 //the isInitializing param will be false when if creating an account post engine initialization,
-OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
+CREATE_NEW_USERNAME :: proc(isInitializing: bool) -> string {
 	using types
 	using utils
 
@@ -193,7 +193,7 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 					enteredStr,
 					utils.RESET,
 				)
-				OST_GET_USERNAME(true)
+				CREATE_NEW_USERNAME(true)
 			}
 		}
 
@@ -236,7 +236,7 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 					utils.RESET,
 				)
 				fmt.println("The only valid special character is '-'.\n")
-				OST_GET_USERNAME(true)
+				CREATE_NEW_USERNAME(true)
 			}
 		}
 
@@ -246,18 +246,18 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 				"Username is too long. Please enter a username that is 32 characters or less",
 			)
 			if isInitializing == true {
-				OST_GET_USERNAME(true)
+				CREATE_NEW_USERNAME(true)
 			} else if isInitializing == false {
-				OST_GET_USERNAME(false)
+				CREATE_NEW_USERNAME(false)
 			}
 		} else if (len(enteredStr) < 2) {
 			fmt.printfln(
 				"Username is too short. Please enter a username that is 2 characters or more",
 			)
 			if isInitializing == true {
-				OST_GET_USERNAME(true)
+				CREATE_NEW_USERNAME(true)
 			} else if isInitializing == false {
-				OST_GET_USERNAME(false)
+				CREATE_NEW_USERNAME(false)
 			}
 		} else {
 			if isInitializing == true {
@@ -280,7 +280,7 @@ OST_GET_USERNAME :: proc(isInitializing: bool) -> string {
 
 //Prompts the user for a password, checks if it is strong enough, then calls the confirm password proc
 //the isInitializing param will be false when if creating an account post engine initialization,
-OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
+CREATE_NEW_USER_PASSWORD :: proc(isInitializing: bool) -> string {
 	using types
 	using utils
 
@@ -304,16 +304,16 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 		}
 	}
 
-	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
+	strongPassword := check_password_strength(enteredStr)
 
-	switch strongPassword
+	switch strongPassword 
 	{
 	case true:
-		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
+		CONFIRM_NEW_USER_PASSWORD(enteredStr, isInitializing)
 		break
 	case false:
 		fmt.printfln("Please try again")
-		OST_GET_PASSWORD(isInitializing)
+		CREATE_NEW_USER_PASSWORD(isInitializing)
 		break
 	}
 
@@ -323,7 +323,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 //Takes in p as password and compares it to the confirmation password
 //if the passwords do not match, the user is prompted to re-enter the password
 //the isInitializing param will be false when if creating an account post engine initialization,
-OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
+CONFIRM_NEW_USER_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 	using types
 	using utils
 
@@ -346,7 +346,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 	}
 	if p != confirmation {
 		fmt.printfln("Passwords do not match. Please try again")
-		OST_GET_PASSWORD(isInitializing)
+		CREATE_NEW_USER_PASSWORD(isInitializing)
 	} else {
 
 		if isInitializing == true {
@@ -373,7 +373,7 @@ OST_CONFIRM_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 
 //Stores the entered user credentials in the users secure collection file/cluster
 // cn- cluster name, id- cluster id, rn- record name, rd- record data
-OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, rn: string, rd: string) -> int {
+STORE_USER_CREDENTIALS :: proc(fn: string, cn: string, id: i64, rn: string, rd: string) -> int {
 	using metadata
 	using const
 	using utils
@@ -404,7 +404,7 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, rn: string, rd: st
 }
 
 // checks if the passed in password is strong enough returns true or false.
-OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
+check_password_strength :: proc(p: string) -> bool {
 	specialChars: []string = {"!", "@", "#", "$", "%", "^", "&", "*"}
 	charsLow: []string = {
 		"a",
@@ -472,7 +472,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p))
+	switch (len(p)) 
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -509,7 +509,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true)
+	switch (true) 
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -562,12 +562,12 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 		return 1
 // 	}
 
-// 	newUserName := OST_GET_USERNAME(false)
+// 	newUserName := CREATE_NEW_USERNAME(false)
 // 	new_user.username.Value = newUserName
 
 
 // 	// Common validation logic for both test and interactive modes
-// 	isBannedUsername := OST_CHECK_FOR_BANNED_USERNAME(new_user.username.Value)
+// 	isBannedUsername := check_if_username_is_banned(new_user.username.Value)
 // 	if isBannedUsername {
 // 		fmt.printfln("Username is banned. Please enter a different username")
 // 		fmt.println("Cannot create user with name: ", new_user.username.Value)
@@ -592,7 +592,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 // 	)
 // 	libc.system("stty -echo")
-// 	initpassword := OST_GET_PASSWORD(false)
+// 	initpassword := CREATE_NEW_USER_PASSWORD(false)
 // 	libc.system("stty echo")
 // 	new_user.password.Value = initpassword
 
@@ -608,35 +608,35 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 	data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", new_user.user_id), 1)
 
 // 	// Store user credentials
-// 	OST_STORE_USER_CREDS(
+// 	STORE_USER_CREDENTIALS(
 // 		newColName,
 // 		new_user.username.Value,
 // 		new_user.user_id,
 // 		"user_name",
 // 		new_user.username.Value,
 // 	)
-// 	OST_STORE_USER_CREDS(
+// 	STORE_USER_CREDENTIALS(
 // 		newColName,
 // 		new_user.username.Value,
 // 		new_user.user_id,
 // 		"role",
 // 		new_user.role.Value,
 // 	)
-// 	OST_STORE_USER_CREDS(
+// 	STORE_USER_CREDENTIALS(
 // 		newColName,
 // 		new_user.username.Value,
 // 		new_user.user_id,
 // 		"salt",
 // 		saltAsString,
 // 	)
-// 	OST_STORE_USER_CREDS(
+// 	STORE_USER_CREDENTIALS(
 // 		newColName,
 // 		new_user.username.Value,
 // 		new_user.user_id,
 // 		"hash",
 // 		hashAsString,
 // 	)
-// 	OST_STORE_USER_CREDS(
+// 	STORE_USER_CREDENTIALS(
 // 		newColName,
 // 		new_user.username.Value,
 // 		new_user.user_id,
@@ -651,136 +651,11 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // }
 
 //Checks that un as username is not a banned username from the banned usernames list
-OST_CHECK_FOR_BANNED_USERNAME :: proc(un: string) -> bool {
+check_if_username_is_banned :: proc(un: string) -> bool {
 	for i := 0; i < len(const.BannedUserNames); i += 1 {
 		if strings.contains(un, const.BannedUserNames[i]) {
 			return true
 		}
 	}
 	return false
-}
-
-//Used to delete a users account. Only admins can delete accounts
-OST_DELETE_USER :: proc(username: string) -> bool {
-	using const
-	using utils
-
-	file := utils.concat_secure_collection_name(username)
-
-
-	// NOTE: This check is reliant on the value stored in memory. if this becomes is a problem remove it and uncomment the line below
-	if types.current_user.role.Value != "admin" {
-		fmt.printfln(
-			"You do not have permission to delete users. Only administrators can perform this action.",
-		)
-		return false
-	}
-
-	//Keep this check in case the value in memory is not accurate
-	// Check if user is an admin based on the role stored in the secure collection
-	// if data.GET_RECORD_VALUE(file, username, "identifier", "role") == "admin" {
-	// 	fmt.printfln("You cannot delete an admin account.")
-	// 	return false
-	// }
-
-	// Cannot delete your own account
-	if username == types.current_user.username.Value {
-		fmt.printfln("You cannot delete your own account.")
-		return false
-	}
-
-	// Check if user exists
-	secureColName := fmt.tprintf("secure_%s", username)
-	exists, _ := data.FIND_SECURE_COLLECTION(secureColName)
-	if !exists {
-		fmt.printfln(
-			"User %s%s%s does not exist. Terminating operation",
-			BOLD_UNDERLINE,
-			username,
-			RESET,
-		)
-		return false
-	}
-
-	// Get confirmation
-	buf: [64]byte
-	fmt.printfln(
-		"Are you sure you want to delete user: %s%s%s?\nThis action cannot be undone.",
-		BOLD_UNDERLINE,
-		username,
-		RESET,
-	)
-	fmt.printfln("Type 'yes' to confirm or 'no' to cancel.")
-
-	input := utils.get_input(false)
-	cap := strings.to_upper(input)
-
-	switch cap {
-	case const.NO:
-		log_runtime_event("User canceled deletion", "User canceled deletion of user account")
-		return false
-	case const.YES:
-		break
-	case:
-		log_runtime_event(
-			"User entered invalid input",
-			"User entered invalid input when trying to delete user",
-		)
-		error2 := new_err(.INVALID_INPUT, get_err_msg(.INVALID_INPUT), #file, #procedure, #line)
-		throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
-		return false
-	}
-
-	//remove the users ID from both clusters in the ids.ost collection file.
-	id := data.GET_CLUSTER_ID("", username)
-	idStr := fmt.tprintf("%d", id)
-
-
-	//called twice to remove the id from both clusters
-	removedFromUserIDCluster := data.REMOVE_ID_FROM_ID_COLLECTION(idStr, true)
-	removedFromClusterIDCluster := data.REMOVE_ID_FROM_ID_COLLECTION(idStr, false)
-	if !removedFromUserIDCluster && !removedFromClusterIDCluster {
-		log_err("Error removing user ID from clusters", #procedure)
-		return false
-	}
-
-
-	// Delete the user's secure collection file
-	deleteSuccess := os.remove(file)
-	if deleteSuccess != 0 {
-		error1 := new_err(
-			.CANNOT_DELETE_FILE,
-			get_err_msg(.CANNOT_DELETE_FILE),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error1)
-		log_err("Error deleting user's secure collection file", #procedure)
-		return false
-	}
-
-	// OST_ERASE_HISTORY_CLUSTER(username) //TODO: Need to rewrite this proc due to moving the onld one to a different file
-	log_runtime_event(
-		"User deleted",
-		fmt.tprintf("Administrator %s deleted user %s", types.user.username.Value, username),
-	)
-	return true
-}
-
-
-//I mean I know what it does but I'm not sure why I wrote it. Not being used currently...
-OST_ADD_USERS_TO_LIST :: proc() -> [dynamic]string {
-	//remember to free mem when calling
-	userArr := make([dynamic]string)
-	secPath, openSuccess := os.open(const.SECURE_COLLECTION_PATH)
-	users, readSuccess := os.read_dir(secPath, -1)
-
-	for user in users {
-		//trim fat
-		nameWithoutSuffix := strings.trim_suffix(user.name, const.OST_EXT)
-		nameWithoutPrefix := strings.trim_prefix(nameWithoutSuffix, "secure_")
-		append(&userArr, nameWithoutPrefix)
-	}
-	return userArr
 }
