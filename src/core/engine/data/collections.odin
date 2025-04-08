@@ -30,7 +30,7 @@ main :: proc() {
 	os.make_directory(STANDARD_COLLECTION_PATH)
 	os.make_directory(QUARANTINE_PATH)
 	os.make_directory(BACKUP_PATH)
-	OST_CREATE_ID_COLLECTION_AND_CLUSTERS()
+	CREATE_AND_FILL_PRIVATE_ID_COLLECTION()
 }
 
 
@@ -54,11 +54,6 @@ GET_COLLECTION_TREE :: proc() {
 
 }
 
-//used for the command line
-OST_CHOOSE_COLLECTION_NAME :: proc() {
-	input := utils.get_input(false)
-	_ = OST_CREATE_COLLECTION(strings.clone(input), .STANDARD_PUBLIC)
-}
 
 /*
 Creates a new collection file with metadata within the DB
@@ -68,14 +63,14 @@ Creates a new collection file with metadata within the DB
 3 history
 4 id
 */
-OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
+CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
 	#partial switch (colType) 
 	{
 	case .STANDARD_PUBLIC:
 		//standard cluster file
-		if OST_PERFORM_COLLECTION_NAME_CHECK(fn) == 1 {
+		if VALIDATE_COLLECTION_NAME(fn) == 1 {
 			return false
 		}
 		collectionPath := utils.concat_standard_collection_name(fn)
@@ -99,7 +94,7 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 		return true
 	case .SECURE_PRIVATE:
 		//secure file
-		if OST_PERFORM_COLLECTION_NAME_CHECK(fn) == 1 {
+		if VALIDATE_COLLECTION_NAME(fn) == 1 {
 			return false
 		}
 		collectionPath := fmt.tprintf("%s%s%s", const.SECURE_COLLECTION_PATH, fn, const.OST_EXT)
@@ -189,13 +184,13 @@ OST_CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool
 }
 
 
-OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
+ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 	using utils
 	using types
 
 	buf: [64]byte
 	fileWithExt := strings.concatenate([]string{fn, const.OST_EXT})
-	if !OST_CHECK_IF_COLLECTION_EXISTS(fn, 0) {
+	if !CHECK_IF_COLLECTION_EXISTS(fn, 0) {
 		return false
 	}
 
@@ -258,7 +253,7 @@ OST_ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 }
 
 //Checks if the passed in collection name is valid
-OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
+VALIDATE_COLLECTION_NAME :: proc(fn: string) -> int {
 	using utils
 
 	nameAsBytes := transmute([]byte)fn
@@ -294,7 +289,7 @@ OST_PERFORM_COLLECTION_NAME_CHECK :: proc(fn: string) -> int {
 
 //checks if the passed in ost file exists in "./collections". see usage in OST_CHOOSE_COLLECTION()
 //type 0 is for standard collection files, type 1 is for secure files
-OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
+CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 	switch (type) {
 	case 0:
 		colPath, openSuccess := os.open(const.STANDARD_COLLECTION_PATH)
@@ -323,7 +318,7 @@ OST_CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 }
 
 
-OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
+RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 	colPath := fmt.tprintf("%s%s%s", const.STANDARD_COLLECTION_PATH, old, const.OST_EXT)
 
 	file, readSuccess := os.read_entire_file_from_filename(colPath)
@@ -360,7 +355,7 @@ OST_RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 }
 
 //reads and returns the body of a collection file
-OST_FETCH_COLLECTION :: proc(fn: string) -> string {
+FETCH_COLLECTION :: proc(fn: string) -> string {
 	fileStart := -1
 	startingPoint := "BTM@@@@@@@@@@@@@@@" //has to be half of the metadata header end mark and not the full thing..IDK why - Marshall
 	collectionPath := utils.concat_standard_collection_name(fn)
@@ -394,61 +389,9 @@ OST_FETCH_COLLECTION :: proc(fn: string) -> string {
 	return strings.clone(str)
 }
 
-//Returns an array of all standard collections
-//if args are false wont print anything just return the names
-OST_GET_ALL_COLLECTION_NAMES :: proc(showCollection, showRecords: bool) -> [dynamic]string {
-	using const
 
-	collectionsDir, errOpen := os.open(STANDARD_COLLECTION_PATH)
-	defer os.close(collectionsDir)
-	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
-	collectionNames := make([dynamic]string)
-	defer delete(collectionNames)
-
-	result: string
-
-
-	//only did this to get the length of the collection names
-	for file in foundFiles {
-		if strings.contains(file.name, OST_EXT) {
-			append(&collectionNames, file.name)
-		}
-	}
-	fmt.printf("\n")
-	fmt.printf("\n")
-	if len(foundFiles) == 1 {
-		fmt.println("Found 1 collection\n--------------------------------")
-	} else {
-		fmt.printfln(
-			"Found %d collections\n--------------------------------",
-			len(collectionNames),
-		)}
-
-	if len(collectionNames) > MAX_COLLECTION_TO_DISPLAY {
-		fmt.printf("There is %d collections to display, display all? (y/N) ", len(collectionNames))
-
-		input := utils.get_input(false)
-
-		if input != "y" || input != "Y" {
-			return collectionNames
-		}
-	}
-
-	for file in foundFiles {
-		if strings.contains(file.name, OST_EXT) {
-			append(&collectionNames, file.name)
-			withoutExt := strings.split(file.name, OST_EXT)
-			fmt.println(withoutExt[0])
-			fmt.println("")
-			LIST_CLUSTERS_IN_COLLECTION(withoutExt[0], showRecords)
-		}
-	}
-
-	return collectionNames
-}
-
-
-OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (bool, string) {
+//Searches for a secure collection file
+FIND_SECURE_COLLECTION :: proc(fn: string) -> (bool, string) {
 	secDir, e := os.open(const.SECURE_COLLECTION_PATH)
 	files, readDirSuccess := os.read_dir(secDir, -1)
 	found := false
@@ -461,7 +404,7 @@ OST_FIND_SEC_COLLECTION :: proc(fn: string) -> (bool, string) {
 }
 
 //gets the number of standard collections
-OST_COUNT_COLLECTIONS :: proc() -> int {
+GET_COLLECTION_COUNT :: proc() -> int {
 	using const
 
 	collectionsDir, errOpen := os.open(STANDARD_COLLECTION_PATH)
@@ -479,7 +422,7 @@ OST_COUNT_COLLECTIONS :: proc() -> int {
 }
 
 //deletes all data from a collection file but keeps the metadata header
-OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
+PURGE_COLLECTION :: proc(fn: string) -> bool {
 	using utils
 
 	collectionPath := utils.concat_standard_collection_name(fn)
@@ -534,7 +477,7 @@ OST_PURGE_COLLECTION :: proc(fn: string) -> bool {
 //LOCK foo -r makes the collection read only
 //LOCK foo -n makes the collection inaccessible
 //LOCK foo without a flag makes the collection Inaccessible by default
-OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm: string) {
+LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm: string) {
 	val: string
 	if flag == "-R" {
 		val = "Read-Only"
@@ -550,7 +493,7 @@ OST_LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm:
 }
 
 //Reverts the permission status of a collection no matter if its in Read-Only or Inaccessible back to Read-Write
-OST_UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
+UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
 	success := false
 	if currentPerm == "Inaccessible" {
 		success = metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)

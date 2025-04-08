@@ -64,7 +64,7 @@ OST_SET_HELP_MODE :: proc() -> bool {
 	using types
 	using utils
 
-	value := data.OST_READ_RECORD_VALUE(
+	value := data.GET_RECORD_VALUE(
 		CONFIG_PATH,
 		CONFIG_CLUSTER,
 		Token[.BOOLEAN],

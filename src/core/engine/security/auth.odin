@@ -41,7 +41,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		return false
 	}
 	usernameCapitalized := strings.to_upper(userName)
-	secCollectionFound, userSecCollection := data.OST_FIND_SEC_COLLECTION(usernameCapitalized)
+	secCollectionFound, userSecCollection := data.FIND_SECURE_COLLECTION(usernameCapitalized)
 	if secCollectionFound == false {
 		fmt.println(
 			"There is no account within OstrichDB associated with the entered username. Please try again.",
@@ -63,7 +63,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		types.system_user.m_k.valAsBytes,
 	)
 
-	userRole := data.OST_READ_RECORD_VALUE(
+	userRole := data.GET_RECORD_VALUE(
 		secCollection,
 		usernameCapitalized,
 		"identifier",
@@ -78,7 +78,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 	}
 
 	//Voodoo??
-	userMKStr := data.OST_READ_RECORD_VALUE(
+	userMKStr := data.GET_RECORD_VALUE(
 		secCollection,
 		usernameCapitalized,
 		"identifier",
@@ -89,10 +89,10 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
-	salt := data.OST_READ_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "salt")
+	salt := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "salt")
 
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.OST_READ_RECORD_VALUE(
+	providedHash := data.GET_RECORD_VALUE(
 		secCollection,
 		usernameCapitalized,
 		"identifier",
@@ -103,7 +103,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 
 	preMesh := OST_MESH_SALT_AND_HASH(salt, pHashAsBytes)
 	//PRE-MESHING END=========================================================================================================
-	algoMethod := data.OST_READ_RECORD_VALUE(
+	algoMethod := data.GET_RECORD_VALUE(
 		secCollection,
 		usernameCapitalized,
 		"identifier",
@@ -146,7 +146,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		current_user.username.Value = strings.clone(usernameCapitalized) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
 
-		userLoggedInValue := data.OST_READ_RECORD_VALUE(
+		userLoggedInValue := data.GET_RECORD_VALUE(
 			CONFIG_PATH,
 			CONFIG_CLUSTER,
 			Token[.BOOLEAN],
@@ -154,7 +154,7 @@ OST_RUN_SIGNIN :: proc() -> bool {
 		)
 
 		//Master Key shit
-		mkValueRead := data.OST_READ_RECORD_VALUE(
+		mkValueRead := data.GET_RECORD_VALUE(
 			secCollection,
 			usernameCapitalized,
 			"identifier",
@@ -250,14 +250,14 @@ OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	secCollection := utils.concat_secure_collection_name(types.user.username.Value)
 
 	//PRE-MESHING START
-	salt := data.OST_READ_RECORD_VALUE(
+	salt := data.GET_RECORD_VALUE(
 		secCollection,
 		types.user.username.Value,
 		"identifier",
 		"salt",
 	)
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.OST_READ_RECORD_VALUE(
+	providedHash := data.GET_RECORD_VALUE(
 		secCollection,
 		types.user.username.Value,
 		"identifier",
@@ -268,7 +268,7 @@ OST_VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	//PRE-MESHING END
 
 
-	algoMethod := data.OST_READ_RECORD_VALUE(
+	algoMethod := data.GET_RECORD_VALUE(
 		secCollection,
 		types.user.username.Value,
 		"identifier",

@@ -95,7 +95,7 @@ OST_START_ENGINE :: proc() -> int {
 				)
 
 
-				autoServeConfigValue := data.OST_READ_RECORD_VALUE(
+				autoServeConfigValue := data.GET_RECORD_VALUE(
 					CONFIG_PATH,
 					CONFIG_CLUSTER,
 					types.Token[.BOOLEAN],

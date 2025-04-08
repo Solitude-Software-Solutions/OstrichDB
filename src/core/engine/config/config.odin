@@ -22,9 +22,9 @@ File Description:
 main :: proc() {
 	using data
 
-	OST_CREATE_COLLECTION("", .CONFIG_PRIVATE)
-	id := OST_GENERATE_ID(true)
-	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
+	CREATE_COLLECTION("", .CONFIG_PRIVATE)
+	id := GENERATE_ID(true)
+	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
 	CREATE_CLUSTER_BLOCK(const.CONFIG_PATH, id, const.CONFIG_CLUSTER)
 
 	appendSuccess := APPEND_ALL_CONFIG_RECORDS()
@@ -170,13 +170,13 @@ APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 
 
 //used to update a config value when a user uses the SET command
-//essentially the same as the data.OST_SET_RECORD_VALUE proc but explicitly for the config collection file.
+//essentially the same as the data.SET_RECORD_VALUE proc but explicitly for the config collection file.
 UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	using const
 	using utils
 	using types
 
-	result := data.OST_CHECK_IF_RECORD_EXISTS(CONFIG_PATH, CONFIG_CLUSTER, rn)
+	result := data.CHECK_IF_SPECIFIC_RECORD_EXISTS(CONFIG_PATH, CONFIG_CLUSTER, rn)
 	if !result {
 		fmt.printfln("Config: %s%s% does not exist", BOLD_UNDERLINE, rn, RESET)
 		return false
@@ -190,14 +190,14 @@ UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 		return false
 	}
 
-	recordType, getTypeSuccess := data.OST_GET_RECORD_TYPE(CONFIG_PATH, CONFIG_CLUSTER, rn)
+	recordType, getTypeSuccess := data.GET_RECORD_TYPE(CONFIG_PATH, CONFIG_CLUSTER, rn)
 	//Standard value allocation
 	valueAny: any = 0
 	ok: bool
 
 	switch (recordType) {
 	case Token[.BOOLEAN]:
-		valueAny, ok = data.OST_CONVERT_RECORD_TO_BOOL(rValue)
+		valueAny, ok = data.CONVERT_RECORD_TO_BOOL(rValue)
 		break
 	case Token[.STRING]:
 		valueAny = rValue
@@ -228,7 +228,7 @@ UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	}
 
 	// Update the record in the file
-	success := data.OST_UPDATE_RECORD_IN_FILE(CONFIG_PATH, CONFIG_CLUSTER, rn, valueAny)
+	success := data.UPDATE_RECORD(CONFIG_PATH, CONFIG_CLUSTER, rn, valueAny)
 
 	return success
 }

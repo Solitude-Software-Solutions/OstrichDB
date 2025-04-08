@@ -75,14 +75,14 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 	hashAsString := string(user.hashedPassword.valAsBytes)
 
 	algoMethodAsString := fmt.tprintf("%d", user.store_method)
-	user.user_id = data.OST_GENERATE_ID(true) //for secure clustser, the cluster id is the user id
+	user.user_id = data.GENERATE_ID(true) //for secure clustser, the cluster id is the user id
 
-	OST_CREATE_COLLECTION("", .HISTORY_PRIVATE)
+	CREATE_COLLECTION("", .HISTORY_PRIVATE)
 	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
 	user.username.Value = inituserName
 	// //store the id to both clusters in the id collection
-	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
-	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
+	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
+	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
 
 
 	// //Create a cluster in the history collection that will hold this users command history
@@ -91,7 +91,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	//Create a secure collection for the user
 	inituserName = fmt.tprintf("secure_%s", inituserName)
-	OST_CREATE_COLLECTION(inituserName, .SECURE_PRIVATE)
+	CREATE_COLLECTION(inituserName, .SECURE_PRIVATE)
 	// OST_GEN_MASTER_KEY returns a 32 byte master key that is hex encoded
 	mk := OST_GEN_MASTER_KEY()
 	mkAsString := transmute(string)mk //dont worry about this
@@ -123,7 +123,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 
 	engineInit := config.UPDATE_CONFIG_VALUE(ENGINE_INIT, "true")
 
-	switch (engineInit) 
+	switch (engineInit)
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -154,7 +154,7 @@ OST_INIT_ADMIN_SETUP :: proc() -> int {
 //Generates and returns a unique id
 OST_GEN_USER_ID :: proc() -> i64 {
 	userID := rand.int63_max(1e16 + 1)
-	if data.OST_CHECK_IF_USER_ID_EXISTS(userID) == true {
+	if data.CHECK_IF_USER_ID_EXISTS(userID) == true {
 		utils.log_err("Generated ID already exists in user file", #procedure)
 		OST_GEN_USER_ID()
 	}
@@ -306,7 +306,7 @@ OST_GET_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := OST_CHECK_PASSWORD_STRENGTH(enteredStr)
 
-	switch strongPassword 
+	switch strongPassword
 	{
 	case true:
 		OST_CONFIRM_PASSWORD(enteredStr, isInitializing)
@@ -397,7 +397,7 @@ OST_STORE_USER_CREDS :: proc(fn: string, cn: string, id: i64, rn: string, rd: st
 
 
 	data.CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
-	data.OST_APPEND_CREDENTIAL_RECORD(secureFilePath, cn, rn, rd, "identifier", id)
+	data.CREATE_AND_APPEND_PRIVATE_RECORD(secureFilePath, cn, rn, rd, "identifier", id)
 
 	UPDATE_METADATA_AFTER_OPERATIONS(secureFilePath)
 	return 0
@@ -472,7 +472,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p)) 
+	switch (len(p))
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -509,7 +509,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true) 
+	switch (true)
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -575,7 +575,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 	}
 
 // 	newColName := fmt.tprintf("secure_%s", new_user.username.Value)
-// 	exists, _ := data.OST_FIND_SEC_COLLECTION(newColName)
+// 	exists, _ := data.FIND_SECURE_COLLECTION(newColName)
 
 // 	if exists {
 // 		fmt.printfln(
@@ -587,7 +587,7 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 		return 1
 // 	}
 
-// 	result := data.OST_CREATE_COLLECTION(newColName, .SECURE_PRIVATE)
+// 	result := data.CREATE_COLLECTION(newColName, .SECURE_PRIVATE)
 // 	fmt.printf(
 // 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 // 	)
@@ -601,11 +601,11 @@ OST_CHECK_PASSWORD_STRENGTH :: proc(p: string) -> bool {
 // 	hashAsString := string(new_user.hashedPassword.valAsStr)
 // 	algoMethodAsString := strconv.itoa(buf[:], new_user.store_method)
 
-// 	new_user.user_id = data.OST_GENERATE_ID(true)
+// 	new_user.user_id = data.GENERATE_ID(true)
 
 // 	//store the id to both clusters in the id collection
-// 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 0)
-// 	data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", new_user.user_id), 1)
+// 	data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", new_user.user_id), 0)
+// 	data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", new_user.user_id), 1)
 
 // 	// Store user credentials
 // 	OST_STORE_USER_CREDS(
@@ -678,7 +678,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 
 	//Keep this check in case the value in memory is not accurate
 	// Check if user is an admin based on the role stored in the secure collection
-	// if data.OST_READ_RECORD_VALUE(file, username, "identifier", "role") == "admin" {
+	// if data.GET_RECORD_VALUE(file, username, "identifier", "role") == "admin" {
 	// 	fmt.printfln("You cannot delete an admin account.")
 	// 	return false
 	// }
@@ -691,7 +691,7 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 
 	// Check if user exists
 	secureColName := fmt.tprintf("secure_%s", username)
-	exists, _ := data.OST_FIND_SEC_COLLECTION(secureColName)
+	exists, _ := data.FIND_SECURE_COLLECTION(secureColName)
 	if !exists {
 		fmt.printfln(
 			"User %s%s%s does not exist. Terminating operation",
@@ -737,8 +737,8 @@ OST_DELETE_USER :: proc(username: string) -> bool {
 
 
 	//called twice to remove the id from both clusters
-	removedFromUserIDCluster := data.OST_REMOVE_ID_FROM_CLUSTER(idStr, true)
-	removedFromClusterIDCluster := data.OST_REMOVE_ID_FROM_CLUSTER(idStr, false)
+	removedFromUserIDCluster := data.REMOVE_ID_FROM_ID_COLLECTION(idStr, true)
+	removedFromClusterIDCluster := data.REMOVE_ID_FROM_ID_COLLECTION(idStr, false)
 	if !removedFromUserIDCluster && !removedFromClusterIDCluster {
 		log_err("Error removing user ID from clusters", #procedure)
 		return false

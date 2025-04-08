@@ -24,14 +24,14 @@ File Description:
 //another example:
 //`WHERE foo` would show the location of every 2nd or 3rd layer data object with the name foo
 
-//handles WHERE {target} {target name}
-OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
+//handles WHERE {objType} {objName}
+LOCATE_SPECIFIC_DATA_OBJECT :: proc(objType, objName: string) -> bool {
 	using const
 	using utils
 	using types
 
-	// Early return for invalid target
-	if target == Token[.COLLECTION] {
+	// Early return for invalid objType
+	if objType == Token[.COLLECTION] {
 		return false
 	}
 
@@ -52,13 +52,13 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 
 	// Search through collections
 	for collection in collectionNames {
-		if target == Token[.CLUSTER] {
+		if objType == Token[.CLUSTER] {
 			collectionPath := fmt.tprintf("%s%s", STANDARD_COLLECTION_PATH, collection)
-			if CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
+			if CHECK_IF_CLUSTER_EXISTS(collectionPath, objName) {
 				fmt.printfln(
 					"Cluster: %s%s%s -> Collection: %s%s%s",
 					BOLD_UNDERLINE,
-					targetName,
+					objName,
 					RESET,
 					BOLD_UNDERLINE,
 					collection,
@@ -67,13 +67,13 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 				found = true
 				// Remove the return here to continue searching
 			}
-		} else if target == Token[.RECORD] {
-			colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
+		} else if objType == Token[.RECORD] {
+			colName, cluName, success := SCAN_COLLECTION_FOR_RECORD(collection, objName)
 			if success {
 				fmt.printfln(
 					"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
 					BOLD_UNDERLINE,
-					targetName,
+					objName,
 					RESET,
 					BOLD_UNDERLINE,
 					cluName,
@@ -93,7 +93,7 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 
 //handles WHERE {target name}
 //returns true if a match is found, the name of the collection and the name of the cluster
-OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
+LOCATE_ANY_OBJECT_WITH_NAME :: proc(targetName: string) -> (bool, string, string) {
 	using utils
 	using const
 
@@ -124,7 +124,7 @@ OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
 		}
 
 		// Check if it's a record name
-		colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
+		colName, cluName, success := SCAN_COLLECTION_FOR_RECORD(collection, targetName)
 		if success {
 			found = true
 			return found, colName, cluName

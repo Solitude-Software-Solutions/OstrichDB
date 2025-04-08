@@ -19,19 +19,19 @@ File Description:
 *********************************************************/
 
 //split the passed in "array" which is actually a string from the command line at each comma, store into a slice and return it
-OST_PARSE_ARRAY :: proc(strArr: string) -> []string {
+PARSE_ARRAY :: proc(strArr: string) -> []string {
 	result := strings.split(strArr, ",")
 	return result
 }
 
 //checks that array values the user wants to store in a record is the correct type
-OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
+VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 	using const
 	using types
 
 	verified := false
 	//retrieve the record type
-	arrayValues := OST_PARSE_ARRAY(strArray)
+	arrayValues := PARSE_ARRAY(strArray)
 
 	switch (rType) {
 	case Token[.INTEGER_ARRAY]:
@@ -54,19 +54,19 @@ OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 		return verified
 	case Token[.DATE_ARRAY]:
 		for i in arrayValues {
-			_, parseSuccess := OST_PARSE_DATE(i)
+			_, parseSuccess := PARSE_DATE(i)
 			verified = parseSuccess
 		}
 		return verified
 	case Token[.TIME_ARRAY]:
 		for i in arrayValues {
-			_, parseSuccess := OST_PARSE_TIME(i)
+			_, parseSuccess := PARSE_TIME(i)
 			verified = parseSuccess
 		}
 		return verified
 	case Token[.DATETIME_ARRAY]:
 		for i in arrayValues {
-			_, parseSuccess := OST_PARSE_DATETIME(i)
+			_, parseSuccess := PARSE_DATETIME(i)
 			verified = parseSuccess
 		}
 		return verified
@@ -75,7 +75,7 @@ OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 		return verified
 	case Token[.UUID_ARRAY]:
 		for i in arrayValues {
-			_, parseSuccess := OST_PARSE_UUID(i)
+			_, parseSuccess := PARSE_UUID(i)
 			verified = parseSuccess
 		}
 		return verified
@@ -86,7 +86,7 @@ OST_VERIFY_ARRAY_VALUES :: proc(rType, strArray: string) -> bool {
 
 
 //makes sure the date is in the correct format & length. then returns the date as a string
-OST_PARSE_DATE :: proc(date: string) -> (string, bool) {
+PARSE_DATE :: proc(date: string) -> (string, bool) {
 	dateStr := ""
 	parts, err := strings.split(date, "-")
 
@@ -137,7 +137,7 @@ OST_PARSE_DATE :: proc(date: string) -> (string, bool) {
 	return dateStr, true
 }
 
-OST_PARSE_TIME :: proc(time: string) -> (string, bool) {
+PARSE_TIME :: proc(time: string) -> (string, bool) {
 	timeStr := ""
 	timeArr, err := strings.split(time, ":")
 
@@ -185,7 +185,7 @@ OST_PARSE_TIME :: proc(time: string) -> (string, bool) {
 
 //parses the passed in string ensuring proper format and length
 //Example datetime: 2024-03-14T09:30:00
-OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, bool) {
+PARSE_DATETIME :: proc(dateTime: string) -> (string, bool) {
 	dateTimeStr := ""
 	dateTimeArr, err := strings.split(dateTime, "T")
 
@@ -197,12 +197,12 @@ OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, bool) {
 		return dateTimeStr, false
 	}
 
-	dateStr, dateErr := OST_PARSE_DATE(dateTimeArr[0])
+	dateStr, dateErr := PARSE_DATE(dateTimeArr[0])
 	if dateErr != true {
 		return dateTimeStr, false
 	}
 
-	timeStr, timeErr := OST_PARSE_TIME(dateTimeArr[1])
+	timeStr, timeErr := PARSE_TIME(dateTimeArr[1])
 	if timeErr != true {
 		return dateTimeStr, false
 	}
@@ -215,7 +215,7 @@ OST_PARSE_DATETIME :: proc(dateTime: string) -> (string, bool) {
 //parses the passed in string ensuring proper format and length
 //Must be in the format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 //Only allows 0-9 and a-f
-OST_PARSE_UUID :: proc(uuid: string) -> (string, bool) {
+PARSE_UUID :: proc(uuid: string) -> (string, bool) {
 	uuidStr := ""
 	isValidChar := false
 
@@ -295,7 +295,6 @@ OST_PARSE_UUID :: proc(uuid: string) -> (string, bool) {
 	)
 	return strings.to_lower(uuidStr), true
 }
-
 
 
 //TODO DONT DELETE THESE..THEY CAN BE USEDFUL IN THE TRANSFER package

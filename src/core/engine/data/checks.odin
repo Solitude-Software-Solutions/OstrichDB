@@ -30,7 +30,7 @@ VALIDATE_IDS :: proc(fn: string) -> bool {
 	// defer delete(idsAsStringArray)
 
 	// for id in idsFoundInCollection {
-	// 	idFoundInCache := OST_CHECK_IF_CLUSTER_ID_EXISTS(id)
+	// 	idFoundInCache := CHECK_IF_CLUSTER_ID_EXISTS(id)
 	// 	if !idFoundInCache {
 	// 		log_err(fmt.tprintf("Cluster ID %v not found in cache", id), #procedure)
 	// 		types.data_integrity_checks.Cluster_IDs.Compliant = false
@@ -237,7 +237,7 @@ HANDLE_INTEGRITY_CHECK_RESULT :: proc(fn: string) -> int {
 				data_integrity_checks.Checksum.Compliant,
 			)
 			fmt.println("For more information, please see the error log file.")
-			OST_PERFORM_ISOLATION(fn)
+			PERFORM_COLLECTION_ISOLATION(fn)
 			return -1
 		}
 	}

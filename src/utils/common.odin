@@ -236,3 +236,11 @@ string_is_int :: proc(value: string) -> bool {
 	return ok
 
 }
+
+
+//helper used to strip array brackets from a string, used in internal_conversion.odin
+strip_array_brackets :: proc(value: string) -> string {
+	value := strings.trim_prefix(value, "[")
+	value = strings.trim_suffix(value, "]")
+	return strings.clone(strings.trim_space(value))
+}

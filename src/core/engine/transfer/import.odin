@@ -258,13 +258,13 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool)
 	}
 
 	collectionPath := utils.concat_standard_collection_name(desiredColName)
-	colCreationSuccess := OST_CREATE_COLLECTION(strings.to_upper(desiredColName), .STANDARD_PUBLIC)
+	colCreationSuccess := CREATE_COLLECTION(strings.to_upper(desiredColName), .STANDARD_PUBLIC)
 	if !colCreationSuccess {
 		fmt.println("Failed to create collection for import file")
 		return success
 	}
 
-	id := OST_GENERATE_ID(true)
+	id := GENERATE_ID(true)
 	cluCreationSuccess := CREATE_CLUSTER(strings.to_upper(desiredColName), csvClusterName, id)
 	if cluCreationSuccess != 0 {
 		fmt.println("Failed to create cluster within new import collection")

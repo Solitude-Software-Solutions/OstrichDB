@@ -30,7 +30,7 @@ OST_CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 	userCluster := strings.to_upper(user.username.Value)
 	isAdmin := false
 
-	userRoleVal := data.OST_READ_RECORD_VALUE(secCollection, userCluster, "identifier", "role")
+	userRoleVal := data.GET_RECORD_VALUE(secCollection, userCluster, "identifier", "role")
 
 	if userRoleVal == "admin" {
 		isAdmin = true

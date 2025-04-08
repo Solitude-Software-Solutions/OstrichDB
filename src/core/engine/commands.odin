@@ -42,7 +42,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	}
 
 	defer delete(cmd.l_token)
-	#partial switch (cmd.c_token) 
+	#partial switch (cmd.c_token)
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
@@ -100,7 +100,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .HISTORY:
 		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
 		OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
-		commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
+		commandHistory := push_records_to_array(types.current_user.username.Value)
 
 		OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		for cmd, index in commandHistory {
@@ -168,7 +168,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// 		//--------------Permissions Security stuff Start----------------//
 	// 		OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, WHERE, .STANDARD_PUBLIC)
 
-	// 		found := data.OST_WHERE_OBJECT(cmd.t_token, collectionName)
+	// 		found := data.LOCATE_SPECIFIC_DATA_OBJECT(cmd.t_token, collectionName)
 	// 		if !found {
 	// 			fmt.printfln(
 	// 				"No %s%s%s with name: %s%s%s found within OstrichDB.",
@@ -184,7 +184,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// 	}
 	// 	if len(cmd.l_token) == 0 {
 
-	// 		found, collectionName, clusterName := data.OST_WHERE_ANY(cmd.t_token)
+	// 		found, collectionName, clusterName := data.LOCATE_ANY_OBJECT_WITH_NAME(cmd.t_token)
 
 
 	// 		OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, WHERE, .STANDARD_PUBLIC)
@@ -240,7 +240,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			collectionName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -288,11 +288,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
-			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
+			exists := data.CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
 			switch (exists) {
 			case false:
 				fmt.printf("Creating collection: %s%s%s\n", BOLD_UNDERLINE, cmd.l_token[0], RESET)
-				success := data.OST_CREATE_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC)
+				success := data.CREATE_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC)
 				if success {
 					fmt.printf(
 						"Collection: %s%s%s created successfully.\n",
@@ -344,7 +344,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if cmd.isUsingDotNotation == true {
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -372,11 +372,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// 	return -1
 				// }
 
-				id := data.OST_GENERATE_ID(true)
+				id := data.GENERATE_ID(true)
 				result := data.CREATE_CLUSTER(collectionName, clusterName, id)
-				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
+				data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
 
-				switch (result) 
+				switch (result)
 				{
 				case -1:
 					fmt.printfln(
@@ -435,7 +435,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -459,7 +459,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			colPath := concat_standard_collection_name(collectionName)
 
 			if Token[.OF_TYPE] in cmd.p_token && cmd.isUsingDotNotation == true {
-				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[Token[.OF_TYPE]])
+				rType, typeSuccess := data.SET_RECORD_TYPE(cmd.p_token[Token[.OF_TYPE]])
 				if typeSuccess == 0 {
 					fmt.printfln(
 						"Creating record: %s%s%s of type: %s%s%s",
@@ -471,14 +471,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 
-					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
+					recordCreationSuccess := data.CREATE_RECORD(
 						colPath,
 						clusterName,
 						recordName,
 						"",
 						rType,
 					)
-					switch (appendSuccess) 
+					switch (recordCreationSuccess)
 					{
 					case 0:
 						fmt.printfln(
@@ -494,7 +494,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						//IF a records type is NULL, technically it cant hold a value, the word NULL in the value slot
 						// of a record is mostly a placeholder
 						if rType == Token[.NULL] {
-							data.OST_SET_RECORD_VALUE(
+							data.SET_RECORD_VALUE(
 								colPath,
 								clusterName,
 								recordName,
@@ -561,14 +561,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case .RENAME:
 		log_runtime_event("Used RENAME command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			if Token[.TO] in cmd.p_token {
 				oldName := cmd.l_token[0]
 				newName := cmd.p_token[Token[.TO]]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(oldName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(oldName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -590,8 +590,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					newName,
 					RESET,
 				)
-				success := data.OST_RENAME_COLLECTION(oldName, newName)
-				switch (success) 
+				success := data.RENAME_COLLECTION(oldName, newName)
+				switch (success)
 				{
 				case true:
 					fmt.printf(
@@ -643,7 +643,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName = cmd.l_token[0]
 				newName := cmd.p_token[Token[.TO]]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -717,7 +717,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					clusterName = cmd.l_token[1]
 
 
-					if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 						fmt.printfln(
 							"Collection: %s%s%s does not exist.",
 							BOLD_UNDERLINE,
@@ -739,13 +739,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					oldRName = cmd.l_token[0]
 					newRName = cmd.p_token[Token[.TO]]
 				}
-				result := data.OST_RENAME_RECORD(
+				result := data.RENAME_RECORD(
 					strings.clone(collectionName),
 					strings.clone(clusterName),
 					oldRName,
 					newRName,
 				)
-				switch (result) 
+				switch (result)
 				{
 				case 0:
 					fmt.printfln(
@@ -800,12 +800,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case .ERASE:
 		log_runtime_event("Used ERASE command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			collectionName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -817,7 +817,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
 
-			if data.OST_ERASE_COLLECTION(collectionName, false) == true {
+			if data.ERASE_COLLECTION(collectionName, false) == true {
 				fmt.printfln(
 					"Collection: %s%s%s erased successfully",
 					BOLD_UNDERLINE,
@@ -841,7 +841,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName = cmd.l_token[0]
 				cluster = cmd.l_token[1]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -872,7 +872,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 					OST_DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user.m_k.valAsBytes)
-					if data.OST_REMOVE_ID_FROM_CLUSTER(fmt.tprintf("%d", clusterID), false) {
+					if data.REMOVE_ID_FROM_ID_COLLECTION(fmt.tprintf("%d", clusterID), false) {
 						OST_ENCRYPT_COLLECTION(
 							"",
 							.ID_PRIVATE,
@@ -937,7 +937,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				recordName = cmd.l_token[2]
 
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -956,7 +956,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// case -1:
 				// 	return -1
 				// }
-				if data.OST_ERASE_RECORD(collectionName, clusterName, recordName, false) == true {
+				if data.ERASE_RECORD(collectionName, clusterName, recordName, false) == true {
 					fmt.printfln(
 						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
 						BOLD_UNDERLINE,
@@ -1001,14 +1001,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case .FETCH:
 		log_runtime_event("Used FETCH command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
 				collectionName := cmd.l_token[0]
 
 				//check that the collection even exists
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1020,7 +1020,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.FETCH], .STANDARD_PUBLIC)
 
-				str := data.OST_FETCH_COLLECTION(collectionName)
+				str := data.FETCH_COLLECTION(collectionName)
 				fmt.println(str)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: FETCH <collection_name>")
@@ -1041,7 +1041,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1083,7 +1083,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName = cmd.l_token[1]
 				recordName = cmd.l_token[2]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1101,7 +1101,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// case -1:
 				// 	return -1
 				// }
-				record, found := data.OST_FETCH_RECORD(collectionName, clusterName, recordName)
+				record, found := data.FETCH_RECORD(collectionName, clusterName, recordName)
 				fmt.printfln(
 					"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
 					BOLD_UNDERLINE,
@@ -1142,7 +1142,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// SET: Allows for the setting of values within records or configs
 	case .SET:
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 3:
 			//Setting a standard records value
@@ -1151,7 +1151,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1176,7 +1176,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				file := utils.concat_standard_collection_name(collectionName)
 
-				setValueSuccess := data.OST_SET_RECORD_VALUE(
+				setValueSuccess := data.SET_RECORD_VALUE(
 					file,
 					clusterName,
 					recordName,
@@ -1186,7 +1186,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				//if that records type is one of the following 'special' arrays:
 				// []CHAR, []DATE, []TIME, []DATETIME,etc scan for that type and remove the "" that
 				// each value will have(THANKS ODIN...)
-				rType, _ := data.OST_GET_RECORD_TYPE(file, clusterName, recordName)
+				rType, _ := data.GET_RECORD_TYPE(file, clusterName, recordName)
 
 
 				/*
@@ -1195,7 +1195,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				Remove at any time if needed - Marshall
 				*/
 				if rType == Token[.STRING] && len(value) == 1 {
-					conversionSuccess := data.OST_CHANGE_RECORD_TYPE(
+					conversionSuccess := data.CHANGE_RECORD_TYPE(
 						file,
 						clusterName,
 						recordName,
@@ -1233,7 +1233,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				   rType == Token[.TIME_ARRAY] ||
 				   rType == Token[.DATETIME_ARRAY] ||
 				   rType == Token[.UUID_ARRAY] {
-					data.OST_MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
+					data.MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
 				}
 
 				if setValueSuccess {
@@ -1290,7 +1290,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						value,
 						RESET,
 					)
-					switch (configName) 
+					switch (configName)
 					{
 					case "HELP_VERBOSE":
 						if value == "true" || value == "false" {
@@ -1412,10 +1412,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// COUNT: Allows for the counting of collections, clusters, or records
 	case .COUNT:
 		log_runtime_event("Used COUNT command", "")
-		switch (cmd.t_token) 
+		switch (cmd.t_token)
 		{
 		case Token[.COLLECTIONS]:
-			result := data.OST_COUNT_COLLECTIONS()
+			result := data.GET_COLLECTION_COUNT()
 			switch (result) {
 			case -1:
 				fmt.printfln("Failed to count collections")
@@ -1435,7 +1435,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			if len(cmd.l_token) == 1 {
 				collectionName := cmd.l_token[0]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1448,7 +1448,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
 				result := data.COUNT_CLUSTERS(collectionName)
-				switch (result) 
+				switch (result)
 				{
 				case -1:
 					fmt.printfln(
@@ -1508,7 +1508,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1520,7 +1520,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
-				result := data.OST_COUNT_RECORDS_IN_CLUSTER(
+				result := data.GET_RECORD_COUNT_WITHIN_CLUSTER(
 					strings.clone(collectionName),
 					strings.clone(clusterName),
 					true,
@@ -1582,7 +1582,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				//in the event the user is counting all records in a collection
 				collectionName := cmd.l_token[0]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1594,9 +1594,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.COUNT], .STANDARD_PUBLIC)
 
-				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collectionName)
+				result := data.GET_RECORD_COUNT_WITHIN_COLLECTION(collectionName)
 
-				switch result 
+				switch result
 				{
 				case -1:
 					fmt.printfln(
@@ -1654,12 +1654,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .PURGE:
 		collectionName, clusterName, recordName: string
 		log_runtime_event("Used PURGE command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			collectionName = cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1671,8 +1671,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
-			result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
-			switch result 
+			result := data.PURGE_COLLECTION(cmd.l_token[0])
+			switch result
 			{
 			case true:
 				fmt.printfln(
@@ -1699,7 +1699,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1751,7 +1751,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1763,7 +1763,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
-			result := data.OST_PURGE_RECORD(collectionName, clusterName, recordName)
+			result := data.PURGE_RECORD(collectionName, clusterName, recordName)
 			switch result {
 			case true:
 				fmt.printfln(
@@ -1810,7 +1810,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 1:
 			collectionName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1846,7 +1846,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1893,7 +1893,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				recordName := cmd.l_token[2]
 
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1905,7 +1905,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.SIZE_OF], .STANDARD_PUBLIC)
 
-				size, success := data.OST_GET_RECORD_SIZE(collectionName, clusterName, recordName)
+				size, success := data.GET_RECORD_SIZE(collectionName, clusterName, recordName)
 				if success {
 					fmt.printf(
 						"Size of record %s.%s.%s: %d bytes\n",
@@ -1949,7 +1949,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1962,7 +1962,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.TYPE_OF], .STANDARD_PUBLIC)
 
 			colPath := concat_standard_collection_name(collectionName)
-			rType, success := data.OST_GET_RECORD_TYPE(colPath, clusterName, recordName)
+			rType, success := data.GET_RECORD_TYPE(colPath, clusterName, recordName)
 			if !success {
 				fmt.printfln(
 					"Failed to get record %s.%s.%s's type",
@@ -2014,7 +2014,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				recordName := cmd.l_token[2]
 				newType := cmd.p_token[Token[.TO]]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -2058,7 +2058,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					newType = Token[.FLOAT_ARRAY]
 				}
 
-				success := data.OST_HANDLE_TYPE_CHANGE(colPath, clusterName, recordName, newType)
+				success := data.HANDLE_RECORD_TYPE_CONVERSION(
+					colPath,
+					clusterName,
+					recordName,
+					newType,
+				)
 
 				if success {
 					fmt.printfln(
@@ -2106,7 +2111,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionName := cmd.l_token[0]
 
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -2118,7 +2123,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			OST_EXEC_CMD_LINE_PERM_CHECK(collectionName, Token[.ISOLATE], .STANDARD_PUBLIC)
 
-			result, isolatedColName := data.OST_PERFORM_ISOLATION(collectionName)
+			result, isolatedColName := data.PERFORM_COLLECTION_ISOLATION(collectionName)
 			fmt.println("isolatedNAme: ", isolatedColName)
 			switch result {
 			case 0:
@@ -2161,7 +2166,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// 	case 1:
 	// 		collectionName := cmd.l_token[0]
 
-	// 		if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+	// 		if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 	// 			fmt.printfln(
 	// 				"Collection: %s%s%s does not exist.",
 	// 				BOLD_UNDERLINE,
@@ -2263,7 +2268,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			//locking a collection with no flag defaults to it being inaccessable unless unlocked
 			colName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(colName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(colName, 0) {
 				fmt.printfln("Collection: %s%s%s does not exist.", BOLD_UNDERLINE, colName, RESET)
 				return -1
 			}
@@ -2312,7 +2317,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						fmt.printfln("Invalid password. Operation cancelled.")
 						break
 					case true:
-						lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
+						lockSuccess, permission := data.LOCK_COLLECTION(colName, "-N")
 						if lockSuccess {
 							filePath := concat_standard_collection_name(colName)
 							osPermSuccess := security.OST_SET_OS_PERMISSIONS(filePath, permission)
@@ -2369,7 +2374,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			OST_DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 
 			fmt.printfln("Locking collection: %s%s%s ", BOLD_UNDERLINE, colName, RESET)
-			lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, flag)
+			lockSuccess, permission := data.LOCK_COLLECTION(colName, flag)
 			if lockSuccess {
 				fmt.printfln(
 					"Collection: %s%s%s now now in %s%s%s mode.",
@@ -2428,7 +2433,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				} else {
 					passwordConfirmed := security.OST_CONFIRM_COLLECECTION_UNLOCK()
-					switch (passwordConfirmed) 
+					switch (passwordConfirmed)
 					{
 					case false:
 						fmt.printfln(
@@ -2450,7 +2455,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							colName,
 							RESET,
 						)
-						unlockSuccess := data.OST_UNLOCK_COLLECTION(colName, currentPerm)
+						unlockSuccess := data.UNLOCK_COLLECTION(colName, currentPerm)
 						break
 					}
 				}

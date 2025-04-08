@@ -25,7 +25,7 @@ File Description:
 //references to quarantine all throughout. Just know its the same thing. - SchoolyB
 
 //moves the passed in collection file from the collections dir to the quarantine dir
-OST_PERFORM_ISOLATION :: proc(fn: string) -> (int, string) {
+PERFORM_COLLECTION_ISOLATION :: proc(fn: string) -> (int, string) {
 	using const
 
 	collectionPath := utils.concat_standard_collection_name(fn)
@@ -55,7 +55,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> (int, string) {
 
 	//ID REMOVAL STUFF
 	idsAsInt, idsAsStr := GET_ALL_CLUSTER_IDS(fn)
-	idRemovaleResult := OST_REMOVE_ISOLATED_CLUSTER_IDS(idsAsStr)
+	idRemovaleResult := REMOVE_ISOLATED_CLUSTER_IDS_FROM_ID_COLLECTION(idsAsStr)
 	if !idRemovaleResult {
 		utils.log_err("Error removing isolated cluster IDs", #procedure)
 		return -3, ""
@@ -75,7 +75,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> (int, string) {
 	}
 
 
-	result := OST_APPEND_QUARANTINE_METADATA(fn, isolationPath)
+	result := APPEND_NEW_ISOLATION_METADATA(fn, isolationPath)
 	return result, quarantineFilename
 }
 
@@ -84,7 +84,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> (int, string) {
 //%ocn - Original Collection Name
 //%doq - Date of Quarantine
 //%toq - Time of Quarantine
-OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, isolationPath: string) -> int {
+APPEND_NEW_ISOLATION_METADATA :: proc(fn: string, isolationPath: string) -> int {
 
 	data, readSuccess := utils.read_file(isolationPath, #procedure)
 	if !readSuccess {
@@ -157,11 +157,11 @@ OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, isolationPath: string) -> int
 //in the event that a cluster id in a standard collectionn file
 // is modified, the check systsem bugs out. its looking for an exact match of the cluster
 // id so if that is modified there can be no match thus the id is not found and removed...
-OST_REMOVE_ISOLATED_CLUSTER_IDS :: proc(idsAsStr: [dynamic]string) -> bool {
+REMOVE_ISOLATED_CLUSTER_IDS_FROM_ID_COLLECTION :: proc(idsAsStr: [dynamic]string) -> bool {
 	// Remove the cluster id from the cluster ids file
 	for id in idsAsStr {
 		// Remove the cluster id from the cluster ids file
-		OST_REMOVE_ID_FROM_CLUSTER(id, false)
+		REMOVE_ID_FROM_ID_COLLECTION(id, false)
 	}
 
 	return true

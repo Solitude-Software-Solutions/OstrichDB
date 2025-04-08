@@ -60,7 +60,7 @@ OST_HANDLE_GET_REQ :: proc(
 			return types.HttpStatus {
 				code = .OK,
 				text = types.HttpStatusText[.OK],
-			}, data.OST_FETCH_COLLECTION(strings.to_upper(collectionName))
+			}, data.FETCH_COLLECTION(strings.to_upper(collectionName))
 		} else if len(pathSegments) == 4 {
 			// /collection/collectionName/cluster
 			collectionName = pathSegments[1]
@@ -74,7 +74,7 @@ OST_HANDLE_GET_REQ :: proc(
 			clusterName = pathSegments[3]
 			recordName = pathSegments[5]
 
-			recordData, fetchSuccess := data.OST_FETCH_RECORD(
+			recordData, fetchSuccess := data.FETCH_RECORD(
 				strings.to_upper(collectionName),
 				strings.to_upper(clusterName),
 				strings.to_upper(recordName),
@@ -183,16 +183,16 @@ OST_HANDLE_PUT_REQ :: proc(
 	recordName := strings.split(pathSegments[5], "?")
 	slicedRecordName := strings.to_upper(recordName[0])
 
-	switch (pathSegments[0]) 
+	switch (pathSegments[0])
 	{
 	case "c":
-		switch (segments) 
+		switch (segments)
 		{
 		case 2:
 			// In the event of something like: /collection/collecion_name
-			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+			colExists = data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
-				data.OST_CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
+				data.CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
 				return types.HttpStatus {
 					code = .OK,
 					text = types.HttpStatusText[.OK],
@@ -205,7 +205,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			}
 		case 4:
 			// In the event of something like: /collection/collection_name/cluster_name
-			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+			colExists = data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
 				return types.HttpStatus {
 					code = .NOT_FOUND,
@@ -214,7 +214,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			}
 			cluExists = data.CHECK_IF_CLUSTER_EXISTS(collectionName, clusterName)
 			if !cluExists {
-				id := data.OST_GENERATE_ID(true)
+				id := data.GENERATE_ID(true)
 				data.CREATE_CLUSTER(collectionName, clusterName, id)
 				return types.HttpStatus {
 					code = .OK,
@@ -223,7 +223,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			}
 		case 6:
 			// in the event of something like: /collection/collection_name/cluster/cluster_name/record/record_name
-			colExists = data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+			colExists = data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 			if !colExists {
 				return types.HttpStatus {
 					code = .NOT_FOUND,
@@ -239,7 +239,7 @@ OST_HANDLE_PUT_REQ :: proc(
 					text = types.HttpStatusText[.NOT_FOUND],
 				}, fmt.tprintf("CLUSTER: %s not found", clusterName)
 			}
-			recExists = data.OST_CHECK_IF_RECORD_EXISTS(
+			recExists = data.CHECK_IF_SPECIFIC_RECORD_EXISTS(
 				collectionNamePath,
 				clusterName,
 				slicedRecordName,
@@ -247,7 +247,7 @@ OST_HANDLE_PUT_REQ :: proc(
 			if !recExists {
 				//using query parameters to set the record data
 				// Example: /collection/collection_name/cluster/cluster_name/record/record_name?type=string&value=hello
-				data.OST_APPEND_RECORD_TO_CLUSTER(
+				data.CREATE_RECORD(
 					collectionNamePath,
 					clusterName,
 					slicedRecordName,
@@ -260,21 +260,21 @@ OST_HANDLE_PUT_REQ :: proc(
 				}, fmt.tprintf("New RECORD: %s created sucessfully", slicedRecordName)
 			} else if recExists {
 				//if the record does exist overwrite it with the new data provided
-				eraseSuccess := data.OST_ERASE_RECORD(
+				eraseSuccess := data.ERASE_RECORD(
 					collectionName,
 					clusterName,
 					slicedRecordName,
 					true,
 				)
 				if eraseSuccess {
-					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
+					recordCreationSuccess := data.CREATE_RECORD(
 						collectionNamePath,
 						clusterName,
 						slicedRecordName,
 						queryParams["value"],
 						recordType,
 					)
-					switch (appendSuccess) {
+					switch (recordCreationSuccess) {
 					case 0:
 						fmt.println("Record appended successfully")
 						return types.HttpStatus {
@@ -333,7 +333,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 	switch (segments) {
 	case 2:
 		// /collection/collecion_name
-		data.OST_ERASE_COLLECTION(collectionName, true)
+		data.ERASE_COLLECTION(collectionName, true)
 		return types.HttpStatus {
 			code = .OK,
 			text = types.HttpStatusText[.OK],
@@ -347,7 +347,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 		}, fmt.tprintf("CLUSTER: %s erased successfully", clusterName)
 	case 6:
 		// /collection/collection_name/cluster/cluster_name/record/record_name
-		data.OST_ERASE_RECORD(collectionName, clusterName, recordName, true)
+		data.ERASE_RECORD(collectionName, clusterName, recordName, true)
 		return types.HttpStatus {
 			code = .OK,
 			text = types.HttpStatusText[.OK],
@@ -388,8 +388,8 @@ OST_HANDLE_POST_REQ :: proc(
 	if len(segments) == 2 && segments[0] == "c" {
 		collectionName = strings.to_upper(segments[1])
 
-		if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-			data.OST_CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
+		if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			data.CREATE_COLLECTION(collectionName, .STANDARD_PUBLIC)
 			return types.HttpStatus {
 				code = .OK,
 				text = types.HttpStatusText[.OK],
@@ -408,7 +408,7 @@ OST_HANDLE_POST_REQ :: proc(
 		clusterName = strings.to_upper(segments[3])
 		colFilePath := utils.concat_standard_collection_name(collectionName)
 
-		if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+		if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 			return types.HttpStatus {
 				code = .NOT_FOUND,
 				text = types.HttpStatusText[.NOT_FOUND],
@@ -417,7 +417,7 @@ OST_HANDLE_POST_REQ :: proc(
 
 
 		if !data.CHECK_IF_CLUSTER_EXISTS(colFilePath, clusterName) {
-			id := data.OST_GENERATE_ID(true)
+			id := data.GENERATE_ID(true)
 			data.CREATE_CLUSTER(collectionName, clusterName, id)
 			return types.HttpStatus {
 				code = .OK,
@@ -446,7 +446,7 @@ OST_HANDLE_POST_REQ :: proc(
 		colFilePath := utils.concat_standard_collection_name(collectionName)
 
 
-		colExists := data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+		colExists := data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 		if !colExists {
 			fmt.printfln("COLLECTION: %s not found", collectionName)
 			return types.HttpStatus {
@@ -465,9 +465,9 @@ OST_HANDLE_POST_REQ :: proc(
 		}
 
 
-		if !data.OST_CHECK_IF_RECORD_EXISTS(colFilePath, clusterName, recordName) {
+		if !data.CHECK_IF_SPECIFIC_RECORD_EXISTS(colFilePath, clusterName, recordName) {
 			fmt.printfln("RECORD: %s not found...attempting to create", recordName)
-			if data.OST_APPEND_RECORD_TO_CLUSTER(
+			if data.CREATE_RECORD(
 				   colFilePath,
 				   clusterName,
 				   recordName,

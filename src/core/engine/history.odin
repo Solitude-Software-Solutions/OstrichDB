@@ -28,7 +28,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	histBuf: [1024]byte
 	//append the last command to the history buffer
-	current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
+	current_user.commandHistory.cHistoryCount = data.GET_RECORD_COUNT_WITHIN_CLUSTER(
 		"history",
 		current_user.username.Value,
 		false,
@@ -40,7 +40,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	//
 
 	security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	limitOn := data.OST_READ_RECORD_VALUE(
+	limitOn := data.GET_RECORD_VALUE(
 		const.CONFIG_PATH,
 		const.CONFIG_CLUSTER,
 		types.Token[.BOOLEAN],
@@ -62,7 +62,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	recordName := fmt.tprintf("%s%s", "history_", histCountStr)
 
 	//append the last command to the history file
-	data.OST_APPEND_RECORD_TO_CLUSTER(
+	data.CREATE_RECORD(
 		const.HISTORY_PATH,
 		current_user.username.Value,
 		strings.to_upper(recordName),
@@ -71,7 +71,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	)
 
 	//get value of the command that was just stored as a record
-	historyRecordValue := data.OST_READ_RECORD_VALUE(
+	historyRecordValue := data.GET_RECORD_VALUE(
 		const.HISTORY_PATH,
 		current_user.username.Value,
 		"COMMAND",
@@ -306,4 +306,38 @@ OST_CHECK_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
 		}
 	}
 	return limitReached
+}
+//used for the history command,
+//reads over the passed in collection file and
+//the specified cluster and stores the value of each record into the array
+push_records_to_array :: proc(cn: string) -> [dynamic]string {
+	records: [dynamic]string
+	histBuf: [1024]byte
+
+
+	data, readSuccess := utils.read_file(const.HISTORY_PATH, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return records
+	}
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster, i in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			lines := strings.split(cluster, "\n")
+			for line, j in lines {
+				if strings.contains(line, ":COMMAND:") {
+					parts := strings.split(line, ":COMMAND:")
+					if len(parts) >= 2 {
+						value := strings.trim_space(parts[1])
+						append(&records, strings.clone(value))
+					}
+				}
+			}
+			break
+		}
+	}
+	return records
 }

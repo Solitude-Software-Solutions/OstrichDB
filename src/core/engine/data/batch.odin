@@ -37,14 +37,14 @@ HANDLE_COLLECTION_BATCH_REQ :: proc(
 	case .NEW:
 		for name in collectionNames {
 			fmt.printfln("Creating collection: %s", name)
-			if !OST_CREATE_COLLECTION(strings.to_upper(name), .STANDARD_PUBLIC) {
+			if !CREATE_COLLECTION(strings.to_upper(name), .STANDARD_PUBLIC) {
 				return 1, ""
 			}
 		}
 		return 0, ""
 	case .ERASE:
 		for name in collectionNames {
-			if !OST_ERASE_COLLECTION(strings.to_upper(name), false) {
+			if !ERASE_COLLECTION(strings.to_upper(name), false) {
 				return 1, ""
 			}
 			return 0, ""
@@ -52,7 +52,7 @@ HANDLE_COLLECTION_BATCH_REQ :: proc(
 	case .FETCH:
 		result: string
 		for name in collectionNames {
-			result = OST_FETCH_COLLECTION(strings.to_upper(name))
+			result = FETCH_COLLECTION(strings.to_upper(name))
 			if result == "" {
 				return 1, ""
 			} else {
@@ -72,7 +72,7 @@ BATCH_RENAME_COLLECTIONS :: proc(oldNames: []string, newNames: []string) -> int 
 	}
 
 	for i in 0 ..< len(oldNames) {
-		if !OST_RENAME_COLLECTION(oldNames[i], newNames[i]) {
+		if !RENAME_COLLECTION(oldNames[i], newNames[i]) {
 			return 1
 		}
 	}
@@ -106,7 +106,7 @@ HANDLE_CLUSTER_BATCH_REQ :: proc(
 	case .NEW:
 		for i in colNames {
 			for j in cluNames {
-				id := OST_GENERATE_ID(true) //todo: this might be fucked. Passing true skips a check to see if the id is already in use...
+				id := GENERATE_ID(true) //todo: this might be fucked. Passing true skips a check to see if the id is already in use...
 				if CREATE_CLUSTER(strings.to_upper(i), j, id) != 0 {
 					return 1, ""
 				}
@@ -181,7 +181,7 @@ HANDLE_RECORD_BATCH_REQ :: proc(
 				for k in recNames {
 					for l in recordTypes {
 						for m in recValues {
-							if OST_APPEND_RECORD_TO_CLUSTER(i, j, k, m, l) != 0 {
+							if CREATE_RECORD(i, j, k, m, l) != 0 {
 								return 1, "Error encountered while creating new records"
 							} else {
 								return 0, "New records created succesfully"
@@ -195,7 +195,7 @@ HANDLE_RECORD_BATCH_REQ :: proc(
 		for i in colNames {
 			for j in cluNames {
 				for k in recNames {
-					if !OST_ERASE_RECORD(i, j, k, true) {
+					if !ERASE_RECORD(i, j, k, true) {
 						return 1, "Error encountered while erasing records"
 
 					} else {
@@ -208,7 +208,7 @@ HANDLE_RECORD_BATCH_REQ :: proc(
 		for i in colNames {
 			for j in cluNames {
 				for k in recNames {
-					recordData, fetchSucess := OST_FETCH_RECORD(i, j, k)
+					recordData, fetchSucess := FETCH_RECORD(i, j, k)
 					if !fetchSucess {
 						return 1, "Error fetching records"
 					} else {
