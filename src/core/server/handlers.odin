@@ -14,20 +14,17 @@ Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 File Description:
             Contains logic for handling requests from the client.
             This file is used by the server to handle requests from the client.
-            It is called by the `OST_ADD_ROUTE` proc in server.odin which expects
+            It is called by the `ADD_ROUTE_TO_ROUTER` proc in server.odin which expects
             all handlers to follow the `RouteHandler` procedure signature.
             Unstable and not fully implemented.
 *********************************************************/
 
 // Note: Although some procs follow the `RouteHandler` procdure signature, they dont all use the params that are expected. But, they all MUST follow this signature
-// because they are all called by the `OST_ADD_ROUTE` proc in server.odin which expects them to have this signature - Marshall A Burns aka @SchoolyB
+// because they are all called by the `ADD_ROUTE_TO_ROUTER` proc in server.odin which expects them to have this signature - Marshall A Burns aka @SchoolyB
 
-OST_PATH_SPLITTER :: proc(p: string) -> []string {
-	return strings.split(strings.trim_prefix(p, "/"), "/")
-}
 
 //Handles all GET requests from the client
-OST_HANDLE_GET_REQ :: proc(
+HANDLE_GET_REQUEST :: proc(
 	m, p: string,
 	h: map[string]string,
 	params: ..string,
@@ -43,7 +40,7 @@ OST_HANDLE_GET_REQ :: proc(
 	collectionName, clusterName, recordName: string
 
 	// Split the path into segments
-	pathSegments := OST_PATH_SPLITTER(p)
+	pathSegments := split_path_into_segments(p)
 	segments := len(pathSegments)
 
 	defer delete(pathSegments)
@@ -99,7 +96,7 @@ OST_HANDLE_GET_REQ :: proc(
 
 // Handles the HEAD request from the client
 // Sends the http status code, metadata like the server name and version, content type, and content length
-OST_HANDLE_HEAD_REQ :: proc(
+HANDLE_HEAD_REQUEST :: proc(
 	m, p: string,
 	h: map[string]string,
 	params: ..string,
@@ -113,13 +110,13 @@ OST_HANDLE_HEAD_REQ :: proc(
 			"Method not allowed\n"
 	}
 	//The responsebody is NOT returned in the HEAD request. Only used to calculate the content length
-	status, responseBody := OST_HANDLE_GET_REQ("GET", p, h)
+	status, responseBody := HANDLE_GET_REQUEST("GET", p, h)
 
 
 	if status.code != .OK {
 		return status, ""
 	}
-	pathSegments := OST_PATH_SPLITTER(p)
+	pathSegments := split_path_into_segments(p)
 
 	//there is no path, so we are just fetching the root
 	contentLength := len(responseBody)
@@ -141,7 +138,7 @@ OST_HANDLE_HEAD_REQ :: proc(
 
 //Handles PUT requests from the client
 //PUT allows the client to update/overwrite a collection, cluster or record in the database or create a new one if none exists
-OST_HANDLE_PUT_REQ :: proc(
+HANDLE_PUT_REQUEST :: proc(
 	m, p: string,
 	h: map[string]string,
 	params: ..string,
@@ -171,7 +168,7 @@ OST_HANDLE_PUT_REQ :: proc(
 	recordType = strings.to_upper(recordType)
 	colExists, cluExists, recExists: bool
 
-	pathSegments := OST_PATH_SPLITTER(p)
+	pathSegments := split_path_into_segments(p)
 	segments := len(pathSegments)
 
 	defer delete(pathSegments)
@@ -183,10 +180,10 @@ OST_HANDLE_PUT_REQ :: proc(
 	recordName := strings.split(pathSegments[5], "?")
 	slicedRecordName := strings.to_upper(recordName[0])
 
-	switch (pathSegments[0])
+	switch (pathSegments[0]) 
 	{
 	case "c":
-		switch (segments)
+		switch (segments) 
 		{
 		case 2:
 			// In the event of something like: /collection/collecion_name
@@ -299,7 +296,7 @@ OST_HANDLE_PUT_REQ :: proc(
 }
 
 // handles the DELETE request from the client
-OST_HANDLE_DELETE_REQ :: proc(
+HANDLE_DELETE_REQUEST :: proc(
 	m, p: string,
 	h: map[string]string,
 	params: ..string,
@@ -315,7 +312,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 			"Invalid method\n"
 	}
 
-	pathSegments := OST_PATH_SPLITTER(p)
+	pathSegments := split_path_into_segments(p)
 	segments := len(pathSegments)
 	defer delete(pathSegments)
 	collectionName, clusterName, recordName: string
@@ -360,7 +357,7 @@ OST_HANDLE_DELETE_REQ :: proc(
 
 
 //Handles POST requests from the client
-OST_HANDLE_POST_REQ :: proc(
+HANDLE_POST_REQUEST :: proc(
 	m, p: string,
 	h: map[string]string,
 	params: ..string,
@@ -376,7 +373,7 @@ OST_HANDLE_POST_REQ :: proc(
 			"Method not allowed\n"
 	}
 
-	segments := OST_PATH_SPLITTER(p)
+	segments := split_path_into_segments(p)
 
 
 	if len(segments) < 2 {
@@ -467,14 +464,7 @@ OST_HANDLE_POST_REQ :: proc(
 
 		if !data.CHECK_IF_SPECIFIC_RECORD_EXISTS(colFilePath, clusterName, recordName) {
 			fmt.printfln("RECORD: %s not found...attempting to create", recordName)
-			if data.CREATE_RECORD(
-				   colFilePath,
-				   clusterName,
-				   recordName,
-				   "",
-				   recordType,
-			   ) ==
-			   0 {
+			if data.CREATE_RECORD(colFilePath, clusterName, recordName, "", recordType) == 0 {
 				fmt.println("Record appended successfully")
 				return types.HttpStatus {
 					code = .OK,
@@ -671,4 +661,9 @@ parse_query_string :: proc(query: string) -> map[string]string {
 		}
 	}
 	return params
+}
+
+
+split_path_into_segments :: proc(p: string) -> []string {
+	return strings.split(strings.trim_prefix(p, "/"), "/")
 }

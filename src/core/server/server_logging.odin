@@ -17,7 +17,7 @@ File Description:
             event logging on the server.
 *********************************************************/
 //creates a new server log file
-OST_CREATE_SERVER_LOG_FILE :: proc() -> int {
+CREATE_SERVER_LOG_FILE :: proc() -> int {
 	serverLogFile, creationSuccess := os.open(
 		const.SERVER_LOG_PATH,
 		os.O_CREATE | os.O_RDWR,
@@ -41,16 +41,15 @@ OST_CREATE_SERVER_LOG_FILE :: proc() -> int {
 }
 
 
-OST_SET_EVENT_INFORMATION :: proc(
+SET_SERVER_EVENT_INFORMATION :: proc(
 	name, desc: string,
 	type: types.ServerEventType,
 	time: time.Time,
 	isRequestEvent: bool,
 	path: string,
 	method: types.HttpMethod,
-) ->
-    types.ServerEvent {
-    newEvent := new(types.ServerEvent)
+) -> types.ServerEvent {
+	newEvent := new(types.ServerEvent)
 	newEvent.Name = name
 	newEvent.Description = desc
 	newEvent.Type = type
@@ -62,7 +61,7 @@ OST_SET_EVENT_INFORMATION :: proc(
 	return newEvent^
 }
 
-OST_PRINT_EVENT_INFORMATION :: proc(event: types.ServerEvent) {
+PRINT_SERVER_EVENT_INFORMATION :: proc(event: types.ServerEvent) {
 	fmt.println("Event Name: ", event.Name)
 	fmt.println("Event Description: ", event.Description)
 	fmt.println("Event Type: ", event.Type)
@@ -76,10 +75,10 @@ OST_PRINT_EVENT_INFORMATION :: proc(event: types.ServerEvent) {
 }
 
 //Takes in an event and writes the events data to the log file
-OST_LOG_AND_PRINT_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
-    OST_PRINT_EVENT_INFORMATION(event)
+LOG_AND_PRINT_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
+	PRINT_SERVER_EVENT_INFORMATION(event)
 
-    //Logging shit
+	//Logging shit
 	logMsg := fmt.tprintf(
 		"Server Event Triggered: ",
 		event.Name,
@@ -132,5 +131,3 @@ OST_LOG_AND_PRINT_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
 	return 0
 
 }
-
-

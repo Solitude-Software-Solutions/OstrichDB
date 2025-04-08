@@ -25,85 +25,205 @@ isRunning := true
 OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	using const
 	using types
-	OST_CREATE_SERVER_LOG_FILE()
+	CREATE_SERVER_LOG_FILE()
 	isRunning = true
-	initializedServerStartEvent:=OST_SET_EVENT_INFORMATION("Server Start","OstrichDB Server started",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(initializedServerStartEvent)
-	router = OST_NEW_ROUTER()
+	initializedServerStartEvent := SET_SERVER_EVENT_INFORMATION(
+		"Server Start",
+		"OstrichDB Server started",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(initializedServerStartEvent)
+	router = CREATE_NEW_ROUTER()
 	defer free(router)
 
 
 	//OstrichDB GET version static route and server logging
-	OST_ADD_ROUTE(router, .GET, "/version", OST_HANDLE_GET_REQ)
-	versionRouteEvent:=OST_SET_EVENT_INFORMATION("Add Route","Added '/version' static GET route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(versionRouteEvent)
+	ADD_ROUTE_TO_ROUTER(router, .GET, "/version", HANDLE_GET_REQUEST)
+	versionRouteEvent := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/version' static GET route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(versionRouteEvent)
 
 	// HEAD, POST, GET, DELETE dynamic routes for collections as well as server logging
-	OST_ADD_ROUTE(router, .HEAD, C_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
-	addHeadColRoute:= OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*' dynamic HEAD route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addHeadColRoute)
+	ADD_ROUTE_TO_ROUTER(router, .HEAD, C_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
+	addHeadColRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*' dynamic HEAD route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addHeadColRoute)
 
-	OST_ADD_ROUTE(router, .POST, C_DYNAMIC_BASE, OST_HANDLE_POST_REQ)
-	addPostColRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*' dynamic POST route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addPostColRoute)
+	ADD_ROUTE_TO_ROUTER(router, .POST, C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	addPostColRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*' dynamic POST route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addPostColRoute)
 
-	OST_ADD_ROUTE(router, .GET, C_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
-	addGetColRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*' dynamic GET route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addGetColRoute)
+	ADD_ROUTE_TO_ROUTER(router, .GET, C_DYNAMIC_BASE, HANDLE_GET_REQUEST)
+	addGetColRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*' dynamic GET route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addGetColRoute)
 
-	OST_ADD_ROUTE(router, .DELETE, C_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
-	addDeleteColRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*' dynamic DELETE route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addDeleteColRoute)
+	ADD_ROUTE_TO_ROUTER(router, .DELETE, C_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
+	addDeleteColRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*' dynamic DELETE route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addDeleteColRoute)
 
 
 	// HEAD, POST, GET, DELETE dynamic routes for clusters as well as server logging
-	OST_ADD_ROUTE(router, .HEAD, CL_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
-	addHeadCluRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*' dynamic HEAD route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addHeadCluRoute)
+	ADD_ROUTE_TO_ROUTER(router, .HEAD, CL_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
+	addHeadCluRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*' dynamic HEAD route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addHeadCluRoute)
 
-	OST_ADD_ROUTE(router, .POST, CL_DYNAMIC_BASE, OST_HANDLE_POST_REQ)
-	addPostCluRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*' dynamic POST route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addPostCluRoute)
+	ADD_ROUTE_TO_ROUTER(router, .POST, CL_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	addPostCluRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*' dynamic POST route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addPostCluRoute)
 
-	OST_ADD_ROUTE(router, .GET, CL_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
-	addGetCluRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*' dynamic GET route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addGetCluRoute)
+	ADD_ROUTE_TO_ROUTER(router, .GET, CL_DYNAMIC_BASE, HANDLE_GET_REQUEST)
+	addGetCluRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*' dynamic GET route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addGetCluRoute)
 
-	OST_ADD_ROUTE(router, .DELETE, CL_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
-	addDeleteCluRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*' dynamic DELETE route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addDeleteCluRoute)
+	ADD_ROUTE_TO_ROUTER(router, .DELETE, CL_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
+	addDeleteCluRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*' dynamic DELETE route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addDeleteCluRoute)
 
 
-		// HEAD, POST, GET, DELETE dynamic routes for clusters as well as server logging
-	OST_ADD_ROUTE(router, .HEAD, R_DYNAMIC_BASE, OST_HANDLE_HEAD_REQ)
-	addHeadRecRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*/r/*' dynamic HEAD route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addHeadRecRoute)
+	// HEAD, POST, GET, DELETE dynamic routes for clusters as well as server logging
+	ADD_ROUTE_TO_ROUTER(router, .HEAD, R_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
+	addHeadRecRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*/r/*' dynamic HEAD route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addHeadRecRoute)
 
-	OST_ADD_ROUTE(router, .POST, R_DYNAMIC_TYPE_QUERY, OST_HANDLE_POST_REQ)
-	addPostRecRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*/r/*?type=*' dynamic POST route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addPostRecRoute)
+	ADD_ROUTE_TO_ROUTER(router, .POST, R_DYNAMIC_TYPE_QUERY, HANDLE_POST_REQUEST)
+	addPostRecRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*/r/*?type=*' dynamic POST route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addPostRecRoute)
 
-	OST_ADD_ROUTE(router, .PUT, R_DYNAMIC_TYPE_VALUE_QUERY, OST_HANDLE_PUT_REQ)
-	addPutRecRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*/r/*?type=*&value=*' dynamic PUT route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addPutRecRoute)
+	ADD_ROUTE_TO_ROUTER(router, .PUT, R_DYNAMIC_TYPE_VALUE_QUERY, HANDLE_PUT_REQUEST)
+	addPutRecRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*/r/*?type=*&value=*' dynamic PUT route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addPutRecRoute)
 
-	OST_ADD_ROUTE(router, .GET, R_DYNAMIC_BASE, OST_HANDLE_GET_REQ)
-	addGetRecRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*/r/*' dynamic GET route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addGetRecRoute)
+	ADD_ROUTE_TO_ROUTER(router, .GET, R_DYNAMIC_BASE, HANDLE_GET_REQUEST)
+	addGetRecRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*/r/*' dynamic GET route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addGetRecRoute)
 
-	OST_ADD_ROUTE(router, .DELETE, R_DYNAMIC_BASE, OST_HANDLE_DELETE_REQ)
-	addDeleteRecRoute:=OST_SET_EVENT_INFORMATION("Add Route","Added '/c/*/cl/*/r/*' dynamic DELETE route to router",ServerEventType.ROUTINE, time.now(), false, "",nil)
-	OST_LOG_AND_PRINT_SERVER_EVENT(addDeleteRecRoute)
+	ADD_ROUTE_TO_ROUTER(router, .DELETE, R_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
+	addDeleteRecRoute := SET_SERVER_EVENT_INFORMATION(
+		"Add Route",
+		"Added '/c/*/cl/*/r/*' dynamic DELETE route to router",
+		ServerEventType.ROUTINE,
+		time.now(),
+		false,
+		"",
+		nil,
+	)
+	LOG_AND_PRINT_SERVER_EVENT(addDeleteRecRoute)
 
 
 	//TODO: Need to come back to batch requests...
-	// OST_ADD_ROUTE(
+	// ADD_ROUTE_TO_ROUTER(
 	// 	router,
 	// 	.POST,
 	// 	"/batch/c/foo/cl/foo&bar&baz&goob",
-	// 	OST_HANDLE_POST_REQ,
+	// 	HANDLE_POST_REQUEST,
 	// )
-	// OST_ADD_ROUTE(router, .POST, "/batch/c/foo&bar/cl/foo&bar", OST_HANDLE_POST_REQ)
+	// ADD_ROUTE_TO_ROUTER(router, .POST, "/batch/c/foo&bar/cl/foo&bar", HANDLE_POST_REQUEST)
 
 
 	//Create a new endpoint to listen on
@@ -163,7 +283,7 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 
 		// Parse incoming request
-		method, path, headers := OST_PARSE_REQUEST(buf[:bytes_read])
+		method, path, headers := PARSE_HTTP_REQUEST(buf[:bytes_read])
 
 		// Create response headers
 		response_headers := make(map[string]string)
@@ -173,27 +293,67 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 		// Handle the request using router
 		fmt.printfln("passing %s router: ", #procedure, router)
-		status, response_body := OST_HANDLE_REQUEST(router, method, path, headers)
-		handleRequestEvent := OST_SET_EVENT_INFORMATION("Attempt Request", "Attempting handle request made on the server",types.ServerEventType.ROUTINE, time.now(), true, path,nil)
-		OST_LOG_AND_PRINT_SERVER_EVENT(handleRequestEvent)
+		status, response_body := HANDLE_HTTP_REQUEST(router, method, path, headers)
+		handleRequestEvent := SET_SERVER_EVENT_INFORMATION(
+			"Attempt Request",
+			"Attempting handle request made on the server",
+			types.ServerEventType.ROUTINE,
+			time.now(),
+			true,
+			path,
+			nil,
+		)
+		LOG_AND_PRINT_SERVER_EVENT(handleRequestEvent)
 
 
 		// Build and send response
-		response := OST_BUILD_RESPONSE(status, response_headers, response_body)
-		buildResponseEvent := OST_SET_EVENT_INFORMATION("Build Response", "Attempting build a response for the request",types.ServerEventType.ROUTINE, time.now(), false, "",nil)
-		OST_LOG_AND_PRINT_SERVER_EVENT(buildResponseEvent)
+		response := BUILD_HTTP_RESPONSE(status, response_headers, response_body)
+		buildResponseEvent := SET_SERVER_EVENT_INFORMATION(
+			"Build Response",
+			"Attempting build a response for the request",
+			types.ServerEventType.ROUTINE,
+			time.now(),
+			false,
+			"",
+			nil,
+		)
+		LOG_AND_PRINT_SERVER_EVENT(buildResponseEvent)
 
-		if len(response) == 0{
-		   buildResponseFailEvent := OST_SET_EVENT_INFORMATION("Failed Reponse Build", "Failed to build a response",types.ServerEventType.WARNING, time.now(), false, "",nil)
-		   OST_LOG_AND_PRINT_SERVER_EVENT(buildResponseFailEvent)
+		if len(response) == 0 {
+			buildResponseFailEvent := SET_SERVER_EVENT_INFORMATION(
+				"Failed Reponse Build",
+				"Failed to build a response",
+				types.ServerEventType.WARNING,
+				time.now(),
+				false,
+				"",
+				nil,
+			)
+			LOG_AND_PRINT_SERVER_EVENT(buildResponseFailEvent)
 		}
 
 		_, write_err := net.send(socket, response)
-		writeResponseToSocket := OST_SET_EVENT_INFORMATION("Write Respone To Socket", "Attempting to write a response to the socket",types.ServerEventType.ROUTINE, time.now(), false, "",nil)
-		OST_LOG_AND_PRINT_SERVER_EVENT(writeResponseToSocket)
+		writeResponseToSocket := SET_SERVER_EVENT_INFORMATION(
+			"Write Respone To Socket",
+			"Attempting to write a response to the socket",
+			types.ServerEventType.ROUTINE,
+			time.now(),
+			false,
+			"",
+			nil,
+		)
+		LOG_AND_PRINT_SERVER_EVENT(writeResponseToSocket)
 		if write_err != nil {
-		writeResponseToSocketFail := OST_SET_EVENT_INFORMATION("Failed To Write To Socket", "Failed to write a response to the socket",types.ServerEventType.CRITICAL_ERROR, time.now(), false, "",nil)
-		OST_LOG_AND_PRINT_SERVER_EVENT(writeResponseToSocketFail)
+			writeResponseToSocketFail := SET_SERVER_EVENT_INFORMATION(
+				"Failed To Write To Socket",
+				"Failed to write a response to the socket",
+				types.ServerEventType.CRITICAL_ERROR,
+				time.now(),
+				false,
+				"",
+				nil,
+			)
+			LOG_AND_PRINT_SERVER_EVENT(writeResponseToSocketFail)
 
 			fmt.println("Error writing to socket:", write_err)
 			return

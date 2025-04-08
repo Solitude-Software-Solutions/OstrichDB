@@ -142,12 +142,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used HELP command", "User requested help information.")
 		if len(cmd.t_token) == 0 {
 			log_runtime_event("Used HELP command", "User requested general help information.")
-			help.OST_GET_GENERAL_HELP()
+			help.GET_GENERAL_HELP_INFO()
 		} else if cmd.t_token == Token[.CLP] || cmd.t_token == Token[.CLPS] {
 			log_runtime_event("Used HELP command", "User requested atom help information.")
-			help.OST_GET_CLPS_HELP()
+			help.SHOW_TOKEN_HELP_TABLE()
 		} else {
-			help.OST_GET_SPECIFIC_HELP(cmd.t_token)
+			help.GET_HELP_INFO_FOR_SPECIFIC_TOKEN(cmd.t_token)
 			log_runtime_event("Used HELP command", "User requested specific help information.")
 		}
 		break
@@ -1337,7 +1337,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
 								fmt.printfln("Successfully set HELP config to %s", value)
 							}
-							help.OST_SET_HELP_MODE()
+							help.SET_HELP_MODE()
 						} else {
 							fmt.println(
 								"Invalid value. Valid values for config HELP_VERBOSE are: 'true' or 'false'",

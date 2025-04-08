@@ -14,7 +14,7 @@ File Description:
 *********************************************************/
 
 //Create a new router
-OST_NEW_ROUTER :: proc() -> ^types.Router {
+CREATE_NEW_ROUTER :: proc() -> ^types.Router {
 	router := new(types.Router)
 	router.routes = make([dynamic]types.Route)
 
@@ -22,7 +22,7 @@ OST_NEW_ROUTER :: proc() -> ^types.Router {
 }
 
 //Adds a route to the newly created router
-OST_ADD_ROUTE :: proc(
+ADD_ROUTE_TO_ROUTER :: proc(
 	router: ^types.Router,
 	method: types.HttpMethod,
 	path: string,
@@ -40,7 +40,7 @@ OST_ADD_ROUTE :: proc(
 }
 
 //This finds the route that matches the path and calls appropriate handler
-OST_HANDLE_REQUEST :: proc(
+HANDLE_HTTP_REQUEST :: proc(
 	router: ^types.Router,
 	method: string,
 	path: string,

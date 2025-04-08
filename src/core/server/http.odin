@@ -15,7 +15,7 @@ File Description:
 *********************************************************/
 
 //Parse the incoming request from the OstrichDB server
-OST_PARSE_REQUEST :: proc(
+PARSE_HTTP_REQUEST :: proc(
 	requestData: []byte,
 ) -> (
 	method: string,
@@ -69,7 +69,7 @@ OST_PARSE_REQUEST :: proc(
 
 //builds an HTTP respons with the passed in status code, headers, and body.
 //returns the response as a byte array
-OST_BUILD_RESPONSE :: proc(
+BUILD_HTTP_RESPONSE :: proc(
 	status: types.HttpStatus,
 	headers: map[string]string,
 	body: string,
@@ -86,7 +86,7 @@ OST_BUILD_RESPONSE :: proc(
 	)
 
 	response = strings.concatenate([]string{response, "Connection: close\r\n"})
-    
+
 	// Add custom headers
 	for key, value in headers {
 		response = strings.concatenate([]string{response, fmt.tprintf("%s: %s\r\n", key, value)})

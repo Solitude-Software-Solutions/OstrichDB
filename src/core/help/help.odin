@@ -59,17 +59,12 @@ validCommands := []string {
 }
 //called when user only enters the "HELP" command without any arguments
 // will take in the value from the config file. if verbose is true then show data from verbose help file, and vice versa
-OST_SET_HELP_MODE :: proc() -> bool {
+SET_HELP_MODE :: proc() -> bool {
 	using const
 	using types
 	using utils
 
-	value := data.GET_RECORD_VALUE(
-		CONFIG_PATH,
-		CONFIG_CLUSTER,
-		Token[.BOOLEAN],
-		HELP_IS_VERBOSE,
-	)
+	value := data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], HELP_IS_VERBOSE)
 
 	switch (value) 
 	{
@@ -89,7 +84,7 @@ OST_SET_HELP_MODE :: proc() -> bool {
 }
 
 //checks if the token that the user wants help with is valid
-OST_CHECK_HELP_EXISTS :: proc(cmd: string) -> bool {
+CHECK_IF_HELP_EXISTS_FOR_TOKEN :: proc(cmd: string) -> bool {
 	cmdUpper := strings.to_upper(cmd)
 	for validCmd in validCommands {
 		if cmdUpper == validCmd {
@@ -100,17 +95,17 @@ OST_CHECK_HELP_EXISTS :: proc(cmd: string) -> bool {
 }
 
 //Returns a specific portion of the help file based on the subject passed. can be simple or verbose
-OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
+GET_HELP_INFO_FOR_SPECIFIC_TOKEN :: proc(subject: string) -> string {
 	using const
 	using utils
 
-	helpModeIsVerbose := OST_SET_HELP_MODE()
+	helpModeIsVerbose := SET_HELP_MODE()
 	fmt.printfln("Help mode is verbose: %v", helpModeIsVerbose)
 	helpText: string
 	data: []byte
 	ok: bool
 
-	validCommnad := OST_CHECK_HELP_EXISTS(subject)
+	validCommnad := CHECK_IF_HELP_EXISTS_FOR_TOKEN(subject)
 	if !validCommnad {
 		fmt.printfln(
 			"Cannot get help with %s%s%s as it is not a valid command.\nPlease try valid OstrichDB commmand\nor enter 'HELP' with no trailing arguments",
@@ -156,7 +151,7 @@ OST_GET_SPECIFIC_HELP :: proc(subject: string) -> string {
 }
 
 //ready and returns everything from the general help file
-OST_GET_GENERAL_HELP :: proc() -> string {
+GET_GENERAL_HELP_INFO :: proc() -> string {
 	using const
 
 	data, ok := os.read_entire_file(GENERAL_HELP_FILE)
@@ -172,7 +167,7 @@ OST_GET_GENERAL_HELP :: proc() -> string {
 }
 
 //shows a table of explaining atoms
-OST_GET_CLPS_HELP :: proc() -> string {
+SHOW_TOKEN_HELP_TABLE :: proc() -> string {
 	using const
 
 	data, ok := os.read_entire_file(CLPS_HELP_FILE)
