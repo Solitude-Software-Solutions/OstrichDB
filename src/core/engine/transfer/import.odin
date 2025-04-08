@@ -26,7 +26,7 @@ File Description:
 // Returns:
 // detected - if a atleast 1 file was auto detected in the executables root dir
 // autoImportSuccess - if the auto import is confirmed by the user AND successful
-OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES :: proc() -> (detected: bool, autoImportSuccess: bool) {
+AUTO_DETECT_AND_HANDLE_IMPORT_FILES :: proc() -> (detected: bool, autoImportSuccess: bool) {
 	detected = false
 	autoImportSuccess = false
 	detectedCount := 0
@@ -65,7 +65,7 @@ OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES :: proc() -> (detected: bool, autoImportS
 
 		confirmation := utils.get_input(false)
 		if confirmation == "Y" || confirmation == "y" {
-			autoImportSuccess = OST_SELECT_IMPORT_FROM_ROOT(fileNames)
+			autoImportSuccess = select_import_file_from_executable_root(fileNames)
 			return detected, autoImportSuccess //Files were detected AND user auto imported successfully
 
 		} else if confirmation == "N" || confirmation == "n" {
@@ -73,7 +73,7 @@ OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES :: proc() -> (detected: bool, autoImportS
 			return detected, autoImportSuccess //Files were detected but user chose to manually import
 		} else {
 			fmt.println("Please enter a valid input...[Y/N]")
-			OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES()
+			AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
 
 		}
 	} else {
@@ -86,45 +86,13 @@ OST_AUTO_DETECT_AND_HANLE_IMPORT_FILES :: proc() -> (detected: bool, autoImportS
 	return false, false //none detected and thus no auto import could happen
 }
 
-//helper for above proc
-OST_SELECT_IMPORT_FROM_ROOT :: proc(fileNames: [dynamic]string) -> bool {
-	importSuccess := false
 
-	fmt.println("Please enter the name of the file you would like to import...")
-	fmt.println("To cancel this operation enter: 'cancel' or 'quit' ")
-	input := utils.get_input(false)
-
-	if input == "cancel" || input == "quit" {
-		fmt.println("Canceling operation")
-		return importSuccess
-	}
-
-	for name in fileNames {
-		if input != name {
-			fmt.println("The provided name does not match any of the detected files.")
-			fmt.println("Please try again...")
-			OST_SELECT_IMPORT_FROM_ROOT(fileNames)
-		} else if input == name {
-			//since the program detects this in root of the executable, just append the name to the './' prefix :) - Marshall
-			pathConcat := fmt.tprintf("./%s", name)
-			fmt.printfln(
-				"Importing file: %s%s%s into OstrichDB",
-				utils.BOLD_UNDERLINE,
-				name,
-				utils.RESET,
-			)
-			importSuccess = OST_IMPORT_CSV_FILE(name, pathConcat)
-		}
-	}
-	return importSuccess
-}
-
-OST_HANDLE_IMPORT :: proc() -> (success: bool) {
+HANDLE_IMPORT :: proc() -> (success: bool) {
 	success = false
-	name, fullPath, size, importType := OST_GET_IMPORT_FILE_INFO()
-	if OST_CONFIRM_IMPORT_EXISTS(fullPath) {
+	name, fullPath, size, importType := GET_IMPORT_FILE_INFO()
+	if confirm_import_exists(fullPath) {
 		//now ensure the file is not empty.
-		if OST_IMPORT_CSV_FILE(name, fullPath) {
+		if IMPORT_CSV_FILE(name, fullPath) {
 			success = true
 		} else {
 			fmt.println("Import operation could not be completed. Please try again.")
@@ -135,13 +103,7 @@ OST_HANDLE_IMPORT :: proc() -> (success: bool) {
 
 // returns the file import name, size, and type
 // type: 0 = .csv, 1 = .json , -1 = error
-OST_GET_IMPORT_FILE_INFO :: proc(
-) -> (
-	name: string,
-	fullPath: string,
-	size: i64,
-	importType: int,
-) {
+GET_IMPORT_FILE_INFO :: proc() -> (name: string, fullPath: string, size: i64, importType: int) {
 	using utils
 
 	name = ""
@@ -162,7 +124,7 @@ OST_GET_IMPORT_FILE_INFO :: proc(
 		return name, fullPath, size, importType
 	}
 
-	fileFound := OST_CONFIRM_IMPORT_EXISTS(input)
+	fileFound := confirm_import_exists(input)
 	if !fileFound {
 		if !strings.ends_with(input, ".csv") || !strings.ends_with(input, ".json") {
 			fmt.printfln(
@@ -208,22 +170,9 @@ OST_GET_IMPORT_FILE_INFO :: proc(
 	return name, fullPath, size, importType
 }
 
-//USed to make sure the file the user wants to import exists
-OST_CONFIRM_IMPORT_EXISTS :: proc(importFilePath: string) -> bool {
-	fileExists := false
-
-	file, openSuccess := os.open(importFilePath, os.O_RDWR)
-	if openSuccess == 0 {
-		fileExists = true
-	}
-	os.close(file)
-
-	return fileExists
-}
-
 
 //Handles all logic for importing the passed in .csv file into OstrichDB as a new foriegn collection
-OST_IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool) {
+IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool) {
 	using data
 	success = false
 
@@ -243,15 +192,15 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool)
 		//just continue on with procedure
 	} else if colNameConfirmation == "n" || colNameConfirmation == "N" {
 		fmt.println("Please try again")
-		OST_IMPORT_CSV_FILE(name, fullPath[0])
+		IMPORT_CSV_FILE(name, fullPath[0])
 	} else {
 		fmt.println("Invalid repsonse given. Please try again")
-		OST_IMPORT_CSV_FILE(name, fullPath[0])
+		IMPORT_CSV_FILE(name, fullPath[0])
 	}
 
 	csvClusterName := strings.to_upper(desiredColName)
-	head, body, recordCount := OST_GET_CSV_DATA(fullPath[0])
-	inferSucces, csvTypes := OST_INFER_CSV_RECORD_TYPES(head, recordCount)
+	head, body, recordCount := GET_DATA_FROM_CSV_FILE(fullPath[0])
+	inferSucces, csvTypes := INFER_CSV_RECORD_TYPES(head, recordCount)
 	if !inferSucces {
 		fmt.printfln("Failed to infer record types")
 		return success
@@ -271,14 +220,14 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool)
 		return success
 	}
 
-	cols := OST_ORGANIZE_CSV_INTO_COLUMNS(body, len(head))
+	cols := organize_csv_data_into_columns(body, len(head))
 
 	for colIndex := 0; colIndex < len(cols) && colIndex < len(head); colIndex += 1 {
 		columnName := head[colIndex]
 		columnType := csvTypes[columnName]
 		columnValues := (fmt.tprintf("%v", cols[colIndex]))
 
-		if OST_APPEND_CSV_RECORD_INTO_OSTRICH(
+		if APPEND_CSV_DATA_INTO_OSTRICH_COLLECTION(
 			   collectionPath,
 			   csvClusterName,
 			   strings.to_upper(columnName),
@@ -317,7 +266,7 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool)
 
 // Gets all data from a .csv file and returns the "head"(first row) and "body"(everything else) respectively
 // as well as the number of records in the .csv file
-OST_GET_CSV_DATA :: proc(fn: string) -> ([dynamic]string, [dynamic]string, int) {
+GET_DATA_FROM_CSV_FILE :: proc(fn: string) -> ([dynamic]string, [dynamic]string, int) {
 	csvRecordCount := 0
 	head, body: [dynamic]string
 
@@ -354,7 +303,7 @@ OST_GET_CSV_DATA :: proc(fn: string) -> ([dynamic]string, [dynamic]string, int) 
 }
 
 //handles the actual logic for moving csv data into the OstrichDB collection file
-OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int {
+APPEND_CSV_DATA_INTO_OSTRICH_COLLECTION :: proc(fn, cn, rn, rType, rd: string) -> int {
 	// csvCollectionFile := fmt.tprintf("./collections/%s.ost", fn)
 	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
@@ -418,10 +367,56 @@ OST_APPEND_CSV_RECORD_INTO_OSTRICH :: proc(fn, cn, rn, rType, rd: string) -> int
 	return 0
 }
 
+//In the event that an import file is found in the same location as the executable this helper proc handles that logic
+select_import_file_from_executable_root :: proc(fileNames: [dynamic]string) -> bool {
+	importSuccess := false
+
+	fmt.println("Please enter the name of the file you would like to import...")
+	fmt.println("To cancel this operation enter: 'cancel' or 'quit' ")
+	input := utils.get_input(false)
+
+	if input == "cancel" || input == "quit" {
+		fmt.println("Canceling operation")
+		return importSuccess
+	}
+
+	for name in fileNames {
+		if input != name {
+			fmt.println("The provided name does not match any of the detected files.")
+			fmt.println("Please try again...")
+			select_import_file_from_executable_root(fileNames)
+		} else if input == name {
+			//since the program detects this in root of the executable, just append the name to the './' prefix :) - Marshall
+			pathConcat := fmt.tprintf("./%s", name)
+			fmt.printfln(
+				"Importing file: %s%s%s into OstrichDB",
+				utils.BOLD_UNDERLINE,
+				name,
+				utils.RESET,
+			)
+			importSuccess = IMPORT_CSV_FILE(name, pathConcat)
+		}
+	}
+	return importSuccess
+}
+
+
+//Used to make sure the file the user wants to import exists
+confirm_import_exists :: proc(importFilePath: string) -> bool {
+	fileExists := false
+
+	file, openSuccess := os.open(importFilePath, os.O_RDWR)
+	if openSuccess == 0 {
+		fileExists = true
+	}
+	os.close(file)
+
+	return fileExists
+}
 
 //Takes fields of each record in a .csv file and organizes them into "columns"
 //This helps with the inferance of record types, but could be used for other things I guess
-OST_ORGANIZE_CSV_INTO_COLUMNS :: proc(
+organize_csv_data_into_columns :: proc(
 	body: [dynamic]string,
 	num_fields: int,
 ) -> [dynamic][dynamic]string {

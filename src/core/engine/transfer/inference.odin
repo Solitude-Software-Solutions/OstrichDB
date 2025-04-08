@@ -2,12 +2,12 @@ package transfer
 
 import "../../../utils"
 import "../../const"
+import "../../types"
 import "core:encoding/csv"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-import "../../types"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -185,7 +185,7 @@ commonBools := []string {
 
 // Takes the passed in record names, iterates over them and infers a data type, returns a map of the inferred data types
 // NOTE: Only used on the first row of a .csv file
-OST_INFER_CSV_RECORD_TYPES :: proc(
+INFER_CSV_RECORD_TYPES :: proc(
 	csvRecordNames: [dynamic]string,
 	recCount: int,
 ) -> (
