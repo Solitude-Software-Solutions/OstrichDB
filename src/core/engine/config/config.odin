@@ -35,32 +35,6 @@ main :: proc() {
 	}
 }
 
-//TODO NOT USING THIS
-OST_CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
-	using utils
-	configExists: bool
-	binDir, e := os.open(const.PRIVATE_PATH)
-	defer os.close(binDir)
-
-	foundFiles, readDirSuccess := os.read_dir(binDir, -1)
-
-	if readDirSuccess != 0 {
-		error1 := new_err(
-			.CANNOT_READ_DIRECTORY,
-			get_err_msg(.CANNOT_READ_DIRECTORY),
-			#file,
-			#procedure,
-			#line,
-		)
-		log_err("Error reading directory", #procedure)
-	}
-	for file in foundFiles {
-		if file.name == "config.ost" {
-			configExists = true
-		}
-	}
-	return configExists
-}
 
 //used to first append config records to the config cluster when the config file is created
 //essentially the same as data.APPEND_RECORD_TO_CLUSTER but explicitly for the config collection file and no print statements.
