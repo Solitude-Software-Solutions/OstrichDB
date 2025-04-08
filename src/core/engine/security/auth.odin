@@ -57,7 +57,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	secCollection := utils.concat_secure_collection_name(userName)
 
 	//decrypt the user secure collection
-	decSuccess, _ := OST_DECRYPT_COLLECTION(
+	decSuccess, _ := DECRYPT_COLLECTION(
 		usernameCapitalized,
 		.SECURE_PRIVATE,
 		types.system_user.m_k.valAsBytes,
@@ -74,7 +74,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 
 	//Voodoo??
 	userMKStr := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "m_k")
-	user.m_k.valAsBytes = OST_DECODE_M_K(transmute([]byte)userMKStr)
+	user.m_k.valAsBytes = DECODE_MASTER_KEY(transmute([]byte)userMKStr)
 	user.username.Value = strings.clone(usernameCapitalized)
 
 	//PRE-MESHING START=======================================================================================================
@@ -118,8 +118,8 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := OST_HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
-	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
+	newHash := HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
+	encodedHash := ENCODE_HASHED_PASSWORD(newHash)
 	postMesh := MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================
 	authPassed := CROSS_CHECK_MESH(preMesh, postMesh)
@@ -167,7 +167,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		RUN_USER_SIGNIN()
 
 	}
-	OST_ENCRYPT_COLLECTION(
+	ENCRYPT_COLLECTION(
 		usernameCapitalized,
 		.SECURE_PRIVATE,
 		types.system_user.m_k.valAsBytes,
@@ -200,7 +200,7 @@ CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 //Handles logic for signing out a user and exiting the program
 //param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
 RUN_USER_LOGOUT :: proc(param: int) {
-	security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	loggedOut := config.UPDATE_CONFIG_VALUE(const.USER_LOGGED_IN, "false")
 
 	switch loggedOut {
@@ -209,19 +209,19 @@ RUN_USER_LOGOUT :: proc(param: int) {
 		{
 		case 0:
 			//Logging out but keeps program running
-			OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 		case 1:
 			//Exiting
-			OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)
 		}
 		break
 	case false:
-		OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		types.USER_SIGNIN_STATUS = true
 		fmt.printfln("You have NOT been logged out.")
 		break
@@ -260,8 +260,8 @@ VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := OST_HASH_PASSWORD(string(input), algoAsInt, true, false)
-	encodedHash := OST_ENCODE_HASHED_PASSWORD(newHash)
+	newHash := HASH_PASSWORD(string(input), algoAsInt, true, false)
+	encodedHash := ENCODE_HASHED_PASSWORD(newHash)
 	postmesh := MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END
 

@@ -294,7 +294,7 @@ OST_IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool)
 	}
 
 	metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
-	encryptSuccess, _ := security.OST_ENCRYPT_COLLECTION(
+	encryptSuccess, _ := security.ENCRYPT_COLLECTION(
 		desiredColName,
 		.STANDARD_PUBLIC,
 		types.current_user.m_k.valAsBytes,

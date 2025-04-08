@@ -99,10 +99,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// Shows the current users past command history
 	case .HISTORY:
 		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
-		OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		commandHistory := push_records_to_array(types.current_user.username.Value)
 
-		OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		for cmd, index in commandHistory {
 			fmt.printfln("%d: %s", index + 1, cmd)
 		}
@@ -307,7 +307,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					fileName := concat_standard_collection_name(cmd.l_token[0])
 					UPDATE_METADATA_UPON_CREATION(fileName)
 
-					OST_ENCRYPT_COLLECTION(
+					ENCRYPT_COLLECTION(
 						cmd.l_token[0],
 						.STANDARD_PUBLIC,
 						types.current_user.m_k.valAsBytes,
@@ -396,7 +396,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					OST_ENCRYPT_COLLECTION(
+					ENCRYPT_COLLECTION(
 						cmd.l_token[0],
 						.STANDARD_PUBLIC,
 						types.current_user.m_k.valAsBytes,
@@ -429,7 +429,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a cluster name to create.",
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -536,7 +536,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 				}
-				OST_ENCRYPT_COLLECTION(
+				ENCRYPT_COLLECTION(
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
@@ -629,7 +629,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					break
 				}
 
-				OST_ENCRYPT_COLLECTION(
+				ENCRYPT_COLLECTION(
 					newName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
@@ -704,7 +704,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to rename.",
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -734,7 +734,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						return -1
 					}
 
-					OST_DECRYPT_COLLECTION(
+					DECRYPT_COLLECTION(
 						collectionName,
 						.STANDARD_PUBLIC,
 						types.current_user.m_k.valAsBytes,
@@ -799,7 +799,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid record name to rename.",
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -886,16 +886,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					OST_DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user.m_k.valAsBytes)
+					DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user.m_k.valAsBytes)
 					if data.REMOVE_ID_FROM_ID_COLLECTION(fmt.tprintf("%d", clusterID), false) {
-						OST_ENCRYPT_COLLECTION(
+						ENCRYPT_COLLECTION(
 							"",
 							.ID_PRIVATE,
 							types.system_user.m_k.valAsBytes,
 							false,
 						)
 					} else {
-						OST_ENCRYPT_COLLECTION(
+						ENCRYPT_COLLECTION(
 							"",
 							.ID_PRIVATE,
 							types.system_user.m_k.valAsBytes,
@@ -934,7 +934,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to erase.",
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1003,7 +1003,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 				}
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1052,7 +1052,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid collection name to fetch.",
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1093,7 +1093,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to fetch.",
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1159,7 +1159,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid record name to fetch.",
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1296,7 +1296,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fn := concat_standard_collection_name(collectionName)
 				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1429,12 +1429,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
 					)
 				}
-				OST_ENCRYPT_COLLECTION(
-					"",
-					.CONFIG_PRIVATE,
-					types.current_user.m_k.valAsBytes,
-					false,
-				)
+				ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.current_user.m_k.valAsBytes, false)
 				break
 			}
 		case:
@@ -1524,7 +1519,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					break
 				}
-				OST_ENCRYPT_COLLECTION(
+				ENCRYPT_COLLECTION(
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
@@ -1615,7 +1610,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					break
 				}
-				OST_ENCRYPT_COLLECTION(
+				ENCRYPT_COLLECTION(
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
@@ -1679,7 +1674,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 				}
-				OST_ENCRYPT_COLLECTION(
+				ENCRYPT_COLLECTION(
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
@@ -1735,7 +1730,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
 				break
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1786,7 +1781,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			}
 
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1841,7 +1836,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				break
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1885,7 +1880,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			} else {
 				fmt.printf("Failed to get size of collection %s\n", collectionName)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1934,7 +1929,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"Invalid command. Use dot notation for clusters: SIZE_OF CLUSTER collection_name.cluster_name",
 				)
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -1981,7 +1976,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						recordName,
 					)
 				}
-				OST_ENCRYPT_COLLECTION(
+				ENCRYPT_COLLECTION(
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
@@ -2052,7 +2047,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -2149,7 +2144,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						newType,
 					)
 				}
-				OST_ENCRYPT_COLLECTION(
+				ENCRYPT_COLLECTION(
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
@@ -2214,7 +2209,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				break
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				isolatedColName,
 				.ISOLATE_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -2261,7 +2256,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// 				RESET,
 	// 			)
 
-	// 			OST_ENCRYPT_COLLECTION(
+	// 			ENCRYPT_COLLECTION(
 	// 				collectionName,
 	// 				.STANDARD_PUBLIC,
 	// 				types.current_user.m_k.valAsBytes,
@@ -2344,12 +2339,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			OST_DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+			DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 
 			collectionAlreadyLocked := security.GET_COLLECTION_LOCK_STATUS(colName)
 
 			//next make sure the "locker" is an admin
-			OST_DECRYPT_COLLECTION(
+			DECRYPT_COLLECTION(
 				types.current_user.username.Value,
 				.SECURE_PRIVATE,
 				types.system_user.m_k.valAsBytes,
@@ -2424,25 +2419,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			}
 
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				types.current_user.username.Value,
 				.SECURE_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 				false,
 			)
 
-			OST_ENCRYPT_COLLECTION(
-				colName,
-				.STANDARD_PUBLIC,
-				types.current_user.m_k.valAsBytes,
-				false,
-			)
+			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes, false)
 			break
 		case 2:
 			colName := cmd.l_token[0]
 			flag := cmd.l_token[1]
 
-			OST_DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+			DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 
 			fmt.printfln("Locking collection: %s%s%s ", BOLD_UNDERLINE, colName, RESET)
 			lockSuccess, permission := data.LOCK_COLLECTION(colName, flag)
@@ -2466,7 +2456,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Incomplete command. Correct Usage: LOCK <collection_name> or LOCK <collection_name> -{flag}",
 			)
 		}
-		OST_ENCRYPT_COLLECTION(
+		ENCRYPT_COLLECTION(
 			cmd.l_token[0],
 			.STANDARD_PUBLIC,
 			types.current_user.m_k.valAsBytes,
@@ -2479,9 +2469,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			colName := cmd.l_token[0]
 			//check that a collection is in fact locked
 
-			OST_DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+			DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 
-			OST_DECRYPT_COLLECTION(
+			DECRYPT_COLLECTION(
 				types.current_user.username.Value,
 				.SECURE_PRIVATE,
 				types.system_user.m_k.valAsBytes,
@@ -2531,14 +2521,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					}
 				}
 			}
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				types.current_user.username.Value,
 				.SECURE_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 				false,
 			)
 
-			OST_ENCRYPT_COLLECTION(
+			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -2554,7 +2544,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
-			encSuccess, _ := OST_ENCRYPT_COLLECTION(
+			encSuccess, _ := ENCRYPT_COLLECTION(
 				colName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
@@ -2582,7 +2572,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
-			decSuccess, _ := security.OST_DECRYPT_COLLECTION(
+			decSuccess, _ := security.DECRYPT_COLLECTION(
 				colName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,

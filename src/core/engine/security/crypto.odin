@@ -22,7 +22,7 @@ File Description:
 *********************************************************/
 
 
-OST_GENERATE_SALT :: proc() -> []u8 {
+GENERATE_SALT :: proc() -> []u8 {
 	salt: string
 	randC: string //random char
 	randN: int //random number
@@ -85,9 +85,9 @@ OST_GENERATE_SALT :: proc() -> []u8 {
 
 //Hashes p using the hashing method provided
 // p - password, hMethod - store/hashing method, isAuth - is the user authenticating or creating an account, isInitializing - is this being done pre or post engine initialization
-OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing: bool) -> []u8 {
+HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing: bool) -> []u8 {
 	//generate the salt
-	salt: []u8 = OST_GENERATE_SALT()
+	salt: []u8 = GENERATE_SALT()
 	if (isInitializing == true) {
 		types.user.salt.valAsBytes = salt //store the salt into the user struct
 	} else if (isInitializing == false) {
@@ -101,16 +101,16 @@ OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing:
 	if (isAuth) {
 		x := sMethod
 		if isInitializing == true {
-			hashedPassword = OST_CHOOSE_ALGORITHM(x, p, true)
+			hashedPassword = SELECT_ALGORITHM(x, p, true)
 		} else if isInitializing == false {
-			hashedPassword = OST_CHOOSE_ALGORITHM(x, p, false)
+			hashedPassword = SELECT_ALGORITHM(x, p, false)
 		}
 	} else {
 		x := rand.choice([]int{1, 2, 3, 4, 5})
 		if isInitializing == true {
-			hashedPassword = OST_CHOOSE_ALGORITHM(x, p, true)
+			hashedPassword = SELECT_ALGORITHM(x, p, true)
 		} else if isInitializing == false {
-			hashedPassword = OST_CHOOSE_ALGORITHM(x, p, false)
+			hashedPassword = SELECT_ALGORITHM(x, p, false)
 		}
 	}
 	return hashedPassword
@@ -118,7 +118,7 @@ OST_HASH_PASSWORD :: proc(p: string, sMethod: int, isAuth: bool, isInitializing:
 
 //Chooses which hashing algorithm to use on p based on the choice provided
 // choice - hashing method, p - password, isInitializing - is this being done pre or post engine initialization
-OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []u8 {
+SELECT_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []u8 {
 	using types
 
 	x := choice
@@ -190,7 +190,7 @@ OST_CHOOSE_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []
 
 // //encode the hashed password then convert it to a string and return it
 // hp - hashed password
-OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
+ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 	encodedHash := hex.encode(hp)
 	str := transmute(string)encodedHash
 	return encodedHash
@@ -198,7 +198,7 @@ OST_ENCODE_HASHED_PASSWORD :: proc(hp: []u8) -> []u8 {
 
 
 //used to generate a 256 bit master key for each user, encodes it to hexidecimal, then returns it as a 64 byte array
-OST_GEN_MASTER_KEY :: proc() -> []byte {
+GENERATE_MASTER_KEY :: proc() -> []byte {
 	key := make([]byte, 32)
 	// Fill the buffer with random bytes
 	for i := 0; i < 32; i += 1 {
@@ -210,8 +210,7 @@ OST_GEN_MASTER_KEY :: proc() -> []byte {
 	return encodedKey
 }
 
-OST_DECODE_M_K :: proc(m_k: []byte) -> []byte {
+DECODE_MASTER_KEY :: proc(m_k: []byte) -> []byte {
 	decodedKey, _ := hex.decode(m_k)
 	return decodedKey
 }
-

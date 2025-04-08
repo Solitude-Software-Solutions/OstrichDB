@@ -23,23 +23,23 @@ File Description:
 stopWatch: time.Stopwatch
 
 //Starts the session timer
-OST_START_SESSION_TIMER :: proc() {
+START_SESSION_TIMER :: proc() {
 	time.stopwatch_start(&stopWatch)
 }
 
 //Stops the session timer
-OST_STOP_SESSION_TIMER :: proc() {
+STOP_SESSION_TIMER :: proc() {
 	time.stopwatch_stop(&stopWatch)
 }
 
 //Returns the duration of the current session
-OST_GET_SESSION_DURATION :: proc() -> time.Duration {
+GET_SESSION_DURATION :: proc() -> time.Duration {
 	sessionDuration := time.stopwatch_duration(stopWatch)
 	return sessionDuration
 }
 
 //simply checks if the passed in session duration has met the maximum allowed session time yet
-OST_CHECK_SESSION_DURATION :: proc(sessionDuration: time.Duration) -> bool {
+CHECK_IF_SESSION_DURATION_MAXED :: proc(sessionDuration: time.Duration) -> bool {
 	maxDurationMet := false
 	if sessionDuration > const.MAX_SESSION_TIME {
 		maxDurationMet = true
@@ -48,7 +48,7 @@ OST_CHECK_SESSION_DURATION :: proc(sessionDuration: time.Duration) -> bool {
 }
 
 //Handles logic for when a session meets its maximum allowed time
-OST_HANDLE_MAX_SESSION_DURATION_MET :: proc() {
+HANDLE_MAXED_SESSION :: proc() {
 	fmt.printfln(
 		"Maximum session time of %s1 Day%s has been met. You will be automatically logged out. Please log back in.",
 		utils.BOLD,

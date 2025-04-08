@@ -92,13 +92,13 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	//Create a secure collection for the user
 	inituserName = fmt.tprintf("secure_%s", inituserName)
 	CREATE_COLLECTION(inituserName, .SECURE_PRIVATE)
-	// OST_GEN_MASTER_KEY returns a 32 byte master key that is hex encoded
-	mk := OST_GEN_MASTER_KEY()
+	// GENERATE_MASTER_KEY returns a 32 byte master key that is hex encoded
+	mk := GENERATE_MASTER_KEY()
 	mkAsString := transmute(string)mk //dont worry about this
 	// user.m_k.valAsStr = mkAsString //dont worry about this
 
 	//this value is passed to my encryption and decryption functions. must be 32 bytes
-	user.m_k.valAsBytes = OST_DECODE_M_K(mk)
+	user.m_k.valAsBytes = DECODE_MASTER_KEY(mk)
 
 	//Store all the user credentials within the secure collection
 	STORE_USER_CREDENTIALS(
@@ -140,10 +140,10 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	)
 
 	//Encrypt the the config, history, id, and new users secure collection
-	OST_ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes, false)
-	OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
-	OST_ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
-	OST_ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes, false)
 
 
 	fmt.println("Please re-launch OstrichDB...")
@@ -352,17 +352,17 @@ CONFIRM_NEW_USER_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 		if isInitializing == true {
 			user.password.Length = len(p)
 			user.password.Value = strings.clone(p)
-			user.hashedPassword.valAsBytes = OST_HASH_PASSWORD(p, 0, false, true)
+			user.hashedPassword.valAsBytes = HASH_PASSWORD(p, 0, false, true)
 
-			encodedPassword := OST_ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
+			encodedPassword := ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
 			user.hashedPassword.valAsBytes = encodedPassword
 
 		} else if isInitializing == false {
 			new_user.password.Length = len(p)
 			new_user.password.Value = strings.clone(p)
-			new_user.hashedPassword.valAsBytes = OST_HASH_PASSWORD(p, 0, false, false)
+			new_user.hashedPassword.valAsBytes = HASH_PASSWORD(p, 0, false, false)
 
-			encodedPassword := OST_ENCODE_HASHED_PASSWORD(new_user.hashedPassword.valAsBytes)
+			encodedPassword := ENCODE_HASHED_PASSWORD(new_user.hashedPassword.valAsBytes)
 			new_user.hashedPassword.valAsBytes = encodedPassword
 			return new_user.password.Value
 		}

@@ -39,14 +39,14 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	// the num of records of the users command history cluster
 	//
 
-	security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 	limitOn := data.GET_RECORD_VALUE(
 		const.CONFIG_PATH,
 		const.CONFIG_CLUSTER,
 		types.Token[.BOOLEAN],
 		const.LIMIT_HISTORY,
 	)
-	security.OST_ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+	security.ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 
 	if limitOn == "true" {
 		limitReached := OST_CHECK_HISTORY_LIMIT_MET(&current_user)

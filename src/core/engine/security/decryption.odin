@@ -41,7 +41,7 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-OST_DECRYPT_COLLECTION :: proc(
+DECRYPT_COLLECTION :: proc(
 	colName: string,
 	colType: types.CollectionType,
 	key: []u8,

@@ -71,7 +71,7 @@ OST_START_ENGINE :: proc() -> int {
 
 	case true:
 		for {
-			security.OST_ENCRYPT_COLLECTION(
+			security.ENCRYPT_COLLECTION(
 				"",
 				.CONFIG_PRIVATE,
 				types.system_user.m_k.valAsBytes,
@@ -81,18 +81,14 @@ OST_START_ENGINE :: proc() -> int {
 			switch (userSignedIn) 
 			{
 			case true:
-				security.OST_START_SESSION_TIMER()
+				security.START_SESSION_TIMER()
 				utils.log_runtime_event(
 					"User Signed In",
 					"User successfully logged into OstrichDB",
 				)
 
 				//Check to see if the server AUTO_SERVE config value is true. If so start server
-				security.OST_DECRYPT_COLLECTION(
-					"",
-					.CONFIG_PRIVATE,
-					types.system_user.m_k.valAsBytes,
-				)
+				security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 
 
 				autoServeConfigValue := data.GET_RECORD_VALUE(
@@ -110,7 +106,7 @@ OST_START_ENGINE :: proc() -> int {
 						"1. Enter 'kill' or 'quit' to stop the server and be returned to the OstrichDB command line",
 					)
 					fmt.println("2. Use command: 'SET CONFIG AUTO_SERVE TO false'\n\n")
-					security.OST_ENCRYPT_COLLECTION(
+					security.ENCRYPT_COLLECTION(
 						"",
 						.CONFIG_PRIVATE,
 						types.system_user.m_k.valAsBytes,
@@ -126,7 +122,7 @@ OST_START_ENGINE :: proc() -> int {
 					}
 				} else {
 					// if the AUTO_SERVE config value is false, then continue starting command line
-					security.OST_ENCRYPT_COLLECTION(
+					security.ENCRYPT_COLLECTION(
 						"",
 						.CONFIG_PRIVATE,
 						types.system_user.m_k.valAsBytes,
@@ -138,7 +134,7 @@ OST_START_ENGINE :: proc() -> int {
 				}
 			case false:
 				fmt.printfln("Sign in failed. Please try again.")
-				security.OST_ENCRYPT_COLLECTION(
+				security.ENCRYPT_COLLECTION(
 					"",
 					.CONFIG_PRIVATE,
 					types.system_user.m_k.valAsBytes,
@@ -163,25 +159,20 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		fmt.print(const.ost_carrot, "\t")
 		input := utils.get_input(false)
 
-		security.OST_DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		security.DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		OST_APPEND_COMMAND_TO_HISTORY(input)
-		security.OST_ENCRYPT_COLLECTION(
-			"",
-			.HISTORY_PRIVATE,
-			types.system_user.m_k.valAsBytes,
-			false,
-		)
+		security.ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		cmd := OST_PARSE_COMMAND(input)
 
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
-		sessionDuration := security.OST_GET_SESSION_DURATION()
-		maxDurationMet := security.OST_CHECK_SESSION_DURATION(sessionDuration)
+		sessionDuration := security.GET_SESSION_DURATION()
+		maxDurationMet := security.CHECK_IF_SESSION_DURATION_MAXED(sessionDuration)
 		switch (maxDurationMet) 
 		{
 		case false:
 			break
 		case true:
-			security.OST_HANDLE_MAX_SESSION_DURATION_MET()
+			security.HANDLE_MAXED_SESSION()
 		}
 
 		result = OST_EXECUTE_COMMAND(&cmd)
@@ -191,7 +182,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 
 	//Re-engage the loop
 	if types.USER_SIGNIN_STATUS == false {
-		security.OST_DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 		OST_START_ENGINE()
 	}
 
