@@ -29,7 +29,7 @@ File Description:
 *********************************************************/
 
 
-OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
+EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using metadata
 	using const
 	using utils
@@ -65,10 +65,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// Runs the restart script
 	case .RESTART:
 		log_runtime_event("Used RESTART command", "User requested to restart OstrichDB.")
-		OST_RESTART()
+		RESTART_OSTRICHDB()
 	case .REBUILD:
 		log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
-		OST_REBUILD()
+		REBUILD_OSTRICHDB()
 	case .SERVE, .SERVER:
 		//first kill localhost:8042
 		libc.system("stty -echo")
@@ -85,7 +85,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// Used to completley destroy the program and all its files, rebuilds after on macOs and Linux
 	case .DESTROY:
 		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
-		OST_DESTROY()
+		DESTROY_EVERYTHING()
 	//Clears the terminal screen
 	case .CLEAR:
 		log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
@@ -131,8 +131,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		// parses the command that has been stored in the most recent command history index. Crucial for the HISTORY command
-		cmd := OST_PARSE_COMMAND(commandHistory[commandIndex])
-		OST_EXECUTE_COMMAND(&cmd)
+		cmd := PARSE_COMMAND(commandHistory[commandIndex])
+		EXECUTE_COMMAND(&cmd)
 
 
 		delete(commandHistory)

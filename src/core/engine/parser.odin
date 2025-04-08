@@ -18,36 +18,8 @@ File Description:
             then executed.
 *********************************************************/
 
-//checks if a token is a valid modifier only used in the parser
-OST_IS_VALID_MODIFIER :: proc(token: string) -> bool {
-	using const
-	using types
-
-	validModifiers := []string{Token[.OF_TYPE], Token[.TO]}
-	for modifier in validModifiers {
-		if strings.to_upper(token) == modifier {
-			return true
-		}
-	}
-	return false
-}
-
-//take the string representation of a token and returns the token itself
-OST_STRING_TO_TOKEN :: proc(str: string) -> types.TokenType {
-    using types
-
-    upperStr := strings.to_upper(str)
-    for tokenStrRepresentation, index in Token {
-        if upperStr == tokenStrRepresentation { //if the passed in string and the token string representation are the same return the enum
-            return index
-        }
-    }
-    return TokenType.INVALID
-}
-
-
 //Takes the users input and parser it into a command. The command is then returned to the caller in engine.odin
-OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
+PARSE_COMMAND :: proc(input: string) -> types.Command {
 	using const
 	using types
 
@@ -66,7 +38,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	}
 
 	// Convert first token to TokenType
-	cmd.c_token = OST_STRING_TO_TOKEN(tokens[0])
+	cmd.c_token = convert_string_to_ostrichdb_token(tokens[0])
 	state := 0 //state machine exclusively used for parameter token shit
 	currentModifier := "" //stores the current modifier such as TO
 	collectingString := false
@@ -87,7 +59,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 		switch state {
 		case 0:
 			// Expecting target
-			#partial switch (cmd.c_token)
+			#partial switch (cmd.c_token) 
 			{
 			case TokenType.SET:
 				if token == Token[.CONFIG] {
@@ -105,7 +77,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 				state = 1
 				break
 			case TokenType.WHERE:
-				if token == Token[.CLUSTER]|| token == Token[.RECORD] {
+				if token == Token[.CLUSTER] || token == Token[.RECORD] {
 					cmd.t_token = token
 				} else {
 					append(&cmd.l_token, token)
@@ -120,7 +92,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 				case Token[.COLLECTIONS]:
 					cmd.t_token = token
 					break
-				case  Token[.CLUSTERS], Token[.RECORDS]:
+				case Token[.CLUSTERS], Token[.RECORDS]:
 					cmd.t_token = token
 					if strings.contains(token, ".") {
 						cmd.isUsingDotNotation = true
@@ -159,7 +131,7 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 			}
 		case 1:
 			// Expecting object or modifier
-			if OST_IS_VALID_MODIFIER(token) {
+			if check_if_param_token_is_valid(token) {
 				currentModifier = token
 				state = 2
 			} else {
@@ -186,4 +158,32 @@ OST_PARSE_COMMAND :: proc(input: string) -> types.Command {
 	}
 
 	return cmd
+}
+
+
+//checks if a token is a valid modifier only used in the parser
+check_if_param_token_is_valid :: proc(token: string) -> bool {
+	using const
+	using types
+
+	validModifiers := []string{Token[.OF_TYPE], Token[.TO]}
+	for modifier in validModifiers {
+		if strings.to_upper(token) == modifier {
+			return true
+		}
+	}
+	return false
+}
+
+//take the string representation of a token and returns the token itself
+convert_string_to_ostrichdb_token :: proc(str: string) -> types.TokenType {
+	using types
+
+	upperStr := strings.to_upper(str)
+	for tokenStrRepresentation, index in Token {
+		if upperStr == tokenStrRepresentation { 	//if the passed in string and the token string representation are the same return the enum
+			return index
+		}
+	}
+	return TokenType.INVALID
 }

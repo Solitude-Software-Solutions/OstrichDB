@@ -20,7 +20,7 @@ File Description:
 *********************************************************/
 
 //Deletes the entire executiable, databases, history files, user files, and cache files.
-OST_DESTROY :: proc() {
+DESTROY_EVERYTHING :: proc() {
 	using const
 
 	if types.user.role.Value != "admin" {
@@ -123,5 +123,5 @@ OST_DESTROY :: proc() {
 	fmt.printfln("%sOstrichDB has been destroyed.%s", utils.GREEN, utils.RESET)
 	fmt.printfln("%sRebuilding OstrichDB...%s", utils.GREEN, utils.RESET)
 
-	OST_REBUILD()
+	REBUILD_OSTRICHDB()
 }

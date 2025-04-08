@@ -29,7 +29,7 @@ File Description:
 
 
 //initialize the data integrity system
-OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
+INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
 	using types
 
 	data_integrity_checks.File_Size.Severity = .LOW
@@ -53,7 +53,7 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 
 //Starts the OstrichDB engine:
 //Session timer, sign in, and command line
-OST_START_ENGINE :: proc() -> int {
+START_OSTRICHDB_ENGINE :: proc() -> int {
 	using const
 
 	ServerConfig := types.Server_Config {
@@ -61,7 +61,7 @@ OST_START_ENGINE :: proc() -> int {
 	}
 
 	//Initialize data integrity system
-	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
+	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
 	switch (types.OstrichEngine.Initialized) 
 	{
 	case false:
@@ -115,7 +115,7 @@ OST_START_ENGINE :: proc() -> int {
 					serverDone := server.OST_START_SERVER(ServerConfig)
 					if serverDone == 0 {
 						fmt.println("\n\n")
-						cmdLineDone := OST_ENGINE_COMMAND_LINE()
+						cmdLineDone := START_COMMAND_LINE()
 						if cmdLineDone == 0 {
 							return cmdLineDone
 						}
@@ -129,7 +129,7 @@ OST_START_ENGINE :: proc() -> int {
 						false,
 					)
 					fmt.println("Starting command line")
-					result := OST_ENGINE_COMMAND_LINE()
+					result := START_COMMAND_LINE()
 					return result
 				}
 			case false:
@@ -148,7 +148,7 @@ OST_START_ENGINE :: proc() -> int {
 }
 
 //Command line loop
-OST_ENGINE_COMMAND_LINE :: proc() -> int {
+START_COMMAND_LINE :: proc() -> int {
 	result := 0
 	fmt.println("Welcome to the OstrichDB DBMS Command Line")
 	utils.log_runtime_event("Entered DBMS command line", "")
@@ -160,9 +160,9 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 		input := utils.get_input(false)
 
 		security.DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
-		OST_APPEND_COMMAND_TO_HISTORY(input)
+		APPEND_COMMAND_TO_HISTORY(input)
 		security.ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
-		cmd := OST_PARSE_COMMAND(input)
+		cmd := PARSE_COMMAND(input)
 
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := security.GET_SESSION_DURATION()
@@ -175,7 +175,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 			security.HANDLE_MAXED_SESSION()
 		}
 
-		result = OST_EXECUTE_COMMAND(&cmd)
+		result = EXECUTE_COMMAND(&cmd)
 
 		//Command line end
 	}
@@ -183,7 +183,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 	//Re-engage the loop
 	if types.USER_SIGNIN_STATUS == false {
 		security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-		OST_START_ENGINE()
+		START_OSTRICHDB_ENGINE()
 	}
 
 	return result
@@ -191,7 +191,7 @@ OST_ENGINE_COMMAND_LINE :: proc() -> int {
 }
 
 //Used to restart the engine
-OST_RESTART :: proc() {
+RESTART_OSTRICHDB :: proc() {
 	if const.DEV_MODE == true {
 		libc.system(const.RESTART_SCRIPT_PATH)
 		os.exit(0)
@@ -200,8 +200,8 @@ OST_RESTART :: proc() {
 	}
 }
 
-//Used to rebuild and restart the engine
-OST_REBUILD :: proc() {
+//Used to rebuild then restart the engine
+REBUILD_OSTRICHDB :: proc() {
 	if const.DEV_MODE == true {
 		libc.system(const.BUILD_SCRIPT_PATH)
 		os.exit(0)

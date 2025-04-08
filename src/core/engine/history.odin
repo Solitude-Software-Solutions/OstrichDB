@@ -20,7 +20,7 @@ File Description:
             Contains logic for handling the command history.
             It also contains logic for the actual HISTORY command.
 *********************************************************/
-OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
+APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	using types
 	using metadata
 	using utils
@@ -49,9 +49,9 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	security.ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 
 	if limitOn == "true" {
-		limitReached := OST_CHECK_HISTORY_LIMIT_MET(&current_user)
+		limitReached := CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET(&current_user)
 		if limitReached {
-			if OST_PURGE_HIRSTORY_CLUSTER(current_user.username.Value) {
+			if PURGE_USERS_HISTORY_CLUSTER(current_user.username.Value) {
 				//set the count back to 0
 				current_user.commandHistory.cHistoryCount = 0
 			}
@@ -87,7 +87,7 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 }
 
 
-OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
+ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	using const
 	using utils
 
@@ -163,7 +163,7 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 
 
 //Used to get rid of data within a user's history cluster once the limit has been reached.
-OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
+PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 	using const
 	using utils
 
@@ -275,7 +275,7 @@ OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
 }
 
 
-OST_CHECK_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
+CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
 	using utils
 	using const
 
@@ -283,7 +283,7 @@ OST_CHECK_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
 	//Check that the history count is not greater than the limit
 	if currentUser.commandHistory.cHistoryCount > const.MAX_HISTORY_COUNT {
 		//remove the oldest command from the history buffer .....NOT DOING THIS...NEED TO ACTUALLY REMOVE ALL RECORDS FROM THE CLUSTER 
-		historyPurgeSuccess := OST_PURGE_HIRSTORY_CLUSTER(currentUser.username.Value)
+		historyPurgeSuccess := PURGE_USERS_HISTORY_CLUSTER(currentUser.username.Value)
 		if !historyPurgeSuccess {
 			throw_err(
 				new_err(
