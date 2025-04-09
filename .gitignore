@@ -13,7 +13,7 @@ ols.json
 
 #Ignore the Golang related files in NLP package
 *.dylib
-*main
+src/core/nlp/main
 *go.sum
 *go.mod
 *ModelFile
