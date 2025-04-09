@@ -43,7 +43,6 @@ CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 SET_FILE_PERMISSIONS_ON_OS_LEVEL :: proc(fn, permission: string) -> (success:bool) {
 	using os
 
-
 	mode:posix.mode_t= posix.S_IRWXU // default to file owner read/write/execute
 
 /*

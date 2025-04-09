@@ -14,6 +14,7 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
+import "../nlp"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -62,7 +63,7 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 	//Initialize data integrity system
 	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
-	switch (types.OstrichEngine.Initialized) 
+	switch (types.OstrichEngine.Initialized)
 	{
 	case false:
 		//Continue with engine initialization
@@ -78,7 +79,7 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 				false,
 			)
 			userSignedIn := security.RUN_USER_SIGNIN()
-			switch (userSignedIn) 
+			switch (userSignedIn)
 			{
 			case true:
 				security.START_SESSION_TIMER()
@@ -112,7 +113,8 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						types.system_user.m_k.valAsBytes,
 						false,
 					)
-					serverDone := server.OST_START_SERVER(ServerConfig)
+					//Auto-server loop
+					serverDone := server.START_OSTRICH_SERVER(ServerConfig)
 					if serverDone == 0 {
 						fmt.println("\n\n")
 						cmdLineDone := START_COMMAND_LINE()
@@ -167,7 +169,7 @@ START_COMMAND_LINE :: proc() -> int {
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := security.GET_SESSION_DURATION()
 		maxDurationMet := security.CHECK_IF_SESSION_DURATION_MAXED(sessionDuration)
-		switch (maxDurationMet) 
+		switch (maxDurationMet)
 		{
 		case false:
 			break

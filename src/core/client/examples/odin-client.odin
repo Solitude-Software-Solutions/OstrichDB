@@ -127,13 +127,13 @@ drastically in the future so dont get to comfortable with this for now.
 // 	}
 
 // 	buf: [1024]byte
-// 	bytes_read, recv_err := net.recv(client_socket, buf[:])
+// 	bytesRead, recv_err := net.recv(client_socket, buf[:])
 // 	if recv_err != nil {
 // 		fmt.println("Error receiving response:", recv_err)
 // 		return "", false
 // 	}
 
-// 	return string(buf[:bytes_read]), true
+// 	return string(buf[:bytesRead]), true
 // }
 
 // // Test client demonstrating various API calls

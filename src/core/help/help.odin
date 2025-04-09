@@ -66,7 +66,7 @@ SET_HELP_MODE :: proc() -> bool {
 
 	value := data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], HELP_IS_VERBOSE)
 
-	switch (value) 
+	switch (value)
 	{
 	case "true":
 		helpMode.isVerbose = true
@@ -115,7 +115,7 @@ GET_HELP_INFO_FOR_SPECIFIC_TOKEN :: proc(subject: string) -> string {
 		)
 		return ""
 	}
-	switch (helpModeIsVerbose) 
+	switch (helpModeIsVerbose)
 	{
 	case true:
 		data, ok = os.read_entire_file(VERBOSE_HELP_FILE)
@@ -132,18 +132,18 @@ GET_HELP_INFO_FOR_SPECIFIC_TOKEN :: proc(subject: string) -> string {
 	helpSectionStart := fmt.tprintf("### %s START", subject)
 	helpSectionEnd := fmt.tprintf("### %s END", subject)
 
-	start_index := strings.index(content, helpSectionStart)
-	if start_index == -1 {
+	startIndex := strings.index(content, helpSectionStart)
+	if startIndex == -1 {
 		return fmt.tprintf("No help found for %s%s%s", BOLD_UNDERLINE, subject, RESET)
 	}
 
-	start_index += len(helpSectionStart)
-	end_index := strings.index(content[start_index:], helpSectionEnd)
-	if end_index == -1 {
+	startIndex += len(helpSectionStart)
+	endIndex := strings.index(content[startIndex:], helpSectionEnd)
+	if endIndex == -1 {
 		return fmt.tprintf("Malformed help section for %s%s%s", BOLD_UNDERLINE, subject, RESET)
 	}
 
-	helpText = strings.trim_space(content[start_index:][:end_index])
+	helpText = strings.trim_space(content[startIndex:][:endIndex])
 	fmt.printfln("\n")
 	fmt.printfln(helpText)
 	fmt.printfln("\n")

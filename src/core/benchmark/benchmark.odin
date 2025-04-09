@@ -267,11 +267,11 @@ B_CREATE_COLLECTION_OP :: proc(iterations: int) -> (types.Benchmark_Result, [dyn
 		defer os.close(dir_handle)
 		if files, read_err := os.read_dir(dir_handle, 0); read_err == 0 {
 			defer delete(files)
-			start_index := len(files)
+			startIndex := len(files)
 
 			// Create new collections starting from existing count
 			for i := 0; i < iterations; i += 1 {
-				benchmarkColName := fmt.tprintf("benchmark_collection_%d", start_index + i)
+				benchmarkColName := fmt.tprintf("benchmark_collection_%d", startIndex + i)
 				if B_CREATE_COLLECTION(benchmarkColName) == 0 {
 					append(&names, benchmarkColName)
 				} else {
@@ -871,10 +871,10 @@ B_FETCH_CLUSTER :: proc(fn, cn: string) -> int {
 	for cluster in clusters {
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			// Find the start of the cluster (opening brace)
-			start_index := strings.index(cluster, "{")
-			if start_index != -1 {
+			startIndex := strings.index(cluster, "{")
+			if startIndex != -1 {
 				// Extract the content between braces
-				clusterContent = cluster[start_index + 1:]
+				clusterContent = cluster[startIndex + 1:]
 				// Trim any leading or trailing whitespace
 				clusterContent = strings.trim_space(clusterContent)
 				return 0
@@ -903,10 +903,10 @@ B_FETCH_RECORD :: proc(fn, cn, rn: string) -> int {
 	for cluster in clusters {
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			// Find the start of the cluster (opening brace)
-			start_index := strings.index(cluster, "{")
-			if start_index != -1 {
+			startIndex := strings.index(cluster, "{")
+			if startIndex != -1 {
 				// Extract the content between braces
-				clusterContent = cluster[start_index + 1:]
+				clusterContent = cluster[startIndex + 1:]
 				// Trim any leading or trailing whitespace
 				clusterContent = strings.trim_space(clusterContent)
 				// return strings.clone(clusterContent)

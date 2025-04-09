@@ -1042,10 +1042,10 @@ FETCH_RECORD :: proc(fn: string, cn: string, rn: string) -> (types.Record, bool)
 	for cluster in clusters {
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			// Find the start of the cluster (opening brace)
-			start_index := strings.index(cluster, "{")
-			if start_index != -1 {
+			startIndex := strings.index(cluster, "{")
+			if startIndex != -1 {
 				// Extract the content between braces
-				clusterContent = cluster[start_index + 1:]
+				clusterContent = cluster[startIndex + 1:]
 				// Trim any leading or trailing whitespace
 				clusterContent = strings.trim_space(clusterContent)
 				// return strings.clone(clusterContent)
@@ -1367,8 +1367,8 @@ GET_RECORD_SIZE :: proc(
 		collection_name,
 		const.OST_EXT,
 	)
-	data, read_success := utils.read_file(collection_path, #procedure)
-	if !read_success {
+	data, readSuccess := utils.read_file(collection_path, #procedure)
+	if !readSuccess {
 		return 0, false
 	}
 	defer delete(data)

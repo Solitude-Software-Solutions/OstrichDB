@@ -8,6 +8,7 @@ import "core:net"
 import "core:os"
 import "core:thread"
 import "core:time"
+import "../nlp"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -22,7 +23,7 @@ router: ^types.Router
 isRunning := true
 
 //The isAutoServing flag is added for NLP. Auto serving will be set to true by default.
-OST_START_SERVER :: proc(config: types.Server_Config) -> int {
+START_OSTRICH_SERVER :: proc(config: types.Server_Config) -> int {
 	using const
 	using types
 	CREATE_SERVER_LOG_FILE()
@@ -237,7 +238,7 @@ OST_START_SERVER :: proc(config: types.Server_Config) -> int {
 	}
 
 	//Start a thread to handle user input for killing the server
-	thread.run(OST_HANDLE_SERVER_KILL_INPUT)
+	thread.run(HANDLE_SERVER_KILL_INPUT)
 	defer net.close(net.TCP_Socket(listen_socket))
 
 	fmt.printf(
@@ -270,30 +271,30 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 	for {
 		fmt.println("Waiting to receive data...")
-		bytes_read, read_err := net.recv(socket, buf[:])
+		bytesRead, read_err := net.recv(socket, buf[:])
 
 		if read_err != nil {
 			fmt.println("Error reading from socket:", read_err)
 			return
 		}
-		if bytes_read == 0 {
+		if bytesRead == 0 {
 			fmt.println("Connection closed by client")
 			return
 		}
 
 
 		// Parse incoming request
-		method, path, headers := PARSE_HTTP_REQUEST(buf[:bytes_read])
+		method, path, headers := PARSE_HTTP_REQUEST(buf[:bytesRead])
 
 		// Create response headers
-		response_headers := make(map[string]string)
-		response_headers["Content-Type"] = "text/plain"
-		response_headers["Server"] = "OstrichDB"
+		responseHeaders := make(map[string]string)
+		responseHeaders["Content-Type"] = "text/plain"
+		responseHeaders["Server"] = "OstrichDB"
 
 
 		// Handle the request using router
-		fmt.printfln("passing %s router: ", #procedure, router)
-		status, response_body := HANDLE_HTTP_REQUEST(router, method, path, headers)
+		// fmt.printfln("passing %s router: ", #procedure, router) //debugging
+		status, responseBody := HANDLE_HTTP_REQUEST(router, method, path, headers)
 		handleRequestEvent := SET_SERVER_EVENT_INFORMATION(
 			"Attempt Request",
 			"Attempting handle request made on the server",
@@ -307,7 +308,7 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 
 		// Build and send response
-		response := BUILD_HTTP_RESPONSE(status, response_headers, response_body)
+		response := BUILD_HTTP_RESPONSE(status, responseHeaders, responseBody)
 		buildResponseEvent := SET_SERVER_EVENT_INFORMATION(
 			"Build Response",
 			"Attempting build a response for the request",
@@ -363,7 +364,7 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 	}
 }
 
-OST_HANDLE_SERVER_KILL_INPUT :: proc() {
+HANDLE_SERVER_KILL_INPUT :: proc() {
 	utils.show_server_kill_msg()
 	input := utils.get_input(false)
 	if input == "kill" || input == "exit" {
@@ -374,6 +375,6 @@ OST_HANDLE_SERVER_KILL_INPUT :: proc() {
 		return
 	} else {
 		fmt.printfln("Invalid input")
-		OST_HANDLE_SERVER_KILL_INPUT()
+		HANDLE_SERVER_KILL_INPUT()
 	}
 }

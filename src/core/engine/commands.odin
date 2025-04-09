@@ -1,5 +1,6 @@
 package engine
 
+import "../nlp"
 import "../../utils"
 import "../benchmark"
 import "../const"
@@ -75,13 +76,15 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
 		libc.system("stty echo")
 		fmt.printfln("Launching OstrichDB server...")
-		serverResult := server.OST_START_SERVER(ServerConfig)
+		serverResult := server.START_OSTRICH_SERVER(ServerConfig)
 		if serverResult == 0 {
 			fmt.printfln("Server stopped. Returning to OstrichDB command line...")
 		} else {
 			fmt.printfln("Server stopped with errors. Returning to OstrichDB command line...")
 		}
 		break
+	case .AGENT: //Used to interact with the OstrichDB ai agent
+	   nlp.main() //TODO: This wont do anything because it requires the server to be running for work to be done
 	// Used to completley destroy the program and all its files, rebuilds after on macOs and Linux
 	case .DESTROY:
 		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")

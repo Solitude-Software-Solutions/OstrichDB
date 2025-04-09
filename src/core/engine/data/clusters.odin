@@ -573,7 +573,7 @@ FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	collectionPath := concat_standard_collection_name(fn)
 
 	clusterExists := CHECK_IF_CLUSTER_EXISTS(collectionPath, cn)
-	switch clusterExists 
+	switch clusterExists
 	{
 	case false:
 		fmt.printfln(
@@ -602,10 +602,10 @@ FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	for cluster in clusters {
 		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
 			// Find the start of the cluster (opening brace)
-			start_index := strings.index(cluster, "{")
-			if start_index != -1 {
+			startIndex := strings.index(cluster, "{")
+			if startIndex != -1 {
 				// Extract the content between braces
-				clusterContent = cluster[start_index + 1:]
+				clusterContent = cluster[startIndex + 1:]
 				// Trim any leading or trailing whitespace
 				clusterContent = strings.trim_space(clusterContent)
 				return strings.clone(clusterContent)
@@ -715,7 +715,7 @@ SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStructur
 	bracketCount := 0
 	clusterStartLine := 0
 
-	for line, line_number in lines {
+	for line, lineNumber in lines {
 		trimmed := strings.trim_space(line)
 
 		if trimmed == "{" {
@@ -724,7 +724,7 @@ SCAN_CLUSTER_STRUCTURE :: proc(fn: string) -> (scanSuccess: int, invalidStructur
 			}
 			inCluster = true
 			bracketCount += 1
-			clusterStartLine = line_number
+			clusterStartLine = lineNumber
 		} else if trimmed == "}," {
 			if !inCluster {
 				return -2, true
