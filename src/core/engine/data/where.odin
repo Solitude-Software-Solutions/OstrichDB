@@ -24,17 +24,18 @@ File Description:
 //another example:
 //`WHERE foo` would show the location of every 2nd or 3rd layer data object with the name foo
 
-//handles WHERE {target} {target name}
-OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
+//handles WHERE {objType} {objName}
+LOCATE_SPECIFIC_DATA_OBJECT :: proc(objType, objName: string) -> bool {
 	using const
 	using utils
+	using types
 
-	// Early return for invalid target
-	if target == COLLECTION {
+	// Early return for invalid objType
+	if objType == Token[.COLLECTION] {
 		return false
 	}
 
-	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
+	collectionsDir, errOpen := os.open(STANDARD_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -42,7 +43,7 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 
 	// Collect all valid collection files
 	for file in foundFiles {
-		if strings.contains(file.name, OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_EXT) {
 			append(&collectionNames, file.name)
 		}
 	}
@@ -51,13 +52,13 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 
 	// Search through collections
 	for collection in collectionNames {
-		if target == CLUSTER {
-			collectionPath := fmt.tprintf("%s%s", OST_COLLECTION_PATH, collection)
-			if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
+		if objType == Token[.CLUSTER] {
+			collectionPath := fmt.tprintf("%s%s", STANDARD_COLLECTION_PATH, collection)
+			if CHECK_IF_CLUSTER_EXISTS(collectionPath, objName) {
 				fmt.printfln(
 					"Cluster: %s%s%s -> Collection: %s%s%s",
 					BOLD_UNDERLINE,
-					targetName,
+					objName,
 					RESET,
 					BOLD_UNDERLINE,
 					collection,
@@ -66,13 +67,13 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 				found = true
 				// Remove the return here to continue searching
 			}
-		} else if target == RECORD {
-			colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
+		} else if objType == Token[.RECORD] {
+			colName, cluName, success := SCAN_COLLECTION_FOR_RECORD(collection, objName)
 			if success {
 				fmt.printfln(
 					"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
 					BOLD_UNDERLINE,
-					targetName,
+					objName,
 					RESET,
 					BOLD_UNDERLINE,
 					cluName,
@@ -92,11 +93,11 @@ OST_WHERE_OBJECT :: proc(target, targetName: string) -> bool {
 
 //handles WHERE {target name}
 //returns true if a match is found, the name of the collection and the name of the cluster
-OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
+LOCATE_ANY_OBJECT_WITH_NAME :: proc(targetName: string) -> (bool, string, string) {
 	using utils
 	using const
 
-	collectionsDir, errOpen := os.open(OST_COLLECTION_PATH)
+	collectionsDir, errOpen := os.open(STANDARD_COLLECTION_PATH)
 	defer os.close(collectionsDir)
 	foundFiles, dirReadSuccess := os.read_dir(collectionsDir, -1)
 	collectionNames := make([dynamic]string)
@@ -104,7 +105,7 @@ OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
 
 	// Collect all valid collection files
 	for file in foundFiles {
-		if strings.contains(file.name, OST_FILE_EXTENSION) {
+		if strings.contains(file.name, OST_EXT) {
 			append(&collectionNames, file.name)
 		}
 	}
@@ -113,17 +114,17 @@ OST_WHERE_ANY :: proc(targetName: string) -> (bool, string, string) {
 
 	// Search through collections
 	for collection in collectionNames {
-		collectionPath := fmt.tprintf("%s%s", OST_COLLECTION_PATH, collection)
+		collectionPath := fmt.tprintf("%s%s", STANDARD_COLLECTION_PATH, collection)
 
 		// Check if it's a cluster name
-		if OST_CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
+		if CHECK_IF_CLUSTER_EXISTS(collectionPath, targetName) {
 			found = true
 			return found, collection, ""
 
 		}
 
 		// Check if it's a record name
-		colName, cluName, success := OST_SCAN_COLLECTION_FOR_RECORD(collection, targetName)
+		colName, cluName, success := SCAN_COLLECTION_FOR_RECORD(collection, targetName)
 		if success {
 			found = true
 			return found, colName, cluName

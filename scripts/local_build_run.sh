@@ -15,7 +15,7 @@ cd "$DIR/.."
 
 
 # Build the project, if DEV_MODE is false then shit breaks so LEAVE IT THE FUCK ALONE - Marshall
-odin build main -define:OST_DEV_MODE=true
+odin build main -define:DEV_MODE=true
 
 # Check if build was successful
 if [ $? -eq 0 ]; then

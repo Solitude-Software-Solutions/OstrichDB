@@ -55,8 +55,8 @@ This section lists the labels we use to help us track and manage issues and pull
 
 * `Bug:` - Issues that are bugs in the DBMS
 * `Feature:` - Issues that are DBMS feature requests
-* `Documentation` - Issues that are related to DBMS documentation
-* `Brainstorms` - Issues that are for brainstorming DBMS features and improvements
+* `Documentation:` - Issues that are related to DBMS documentation
+* `Brainstorms:` - Issues that are for brainstorming DBMS features and improvements
 
 ## Getting Started
 

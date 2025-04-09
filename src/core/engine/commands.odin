@@ -1,5 +1,6 @@
 package engine
 
+import "../nlp"
 import "../../utils"
 import "../benchmark"
 import "../const"
@@ -29,74 +30,82 @@ File Description:
 *********************************************************/
 
 
-OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
+EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using metadata
 	using const
 	using utils
-	// using data //cant use this when using utils namespace
-
-	//TODO: not even using these...
-	incompleteCommandErr := new_err(
-		.INCOMPLETE_COMMAND,
-		get_err_msg(.INCOMPLETE_COMMAND),
-		#procedure,
-	)
-
-	invalidCommandErr := new_err(.INVALID_COMMAND, get_err_msg(.INVALID_COMMAND), #procedure)
+	using security
+	using types
 
 	//Semi global Server shit
 	ServerConfig := types.Server_Config {
-		port = 8082,
+		port = 8042,
 	}
+
 	defer delete(cmd.l_token)
-
-
-	switch (cmd.c_token) 
+	#partial switch (cmd.c_token)
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
 	//Shows the current version of OstrichDB
-	case VERSION:
+	case .VERSION:
 		log_runtime_event("Used VERSION command", "User requested version information.")
 		fmt.printfln("Using OstrichDB Version: %s%s%s", BOLD, get_ost_version(), RESET)
 		break
 	//Safely kills the dbms
-	case EXIT:
+	case .EXIT:
 		//logout then exit the program
 		log_runtime_event("Used EXIT command", "User requested to exit the program.")
-		security.OST_USER_LOGOUT(1)
-	case LOGOUT:
+		security.RUN_USER_LOGOUT(1)
+	case .LOGOUT:
 		//only returns user to signin.
 		log_runtime_event("Used LOGOUT command", "User requested to logout.")
 		fmt.printfln("Logging out...")
-		security.OST_USER_LOGOUT(0)
+		security.RUN_USER_LOGOUT(0)
 		return 0
 	// Runs the restart script
-	case RESTART:
+	case .RESTART:
 		log_runtime_event("Used RESTART command", "User requested to restart OstrichDB.")
-		OST_RESTART()
-	case REBUILD:
+		RESTART_OSTRICHDB()
+	case .REBUILD:
 		log_runtime_event("Used REBUILD command", "User requested to rebuild OstrichDB")
-		OST_REBUILD()
+		REBUILD_OSTRICHDB()
+	case .SERVE, .SERVER:
+		//first kill localhost:8042
+		libc.system("stty -echo")
+		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
+		libc.system("stty echo")
+		fmt.printfln("Launching OstrichDB server...")
+		serverResult := server.START_OSTRICH_SERVER(ServerConfig)
+		if serverResult == 0 {
+			fmt.printfln("Server stopped. Returning to OstrichDB command line...")
+		} else {
+			fmt.printfln("Server stopped with errors. Returning to OstrichDB command line...")
+		}
+		break
+	case .AGENT: //Used to interact with the OstrichDB ai agent
+	   nlp.main() //TODO: This wont do anything because it requires the server to be running for work to be done
 	// Used to completley destroy the program and all its files, rebuilds after on macOs and Linux
-	case DESTROY:
+	case .DESTROY:
 		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
-		OST_DESTROY()
+		DESTROY_EVERYTHING()
 	//Clears the terminal screen
-	case CLEAR:
+	case .CLEAR:
 		log_runtime_event("Used CLEAR command", "User requested to clear the screen.")
 		libc.system("clear")
 		break
 	//Shows a tree-like structure of the dbms
-	case TREE:
+	case .TREE:
 		log_runtime_event("Used TREE command", "User requested to view a tree of the database.")
-		data.OST_GET_DATABASE_TREE()
+		data.GET_COLLECTION_TREE()
 		break
 	// Shows the current users past command history
-	case HISTORY:
+	case .HISTORY:
 		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
-		commandHistory := data.OST_PUSH_RECORDS_TO_ARRAY(types.current_user.username.Value)
+		DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		commandHistory := push_records_to_array(types.current_user.username.Value)
 
+		ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		for cmd, index in commandHistory {
 			fmt.printfln("%d: %s", index + 1, cmd)
 		}
@@ -106,7 +115,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		inputNumber: [1024]byte
 		n, inputSuccess := os.read(os.stdin, inputNumber[:])
 		if inputSuccess != 0 {
-			error := new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
+			error := new_err(
+				.CANNOT_READ_INPUT,
+				get_err_msg(.CANNOT_READ_INPUT),
+				#file,
+				#procedure,
+				#line,
+			)
 			throw_err(error)
 			log_err("Cannot read user input for HISTORY command.", #procedure)
 		}
@@ -119,135 +134,116 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		// parses the command that has been stored in the most recent command history index. Crucial for the HISTORY command
-		cmd := OST_PARSE_COMMAND(commandHistory[commandIndex])
-		OST_EXECUTE_COMMAND(&cmd)
+		cmd := PARSE_COMMAND(commandHistory[commandIndex])
+		EXECUTE_COMMAND(&cmd)
+
+
+		delete(commandHistory)
 		break
-	//HISTORY CLUSTER FUCK END :)
 	//=======================<SINGLE OR MULTI-TOKEN COMMANDS>=======================//
-	case HELP:
+	case .HELP:
 		log_runtime_event("Used HELP command", "User requested help information.")
 		if len(cmd.t_token) == 0 {
 			log_runtime_event("Used HELP command", "User requested general help information.")
-			help.OST_GET_GENERAL_HELP()
-		} else if cmd.t_token == CLP || cmd.t_token == CLPS {
+			help.GET_GENERAL_HELP_INFO()
+		} else if cmd.t_token == Token[.CLP] || cmd.t_token == Token[.CLPS] {
 			log_runtime_event("Used HELP command", "User requested atom help information.")
-			help.OST_GET_CLPS_HELP()
+			help.SHOW_TOKEN_HELP_TABLE()
 		} else {
+			help.GET_HELP_INFO_FOR_SPECIFIC_TOKEN(cmd.t_token)
 			log_runtime_event("Used HELP command", "User requested specific help information.")
-			help.OST_GET_SPECIFIC_HELP(cmd.t_token)
 		}
 		break
 	//=======================<MULTI-TOKEN COMMANDS>=======================//
-
 	//WHERE: Used to search for a specific object within the DBMS
-	case WHERE:
-		log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
-		switch (cmd.t_token) {
-		case CLUSTER, RECORD:
-			collectionName := cmd.l_token[0]
+	// TODO: The WHERE command is pretty useless right now.
+	// it needs to be able to read collections to find a
+	// specific record or cluster....but since all collections will be encrypted and no specific collection
+	// is provided to search through nothing will work. Will need to re-implement this command after creating
+	// some sort of DECRYPT_ALL_COLLECTIONS/ENCRYPT_ALL_COLLECTIONS command
+	// case .WHERE:
+	// 	log_runtime_event("Used WHERE command", "User requested to search for a specific object.")
+	// 	switch (cmd.t_token) {
+	// 	case CLUSTER, RECORD:
+	// 		collectionName := cmd.l_token[0]
 
-			//Todo this check here seems to work sometimes and other times not. Keep an eye on it - Marshall
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				WHERE,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
+	// 		//Todo this check here seems to work sometimes and other times not. Keep an eye on it - Marshall
+	// 		//--------------Permissions Security stuff Start----------------//
+	// 		EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, WHERE, .STANDARD_PUBLIC)
 
+	// 		found := data.LOCATE_SPECIFIC_DATA_OBJECT(cmd.t_token, collectionName)
+	// 		if !found {
+	// 			fmt.printfln(
+	// 				"No %s%s%s with name: %s%s%s found within OstrichDB.",
+	// 				BOLD_UNDERLINE,
+	// 				cmd.t_token,
+	// 				RESET,
+	// 				BOLD,
+	// 				cmd.l_token[0],
+	// 				RESET,
+	// 			)
+	// 		}
+	// 		break
+	// 	}
+	// 	if len(cmd.l_token) == 0 {
 
-			found := data.OST_WHERE_OBJECT(cmd.t_token, collectionName)
-			if !found {
-				fmt.printfln(
-					"No %s%s%s with name: %s%s%s found within OstrichDB.",
-					BOLD_UNDERLINE,
-					cmd.t_token,
-					RESET,
-					BOLD,
-					cmd.l_token[0],
-					RESET,
-				)
-			}
-		case:
-			break
-		}
-		if len(cmd.l_token) == 0 {
-
-			found, collectionName, clusterName := data.OST_WHERE_ANY(cmd.t_token)
+	// 		found, collectionName, clusterName := data.LOCATE_ANY_OBJECT_WITH_NAME(cmd.t_token)
 
 
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				WHERE,
-				strings.trim(collectionName, OST_FILE_EXTENSION),
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
+	// 		EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, WHERE, .STANDARD_PUBLIC)
 
 
-			if !found {
-				fmt.printfln(
-					"No data with name: %s%s%s found within OstrichDB.",
-					BOLD_UNDERLINE,
-					cmd.t_token,
-					RESET,
-				)
-			}
+	// 		if !found {
+	// 			fmt.printfln(
+	// 				"No data with name: %s%s%s found within OstrichDB.",
+	// 				BOLD_UNDERLINE,
+	// 				cmd.t_token,
+	// 				RESET,
+	// 			)
+	// 		}
 
-			if found && clusterName == "" { 	//if the cluster is found
-				fmt.printfln(
-					"Cluster: %s%s%s -> Collection: %s%s%s",
-					BOLD_UNDERLINE,
-					clusterName,
-					RESET,
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-			} else if found && clusterName != "" { 	//If the record is found
-				fmt.printfln(
-					"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
-					BOLD_UNDERLINE,
-					cmd.t_token,
-					RESET,
-					BOLD_UNDERLINE,
-					clusterName,
-					RESET,
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-			}
-		} else {
-			fmt.println(
-				"Incomplete command. Correct Usage: WHERE <target> <target_name> or WHERE <target_name>",
-			)
-			log_runtime_event(
-				"Incomplete WHERE command",
-				"User did not provide a target name to search for.",
-			)
-		}
-		break
+	// 		if found && clusterName == "" { 	//if the cluster is found
+	// 			fmt.printfln(
+	// 				"Cluster: %s%s%s -> Collection: %s%s%s",
+	// 				BOLD_UNDERLINE,
+	// 				clusterName,
+	// 				RESET,
+	// 				BOLD_UNDERLINE,
+	// 				collectionName,
+	// 				RESET,
+	// 			)
+	// 		} else if found && clusterName != "" { 	//If the record is found
+	// 			fmt.printfln(
+	// 				"Record: %s%s%s -> Cluster: %s%s%s -> Collection: %s%s%s",
+	// 				BOLD_UNDERLINE,
+	// 				cmd.t_token,
+	// 				RESET,
+	// 				BOLD_UNDERLINE,
+	// 				clusterName,
+	// 				RESET,
+	// 				BOLD_UNDERLINE,
+	// 				collectionName,
+	// 				RESET,
+	// 			)
+	// 		}
+	// 	} else {
+	// 		fmt.println(
+	// 			"Incomplete command. Correct Usage: WHERE <target> <target_name> or WHERE <target_name>",
+	// 		)
+	// 		log_runtime_event(
+	// 			"Incomplete WHERE command",
+	// 			"User did not provide a target name to search for.",
+	// 		)
+	// 	}
+	// 	break
 	//BACKUP: Used in conjuction with COLLECTION to create a duplicate of all data within a collection
-	case BACKUP:
+	case .BACKUP:
 		log_runtime_event("Used BACKUP command", "User requested to backup data.")
 		switch (len(cmd.l_token)) {
 		case 1:
 			collectionName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -258,27 +254,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 
 			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				BACKUP,
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 				collectionName,
+				Token[.BACKUP],
+				.STANDARD_PUBLIC,
 			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
 
-			name := data.OST_CHOOSE_BACKUP_NAME()
-			checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-			switch (checks) 
-			{
-			case -1:
-				return -1
-			}
-			success := data.OST_CREATE_BACKUP_COLLECTION(name, cmd.l_token[0])
+			name := data.CHOOSE_BACKUP_NAME()
+			// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+			// switch (checks)
+			// {
+			// case -1:
+			// 	return -1
+			// }
+			success := data.CREATE_BACKUP_COLLECTION(name, cmd.l_token[0])
 			if success {
 				fmt.printfln(
 					"Successfully backed up collection: %s%s%s.",
@@ -302,15 +291,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	//NEW: Allows for the creation of new records, clusters, or collections
-	case NEW:
+	case .NEW:
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
-			exists := data.OST_CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
+			exists := data.CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
 			switch (exists) {
 			case false:
 				fmt.printf("Creating collection: %s%s%s\n", BOLD_UNDERLINE, cmd.l_token[0], RESET)
-				success := data.OST_CREATE_COLLECTION(cmd.l_token[0], 0)
+				success := data.CREATE_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC)
 				if success {
 					fmt.printf(
 						"Collection: %s%s%s created successfully.\n",
@@ -318,8 +307,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						cmd.l_token[0],
 						RESET,
 					)
-					fileName := concat_collection_name(cmd.l_token[0])
-					OST_UPDATE_METADATA_ON_CREATE(fileName)
+					fileName := concat_standard_collection_name(cmd.l_token[0])
+					UPDATE_METADATA_UPON_CREATION(fileName)
+
+					ENCRYPT_COLLECTION(
+						cmd.l_token[0],
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
 				} else {
 					fmt.printf(
 						"Failed to create collection %s%s%s.\n",
@@ -351,11 +347,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case 2:
 			clusterName: string
 			collectionName: string
+			fn: string
 			if cmd.isUsingDotNotation == true {
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
-
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -365,20 +361,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					NEW,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.NEW],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
-
 
 				fmt.printf(
 					"Creating cluster: %s%s%s within collection: %s%s%s\n",
@@ -389,18 +376,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					RESET,
 				)
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
 				// 	return -1
 				// }
 
-				id := data.OST_GENERATE_ID(true)
-				result := data.OST_CREATE_CLUSTER(collectionName, clusterName, id)
-				data.OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", id), 0)
+				id := data.GENERATE_ID(true)
+				result := data.CREATE_CLUSTER(collectionName, clusterName, id)
+				data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
 
-				switch (result) 
+				switch (result)
 				{
 				case -1:
 					fmt.printfln(
@@ -412,12 +399,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
+					ENCRYPT_COLLECTION(
+						cmd.l_token[0],
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+						false,
+					)
 					break
 				case 1, 2, 3:
 					error1 := new_err(
 						.CANNOT_CREATE_CLUSTER,
 						get_err_msg(.CANNOT_CREATE_CLUSTER),
+						#file,
 						#procedure,
+						#line,
 					)
 					throw_custom_err(
 						error1,
@@ -426,8 +421,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					log_err("Failed to create new cluster.", #procedure)
 					break
 				}
-				fn := concat_collection_name(collectionName)
-				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+				fn = concat_standard_collection_name(collectionName)
+				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 			} else {
 				fmt.printfln(
 					"Invalid command. Correct Usage: NEW <collection_name>.<cluster_name>",
@@ -437,16 +432,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a cluster name to create.",
 				)
 			}
-
+			ENCRYPT_COLLECTION(
+				cmd.l_token[0],
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 3:
+			collectionName, clusterName, recordName: string
 			log_runtime_event("Used NEW RECORD command", "User requested to create a new record.")
-			collectionName := cmd.l_token[0]
-			clusterName := cmd.l_token[1]
-			recordName := cmd.l_token[2]
+			collectionName = cmd.l_token[0]
+			clusterName = cmd.l_token[1]
+			recordName = cmd.l_token[2]
 
-
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -455,21 +455,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				NEW,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
 
-			if len(recordName) > 128 {
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.NEW], .STANDARD_PUBLIC)
+
+			if len(recordName) > 64 {
 				fmt.printfln(
 					"Record name: %s%s%s is too long. Please choose a name less than 128 characters.",
 					BOLD_UNDERLINE,
@@ -478,16 +467,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
-			filePath := fmt.tprintf(
-				"%s%s%s",
-				OST_COLLECTION_PATH,
-				collectionName,
-				OST_FILE_EXTENSION,
-			)
+			colPath := concat_standard_collection_name(collectionName)
 
-			if OF_TYPE in cmd.p_token && cmd.isUsingDotNotation == true {
-				rType, typeSuccess := data.OST_SET_RECORD_TYPE(cmd.p_token[OF_TYPE])
-
+			if Token[.OF_TYPE] in cmd.p_token && cmd.isUsingDotNotation == true {
+				rType, typeSuccess := data.SET_RECORD_TYPE(cmd.p_token[Token[.OF_TYPE]])
 				if typeSuccess == 0 {
 					fmt.printfln(
 						"Creating record: %s%s%s of type: %s%s%s",
@@ -499,14 +482,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 
-					appendSuccess := data.OST_APPEND_RECORD_TO_CLUSTER(
-						filePath,
+					recordCreationSuccess := data.CREATE_RECORD(
+						colPath,
 						clusterName,
 						recordName,
 						"",
 						rType,
 					)
-					switch (appendSuccess) 
+					switch (recordCreationSuccess)
 					{
 					case 0:
 						fmt.printfln(
@@ -521,13 +504,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 						//IF a records type is NULL, technically it cant hold a value, the word NULL in the value slot
 						// of a record is mostly a placeholder
-						if rType == NULL {
-							data.OST_SET_RECORD_VALUE(filePath, clusterName, recordName, NULL)
+						if rType == Token[.NULL] {
+							data.SET_RECORD_VALUE(colPath, clusterName, recordName, Token[.NULL])
 						}
 
-						fn := concat_collection_name(collectionName)
-						OST_UPDATE_METADATA_AFTER_OPERATION(fn)
-
+						fn := concat_standard_collection_name(collectionName)
+						UPDATE_METADATA_AFTER_OPERATIONS(fn)
 						break
 					case -1, 1:
 						fmt.printfln(
@@ -557,7 +539,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 				}
-
+				ENCRYPT_COLLECTION(
+					cmd.l_token[0],
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
 			} else {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: NEW <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
@@ -576,35 +563,18 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			break
 		}
-
-		// case USER:
-		// 	log_runtime_event(
-		// 		"Used NEW USER command",
-		// 		"User chose to create a new user account",
-		// 	)
-		// 	if len(cmd.l_token) >= 0 {
-		// 		result := security.OST_CREATE_NEW_USER()
-		// 		return result
-		// 	}
-		// case:
-		// 	fmt.printfln("Invalid command structure. Correct Usage: NEW <Target> <Targets_name>")
-		// 	log_runtime_event(
-		// 		"Invalid NEW command",
-		// 		"User did not provide a valid target to create.",
-		// 	)
 		break
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
-	case RENAME:
+	case .RENAME:
 		log_runtime_event("Used RENAME command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
-			if TO in cmd.p_token {
+			if Token[.TO] in cmd.p_token {
 				oldName := cmd.l_token[0]
-				newName := cmd.p_token[TO]
+				newName := cmd.p_token[Token[.TO]]
 
-
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(oldName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(oldName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -614,20 +584,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					RENAME,
-					oldName,
-				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(oldName, Token[.RENAME], .STANDARD_PUBLIC)
 
 				fmt.printf(
 					"Renaming collection: %s%s%s to %s%s%s\n",
@@ -638,8 +596,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					newName,
 					RESET,
 				)
-				success := data.OST_RENAME_COLLECTION(oldName, newName)
-				switch (success) 
+				success := data.RENAME_COLLECTION(oldName, newName)
+				switch (success)
 				{
 				case true:
 					fmt.printf(
@@ -674,20 +632,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					break
 				}
 
+				ENCRYPT_COLLECTION(
+					newName,
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: RENAME <old_name> TO <new_name>")
 			}
 			break
 		case 2:
-			clusterName: string
 			collectionName: string
-
-			if TO in cmd.p_token && cmd.isUsingDotNotation == true {
+			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation == true {
 				oldName := cmd.l_token[1]
-				collectionName := cmd.l_token[0]
-				newName := cmd.p_token[TO]
+				collectionName = cmd.l_token[0]
+				newName := cmd.p_token[Token[.TO]]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -697,22 +659,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					WHERE,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.RENAME],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-
-				// checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 				// switch (checks)
 				// {
 				// case -1:
@@ -722,7 +675,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				// 	return -1
 				// }
 
-				success := data.OST_RENAME_CLUSTER(collectionName, oldName, newName)
+				success := data.RENAME_CLUSTER(collectionName, oldName, newName)
 				if success {
 					fmt.printf(
 						"Successfully renamed cluster %s%s%s to %s%s%s in collection %s%s%s\n",
@@ -736,8 +689,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					fn := concat_collection_name(collectionName)
-					OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+					fn := concat_standard_collection_name(collectionName)
+
+					UPDATE_METADATA_AFTER_OPERATIONS(fn)
 				} else {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
@@ -753,21 +707,27 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to rename.",
 				)
 			}
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 3:
 			oldRName: string
 			newRName: string
 			collectionName: string //only here if using dot notation
 			clusterName: string //only here if using dot notation
-			if TO in cmd.p_token || cmd.isUsingDotNotation == true {
+			if Token[.TO] in cmd.p_token || cmd.isUsingDotNotation == true {
 				if cmd.isUsingDotNotation == true {
 					oldRName = cmd.l_token[2]
-					newRName = cmd.p_token[TO]
+					newRName = cmd.p_token[Token[.TO]]
 					collectionName = cmd.l_token[0]
 					clusterName = cmd.l_token[1]
 
 
-					if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+					if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 						fmt.printfln(
 							"Collection: %s%s%s does not exist.",
 							BOLD_UNDERLINE,
@@ -776,32 +736,30 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						)
 						return -1
 					}
-					//--------------Permissions Security stuff Start----------------//
-					permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-						WHERE,
-						collectionName,
-					)
-					switch (permissionCheckResult) 
-					{
-					case 0:
-						break
-					case:
-						return -1
-					}
-					//--------------Permissions Security stuff End----------------//
 
+					DECRYPT_COLLECTION(
+						collectionName,
+						.STANDARD_PUBLIC,
+						types.current_user.m_k.valAsBytes,
+					)
+
+					EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+						collectionName,
+						Token[.RENAME],
+						.STANDARD_PUBLIC,
+					)
 
 				} else {
 					oldRName = cmd.l_token[0]
-					newRName = cmd.p_token[TO]
+					newRName = cmd.p_token[Token[.TO]]
 				}
-				result := data.OST_RENAME_RECORD(
+				result := data.RENAME_RECORD(
 					strings.clone(collectionName),
 					strings.clone(clusterName),
 					oldRName,
 					newRName,
 				)
-				switch (result) 
+				switch (result)
 				{
 				case 0:
 					fmt.printfln(
@@ -835,7 +793,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					log_err("Failed to rename record.", #procedure)
 					break
 				}
-
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: RENAME <collection_name>.<cluster_name>.<old_name> TO <new_name>",
@@ -845,18 +802,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid record name to rename.",
 				)
 			}
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		}
 		break
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
-	case ERASE:
+	case .ERASE:
 		log_runtime_event("Used ERASE command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			collectionName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -866,21 +829,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				ERASE,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
 
-			if data.OST_ERASE_COLLECTION(cmd.l_token[0]) == true {
+			if data.ERASE_COLLECTION(collectionName, false) == true {
 				fmt.printfln(
 					"Collection: %s%s%s erased successfully",
 					BOLD_UNDERLINE,
@@ -898,13 +849,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case 2:
 			collectionName: string
-			clusterName: string
+			cluster: string
 
 			if cmd.isUsingDotNotation == true {
-				collectionName := cmd.l_token[0]
-				cluster := cmd.l_token[1]
+				collectionName = cmd.l_token[0]
+				cluster = cmd.l_token[1]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -914,28 +865,21 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					ERASE,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.ERASE],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
-				clusterID := data.OST_GET_CLUSTER_ID(collectionName, cluster)
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
 
-				if data.OST_ERASE_CLUSTER(collectionName, cluster) == true {
+				clusterID := data.GET_CLUSTER_ID(collectionName, cluster)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// switch (checks)
+				// {
+				// case -1:
+				// 	return -1
+				// }
+
+				if data.ERASE_CLUSTER(collectionName, cluster, false) == true {
 					fmt.printfln(
 						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
 						BOLD_UNDERLINE,
@@ -945,7 +889,32 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					data.OST_REMOVE_ID_FROM_CLUSTER(fmt.tprintf("%d", clusterID), false)
+					DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user.m_k.valAsBytes)
+					if data.REMOVE_ID_FROM_ID_COLLECTION(fmt.tprintf("%d", clusterID), false) {
+						ENCRYPT_COLLECTION(
+							"",
+							.ID_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
+					} else {
+						ENCRYPT_COLLECTION(
+							"",
+							.ID_PRIVATE,
+							types.system_user.m_k.valAsBytes,
+							false,
+						)
+
+						fmt.printfln(
+							"Failed to erase cluster: %s%s%s from collection: %s%s%s",
+							BOLD_UNDERLINE,
+							cluster,
+							RESET,
+							BOLD_UNDERLINE,
+							collectionName,
+							RESET,
+						)
+					}
 				} else {
 					fmt.printfln(
 						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
@@ -957,8 +926,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 				}
-				fn := concat_collection_name(collectionName)
-				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+				fn := concat_standard_collection_name(collectionName)
+				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
@@ -968,6 +937,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to erase.",
 				)
 			}
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 3:
 			collectionName: string
@@ -975,12 +950,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			recordName: string
 
 			if cmd.isUsingDotNotation == true {
-				collectionName := cmd.l_token[0]
-				clusterName := cmd.l_token[1]
-				recordName := cmd.l_token[2]
+				collectionName = cmd.l_token[0]
+				clusterName = cmd.l_token[1]
+				recordName = cmd.l_token[2]
 
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -990,28 +965,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					ERASE,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.ERASE],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-				clusterID := data.OST_GET_CLUSTER_ID(collectionName, clusterName)
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
-				if data.OST_ERASE_RECORD(collectionName, clusterName, recordName) == true {
+				clusterID := data.GET_CLUSTER_ID(collectionName, clusterName)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// switch (checks)
+				// {
+				// case -1:
+				// 	return -1
+				// }
+				if data.ERASE_RECORD(collectionName, clusterName, recordName, false) == true {
 					fmt.printfln(
 						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
 						BOLD_UNDERLINE,
@@ -1039,58 +1006,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 				}
 			}
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
-		// case USER:
-		// 	secColPath := fmt.tprintf(
-		// 		"%ssecure_%s%s",
-		// 		OST_SECURE_COLLECTION_PATH,
-		// 		types.current_user.username.Value,
-		// 		OST_FILE_EXTENSION,
-		// 	)
-		// 	result: bool
-		// 	if len(cmd.l_token) == 1 {
-		// 		//evaluate current logged in users role
-		// 		if data.OST_READ_RECORD_VALUE(
-		// 			   secColPath,
-		// 			   types.current_user.username.Value,
-		// 			   "identifier",
-		// 			   "role",
-		// 		   ) ==
-		// 		   "admin" {
-		// 			result := security.OST_DELETE_USER(cmd.l_token[0])
-		// 			if result {
-		// 				fmt.printfln(
-		// 					"User: %s%s%s successfully deleted.",
-		// 					BOLD_UNDERLINE,
-		// 					cmd.l_token[0],
-		// 					RESET,
-		// 				)
-		// 			} else {
-		// 				fmt.printfln(
-		// 					"Failed to delete user: %s%s%s",
-		// 					BOLD_UNDERLINE,
-		// 					cmd.l_token[0],
-		// 					RESET,
-		// 				)
-		// 			}
-		// 		} else {
-		// 			fmt.printfln(
-		// 				"User: %s%s%s does not have permission to delete users.",
-		// 				BOLD_UNDERLINE,
-		// 				types.current_user.username.Value,
-		// 				RESET,
-		// 			)
-		// 			result = false
-		// 		}
-		// 		if result == true {
-		// 			return 0
-		// 		} else {
-		// 			return -1
-		// 		}
-		// 	} else {
-		// 		fmt.printfln("Incomplete command. Correct Usage: ERASE USER <username>")
-		// 	}
-		// 	break
 		case:
 			fmt.printfln(
 				"Invalid command structure. Correct Usage: ERASE <collection_name>.<cluster_name>.<record_name>",
@@ -1099,16 +1021,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
-	case FETCH:
+	case .FETCH:
 		log_runtime_event("Used FETCH command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
 				collectionName := cmd.l_token[0]
 
 				//check that the collection even exists
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1118,21 +1040,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					FETCH,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.FETCH],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-				str := data.OST_FETCH_COLLECTION(collectionName)
+				str := data.FETCH_COLLECTION(collectionName)
 				fmt.println(str)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: FETCH <collection_name>")
@@ -1141,13 +1055,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid collection name to fetch.",
 				)
 			}
+			ENCRYPT_COLLECTION(
+				cmd.l_token[0],
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 2:
 			if cmd.isUsingDotNotation == true {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1157,22 +1077,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					FETCH,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.FETCH],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-				clusterContent := data.OST_FETCH_CLUSTER(collectionName, clusterName)
+				clusterContent := data.FETCH_CLUSTER(collectionName, clusterName)
 				fmt.printfln(clusterContent)
+
+
 			} else {
 				fmt.println(
 					"Incomplete command. Correct Usage: FETCH <collection_name>.<cluster_name>",
@@ -1182,6 +1096,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid cluster name to fetch.",
 				)
 			}
+			ENCRYPT_COLLECTION(
+				cmd.l_token[0],
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 3:
 			collectionName: string
@@ -1189,11 +1109,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			recordName: string
 
 			if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
-				collectionName := cmd.l_token[0]
-				clusterName := cmd.l_token[1]
-				recordName := cmd.l_token[2]
+				collectionName = cmd.l_token[0]
+				clusterName = cmd.l_token[1]
+				recordName = cmd.l_token[2]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1203,28 +1123,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					FETCH,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.FETCH],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-
-				checks := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				switch (checks) 
-				{
-				case -1:
-					return -1
-				}
-				record, found := data.OST_FETCH_RECORD(collectionName, clusterName, recordName)
+				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+				// switch (checks)
+				// {
+				// case -1:
+				// 	return -1
+				// }
+				record, found := data.FETCH_RECORD(collectionName, clusterName, recordName)
 				fmt.printfln(
 					"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
 					BOLD_UNDERLINE,
@@ -1251,6 +1162,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"User did not provide a valid record name to fetch.",
 				)
 			}
+			ENCRYPT_COLLECTION(
+				cmd.l_token[0],
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: FETCH <Targets_name>")
@@ -1258,17 +1175,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	// SET: Allows for the setting of values within records or configs
-	case SET:
-		switch (len(cmd.l_token)) 
+	case .SET:
+		switch (len(cmd.l_token))
 		{
 		case 3:
 			//Setting a standard records value
-			if TO in cmd.p_token && cmd.isUsingDotNotation {
+			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1278,21 +1195,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					SET,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.SET],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-				value := cmd.p_token[TO] // Get the full string value that was collected by the parser
+				value := cmd.p_token[Token[.TO]] // Get the full string value that was collected by the parser
 				fmt.printfln(
 					"Setting record: %s%s%s to %s%s%s",
 					BOLD_UNDERLINE,
@@ -1303,9 +1212,9 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 
-				file := utils.concat_collection_name(collectionName)
+				file := utils.concat_standard_collection_name(collectionName)
 
-				setValueSuccess := data.OST_SET_RECORD_VALUE(
+				setValueSuccess := data.SET_RECORD_VALUE(
 					file,
 					clusterName,
 					recordName,
@@ -1315,7 +1224,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				//if that records type is one of the following 'special' arrays:
 				// []CHAR, []DATE, []TIME, []DATETIME,etc scan for that type and remove the "" that
 				// each value will have(THANKS ODIN...)
-				rType, _ := data.OST_GET_RECORD_TYPE(file, clusterName, recordName)
+				rType, _ := data.GET_RECORD_TYPE(file, clusterName, recordName)
 
 
 				/*
@@ -1323,13 +1232,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				I guess its not neeeded, if a user wants to have a single character string record who am I to stop them?
 				Remove at any time if needed - Marshall
 				*/
-				if rType == STRING && len(value) == 1 {
-					conversionSuccess := data.OST_CHANGE_RECORD_TYPE(
+				if rType == Token[.STRING] && len(value) == 1 {
+					conversionSuccess := data.CHANGE_RECORD_TYPE(
 						file,
 						clusterName,
 						recordName,
 						value,
-						CHAR,
+						Token[.CHAR],
 					)
 					if conversionSuccess {
 						fmt.printfln(
@@ -1344,7 +1253,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 
 
-				if rType == NULL {
+				if rType == Token[.NULL] {
 					fmt.printfln(
 						"Cannot a value ssign to record: %s%s%s of type %sNULL%s",
 						BOLD_UNDERLINE,
@@ -1357,12 +1266,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 0
 				}
 
-				if rType == CHAR_ARRAY ||
-				   rType == DATE_ARRAY ||
-				   rType == TIME_ARRAY ||
-				   rType == DATETIME_ARRAY ||
-				   rType == UUID_ARRAY {
-					data.OST_MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
+				if rType == Token[.CHAR_ARRAY] ||
+				   rType == Token[.DATE_ARRAY] ||
+				   rType == Token[.TIME_ARRAY] ||
+				   rType == Token[.DATETIME_ARRAY] ||
+				   rType == Token[.UUID_ARRAY] {
+					data.MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
 				}
 
 				if setValueSuccess {
@@ -1387,17 +1296,26 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 				}
 
-				fn := concat_collection_name(collectionName)
-				OST_UPDATE_METADATA_AFTER_OPERATION(fn)
+				fn := concat_standard_collection_name(collectionName)
+				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 			}
+			ENCRYPT_COLLECTION(
+				cmd.l_token[0],
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 1:
 			switch (cmd.t_token) {
-			case CONFIG:
+			case Token[.CONFIG]:
 				log_runtime_event("Used SET command", "")
-				if TO in cmd.p_token {
+				if Token[.TO] in cmd.p_token {
 					configName := cmd.l_token[0]
-					value: string
+					value := cmd.p_token[Token[.TO]]
+
+					EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK("", Token[.SET], .CONFIG_PRIVATE)
+
 					for key, val in cmd.p_token {
 						value = strings.to_lower(val)
 					}
@@ -1410,30 +1328,27 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						value,
 						RESET,
 					)
-					switch (configName) 
+					switch (configName)
 					{
 					case "HELP_VERBOSE":
 						if value == "true" || value == "false" {
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FOUR, value)
+							success := config.UPDATE_CONFIG_VALUE(HELP_IS_VERBOSE, value)
 							if success == false {
 								fmt.printfln("Failed to set HELP config to %s", value)
 							} else {
-								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 4)
-								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 5)
+								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 4)
+								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
 								fmt.printfln("Successfully set HELP config to %s", value)
 							}
-							help.OST_SET_HELP_MODE()
+							help.SET_HELP_MODE()
 						} else {
 							fmt.println(
-								"Invalid value. Valid values for config help_verbose are: 'true' or 'false'",
+								"Invalid value. Valid values for config HELP_VERBOSE are: 'true' or 'false'",
 							)
-							return 1
 						}
 						break
 					case "SUPPRESS_ERRORS":
 						if value == "true" || value == "false" {
-
-
 							fmt.printfln(
 								"Setting config: %s%s%s to %s%s%s",
 								BOLD_UNDERLINE,
@@ -1443,7 +1358,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_SIX, value)
+							success := config.UPDATE_CONFIG_VALUE(ERROR_SUPPRESSION, value)
 							if success == false {
 								fmt.printfln("Failed to set SUPPRESS_ERRORS config to %s", value)
 							} else {
@@ -1455,9 +1370,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							break
 						} else {
 							fmt.println(
-								"Invalid value. Valid values for config suppress_errors are: 'true' or 'false'",
+								"Invalid value. Valid values for config SUPPRESS_ERRORS are: 'true' or 'false'",
 							)
-							return 1
 						}
 						break
 					case "LIMIT_HISTORY":
@@ -1471,7 +1385,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_SEVEN, value)
+							success := config.UPDATE_CONFIG_VALUE(LIMIT_HISTORY, value)
 							if success == false {
 								fmt.printfln("Failed to set LIMIT_HISTORY config to %s", value)
 							} else {
@@ -1480,12 +1394,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							break
 						} else {
 							fmt.println(
-								"Invalid value. Valid values for config limit_history are: 'true' or 'false'",
+								"Invalid value. Valid values for config LIMIT_HISTORY are: 'true' or 'false'",
 							)
-							return 1
 						}
 						break
-					case "SERVER_ON":
+					case "AUTO_SERVE":
 						if value == "true" || value == "false" {
 							fmt.printfln(
 								"Setting config: %s%s%s to %s%s%s",
@@ -1496,32 +1409,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 								value,
 								RESET,
 							)
-
-							success := config.OST_UPDATE_CONFIG_VALUE(CONFIG_FIVE, value)
+							success := config.UPDATE_CONFIG_VALUE(AUTO_SERVE, value)
 							if success == false {
-								fmt.printfln("Failed to set SERVER config to %s", value)
+								fmt.printfln("Failed to set AUTO_SERVE config to %s", value)
 							} else {
-								fmt.printfln("Successfully set SERVER config to %s", value)
-								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 4)
-								AUTO_OST_UPDATE_METADATA_VALUE(OST_CONFIG_PATH, 5)
-								if data.OST_READ_RECORD_VALUE(
-									   OST_CONFIG_PATH,
-									   CONFIG_CLUSTER,
-									   BOOLEAN,
-									   CONFIG_FIVE,
-								   ) ==
-								   "true" {
-									fmt.printfln("Server Mode is now ON")
-									server.OST_START_SERVER(ServerConfig)
-								} else {
-									fmt.printfln("Server is now OFF")
-								}
+								fmt.printfln("Successfully set AUTO_SERVE config to %s", value)
 							}
+							break
 						} else {
 							fmt.println(
-								"Invalid value. Valid values for config server are: 'true' or 'false'",
+								"Invalid value. Valid values for config AUTO_SERVE are: 'true' or 'false'",
 							)
-							return 1
 						}
 						break
 					case:
@@ -1534,6 +1432,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
 					)
 				}
+				ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.current_user.m_k.valAsBytes, false)
 				break
 			}
 		case:
@@ -1544,12 +1443,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.printfln("Note: The SET command can only be used on RECORDS and CONFIGS")
 		}
 	// COUNT: Allows for the counting of collections, clusters, or records
-	case COUNT:
+	case .COUNT:
 		log_runtime_event("Used COUNT command", "")
-		switch (cmd.t_token) 
+		switch (cmd.t_token)
 		{
-		case COLLECTIONS:
-			result := data.OST_COUNT_COLLECTIONS()
+		case Token[.COLLECTIONS]:
+			result := data.GET_COLLECTION_COUNT()
 			switch (result) {
 			case -1:
 				fmt.printfln("Failed to count collections")
@@ -1565,11 +1464,11 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				break
 			}
 			break
-		case CLUSTERS:
+		case Token[.CLUSTERS]:
 			if len(cmd.l_token) == 1 {
 				collectionName := cmd.l_token[0]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1578,21 +1477,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					SET,
+
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.COUNT],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
-				result := data.OST_COUNT_CLUSTERS(collectionName)
-				switch (result) 
+
+				result := data.COUNT_CLUSTERS(collectionName)
+				switch (result)
 				{
 				case -1:
 					fmt.printfln(
@@ -1629,6 +1522,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					break
 				}
+				ENCRYPT_COLLECTION(
+					cmd.l_token[0],
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
 			} else {
 				fmt.printfln(
 					"Invalid command structure. Correct Usage: COUNT CLUSTERS <collection_name>",
@@ -1640,14 +1539,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 
 			break
-		case RECORDS:
+		case Token[.RECORDS]:
 			//in the event the users is counting the records in a specific cluster
 			if (len(cmd.l_token) >= 2 || cmd.isUsingDotNotation == true) {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
-
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1656,20 +1554,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					COUNT,
+
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.COUNT],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
-				result := data.OST_COUNT_RECORDS_IN_CLUSTER(
+
+				result := data.GET_RECORD_COUNT_WITHIN_CLUSTER(
 					strings.clone(collectionName),
 					strings.clone(clusterName),
 					true,
@@ -1721,11 +1613,17 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					break
 				}
-			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true {
+				ENCRYPT_COLLECTION(
+					collectionName,
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
+			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true { 	//TODO: 12 March, 2025 THIS WHOLE BLOCK IS FUCKED FOR SOME REASON - MARSHALL
 				//in the event the user is counting all records in a collection
 				collectionName := cmd.l_token[0]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -1735,23 +1633,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					COUNT,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.COUNT],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-				result := data.OST_COUNT_RECORDS_IN_COLLECTION(collectionName)
+				result := data.GET_RECORD_COUNT_WITHIN_COLLECTION(collectionName)
 
-				switch result 
+				switch result
 				{
 				case -1:
 					fmt.printfln(
@@ -1787,7 +1677,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 				}
-
+				ENCRYPT_COLLECTION(
+					cmd.l_token[0],
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
 			} else {
 				fmt.printfln(
 					"Invalid command structure. Correct Usage: COUNT RECORDS <collection_name>.<cluster_name>",
@@ -1800,15 +1695,16 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		}
 		break
-	// //PURGE: Removes all data from the provided collection, cluster, or record but maintains the structure
-	case PURGE:
+	//PURGE: Removes all data from the provided collection, cluster, or record but maintains the structure
+	case .PURGE:
+		collectionName, clusterName, recordName: string
 		log_runtime_event("Used PURGE command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
-			collectionName := cmd.l_token[0]
+			collectionName = cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1818,22 +1714,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				PURGE,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
-			result := data.OST_PURGE_COLLECTION(cmd.l_token[0])
-			switch result 
+			result := data.PURGE_COLLECTION(cmd.l_token[0])
+			switch result
 			{
 			case true:
 				fmt.printfln(
@@ -1842,19 +1726,25 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					RESET,
 				)
-				file := concat_collection_name(collectionName)
-				OST_UPDATE_METADATA_AFTER_OPERATION(file)
+				file := concat_standard_collection_name(collectionName)
+				UPDATE_METADATA_AFTER_OPERATIONS(file)
 				break
 			case false:
 				fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
 				break
 			}
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 2:
-			collectionName := cmd.l_token[0]
-			clusterName := cmd.l_token[1]
+			collectionName = cmd.l_token[0]
+			clusterName = cmd.l_token[1]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1864,22 +1754,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				PURGE,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
 			if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
-				result := data.OST_PURGE_CLUSTER(collectionName, clusterName)
+				result := data.PURGE_CLUSTER(collectionName, clusterName)
 				switch result {
 				case true:
 					fmt.printfln(
@@ -1905,14 +1783,20 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					break
 				}
 			}
+
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case 3:
-			collectionName := cmd.l_token[0]
-			clusterName := cmd.l_token[1]
-			recordName := cmd.l_token[2]
+			collectionName = cmd.l_token[0]
+			clusterName = cmd.l_token[1]
+			recordName = cmd.l_token[2]
 
-
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1921,21 +1805,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				PURGE,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
 
-			result := data.OST_PURGE_RECORD(collectionName, clusterName, recordName)
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
+
+			result := data.PURGE_RECORD(collectionName, clusterName, recordName)
 			switch result {
 			case true:
 				fmt.printfln(
@@ -1966,18 +1839,23 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				break
 			}
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		}
-
 		break
 	//SIZE_OF: Allows for the retrieval of the size of collections, clusters, or records in bytes
-	case SIZE_OF:
+	case .SIZE_OF:
 		log_runtime_event("Used SIZE_OF command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
 			collectionName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -1987,22 +1865,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				return -1
 			}
 
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				SIZE_OF,
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 				collectionName,
+				Token[.SIZE_OF],
+				.STANDARD_PUBLIC,
 			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
 
-			file_path := concat_collection_name(collectionName)
-			actual_size, metadata_size := OST_SUBTRACT_METADATA_SIZE(file_path)
+			file_path := concat_standard_collection_name(collectionName)
+			actual_size, metadata_size := SUBTRACT_METADATA_SIZE(file_path)
 			if actual_size != -1 {
 				fmt.printf(
 					"Size of collection %s: %d bytes (excluding %d bytes of metadata)\n",
@@ -2013,12 +1883,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			} else {
 				fmt.printf("Failed to get size of collection %s\n", collectionName)
 			}
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
+			break
 		case 2:
 			if cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -2028,21 +1905,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return -1
 				}
 
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					SIZE_OF,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.SIZE_OF],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-				size, success := data.OST_GET_CLUSTER_SIZE(collectionName, clusterName)
+				//TODO: This is returning an inaccurate size, need to fix
+				size, success := data.GET_CLUSTER_SIZE(collectionName, clusterName)
 				if success {
 					fmt.printf(
 						"Size of cluster %s.%s: %d bytes\n",
@@ -2062,6 +1932,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					"Invalid command. Use dot notation for clusters: SIZE_OF CLUSTER collection_name.cluster_name",
 				)
 			}
+			ENCRYPT_COLLECTION(
+				cmd.l_token[0],
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
+			break
 		case 3:
 			if cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
@@ -2069,7 +1946,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				recordName := cmd.l_token[2]
 
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -2078,21 +1955,14 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					SIZE_OF,
-					collectionName,
-				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
-				size, success := data.OST_GET_RECORD_SIZE(collectionName, clusterName, recordName)
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+					collectionName,
+					Token[.SIZE_OF],
+					.STANDARD_PUBLIC,
+				)
+
+				size, success := data.GET_RECORD_SIZE(collectionName, clusterName, recordName)
 				if success {
 					fmt.printf(
 						"Size of record %s.%s.%s: %d bytes\n",
@@ -2109,6 +1979,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						recordName,
 					)
 				}
+				ENCRYPT_COLLECTION(
+					cmd.l_token[0],
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
 			} else {
 				fmt.println(
 					"Invalid command. Use dot notation for records: SIZE_OF RECORD collection_name.cluster_name.record_name",
@@ -2118,18 +1994,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			fmt.println(
 				"Invalid SIZE_OF command. Use SIZE_OF COLLECTION, SIZE_OF CLUSTER, or SIZE_OF RECORD.",
 			)
+			break
 		}
 		break
 	// TYPE_OF: Allows for the retrieval of the type of a record
-	case TYPE_OF:
+	case .TYPE_OF:
+		log_runtime_event("Used TYPE_OF command", "")
 		//only works on records
 		if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
 			collectionName := cmd.l_token[0]
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
 
-
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -2138,27 +2015,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				TYPE_OF,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
 
-			colPath := fmt.tprintf(
-				"%s%s%s",
-				OST_COLLECTION_PATH,
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 				collectionName,
-				OST_FILE_EXTENSION,
+				Token[.TYPE_OF],
+				.STANDARD_PUBLIC,
 			)
-			rType, success := data.OST_GET_RECORD_TYPE(colPath, clusterName, recordName)
+
+			colPath := concat_standard_collection_name(collectionName)
+			rType, success := data.GET_RECORD_TYPE(colPath, clusterName, recordName)
 			if !success {
 				fmt.printfln(
 					"Failed to get record %s.%s.%s's type",
@@ -2184,26 +2049,33 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 			}
+
+			ENCRYPT_COLLECTION(
+				collectionName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
+
 		} else {
 			fmt.printfln(
 				"Incomplete command. Correct Usage: TYPE_OF <collection_name>.<cluster_name>.<record_name>",
 			)
 
 		}
-		log_runtime_event("Used TYPE_OF command", "")
 		break
 	// CHANGE_TYPE: Allows for the changing of a record's type
-	case CHANGE_TYPE:
+	case .CHANGE_TYPE:
 		//only works on records
 		switch (len(cmd.l_token)) {
 		case 3:
-			if TO in cmd.p_token && cmd.isUsingDotNotation == true {
+			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation == true {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
-				newType := cmd.p_token[TO]
+				newType := cmd.p_token[Token[.TO]]
 
-				if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
 						"Collection: %s%s%s does not exist.",
 						BOLD_UNDERLINE,
@@ -2212,24 +2084,13 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return -1
 				}
+				colPath := concat_standard_collection_name(collectionName)
 
-
-				colPath := concat_collection_name(collectionName)
-
-
-				//--------------Permissions Security stuff Start----------------//
-				permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-					CHANGE_TYPE,
+				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
 					collectionName,
+					Token[.CHANGE_TYPE],
+					.STANDARD_PUBLIC,
 				)
-				switch (permissionCheckResult) 
-				{
-				case 0:
-					break
-				case:
-					return -1
-				}
-				//--------------Permissions Security stuff End----------------//
 
 				type_is_valid := false
 				for type in VALID_RECORD_TYPES {
@@ -2244,26 +2105,30 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				}
 				//super fucking bad code but tbh its christmas eve and im tired - Marshall
-				if newType == INT || newType == INTEGER {
-					newType = INTEGER
-				} else if newType == STR || newType == STRING {
-					newType = STRING
-				} else if newType == BOOL || newType == BOOLEAN {
-					newType = BOOLEAN
-				} else if newType == FLT || newType == FLOAT {
-					newType = FLOAT
-				} else if newType == STRING_ARRAY || newType == STR_ARRAY {
-					newType = STRING_ARRAY
-					fmt.println("THIS SHOULD BE HAPPENING")
-				} else if newType == INT_ARRAY || newType == INTEGER_ARRAY {
-					newType = INTEGER_ARRAY
-				} else if newType == BOOL_ARRAY || newType == BOOLEAN_ARRAY {
-					newType = BOOLEAN_ARRAY
-				} else if newType == FLOAT_ARRAY || newType == FLT_ARRAY {
-					newType = FLOAT_ARRAY
+				if newType == Token[.INT] || newType == Token[.INTEGER] {
+					newType = Token[.INTEGER]
+				} else if newType == Token[.STR] || newType == Token[.STRING] {
+					newType = Token[.STRING]
+				} else if newType == Token[.BOOL] || newType == Token[.BOOLEAN] {
+					newType = Token[.BOOLEAN]
+				} else if newType == Token[.FLT] || newType == Token[.FLOAT] {
+					newType = Token[.FLOAT]
+				} else if newType == Token[.STR_ARRAY] || newType == Token[.STRING_ARRAY] {
+					newType = Token[.STRING_ARRAY]
+				} else if newType == Token[.INT_ARRAY] || newType == Token[.INTEGER_ARRAY] {
+					newType = Token[.INTEGER_ARRAY]
+				} else if newType == Token[.BOOL_ARRAY] || newType == Token[.BOOLEAN_ARRAY] {
+					newType = Token[.BOOLEAN_ARRAY]
+				} else if newType == Token[.FLT_ARRAY] || newType == Token[.FLOAT_ARRAY] {
+					newType = Token[.FLOAT_ARRAY]
 				}
 
-				success := data.OST_HANDLE_TYPE_CHANGE(colPath, clusterName, recordName, newType)
+				success := data.HANDLE_RECORD_TYPE_CONVERSION(
+					colPath,
+					clusterName,
+					recordName,
+					newType,
+				)
 
 				if success {
 					fmt.printfln(
@@ -2282,6 +2147,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						newType,
 					)
 				}
+				ENCRYPT_COLLECTION(
+					collectionName,
+					.STANDARD_PUBLIC,
+					types.current_user.m_k.valAsBytes,
+					false,
+				)
 			} else {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_type>",
@@ -2297,15 +2168,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			break
 		}
-	// ISOLATE: Allows for the isolation of a collection so that it cannot be accessed via the CLI
-	case ISOLATE:
+	// // ISOLATE: Allows for the isolation of a collection so that it cannot be accessed via the CLI
+	case .ISOLATE:
 		log_runtime_event("Used ISOLATE command", "")
 		switch (len(cmd.l_token)) {
 		case 1:
 			collectionName := cmd.l_token[0]
 
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
 					"Collection: %s%s%s does not exist.",
 					BOLD_UNDERLINE,
@@ -2314,21 +2185,15 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return -1
 			}
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				ISOLATE,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
 
-			result := data.OST_PERFORM_ISOLATION(collectionName)
+			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+				collectionName,
+				Token[.ISOLATE],
+				.STANDARD_PUBLIC,
+			)
+
+			result, isolatedColName := data.PERFORM_COLLECTION_ISOLATION(collectionName)
+			fmt.println("isolatedNAme: ", isolatedColName)
 			switch result {
 			case 0:
 				fmt.printfln(
@@ -2347,6 +2212,12 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				break
 			}
+			ENCRYPT_COLLECTION(
+				isolatedColName,
+				.ISOLATE_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case:
 			fmt.printfln("Incomplete command. Correct Usage: ISOLATE <collection_name>")
@@ -2356,64 +2227,64 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			break
 		}
+
 		break
 	//VALIDATE: Runs the data integrity check on a collection, if it passes GTG, if the the collection is isolated
-	case VALIDATE:
-		switch (len(cmd.l_token)) {
-		case 1:
-			collectionName := cmd.l_token[0]
+	// case .VALIDATE:
+	// 	switch (len(cmd.l_token)) {
+	// 	case 1:
+	// 		collectionName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-				fmt.printfln(
-					"Collection: %s%s%s does not exist.",
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				return -1
-			}
+	// 		if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+	// 			fmt.printfln(
+	// 				"Collection: %s%s%s does not exist.",
+	// 				BOLD_UNDERLINE,
+	// 				collectionName,
+	// 				RESET,
+	// 			)
+	// 			return -1
+	// 		}
 
-			//--------------Permissions Security stuff Start----------------//
-			permissionCheckResult := security.OST_PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(
-				VALIDATE,
-				collectionName,
-			)
-			switch (permissionCheckResult) 
-			{
-			case 0:
-				break
-			case:
-				return -1
-			}
-			//--------------Permissions Security stuff End----------------//
+	// 		EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, VALIDATE, .STANDARD_PUBLIC)
 
-			result := data.OST_HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+	// 		result := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
 
-			if result == 0 {
-				fmt.printfln(
-					"Collection: %s%s%s data integrity status: %svalid%s",
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-					GREEN,
-					RESET,
-				)
-			} else {
-				fmt.printfln(
-					"Collection: %s%s%s data integrity status: %sinvalid%s",
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-					RED,
-					RESET,
-				)
-			}
-		}
+	// 		if result == 0 {
+	// 			fmt.printfln(
+	// 				"Collection: %s%s%s data integrity status: %svalid%s",
+	// 				BOLD_UNDERLINE,
+	// 				collectionName,
+	// 				RESET,
+	// 				GREEN,
+	// 				RESET,
+	// 			)
+
+	// 			ENCRYPT_COLLECTION(
+	// 				collectionName,
+	// 				.STANDARD_PUBLIC,
+	// 				types.current_user.m_k.valAsBytes,
+	// 				false,
+	// 			)
+	// 		} else {
+	// 			fmt.printfln(
+	// 				"Collection: %s%s%s data integrity status: %sinvalid%s",
+	// 				BOLD_UNDERLINE,
+	// 				collectionName,
+	// 				RESET,
+	// 				RED,
+	// 				RESET,
+	// 			)
+	// 			//No need to encrypt because file will be isolated
+	// 		}
+
+	// 	}
+	// 	break
 	//BENCHMARK: Runs the benchmarking suite with or without parameters
-	case BENCHMARK:
+	case .BENCHMARK:
+		using benchmark
 		switch (len(cmd.l_token)) {
 		case 0:
-			benchmark.OST_RUN_BENCHMARK([]int{0, 0, 0}, true)
+			RUN_BENCHMARK([]int{0, 0, 0}, true)
 			break
 		case 3:
 			for token, i in cmd.l_token {
@@ -2427,10 +2298,7 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			colIteration := strconv.atoi(cmd.l_token[0])
 			clusterIteration := strconv.atoi(cmd.l_token[1])
 			recordIteration := strconv.atoi(cmd.l_token[2])
-			benchmark.OST_RUN_BENCHMARK(
-				[]int{colIteration, clusterIteration, recordIteration},
-				false,
-			)
+			RUN_BENCHMARK([]int{colIteration, clusterIteration, recordIteration}, false)
 			break
 		case:
 			fmt.printfln(
@@ -2438,29 +2306,53 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 		}
 		break
-	//IMPORT: Imports foreign data into OstrichDB
-	case IMPORT:
-		transfer.__import_csv__("csv_test_file") //TODO: chang this to user input
-		break
-	case EXPORT:
+	// //IMPORT: Imports foreign data formats into OstrichDB. Currently only supports .csv files
+	case .IMPORT:
+		detected, autoImportSuccess := transfer.AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
+		if detected && autoImportSuccess == true {
+			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
+			break
+		} else if detected == true && autoImportSuccess == false { 	//files were detected but user wanted to continue manually or the import failed
+			importSuccess := transfer.HANDLE_IMPORT()
+			if importSuccess {
+				fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
+			} else {
+				fmt.printfln("%sFailed to import data%s", RED, RESET)
+			}
+			break
+		}
+
+		fmt.println("detected: ", detected)
+		fmt.println("autoImportSuccess: ", autoImportSuccess)
+
+
+	case .EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")
 		break
 	//LOCK: Locks a collection with a flag or without a flag
-	case LOCK:
+	case .LOCK:
 		flag: string
 		switch len(cmd.l_token) {
 		case 1:
 			//locking a collection with no flag defaults to it being inaccessable unless unlocked
 			colName := cmd.l_token[0]
 
-			if !data.OST_CHECK_IF_COLLECTION_EXISTS(colName, 0) {
+			if !data.CHECK_IF_COLLECTION_EXISTS(colName, 0) {
 				fmt.printfln("Collection: %s%s%s does not exist.", BOLD_UNDERLINE, colName, RESET)
 				return -1
 			}
-			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
+
+			DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+
+			collectionAlreadyLocked := security.GET_COLLECTION_LOCK_STATUS(colName)
 
 			//next make sure the "locker" is an admin
-			isAdmin := security.OST_CHECK_ADMIN_STATUS(&types.current_user)
+			DECRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+			)
+			isAdmin := security.CHECK_ADMIN_STATUS(&types.current_user)
 
 			if !isAdmin {
 				fmt.printfln(
@@ -2471,7 +2363,6 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 				return 1
 			} else {
-
 				if collectionAlreadyLocked {
 					fmt.printfln(
 						"Collection: %s%s%s already has a lock status. Please use the UNLOCK command to unlock it, then try again.",
@@ -2489,19 +2380,19 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					input := utils.get_input(true)
 					password := string(input)
-					validatedPassword := security.OST_VALIDATE_USER_PASSWORD(password)
+					validatedPassword := security.VALIDATE_USER_PASSWORD(password)
 					switch (validatedPassword) {
 					case false:
 						fmt.printfln("Invalid password. Operation cancelled.")
 						break
 					case true:
-						lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, "-N")
+						lockSuccess, permission := data.LOCK_COLLECTION(colName, "-N")
 						if lockSuccess {
-							filePath := concat_collection_name(colName)
-							osPermSuccess := security.OST_SET_OS_PERMISSIONS(filePath, permission)
+							filePath := concat_standard_collection_name(colName)
+							osPermSuccess := security.SET_FILE_PERMISSIONS_ON_OS_LEVEL(filePath, permission)
 							if !osPermSuccess {
 								fmt.printfln(
-									"%sWarning: Failed to set OS-level permissions for collection: %s%s%s",
+									"%sWARNING: Failed to set OS-level permissions for collection: %s%s%s",
 									YELLOW,
 									BOLD_UNDERLINE,
 									colName,
@@ -2530,12 +2421,24 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					}
 				}
 			}
+
+			ENCRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				false,
+			)
+
+			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes, false)
 			break
 		case 2:
 			colName := cmd.l_token[0]
 			flag := cmd.l_token[1]
+
+			DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+
 			fmt.printfln("Locking collection: %s%s%s ", BOLD_UNDERLINE, colName, RESET)
-			lockSuccess, permission := data.OST_LOCK_COLLECTION(colName, flag)
+			lockSuccess, permission := data.LOCK_COLLECTION(colName, flag)
 			if lockSuccess {
 				fmt.printfln(
 					"Collection: %s%s%s now now in %s%s%s mode.",
@@ -2556,20 +2459,33 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				"Incomplete command. Correct Usage: LOCK <collection_name> or LOCK <collection_name> -{flag}",
 			)
 		}
+		ENCRYPT_COLLECTION(
+			cmd.l_token[0],
+			.STANDARD_PUBLIC,
+			types.current_user.m_k.valAsBytes,
+			false,
+		)
 		break
-	case UNLOCK:
-		//TODO: only admin users can use the UNLOCK command, this may change in the future but for now it is locked to admin users
+	case .UNLOCK:
 		switch (len(cmd.l_token)) {
 		case 1:
 			colName := cmd.l_token[0]
 			//check that a collection is in fact locked
-			collectionAlreadyLocked := security.OST_GET_COLLECTION_LOCK_STATUS(colName)
+
+			DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+
+			DECRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+			)
+			collectionAlreadyLocked := security.GET_COLLECTION_LOCK_STATUS(colName)
 			if !collectionAlreadyLocked {
 				fmt.printfln("Collection: %s%s%s is not locked.", BOLD_UNDERLINE, colName, RESET)
 				return 1
 			} else {
 				//check that current user is admin
-				isAdmin := security.OST_CHECK_ADMIN_STATUS(&types.current_user)
+				isAdmin := security.CHECK_ADMIN_STATUS(&types.current_user)
 
 				if !isAdmin {
 					fmt.printfln(
@@ -2580,9 +2496,8 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					return 1
 				} else {
-
-					passwordConfirmed := security.OST_CONFIRM_COLLECECTION_UNLOCK()
-					switch (passwordConfirmed) 
+					passwordConfirmed := security.CONFTIM_COLLECTION_UNLOCK_PASSWORD()
+					switch (passwordConfirmed)
 					{
 					case false:
 						fmt.printfln(
@@ -2593,10 +2508,10 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						)
 						return 1
 					case true:
-						currentPerm, err := metadata.OST_GET_METADATA_VALUE(
+						currentPerm, err := metadata.GET_METADATA_MEMBER_VALUE(
 							colName,
 							"# Permission",
-							1,
+							.STANDARD_PUBLIC,
 						)
 						fmt.printfln(
 							"Unlocking collection: %s%s%s",
@@ -2604,19 +2519,86 @@ OST_EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							colName,
 							RESET,
 						)
-						// fmt.printfln("Current permission: %s%s%s", BOLD, currentPerm, RESET) //debugging
-						unlockSuccess := data.OST_UNLOCK_COLLECTION(colName, currentPerm)
+						unlockSuccess := data.UNLOCK_COLLECTION(colName, currentPerm)
 						break
 					}
 				}
 			}
+			ENCRYPT_COLLECTION(
+				types.current_user.username.Value,
+				.SECURE_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				false,
+			)
+
+			ENCRYPT_COLLECTION(
+				cmd.l_token[0],
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
 			break
 		case:
 			fmt.printfln("Incomplete command. Correct Usage: UNLOCK <collection_name>")
 		}
-
 		//unlock is the only way to re-enable Read-Write access to a collection unless user deletes then creates a new one
 		break
+	case .ENC:
+		switch (len(cmd.l_token)) {
+		case 1:
+			colName := cmd.l_token[0]
+			encSuccess, _ := ENCRYPT_COLLECTION(
+				colName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+				false,
+			)
+			if encSuccess == 0 {
+				fmt.printfln(
+					"Successfully encrypted collection: %s%s%s",
+					BOLD_UNDERLINE,
+					colName,
+					RESET,
+				)
+			} else {
+				fmt.printfln(
+					"Failed to encrypt collection: %s%s%s",
+					BOLD_UNDERLINE,
+					colName,
+					RESET,
+				)
+			}
+			break
+		}
+		break
+	case .DEC:
+		switch (len(cmd.l_token)) {
+		case 1:
+			colName := cmd.l_token[0]
+			decSuccess, _ := security.DECRYPT_COLLECTION(
+				colName,
+				.STANDARD_PUBLIC,
+				types.current_user.m_k.valAsBytes,
+			)
+
+			if decSuccess == 0 {
+				fmt.printfln(
+					"Successfully decrypted collection: %s%s%s",
+					BOLD_UNDERLINE,
+					colName,
+					RESET,
+				)
+			} else {
+				fmt.printfln(
+					"Failed to decrypt collection: %s%s%s",
+					BOLD_UNDERLINE,
+					colName,
+					RESET,
+				)
+			}
+			break
+		}
+
 	//END OF COMMAND TOKEN EVALUATION
 	case:
 		fmt.printfln(

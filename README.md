@@ -23,7 +23,7 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 ### **Prerequisites:**
 - A Unix-based system (macOS, Linux).
-- The Odin programming language installed, built, and properly set in the system's PATH.
+- The Odin programming language installed, built, and properly set in the system's PATH. Ideal Odin Version: `dev-2024-11:764c32fd3`
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
 - If you are an "End User" you will need `curl` installed on your system.
 
@@ -148,6 +148,7 @@ These operations perform simple tasks without needing additional arguments.
 - **`EXIT`**: Ends the session and closes the DBMS.
 - **`RESTART`**: Restarts the program.
 - **`REBUILD`**: Rebuilds the DBMS and restarts the program.
+- **`SERVE/SERVER`**: Turns on the OstrichDB server allowing http requests to be made.
 - **`HELP`**: Displays general help information or detailed help when chained with specific tokens.
 - **`TREE`**: Displays the entire data structure in a tree format.
 - **`CLEAR`**: Clears the console screen.
@@ -176,6 +177,9 @@ These operations allow you to perform more complex operations.
 - **`WHERE`**: Searches for the location of a single or several record(s) or cluster(s). DOES NOT WORK WITH COLLECTIONS.
 - **`VALIDATE`**: Validates a collection file for any errors or corruption.
 - **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
+- **`LOCK`**: Used to change the access mode of a collection. Using `LOCK {collection_name} -r` sets a collection to Read-Only. Removing the `-r` will set a collection to Inaccessible.
+- **`UNLOCK`**: Changes the access mode of a collection to the default Read-Write.
+- **`IMPORT`**: Allows the user to import a .csv file into OstrichDB. This will create a new collection thay shares the name of the .csv file.
 ---
 
 ### **Parameters**
@@ -250,13 +254,13 @@ When setting a record value, you must specify the records data type by using the
 
 ## **Configs**
 OstrichDB has a configuration file that allows the user to customize the DBMS to their liking.
-- **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is off)
-- **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is off)
-- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is on)
-- **`SERVER_ON`**: Enable of disable the server mode. (Defualt is off)
+- **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is false)
+- **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is false)
+- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is true)
+
 
 **Note: ALL configs must be set using the following command:**
-Values are either `TRUE` or `FALSE`
+Values can only be `true` or `false`
 
 ```
 SET CONFIG {CONFIG_NAME} TO {VALUE}
@@ -266,24 +270,17 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
 ## **Future Plans**
 
 - More configuration options
-- Database file compression and zipping
 - Several new command tokens:
-  - `IMPORT`: Load data from external sources(CSV, etc.)
   - `EXPORT`: Export data to various formats
-  - `LOCK`: Prevent data modification
-  - `UNLOCK`: Allow data modification
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
-- Enhanced security (database encryption/decryption, secure deletion)
-- Command chaining for complex operations
-- Server-based architecture improvements
-- External API support for popular programming languages
+- Command chaining for even more complex operations
+- OstrichDB web application
 - Windows support
+- External API support for even more programming languages!
 - Integration with the planned Feather query language!
 
-
 ---
-
 
 ## **Contributing**
 

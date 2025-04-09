@@ -25,22 +25,26 @@ File Description:
 
 
 //Sets the files format version(FFV)
-OST_SET_FFV :: proc() -> string {
-	ffv := OST_GET_FILE_FORMAT_VERSION()
+SET_FFV :: proc() -> string {
+	ffv := GET_FILE_FORMAT_VERSION()
 	str := transmute(string)ffv
 	return strings.clone(str)
 }
 
+
 //Gets the files size
-OST_GET_FS :: proc(file: string) -> os.File_Info {
+GET_FS :: proc(file: string) -> os.File_Info {
 	fileSize, _ := os.stat(file)
 	return fileSize
 }
+
+
 //this will get the size of the file and then subtract the size of the metadata header
 //then return the difference
-OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
+SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	using const
 	using utils
+
 	fileInfo, err := os.stat(file)
 	if err != 0 {
 		utils.log_err("Error getting file info", #procedure)
@@ -52,7 +56,7 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
 		log_err("Error reading file", #procedure)
-		return -1, -1
+		return -2, -2
 	}
 	defer delete(data)
 
@@ -62,7 +66,7 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	metadataEnd := strings.index(content, METADATA_END)
 	if metadataEnd == -1 {
 		log_err("Metadata end marker not found", #procedure)
-		return -1, -1
+		return -3, -3
 	}
 
 	// Add length of end marker to get total metadata size
@@ -73,7 +77,7 @@ OST_SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 }
 
 // Calculates a SHA-256 checksum for .ost files based on file content
-OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
+GENERATE_CHECKSUM :: proc(fn: string) -> string {
 	using const
 	using utils
 
@@ -116,20 +120,26 @@ OST_GENERATE_CHECKSUM :: proc(fn: string) -> string {
 
 //!Only used when to append the meta template upon .ost file creation NOT modification
 //this appends the metadata header to the file as well as sets the time of creation
-OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
+APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	using const
 	using utils
 
 	rawData, readSuccess := os.read_entire_file(fn)
 	defer delete(rawData)
 	if !readSuccess {
-		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_FILE,
+			get_err_msg(.CANNOT_READ_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error readinding collection file", #procedure)
 		return false
 	}
 
-	dataAsStr := cast(string)rawData //todo: why in the hell did I use cast??? just use string() instead???
+	dataAsStr := cast(string)rawData
 	if strings.has_prefix(dataAsStr, "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@") {
 		log_err("Metadata header already present", #procedure)
 		return false
@@ -139,7 +149,13 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	defer os.close(file)
 
 	if openSuccess != 0 {
-		error1 := new_err(.CANNOT_OPEN_FILE, get_err_msg(.CANNOT_OPEN_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_OPEN_FILE,
+			get_err_msg(.CANNOT_OPEN_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error opening collection file", #procedure)
 		return false
@@ -149,7 +165,13 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 	writter, ok := os.write(file, blockAsBytes)
 	if ok != 0 {
-		error1 := new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_WRITE_TO_FILE,
+			get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		log_err("Error writing metadata header to collection file", #procedure)
 		return false
@@ -160,12 +182,18 @@ OST_APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 //fn = file name, param = metadata value to update.
 //1 = File Format Version, 2 = Permission, 3 = Date of Creation, 4 = Date Last Modified, 5 = File Size, 6 = Checksum
-AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
+AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	using utils
 
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
-		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_FILE,
+			get_err_msg(.CANNOT_READ_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		return
 	}
@@ -177,7 +205,7 @@ AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 
 	//not doing anything with h,m,s yet but its there if needed
 	currentDate, h, m, s := utils.get_date_and_time() // sets the files date of creation(FDOC) or file date last modified(FDLM)
-	fileInfo := OST_GET_FS(fn)
+	fileInfo := GET_FS(fn)
 	fileSize := fileInfo.size
 
 	found := false
@@ -185,7 +213,7 @@ AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 		switch param {
 		case 1:
 			if strings.has_prefix(line, "# File Format Version:") {
-				lines[i] = fmt.tprintf("# File Format Version: %s", OST_SET_FFV())
+				lines[i] = fmt.tprintf("# File Format Version: %s", SET_FFV())
 				found = true
 			}
 			break
@@ -208,7 +236,7 @@ AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 			break
 		case 5:
 			if strings.has_prefix(line, "# File Size:") {
-				actualSize, _ := OST_SUBTRACT_METADATA_SIZE(fn)
+				actualSize, _ := SUBTRACT_METADATA_SIZE(fn)
 				if actualSize != -1 {
 					lines[i] = fmt.tprintf("# File Size: %d Bytes", actualSize)
 					found = true
@@ -219,7 +247,7 @@ AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 			break
 		case 6:
 			if strings.has_prefix(line, "# Checksum:") {
-				lines[i] = fmt.tprintf("# Checksum: %s", OST_GENERATE_CHECKSUM(fn))
+				lines[i] = fmt.tprintf("# Checksum: %s", GENERATE_CHECKSUM(fn))
 				found = true
 			}
 		}
@@ -238,31 +266,37 @@ AUTO_OST_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 }
 
 //used when creating a new collection file whether public or not
-OST_UPDATE_METADATA_ON_CREATE :: proc(fn: string) {
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 1)
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 3)
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 4)
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 5)
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 6)
+UPDATE_METADATA_UPON_CREATION :: proc(fn: string) {
+	AUTO_UPDATE_METADATA_VALUE(fn, 1)
+	AUTO_UPDATE_METADATA_VALUE(fn, 3)
+	AUTO_UPDATE_METADATA_VALUE(fn, 4)
+	AUTO_UPDATE_METADATA_VALUE(fn, 5)
+	AUTO_UPDATE_METADATA_VALUE(fn, 6)
 }
 
 
 //Creates the file format version file in the temp dir
-OST_CREATE_FFVF :: proc() {
+CREATE_FFV_FILE :: proc() {
 	using const
 	using utils
 
 	CURRENT_FFV := get_ost_version()
-	os.make_directory(const.OST_TMP_PATH)
+	os.make_directory(const.TMP_PATH)
 
-	tmpPath := OST_TMP_PATH
-	pathAndName := fmt.tprintf("%s%s", tmpPath, OST_FFVF_PATH)
+	tmpPath := TMP_PATH
+	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF_PATH)
 
 	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
 	defer os.close(file)
 
 	if createSuccess != 0 {
-		error1 := new_err(.CANNOT_CREATE_FILE, get_err_msg(.CANNOT_CREATE_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_CREATE_FILE,
+			get_err_msg(.CANNOT_CREATE_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_custom_err(error1, "Cannot create file format version file")
 	}
 
@@ -277,19 +311,21 @@ OST_CREATE_FFVF :: proc() {
 		error1 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
 			get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#file,
 			#procedure,
+			#line,
 		)
 		throw_custom_err(error1, "Cannot write to file format version file")
 	}
 }
 
 //Gets the file format version from the file format version file
-OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
+GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 	using const
 	using utils
 
-	FFVF := OST_FFVF_PATH
-	tmpPath := OST_TMP_PATH
+	FFVF := FFVF_PATH
+	tmpPath := TMP_PATH
 	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF)
 
 	ffvf, openSuccess := os.open(pathAndName)
@@ -306,16 +342,11 @@ OST_GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
 }
 
 //looks over the metadata header in a collection file and verifies the formatting of it
-OST_SCAN_METADATA_HEADER_FORMAT :: proc(
-	fn: string,
-) -> (
-	scanSuccess: int,
-	invalidHeaderFormat: bool,
-) {
+SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scanSuccess: int, invalidHeaderFormat: bool) {
 	using const
 	using utils
 
-	file := concat_collection_name(fn)
+	file := concat_standard_collection_name(fn)
 
 	data, readSuccess := read_file(file, #procedure)
 	if !readSuccess {
@@ -328,7 +359,6 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 
 	// Check if the metadata header is present
 	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
-		// fmt.println("Lines[0]: ", lines[0]) //debugging
 		utils.log_err("Missing metadata start marker", #procedure)
 		return -2, true
 	}
@@ -363,7 +393,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 	}
 
 	//checks if the file format verion file and the projects version file match
-	versionMatch := OST_VALIDATE_FILE_FORMAT_VERSION()
+	versionMatch := VALIDATE_FILE_FORMAT_VERSION()
 	if !versionMatch {
 		log_err("Invalid file format version being used", #procedure)
 		return -6, true
@@ -379,7 +409,7 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 
 	//compares the collections to the version in the FFV tmp file. Due to alreay checking if the FFV and the project file
 	//match, now have to ensure the collection file matches as well.
-	FFV := OST_GET_FILE_FORMAT_VERSION()
+	FFV := GET_FILE_FORMAT_VERSION()
 	if strings.compare(collectionVersionValue, string(FFV)) != 0 {
 		log_err(
 			"File format version in collection file does not match the file format version",
@@ -392,8 +422,8 @@ OST_SCAN_METADATA_HEADER_FORMAT :: proc(
 }
 
 //checks that the FFV tmp file matches the projects version file
-OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
-	FFV := string(OST_GET_FILE_FORMAT_VERSION()) //this is from the .tmp file
+VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
+	FFV := string(GET_FILE_FORMAT_VERSION()) //this is from the .tmp file
 
 	if (strings.compare(FFV, string(utils.get_ost_version())) != 0) {
 		utils.log_err("File format version mismatch", #procedure)
@@ -404,28 +434,35 @@ OST_VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
 
 //returns the string value of the passed metadata field
 // colType: 1 = public(standard), 2 = history, 3 = config, 4 = ids
-OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: string, err: int) {
+GET_METADATA_MEMBER_VALUE :: proc(
+	fn, field: string,
+	colType: types.CollectionType,
+) -> (
+	value: string,
+	err: int,
+) {
 	using const
 	using utils
 
 	file: string
-	switch (colType) {
-	case 1:
-		file = concat_collection_name(fn)
+	#partial switch (colType) {
+	case .STANDARD_PUBLIC:
+		file = concat_standard_collection_name(fn)
 		break
-	case 2:
-		file = OST_HISTORY_PATH
+	case .CONFIG_PRIVATE:
+		file = CONFIG_PATH
 		break
-	case 3:
-		file = OST_CONFIG_PATH
+	case .HISTORY_PRIVATE:
+		file = HISTORY_PATH
 		break
-	case 4:
-		file = OST_ID_PATH
+	case .ID_PRIVATE:
+		file = ID_PATH
 		break
 	}
 
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
+		fmt.println("Error reading file: ", file)
 		utils.log_err("Error reading file", #procedure)
 		return "", 1
 	}
@@ -435,9 +472,9 @@ OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: strin
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
+	// fmt.println("lines: ", lines)
 	// Check if the metadata header is present
 	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
-		fmt.println("Lines[0]: ", lines[0])
 		log_err("Missing metadata start marker", #procedure)
 		return "", -1
 	}
@@ -462,7 +499,7 @@ OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: strin
 		log_err("Invalid metadata header length", #procedure)
 		return "", -3
 	}
-	// fmt.println("Field: ", field)
+
 	for i in 1 ..< 6 {
 		if strings.has_prefix(lines[i], field) {
 			val := strings.split(lines[i], ": ")
@@ -478,34 +515,47 @@ OST_GET_METADATA_VALUE :: proc(fn, field: string, colType: int) -> (value: strin
 //Similar to the UPDATE_METADATA_VALUE but updates a value wiht the passed in param
 //member is the metadata field to update
 //For now , only used for the "Permission" field, may add more in the future - Marshall
-// colTypes 0 = standar(public), 1 =secure, 2 = history, 3 = config, 4 = ids
-OST_CHANGE_METADATA_VALUE :: proc(fn, newValue: string, member, colType: int) -> bool {
+// 0 - public, 1 - secure, 2 - config, 3 - history, 4 - id
+CHANGE_METADATA_MEMBER_VALUE :: proc(
+	fn, newValue: string,
+	member: int,
+	colType: types.CollectionType,
+) -> bool {
 	using utils
 	using const
 
 	file: string
 
-	switch (colType) {
-	case 0:
-		file = concat_collection_name(fn)
+	#partial switch (colType) {
+	case .STANDARD_PUBLIC:
+		file = concat_standard_collection_name(fn)
 		break
-	case 1:
-		file = fmt.tprintf("%s%s%s", OST_SECURE_COLLECTION_PATH, fn, ".ost")
+	case .SECURE_PRIVATE:
+		file = fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, fn, ".ost")
 		break
-	case 2:
-		file = OST_HISTORY_PATH
+	case .CONFIG_PRIVATE:
+		file = CONFIG_PATH
 		break
-	case 3:
-		file = OST_CONFIG_PATH
+	case .HISTORY_PRIVATE:
+		file = HISTORY_PATH
 		break
-	case 4:
-		file = OST_ID_PATH
+	case .ID_PRIVATE:
+		file = ID_PATH
 		break
+	//TODO: add case for benchmark collection
 
 	}
+
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
-		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		fmt.printfln("Error reading file: %s", file)
+		error1 := new_err(
+			.CANNOT_READ_FILE,
+			get_err_msg(.CANNOT_READ_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_err(error1)
 		return false
 	}
@@ -543,9 +593,9 @@ OST_CHANGE_METADATA_VALUE :: proc(fn, newValue: string, member, colType: int) ->
 
 
 //Used after most operations on a collection file to update the metadata fields
-OST_UPDATE_METADATA_AFTER_OPERATION :: proc(fn: string) {
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 3) //updates the last time modified
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 4) //updates the file format version
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 5) //updates file size
-	AUTO_OST_UPDATE_METADATA_VALUE(fn, 6) //updates the checksum
+UPDATE_METADATA_AFTER_OPERATIONS :: proc(fn: string) {
+	AUTO_UPDATE_METADATA_VALUE(fn, 3) //updates the last time modified
+	AUTO_UPDATE_METADATA_VALUE(fn, 4) //updates the file format version
+	AUTO_UPDATE_METADATA_VALUE(fn, 5) //updates file size
+	AUTO_UPDATE_METADATA_VALUE(fn, 6) //updates the checksum
 }

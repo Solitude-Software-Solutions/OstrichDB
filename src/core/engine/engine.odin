@@ -2,6 +2,7 @@ package engine
 
 import "../../utils"
 import "../const"
+import "../server"
 import "../types"
 import "./config"
 import "./data"
@@ -13,6 +14,7 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 import "core:time"
+import "../nlp"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -28,7 +30,7 @@ File Description:
 
 
 //initialize the data integrity system
-OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
+INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
 	using types
 
 	data_integrity_checks.File_Size.Severity = .LOW
@@ -52,31 +54,94 @@ OST_INIT_INTEGRITY_CHECKS_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 
 //Starts the OstrichDB engine:
 //Session timer, sign in, and command line
-OST_START_ENGINE :: proc() -> int {
+START_OSTRICHDB_ENGINE :: proc() -> int {
+	using const
+
+	ServerConfig := types.Server_Config {
+		port = 8042,
+	}
+
 	//Initialize data integrity system
-	OST_INIT_INTEGRITY_CHECKS_SYSTEM(&types.data_integrity_checks)
-	switch (types.OstrichEngine.Initialized) 
+	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
+	switch (types.OstrichEngine.Initialized)
 	{
 	case false:
-		security.OST_INIT_ADMIN_SETUP()
+		//Continue with engine initialization
+		security.HANDLE_FIRST_TIME_ACCOUNT_SETUP()
 		break
 
 	case true:
 		for {
-			userSignedIn := security.OST_RUN_SIGNIN()
-			switch (userSignedIn) 
+			security.ENCRYPT_COLLECTION(
+				"",
+				.CONFIG_PRIVATE,
+				types.system_user.m_k.valAsBytes,
+				false,
+			)
+			userSignedIn := security.RUN_USER_SIGNIN()
+			switch (userSignedIn)
 			{
 			case true:
-				security.OST_START_SESSION_TIMER()
+				security.START_SESSION_TIMER()
 				utils.log_runtime_event(
 					"User Signed In",
 					"User successfully logged into OstrichDB",
 				)
-				result := OST_ENGINE_COMMAND_LINE()
-				return result
 
+				//Check to see if the server AUTO_SERVE config value is true. If so start server
+				security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+
+
+				autoServeConfigValue := data.GET_RECORD_VALUE(
+					CONFIG_PATH,
+					CONFIG_CLUSTER,
+					types.Token[.BOOLEAN],
+					AUTO_SERVE,
+				)
+				if strings.contains(autoServeConfigValue, "true") {
+					fmt.println("The OstrichDB server is starting...\n")
+					fmt.println(
+						"If you do not want the server to automatically start by default follow the instructions below:",
+					)
+					fmt.println(
+						"1. Enter 'kill' or 'quit' to stop the server and be returned to the OstrichDB command line",
+					)
+					fmt.println("2. Use command: 'SET CONFIG AUTO_SERVE TO false'\n\n")
+					security.ENCRYPT_COLLECTION(
+						"",
+						.CONFIG_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
+					//Auto-server loop
+					serverDone := server.START_OSTRICH_SERVER(ServerConfig)
+					if serverDone == 0 {
+						fmt.println("\n\n")
+						cmdLineDone := START_COMMAND_LINE()
+						if cmdLineDone == 0 {
+							return cmdLineDone
+						}
+					}
+				} else {
+					// if the AUTO_SERVE config value is false, then continue starting command line
+					security.ENCRYPT_COLLECTION(
+						"",
+						.CONFIG_PRIVATE,
+						types.system_user.m_k.valAsBytes,
+						false,
+					)
+					fmt.println("Starting command line")
+					result := START_COMMAND_LINE()
+					return result
+				}
 			case false:
 				fmt.printfln("Sign in failed. Please try again.")
+				security.ENCRYPT_COLLECTION(
+					"",
+					.CONFIG_PRIVATE,
+					types.system_user.m_k.valAsBytes,
+					false,
+				)
 				continue
 			}
 		}
@@ -85,63 +150,62 @@ OST_START_ENGINE :: proc() -> int {
 }
 
 //Command line loop
-OST_ENGINE_COMMAND_LINE :: proc() -> int {
+START_COMMAND_LINE :: proc() -> int {
 	result := 0
 	fmt.println("Welcome to the OstrichDB DBMS Command Line")
 	utils.log_runtime_event("Entered DBMS command line", "")
-	for {
+	for types.USER_SIGNIN_STATUS == true {
 		//Command line start
 		buf: [1024]byte
 
 		fmt.print(const.ost_carrot, "\t")
-		n, inputSuccess := os.read(os.stdin, buf[:])
-		if inputSuccess != 0 {
-			error := utils.new_err(
-				.CANNOT_READ_INPUT,
-				utils.get_err_msg(.CANNOT_READ_INPUT),
-				#procedure,
-			)
-			utils.throw_err(error)
-			utils.log_err("Could not read user input from command line", #procedure)
-		}
-		input := strings.trim_right(string(buf[:n]), "\r\n")
-		OST_APPEND_COMMAND_TO_HISTORY(input)
-		cmd := OST_PARSE_COMMAND(input)
-		// fmt.printfln("Command: %v", cmd) //debugging
+		input := utils.get_input(false)
+
+		security.DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		APPEND_COMMAND_TO_HISTORY(input)
+		security.ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		cmd := PARSE_COMMAND(input)
 
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
-		sessionDuration := security.OST_GET_SESSION_DURATION()
-		maxDurationMet := security.OST_CHECK_SESSION_DURATION(sessionDuration)
-		switch (maxDurationMet) 
+		sessionDuration := security.GET_SESSION_DURATION()
+		maxDurationMet := security.CHECK_IF_SESSION_DURATION_MAXED(sessionDuration)
+		switch (maxDurationMet)
 		{
 		case false:
 			break
 		case true:
-			security.OST_HANDLE_MAX_SESSION_DURATION_MET()
+			security.HANDLE_MAXED_SESSION()
 		}
 
-		result = OST_EXECUTE_COMMAND(&cmd)
+		result = EXECUTE_COMMAND(&cmd)
 
 		//Command line end
 	}
+
+	//Re-engage the loop
+	if types.USER_SIGNIN_STATUS == false {
+		security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		START_OSTRICHDB_ENGINE()
+	}
+
 	return result
 
 }
 
 //Used to restart the engine
-OST_RESTART :: proc() {
-	if const.OST_DEV_MODE == true {
-		libc.system(const.OST_RESTART_SCRIPT_PATH)
+RESTART_OSTRICHDB :: proc() {
+	if const.DEV_MODE == true {
+		libc.system(const.RESTART_SCRIPT_PATH)
 		os.exit(0)
 	} else {
 		fmt.println("Using the RESTART command is only available in development mode.")
 	}
 }
 
-//Used to rebuild and restart the engine
-OST_REBUILD :: proc() {
-	if const.OST_DEV_MODE == true {
-		libc.system(const.OST_BUILD_SCRIPT_PATH)
+//Used to rebuild then restart the engine
+REBUILD_OSTRICHDB :: proc() {
+	if const.DEV_MODE == true {
+		libc.system(const.BUILD_SCRIPT_PATH)
 		os.exit(0)
 	} else {
 		fmt.println("Using the REBUILD command is only available in development mode.")
