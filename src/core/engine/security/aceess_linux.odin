@@ -1,5 +1,6 @@
 #+build !darwin
-// This is a build constraint: it tells the compiler to ignore this file when building for darwin
+#+build linux
+// This is a build constraint: it tells the compiler to ignore this file when building for linux
 package security
 
 import "../../../utils"

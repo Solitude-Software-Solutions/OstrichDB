@@ -1,5 +1,6 @@
 #+build !linux
-// This is a build constraint: it tells the compiler to ignore this file when building for linux
+#+build darwin
+// This is a build constraint: it tells the compiler to ignore this file when building for darwin
 package security
 
 import "../../../utils"
@@ -277,7 +278,7 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 
 	//Cross check the permissions set for the operation to be performed and the users role
 	permissionCheckResult := PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(commandStr, colName, colType)
-	switch (permissionCheckResult) 
+	switch (permissionCheckResult)
 	{
 	case 0:
 		//If the permission check passes, re-encrypt the "secure" collection and continue with the operation
