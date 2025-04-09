@@ -42,7 +42,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	}
 
 	defer delete(cmd.l_token)
-	#partial switch (cmd.c_token) 
+	#partial switch (cmd.c_token)
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
 
@@ -384,7 +384,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				result := data.CREATE_CLUSTER(collectionName, clusterName, id)
 				data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
 
-				switch (result) 
+				switch (result)
 				{
 				case -1:
 					fmt.printfln(
@@ -486,7 +486,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						"",
 						rType,
 					)
-					switch (recordCreationSuccess) 
+					switch (recordCreationSuccess)
 					{
 					case 0:
 						fmt.printfln(
@@ -564,7 +564,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//RENAME: Allows for the renaming of collections, clusters, or individual record names
 	case .RENAME:
 		log_runtime_event("Used RENAME command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			if Token[.TO] in cmd.p_token {
@@ -594,7 +594,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 				success := data.RENAME_COLLECTION(oldName, newName)
-				switch (success) 
+				switch (success)
 				{
 				case true:
 					fmt.printf(
@@ -756,7 +756,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					oldRName,
 					newRName,
 				)
-				switch (result) 
+				switch (result)
 				{
 				case 0:
 					fmt.printfln(
@@ -811,7 +811,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// ERASE: Allows for the deletion of collections, specific clusters, or individual records within a cluster
 	case .ERASE:
 		log_runtime_event("Used ERASE command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			collectionName := cmd.l_token[0]
@@ -1020,7 +1020,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// FETCH: Allows for the retrieval and displaying of collections, clusters, or individual records
 	case .FETCH:
 		log_runtime_event("Used FETCH command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			if len(cmd.l_token) > 0 {
@@ -1173,7 +1173,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// SET: Allows for the setting of values within records or configs
 	case .SET:
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 3:
 			//Setting a standard records value
@@ -1325,7 +1325,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						value,
 						RESET,
 					)
-					switch (configName) 
+					switch (configName)
 					{
 					case "HELP_VERBOSE":
 						if value == "true" || value == "false" {
@@ -1442,7 +1442,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// COUNT: Allows for the counting of collections, clusters, or records
 	case .COUNT:
 		log_runtime_event("Used COUNT command", "")
-		switch (cmd.t_token) 
+		switch (cmd.t_token)
 		{
 		case Token[.COLLECTIONS]:
 			result := data.GET_COLLECTION_COUNT()
@@ -1482,7 +1482,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 
 				result := data.COUNT_CLUSTERS(collectionName)
-				switch (result) 
+				switch (result)
 				{
 				case -1:
 					fmt.printfln(
@@ -1638,7 +1638,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				result := data.GET_RECORD_COUNT_WITHIN_COLLECTION(collectionName)
 
-				switch result 
+				switch result
 				{
 				case -1:
 					fmt.printfln(
@@ -1696,7 +1696,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .PURGE:
 		collectionName, clusterName, recordName: string
 		log_runtime_event("Used PURGE command", "")
-		switch (len(cmd.l_token)) 
+		switch (len(cmd.l_token))
 		{
 		case 1:
 			collectionName = cmd.l_token[0]
@@ -1714,7 +1714,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
 			result := data.PURGE_COLLECTION(cmd.l_token[0])
-			switch result 
+			switch result
 			{
 			case true:
 				fmt.printfln(
@@ -2386,7 +2386,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						lockSuccess, permission := data.LOCK_COLLECTION(colName, "-N")
 						if lockSuccess {
 							filePath := concat_standard_collection_name(colName)
-							osPermSuccess := security.SET_OS_PERMISSIONS(filePath, permission)
+							osPermSuccess := security.SET_FILE_PERMISSIONS_ON_OS_LEVEL(filePath, permission)
 							if !osPermSuccess {
 								fmt.printfln(
 									"%sWARNING: Failed to set OS-level permissions for collection: %s%s%s",
@@ -2494,7 +2494,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					return 1
 				} else {
 					passwordConfirmed := security.CONFTIM_COLLECTION_UNLOCK_PASSWORD()
-					switch (passwordConfirmed) 
+					switch (passwordConfirmed)
 					{
 					case false:
 						fmt.printfln(

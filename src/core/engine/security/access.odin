@@ -1,6 +1,3 @@
-#+build !darwin
-#+build linux
-// This is a build constraint: it tells the compiler to ignore this file when building for linux
 package security
 
 import "../../../utils"
@@ -12,8 +9,7 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
-import "core:sys/linux"
-
+import "core:sys/posix"
 
 /********************************************************
 Author: Marshall A Burns
@@ -35,7 +31,6 @@ CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 
 	userRoleVal := data.GET_RECORD_VALUE(secCollection, userCluster, "identifier", "role")
 
-
 	if userRoleVal == "admin" {
 		isAdmin = true
 	}
@@ -44,52 +39,52 @@ CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
 }
 
 
-//ngl I hacked this shit together by looking at Odin's souce code for each os' sys package. - Marshall
-SET_OS_PERMISSIONS :: proc(fn, permission: string) -> bool {
+// Set the OS permissions for a given collection file
+SET_FILE_PERMISSIONS_ON_OS_LEVEL :: proc(fn, permission: string) -> (success:bool) {
 	using os
-	mode: uint = 0o600 // default to file owner read/write
+
+
+	mode:posix.mode_t= posix.S_IRWXU // default to file owner read/write/execute
+
+/*
+	//I love the language and its maintainers but holy shit the docs for this is stuff are non-existant
+
+	Looking at the docs for the posix package it seems that there are only 3 "pre-made" modes
+    So I am making my own here.
+
+    - Marshall
+*/
+	R_ONLY_MODE:posix.mode_t: posix.mode_t{.IRUSR} //Owner read only
+	RW_MODE:posix.mode_t:posix.mode_t{.IRUSR, .IWUSR} //Owner read-write
+	I_MODE:posix.mode_t:posix.mode_t{} //No Permissions
+
 	switch permission {
-	case "Read-Only":
-		mode = 0o400 // owner read only
 	case "Read-Write":
-		mode = 0o600 // owner read/write
+		mode = R_ONLY_MODE
+	case "Read-Only":
+		mode = R_ONLY_MODE
 	case "Inaccessible":
-		mode = 0o000 // No permissions
+		mode = I_MODE
 	}
-	path := utils.concat_standard_collection_name(fn)
-	if ODIN_OS == .Linux {
-		// linuxPath := strings.clone_to_cstring(path)
-		//Todo: Finish this shit for linux and windows
-		// } else if ODIN_OS == .Darwin {
-		// 	darwinPath := string(path)
-		// 	if mode == 0o600 {
-		// 		// For owner read/write
-		// 		perm := darwin.Permission{.PERMISSION_OWNER_READ, .PERMISSION_OWNER_WRITE}
-		// 		success := darwin.sys_chmod(darwinPath, perm)
-		// 		if !success {
-		// 			return false
-		// 		}
-		// 	} else if mode == 0o400 {
-		// 		// For owner read only
-		// 		perm := darwin.Permission{.PERMISSION_OWNER_READ}
-		// 		success := darwin.sys_chmod(darwinPath, perm)
-		// 		if !success {
-		// 			return false
-		// 		}
-		// 	} else if mode == 0o000 {
-		// 		// No permissions
-		// 		perm := darwin.Permission{} // Empty set
-		// 		success := darwin.sys_chmod(darwinPath, perm)
-		// 		if !success {
-		// 			return false
-		// 		}
-		// 	}
+	concat := utils.concat_standard_collection_name(fn)
+	path := strings.clone_to_cstring(concat) //chmod requires a cstring
+	delete(path)
+
+	changeSuccess := posix.chmod(path, mode)
+
+	if changeSuccess == posix.result.OK{
+	   success = true
+	}else{
+	   success = false
 	}
-	return true // Changed from "err == 0" since err isn't defined
+
+	return success
 }
-//Sets the permissions for a given operation
+
+//Sets the permissions for a given operation within OstrichDB
 SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
 	using const
+	using types
 
 	operation := new(types.CommandOperation)
 	opArr: [dynamic]string
@@ -97,19 +92,26 @@ SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
 	//todo: TREE should be allowed but if a collection is set to inaccessable then that collection should not be shown
 
 	//these commands will work on a collection that is set to read only or read write
-	readWriteOrReadOnlyCommands := []string{WHERE, COUNT, FETCH, SIZE_OF, TYPE_OF, VALIDATE}
+	readWriteOrReadOnlyCommands := []string {
+		Token[.WHERE],
+		Token[.COUNT],
+		Token[.FETCH],
+		Token[.SIZE_OF],
+		Token[.TYPE_OF],
+		Token[.VALIDATE],
+	}
 
 	//These commands will work on a collection that is set to read write
 	readWriteCommands := []string {
-		ISOLATE,
-		BACKUP,
-		ERASE,
-		RENAME,
-		SET,
-		PURGE,
-		CHANGE_TYPE,
-		LOCK,
-		NEW,
+		Token[.ISOLATE],
+		Token[.BACKUP],
+		Token[.ERASE],
+		Token[.RENAME],
+		Token[.SET],
+		Token[.PURGE],
+		Token[.CHANGE_TYPE],
+		Token[.LOCK],
+		Token[.NEW],
 	}
 
 
@@ -121,8 +123,8 @@ SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
 			append(&operation.permission, types.Operation_Permssion_Requirement.READ_ONLY)
 			append(&operation.permission, types.Operation_Permssion_Requirement.READ_WRITE)
 
+			append(&opArr, "Read-Write") //Believe it or not the order in which these are appended is important. Dumb design I know. - Marshall
 			append(&opArr, "Read-Only")
-			append(&opArr, "Read-Write")
 			operation.permissionStr = opArr
 			return operation
 		}
@@ -143,8 +145,8 @@ SET_OPERATION_PERMISSIONS :: proc(opName: string) -> ^types.CommandOperation {
 
 
 	//check if the UNLOCK operation can be used on a collection that is set to 'Inaccessible' or 'Read-Only'
-	if opName == UNLOCK {
-		operation.name = UNLOCK
+	if opName == Token[.UNLOCK] {
+		operation.name = opName
 		operation.permission = [dynamic]types.Operation_Permssion_Requirement{}
 		append(&operation.permission, types.Operation_Permssion_Requirement.READ_ONLY)
 		append(&operation.permission, types.Operation_Permssion_Requirement.INACCESSABLE)
@@ -178,7 +180,12 @@ CHECK_ID_OPERATION_IS_ALLOWED :: proc(
 
 
 //Handles all the logic from above and returns a 1 if the user does not have permission to perform the passed in operation
-PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) -> int {
+//Performs Decryption of the secure collection, performs the check the re-encrypts the users secure collection
+PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
+	command, colName: string,
+	colType: types.CollectionType,
+) -> int {
+
 	//Get the operation permission for the command
 	commandOperation := SET_OPERATION_PERMISSIONS(command)
 	//Get the string representation array of the permission
@@ -186,7 +193,11 @@ PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) -> int
 	defer free(commandOperation)
 
 
-	permissionValue, success := metadata.GET_METADATA_MEMBER_VALUE(colName, "# Permission", 1)
+	permissionValue, success := metadata.GET_METADATA_MEMBER_VALUE(
+		colName,
+		"# Permission",
+		colType,
+	)
 	for perm in commandPermissions {
 		opIsAllowed := CHECK_ID_OPERATION_IS_ALLOWED(permissionValue, commandOperation)
 		if !opIsAllowed {
@@ -199,13 +210,18 @@ PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(command, colName: string) -> int
 			return 1
 		}
 	}
+
 	return 0
 }
 
 //Used to check if a collection is already locked before attempting to lock it again
 GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
-	lockStatus, success := metadata.GET_METADATA_MEMBER_VALUE(colName, "# Permission", 1)
+	lockStatus, success := metadata.GET_METADATA_MEMBER_VALUE(
+		colName,
+		"# Permission",
+		.STANDARD_PUBLIC,
+	)
 	if lockStatus == "Read-Only" || lockStatus == "Inaccessible" {
 		isAlreadyLocked = true
 	}
@@ -230,4 +246,67 @@ CONFTIM_COLLECTION_UNLOCK_PASSWORD :: proc() -> bool {
 	}
 
 	return passIsCorrect
+}
+
+
+//Performs the permission check on the collection before allowing the operation to be performed. Used on command line
+EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
+	colName, commandStr: string,
+	colType: types.CollectionType,
+) -> int {
+
+	//Decrypt the "working" collection to see what specific permission is set for operations to be performed
+	#partial switch (colType) {
+	case .CONFIG_PRIVATE:
+		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		break
+	case:
+		DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
+		break
+	}
+
+	//Decrypt the logged in users secure collection to ensure their role allows for the requested operation to be performed
+	DECRYPT_COLLECTION(
+		types.current_user.username.Value,
+		.SECURE_PRIVATE,
+		types.system_user.m_k.valAsBytes,
+	)
+
+	//Cross check the permissions set for the operation to be performed and the users role
+	permissionCheckResult := PERFORM_PERMISSIONS_CHECK_ON_COLLECTION(commandStr, colName, colType)
+	switch (permissionCheckResult)
+	{
+	case 0:
+		//If the permission check passes, re-encrypt the "secure" collection and continue with the operation
+		ENCRYPT_COLLECTION(
+			types.current_user.username.Value,
+			.SECURE_PRIVATE,
+			types.system_user.m_k.valAsBytes,
+			false,
+		)
+		break
+	case:
+		// If the permission check fails, re-encrypt the "working" and "secure" collections
+		#partial switch (colType) {
+		case .CONFIG_PRIVATE:
+			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			break
+		case .ISOLATE_PUBLIC:
+			ENCRYPT_COLLECTION(colName, .ISOLATE_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			break
+
+		case:
+			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			break
+		}
+		ENCRYPT_COLLECTION(
+			types.current_user.username.Value,
+			.SECURE_PRIVATE,
+			types.system_user.m_k.valAsBytes,
+			false,
+		)
+		return -1
+	}
+
+	return 0
 }
