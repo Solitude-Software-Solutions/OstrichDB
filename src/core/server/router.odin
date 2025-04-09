@@ -14,7 +14,7 @@ File Description:
 *********************************************************/
 
 //Create a new router
-OST_NEW_ROUTER :: proc() -> ^types.Router {
+CREATE_NEW_ROUTER :: proc() -> ^types.Router {
 	router := new(types.Router)
 	router.routes = make([dynamic]types.Route)
 
@@ -22,7 +22,7 @@ OST_NEW_ROUTER :: proc() -> ^types.Router {
 }
 
 //Adds a route to the newly created router
-OST_ADD_ROUTE :: proc(
+ADD_ROUTE_TO_ROUTER :: proc(
 	router: ^types.Router,
 	method: types.HttpMethod,
 	path: string,
@@ -34,11 +34,13 @@ OST_ADD_ROUTE :: proc(
 		p = path,
 		h = handler,
 	}
+
 	append(&router.routes, route)
+
 }
 
 //This finds the route that matches the path and calls appropriate handler
-OST_HANDLE_REQUEST :: proc(
+HANDLE_HTTP_REQUEST :: proc(
 	router: ^types.Router,
 	method: string,
 	path: string,
@@ -47,16 +49,94 @@ OST_HANDLE_REQUEST :: proc(
 	status: types.HttpStatus,
 	response: string,
 ) {
-	// fmt.println("router being passed to handle request proc: ", router) //debugging
-	// fmt.println("method being passed to handle request proc: ", method) //debugging
-	// fmt.println("path being passed to handle request proc: ", path) //debugging
-	// fmt.println("headers being passed to handle request proc: ", headers) //debugging
+	using types
+	validMethod: types.HttpMethod
+
 	for route in router.routes {
-		if strings.compare(path, route.p) == 0 {
+		//First match the method
+		if strings.contains(method, "GET") {
+			validMethod = .GET
+		} else if strings.contains(method, "POST") {
+			validMethod = .POST
+		} else if strings.contains(method, "PUT") {
+			validMethod = .PUT
+		} else if strings.contains(method, "DELETE") {
+			validMethod = .DELETE
+		} else if strings.contains(method, "HEAD") {
+			validMethod = .HEAD
+		}
+
+		if route.m != validMethod {
+			continue
+		}
+
+		// if strings.compare(method, route.m) != 0 do continue
+		// Use dynamic path matching
+		pathMatch := is_path_match(route.p, path)
+		if pathMatch {
 			return route.h(method, path, headers)
 		}
 	}
 
+
 	return types.HttpStatus{code = .NOT_FOUND, text = types.HttpStatusText[.NOT_FOUND]},
 		"404 Not Found\n"
+}
+
+
+is_path_match :: proc(routePath: string, requestPath: string) -> bool {
+	// Split the route and request paths into segments
+	routeSegments := strings.split(strings.trim_prefix(routePath, "/"), "/")
+	requestSegments := strings.split(strings.trim_prefix(requestPath, "/"), "/")
+
+	// Handle query parameters in both route and request paths
+	lastRouteSegment := routeSegments[len(routeSegments) - 1]
+	lastRequestSegment := requestSegments[len(requestSegments) - 1]
+
+	// Extract base paths (without query parameters)
+	if strings.contains(lastRouteSegment, "?") {
+		routeSegments[len(routeSegments) - 1] = strings.split(lastRouteSegment, "?")[0]
+	}
+	if strings.contains(lastRequestSegment, "?") {
+		requestSegments[len(requestSegments) - 1] = strings.split(lastRequestSegment, "?")[0]
+	}
+
+	defer delete(routeSegments)
+	defer delete(requestSegments)
+
+	// If the length of the route and request segments are not equal, return false
+	if len(routeSegments) != len(requestSegments) do return false
+
+	// Iterate through the segments and compare them
+	for segment, i in routeSegments {
+		if segment == "*" do continue // Skip wildcard segments
+		if segment != requestSegments[i] do return false
+	}
+
+	// If we have query parameters in the route, verify they exist in the request
+	if strings.contains(lastRouteSegment, "?") {
+		routeQuery := strings.split(lastRouteSegment, "?")[1]
+		requestQuery := strings.split(lastRequestSegment, "?")[1]
+
+		// Split query parameters
+		route_params := strings.split(routeQuery, "&")
+		request_params := strings.split(requestQuery, "&")
+		defer delete(route_params)
+		defer delete(request_params)
+
+		// Check each required parameter exists
+		for param in route_params {
+			if param == "*" do continue // Skip wildcard parameters
+			param_found := false
+			for req_param in request_params {
+				if strings.has_prefix(req_param, strings.split(param, "=")[0]) {
+					param_found = true
+					break
+				}
+			}
+			if !param_found do return false
+		}
+	}
+
+	return true
 }

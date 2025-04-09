@@ -9,9 +9,14 @@ ols.json
 .vs
 .DS_Store
 .ostrichdb
+.env
 
-# Uncomment these two when actually implementing zig
-#.zig-cache/
-#zig-out/
-# Remove this one when actually implementing zig
-/zig
+#Ignore the Golang related files in NLP package
+*.dylib
+src/core/nlp/main
+src/core/nlp/nlp
+*go.sum
+*go.mod
+*ModelFile
+*.json
+*.csv

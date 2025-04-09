@@ -5,6 +5,7 @@ import "../../utils"
 import "../engine/data"
 import "../engine/data/metadata"
 import "../types"
+import "./security"
 import "core:fmt"
 import "core:os"
 import "core:strconv"
@@ -19,7 +20,7 @@ File Description:
             Contains logic for handling the command history.
             It also contains logic for the actual HISTORY command.
 *********************************************************/
-OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
+APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	using types
 	using metadata
 	using utils
@@ -27,23 +28,30 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	histBuf: [1024]byte
 	//append the last command to the history buffer
-	current_user.commandHistory.cHistoryCount = data.OST_COUNT_RECORDS_IN_CLUSTER(
+	current_user.commandHistory.cHistoryCount = data.GET_RECORD_COUNT_WITHIN_CLUSTER(
 		"history",
 		current_user.username.Value,
 		false,
 	)
 
-	limitOn := data.OST_READ_RECORD_VALUE(
-		const.OST_CONFIG_PATH,
+	// History Collection file size limit.
+	// Doesnt measure bytes of the file but instead
+	// the num of records of the users command history cluster
+	//
+
+	security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	limitOn := data.GET_RECORD_VALUE(
+		const.CONFIG_PATH,
 		const.CONFIG_CLUSTER,
-		BOOLEAN,
-		const.CONFIG_SEVEN,
+		types.Token[.BOOLEAN],
+		const.LIMIT_HISTORY,
 	)
+	security.ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 
 	if limitOn == "true" {
-		limitReached := OST_CHECK_HISTORY_LIMIT_MET(&current_user)
+		limitReached := CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET(&current_user)
 		if limitReached {
-			if OST_PURGE_HIRSTORY_CLUSTER(current_user.username.Value) {
+			if PURGE_USERS_HISTORY_CLUSTER(current_user.username.Value) {
 				//set the count back to 0
 				current_user.commandHistory.cHistoryCount = 0
 			}
@@ -54,8 +62,8 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	recordName := fmt.tprintf("%s%s", "history_", histCountStr)
 
 	//append the last command to the history file
-	data.OST_APPEND_RECORD_TO_CLUSTER(
-		const.OST_HISTORY_PATH,
+	data.CREATE_RECORD(
+		const.HISTORY_PATH,
 		current_user.username.Value,
 		strings.to_upper(recordName),
 		strings.to_upper(strings.clone(input)),
@@ -63,8 +71,8 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	)
 
 	//get value of the command that was just stored as a record
-	historyRecordValue := data.OST_READ_RECORD_VALUE(
-		const.OST_HISTORY_PATH,
+	historyRecordValue := data.GET_RECORD_VALUE(
+		const.HISTORY_PATH,
 		current_user.username.Value,
 		"COMMAND",
 		strings.to_upper(recordName),
@@ -75,18 +83,20 @@ OST_APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 
 	//update the history file size, date last modified and checksum
-	OST_UPDATE_METADATA_AFTER_OPERATION(const.OST_HISTORY_PATH)
+	UPDATE_METADATA_AFTER_OPERATIONS(const.HISTORY_PATH)
 }
 
 
-OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
+ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	using const
 	using utils
 
-	data, readSuccess := os.read_entire_file(OST_HISTORY_PATH)
+	data, readSuccess := os.read_entire_file(HISTORY_PATH)
 	defer delete(data)
 	if !readSuccess {
-		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
+		throw_err(
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+		)
 		log_err("Error reading collection file", #procedure)
 		return false
 	}
@@ -122,15 +132,25 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 					userName,
 					RESET,
 				),
+				#file,
 				#procedure,
+				#line,
 			),
 		)
 		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
-	writeSuccess := os.write_entire_file(OST_HISTORY_PATH, newContent[:])
+	writeSuccess := os.write_entire_file(HISTORY_PATH, newContent[:])
 	if !writeSuccess {
-		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+		throw_err(
+			new_err(
+				.CANNOT_WRITE_TO_FILE,
+				get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#file,
+				#procedure,
+				#line,
+			),
+		)
 		log_err("Error writing to collection file", #procedure)
 		return false
 	}
@@ -143,14 +163,16 @@ OST_ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 
 
 //Used to get rid of data within a user's history cluster once the limit has been reached.
-OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
+PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 	using const
 	using utils
 
 	// Read the entire file
-	data, readSuccess := os.read_entire_file(const.OST_HISTORY_PATH)
+	data, readSuccess := os.read_entire_file(const.HISTORY_PATH)
 	if !readSuccess {
-		throw_err(new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure))
+		throw_err(
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+		)
 		log_err("Error reading collection file", #procedure)
 		return false
 	}
@@ -221,14 +243,30 @@ OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
 	}
 
 	if !clusterFound {
-		throw_err(new_err(.CANNOT_FIND_CLUSTER, get_err_msg(.CANNOT_FIND_CLUSTER), #procedure))
+		throw_err(
+			new_err(
+				.CANNOT_FIND_CLUSTER,
+				get_err_msg(.CANNOT_FIND_CLUSTER),
+				#file,
+				#procedure,
+				#line,
+			),
+		)
 		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
 	//write the new content to the collection file
-	writeSuccess := os.write_entire_file(const.OST_HISTORY_PATH, newContent[:])
+	writeSuccess := os.write_entire_file(const.HISTORY_PATH, newContent[:])
 	if !writeSuccess {
-		throw_err(new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure))
+		throw_err(
+			new_err(
+				.CANNOT_WRITE_TO_FILE,
+				get_err_msg(.CANNOT_WRITE_TO_FILE),
+				#file,
+				#procedure,
+				#line,
+			),
+		)
 		log_err("Error writing to collection file", #procedure)
 		return false
 	}
@@ -237,7 +275,7 @@ OST_PURGE_HIRSTORY_CLUSTER :: proc(cn: string) -> bool {
 }
 
 
-OST_CHECK_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
+CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
 	using utils
 	using const
 
@@ -245,7 +283,7 @@ OST_CHECK_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
 	//Check that the history count is not greater than the limit
 	if currentUser.commandHistory.cHistoryCount > const.MAX_HISTORY_COUNT {
 		//remove the oldest command from the history buffer .....NOT DOING THIS...NEED TO ACTUALLY REMOVE ALL RECORDS FROM THE CLUSTER 
-		historyPurgeSuccess := OST_PURGE_HIRSTORY_CLUSTER(currentUser.username.Value)
+		historyPurgeSuccess := PURGE_USERS_HISTORY_CLUSTER(currentUser.username.Value)
 		if !historyPurgeSuccess {
 			throw_err(
 				new_err(
@@ -256,7 +294,9 @@ OST_CHECK_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
 						currentUser.username.Value,
 						RESET,
 					),
+					#file,
 					#procedure,
+					#line,
 				),
 			)
 			log_err("Error purging history cluster", #procedure)
@@ -266,4 +306,38 @@ OST_CHECK_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> bool {
 		}
 	}
 	return limitReached
+}
+//used for the history command,
+//reads over the passed in collection file and
+//the specified cluster and stores the value of each record into the array
+push_records_to_array :: proc(cn: string) -> [dynamic]string {
+	records: [dynamic]string
+	histBuf: [1024]byte
+
+
+	data, readSuccess := utils.read_file(const.HISTORY_PATH, #procedure)
+	defer delete(data)
+	if !readSuccess {
+		return records
+	}
+
+	content := string(data)
+	clusters := strings.split(content, "},")
+
+	for cluster, i in clusters {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+			lines := strings.split(cluster, "\n")
+			for line, j in lines {
+				if strings.contains(line, ":COMMAND:") {
+					parts := strings.split(line, ":COMMAND:")
+					if len(parts) >= 2 {
+						value := strings.trim_space(parts[1])
+						append(&records, strings.clone(value))
+					}
+				}
+			}
+			break
+		}
+	}
+	return records
 }

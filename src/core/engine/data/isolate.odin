@@ -25,20 +25,20 @@ File Description:
 //references to quarantine all throughout. Just know its the same thing. - SchoolyB
 
 //moves the passed in collection file from the collections dir to the quarantine dir
-OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
+PERFORM_COLLECTION_ISOLATION :: proc(fn: string) -> (int, string) {
 	using const
 
-	collectionPath := utils.concat_collection_name(fn)
+	collectionPath := utils.concat_standard_collection_name(fn)
 
 	// Generate a unique filename for the quarantined file
 	timestamp := time.now()
 	quarantineFilename := fmt.tprintf(
 		"%s_%v%s",
-		strings.trim_suffix(fn, OST_FILE_EXTENSION),
+		strings.trim_suffix(fn, OST_EXT),
 		timestamp,
-		OST_FILE_EXTENSION,
+		OST_EXT,
 	)
-	isolationPath := fmt.tprintf("%s%s", OST_QUARANTINE_PATH, quarantineFilename)
+	isolationPath := fmt.tprintf("%s%s", QUARANTINE_PATH, quarantineFilename)
 	// Move the file to quarantine
 	//
 
@@ -46,19 +46,19 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	//TODO: So on mac this is throwing an error below but its working as intended. IDK why lol - Schooly
 	//The Odin compiler on Darwin expects a bool return from os.rename
 	// when ODIN_OS == .Darwin {
-	// 	if err != false {
+	// 	if err == true {
 	// 		fmt.printfln("Error moving file to quarantine: %s", err)
-	// 		return -2
+	// 		return -2 , ""
 	// 	}
 	// }
 	//
 
 	//ID REMOVAL STUFF
-	idsAsInt, idsAsStr := OST_GET_ALL_CLUSTER_IDS(fn)
-	idRemovaleResult := OST_REMOVE_ISOLATED_CLUSTER_IDS(idsAsStr)
+	idsAsInt, idsAsStr := GET_ALL_CLUSTER_IDS(fn)
+	idRemovaleResult := REMOVE_ISOLATED_CLUSTER_IDS_FROM_ID_COLLECTION(idsAsStr)
 	if !idRemovaleResult {
 		utils.log_err("Error removing isolated cluster IDs", #procedure)
-		return -3
+		return -3, ""
 	}
 
 	delete(idsAsStr)
@@ -70,13 +70,13 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 	//THe Odin compiler on Linux doesnt expect a bool return from os.rename
 	when ODIN_OS == .Linux {
 		if err != os.ERROR_NONE {
-			return -1
+			return -1, ""
 		}
 	}
 
 
-	result := OST_APPEND_QUARANTINE_METADATA(fn, isolationPath)
-	return result
+	result := APPEND_NEW_ISOLATION_METADATA(fn, isolationPath)
+	return result, quarantineFilename
 }
 
 
@@ -84,7 +84,7 @@ OST_PERFORM_ISOLATION :: proc(fn: string) -> int {
 //%ocn - Original Collection Name
 //%doq - Date of Quarantine
 //%toq - Time of Quarantine
-OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, isolationPath: string) -> int {
+APPEND_NEW_ISOLATION_METADATA :: proc(fn: string, isolationPath: string) -> int {
 
 	data, readSuccess := utils.read_file(isolationPath, #procedure)
 	if !readSuccess {
@@ -154,14 +154,14 @@ OST_APPEND_QUARANTINE_METADATA :: proc(fn: string, isolationPath: string) -> int
 }
 
 //TODO:
-//in the event that a cluster id in a normal collectionn file
+//in the event that a cluster id in a standard collectionn file
 // is modified, the check systsem bugs out. its looking for an exact match of the cluster
 // id so if that is modified there can be no match thus the id is not found and removed...
-OST_REMOVE_ISOLATED_CLUSTER_IDS :: proc(idsAsStr: [dynamic]string) -> bool {
+REMOVE_ISOLATED_CLUSTER_IDS_FROM_ID_COLLECTION :: proc(idsAsStr: [dynamic]string) -> bool {
 	// Remove the cluster id from the cluster ids file
 	for id in idsAsStr {
 		// Remove the cluster id from the cluster ids file
-		OST_REMOVE_ID_FROM_CLUSTER(id, false)
+		REMOVE_ID_FROM_ID_COLLECTION(id, false)
 	}
 
 	return true

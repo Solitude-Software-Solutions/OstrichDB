@@ -19,7 +19,7 @@ File Description:
 
 //Used to create, delete, and fetch several collections
 //only used for NEW, ERASE, AND FETCH tokens. NOT RENAME!!!
-OST_HANDLE_COLLECTION_BATCH_REQ :: proc(
+HANDLE_COLLECTION_BATCH_REQ :: proc(
 	names: []string,
 	operation: types.BatchOperations,
 ) -> (
@@ -37,14 +37,14 @@ OST_HANDLE_COLLECTION_BATCH_REQ :: proc(
 	case .NEW:
 		for name in collectionNames {
 			fmt.printfln("Creating collection: %s", name)
-			if !OST_CREATE_COLLECTION(strings.to_upper(name), 0) {
+			if !CREATE_COLLECTION(strings.to_upper(name), .STANDARD_PUBLIC) {
 				return 1, ""
 			}
 		}
 		return 0, ""
 	case .ERASE:
 		for name in collectionNames {
-			if !OST_ERASE_COLLECTION(strings.to_upper(name)) {
+			if !ERASE_COLLECTION(strings.to_upper(name), false) {
 				return 1, ""
 			}
 			return 0, ""
@@ -52,7 +52,7 @@ OST_HANDLE_COLLECTION_BATCH_REQ :: proc(
 	case .FETCH:
 		result: string
 		for name in collectionNames {
-			result = OST_FETCH_COLLECTION(strings.to_upper(name))
+			result = FETCH_COLLECTION(strings.to_upper(name))
 			if result == "" {
 				return 1, ""
 			} else {
@@ -66,13 +66,13 @@ OST_HANDLE_COLLECTION_BATCH_REQ :: proc(
 
 
 //handles renaming several collection files
-OST_RENAME_COLLECTIONS_BATCH :: proc(oldNames: []string, newNames: []string) -> int {
+BATCH_RENAME_COLLECTIONS :: proc(oldNames: []string, newNames: []string) -> int {
 	if len(oldNames) != len(newNames) {
 		return 1
 	}
 
 	for i in 0 ..< len(oldNames) {
-		if !OST_RENAME_COLLECTION(oldNames[i], newNames[i]) {
+		if !RENAME_COLLECTION(oldNames[i], newNames[i]) {
 			return 1
 		}
 	}
@@ -80,7 +80,7 @@ OST_RENAME_COLLECTIONS_BATCH :: proc(oldNames: []string, newNames: []string) -> 
 }
 
 
-OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
+HANDLE_CLUSTER_BATCH_REQ :: proc(
 	collectionNames, clusterNames: []string,
 	operation: types.BatchOperations,
 ) -> (
@@ -106,8 +106,8 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 	case .NEW:
 		for i in colNames {
 			for j in cluNames {
-				id := OST_GENERATE_ID(true) //todo: this might be fucked. Passing true skips a check to see if the id is already in use...
-				if OST_CREATE_CLUSTER(strings.to_upper(i), j, id) != 0 {
+				id := GENERATE_ID(true) //todo: this might be fucked. Passing true skips a check to see if the id is already in use...
+				if CREATE_CLUSTER(strings.to_upper(i), j, id) != 0 {
 					return 1, ""
 				}
 			}
@@ -115,7 +115,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 	case .ERASE:
 		for i in colNames {
 			for j in cluNames {
-				if !OST_ERASE_CLUSTER(i, j) {
+				if !ERASE_CLUSTER(i, j, true) {
 					return 1, ""
 				} else {
 					return 0, "NO WAY THAT WORKED."
@@ -125,7 +125,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 	case .FETCH:
 		for i in colNames {
 			for j in cluNames {
-				return 0, OST_FETCH_CLUSTER(i, j)
+				return 0, FETCH_CLUSTER(i, j)
 			}
 		}
 	}
@@ -134,7 +134,7 @@ OST_HANDLE_CLUSTER_BATCH_REQ :: proc(
 }
 
 //batch request for handling records
-OST_HANDLE_RECORD_BATCH_REQ :: proc(
+HANDLE_RECORD_BATCH_REQ :: proc(
 	collectionNames, clusterNames, recordNames, recordTypes, recordValues: []string,
 	operation: types.BatchOperations,
 ) -> (
@@ -181,7 +181,7 @@ OST_HANDLE_RECORD_BATCH_REQ :: proc(
 				for k in recNames {
 					for l in recordTypes {
 						for m in recValues {
-							if OST_APPEND_RECORD_TO_CLUSTER(i, j, k, m, l) != 0 {
+							if CREATE_RECORD(i, j, k, m, l) != 0 {
 								return 1, "Error encountered while creating new records"
 							} else {
 								return 0, "New records created succesfully"
@@ -195,7 +195,7 @@ OST_HANDLE_RECORD_BATCH_REQ :: proc(
 		for i in colNames {
 			for j in cluNames {
 				for k in recNames {
-					if !OST_ERASE_RECORD(i, j, k) {
+					if !ERASE_RECORD(i, j, k, true) {
 						return 1, "Error encountered while erasing records"
 
 					} else {
@@ -208,7 +208,7 @@ OST_HANDLE_RECORD_BATCH_REQ :: proc(
 		for i in colNames {
 			for j in cluNames {
 				for k in recNames {
-					recordData, fetchSucess := OST_FETCH_RECORD(i, j, k)
+					recordData, fetchSucess := FETCH_RECORD(i, j, k)
 					if !fetchSucess {
 						return 1, "Error fetching records"
 					} else {

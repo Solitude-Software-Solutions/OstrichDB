@@ -23,7 +23,7 @@ File Description:
 
 //generates a random ID, ensures its not currently in use by a user or a cluster
 //the uponCreation param is used to evalute at whether or not the cluster or user that the ID will be assigned to has been created yet
-OST_GENERATE_ID :: proc(uponCreation: bool) -> i64 {
+GENERATE_ID :: proc(uponCreation: bool) -> i64 {
 	idAlreadyExists := false
 	//ensure the generated id length is 16 digits
 	ID := rand.int63_max(1e16 + 1)
@@ -32,13 +32,13 @@ OST_GENERATE_ID :: proc(uponCreation: bool) -> i64 {
 	if uponCreation == true {
 		return ID
 	} else {
-		if OST_CHECK_IF_USER_ID_EXISTS(ID) == true && OST_CHECK_IF_CLUSTER_ID_EXISTS(ID) == true {
+		if CHECK_IF_USER_ID_EXISTS(ID) == true && CHECK_IF_CLUSTER_ID_EXISTS(ID) == true {
 			utils.log_err("Generated ID already exists in cache file", #procedure)
 			idAlreadyExists = true
 		}
 
 		if idAlreadyExists == true {
-			OST_GENERATE_ID(false)
+			GENERATE_ID(false)
 		}
 
 		return ID
@@ -46,65 +46,64 @@ OST_GENERATE_ID :: proc(uponCreation: bool) -> i64 {
 }
 
 // takes in an id and checks if it exists in the USER_IDS cluster
-OST_CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
+CHECK_IF_USER_ID_EXISTS :: proc(id: i64) -> bool {
 	idStr := fmt.tprintf("%d", id)
 	//this is incorrect, record names are not the same as the id values
-	_, idFound := OST_SCAN_FOR_ID_RECORD_VALUE(const.USER_ID_CLUSTER, "USER_ID", idStr)
+	_, idFound := SCAN_ID_COLLECTION_FOR_ID_VALUE(const.USER_ID_CLUSTER, "USER_ID", idStr)
 	return idFound
 }
 //same as above but for the cluster_id cluster
-OST_CHECK_IF_CLUSTER_ID_EXISTS :: proc(id: i64) -> bool {
-	// fmt.printfln("checking if id: %d exists", id) //debugging
+CHECK_IF_CLUSTER_ID_EXISTS :: proc(id: i64) -> bool {
 	idStr := fmt.tprintf("%d", id)
-	// fmt.println("Checking if cluster id %s exists", idStr) //debugging
 	//this is incorrect, record names are not the same as the id values
-	_, idFound := OST_SCAN_FOR_ID_RECORD_VALUE(const.CLUSTER_ID_CLUSTER, "CLUSTER_ID", idStr)
-	// fmt.println("id was found: ", idFound) //debugging
+	_, idFound := SCAN_ID_COLLECTION_FOR_ID_VALUE(const.CLUSTER_ID_CLUSTER, "CLUSTER_ID", idStr)
 	return idFound
 }
 
-
-OST_CREATE_ID_COLLECTION_AND_CLUSTERS :: proc() {
+//Used to create the private collection that holds 2 clusters:
+//1. cluster_id_cluster
+//2. user_id_cluster
+//These are important for keeping track of used ids in the system
+CREATE_AND_FILL_PRIVATE_ID_COLLECTION :: proc() {
 	using const
 
-	OST_CREATE_COLLECTION("ids", 4)
-	cluOneid := OST_GENERATE_ID(true)
+	CREATE_COLLECTION("", .ID_PRIVATE)
+	cluOneid := GENERATE_ID(true)
 
 	// doing this prevents the creation of cluster_id records each time the program starts up. Only allows it once
-	if OST_CHECK_IF_CLUSTER_EXISTS(OST_ID_PATH, CLUSTER_ID_CLUSTER) == true &&
-	   OST_CHECK_IF_CLUSTER_EXISTS(OST_ID_PATH, USER_ID_CLUSTER) == true {
+	if CHECK_IF_CLUSTER_EXISTS(ID_PATH, CLUSTER_ID_CLUSTER) == true &&
+	   CHECK_IF_CLUSTER_EXISTS(ID_PATH, USER_ID_CLUSTER) == true {
 		return
 	}
 	//create a cluster for cluster ids
-	OST_CREATE_CLUSTER_BLOCK(const.OST_ID_PATH, cluOneid, CLUSTER_ID_CLUSTER)
-	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
+	CREATE_CLUSTER_BLOCK(const.ID_PATH, cluOneid, CLUSTER_ID_CLUSTER)
+	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", cluOneid), 0)
 
-	cluTwoid := OST_GENERATE_ID(true)
+	cluTwoid := GENERATE_ID(true)
 	//create a cluster for user ids
-	OST_CREATE_CLUSTER_BLOCK(const.OST_ID_PATH, cluTwoid, USER_ID_CLUSTER)
-	OST_APPEND_ID_TO_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
+	CREATE_CLUSTER_BLOCK(const.ID_PATH, cluTwoid, USER_ID_CLUSTER)
+	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
-	metadata.OST_UPDATE_METADATA_ON_CREATE(OST_ID_PATH)
+	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)
 }
 
-//appends eiter a user id or a cluster id to their respective clusters in the id collection
+//appends either a user id or a cluster id to their respective clusters in the private id collection
 //0 = cluster id, 1 = user id
-OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
+APPEND_ID_TO_ID_COLLECTION :: proc(idStr: string, idType: int) {
 	using types
 	using const
 
 	idBuf: [1024]byte
-	switch (idType) 
+	switch (idType)
 	{
 	case 0:
-		// fmt.printfln("Appending cluster id: %s to id clusters", idStr) //debugging
-		id.clusterIdCount = OST_COUNT_RECORDS_IN_CLUSTER("ids", CLUSTER_ID_CLUSTER, false)
+		id.clusterIdCount = GET_RECORD_COUNT_WITHIN_CLUSTER("ids", CLUSTER_ID_CLUSTER, false)
 
 		idCountStr := strconv.itoa(idBuf[:], id.clusterIdCount)
 		recordName := fmt.tprintf("%s%s", "clusterID_", idCountStr)
 
-		appendSuccess := OST_APPEND_RECORD_TO_CLUSTER(
-			OST_ID_PATH,
+		recordCreationSuccess := CREATE_RECORD(
+			ID_PATH,
 			CLUSTER_ID_CLUSTER,
 			recordName,
 			idStr,
@@ -112,13 +111,13 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 		)
 		break
 	case 1:
-		id.userIdCount = OST_COUNT_RECORDS_IN_CLUSTER("ids", USER_ID_CLUSTER, false)
+		id.userIdCount = GET_RECORD_COUNT_WITHIN_CLUSTER("ids", USER_ID_CLUSTER, false)
 
 		idCountStr := strconv.itoa(idBuf[:], id.userIdCount)
 		recordName := fmt.tprintf("%s%s", "userID_", idCountStr)
 
-		appendSuccess := OST_APPEND_RECORD_TO_CLUSTER(
-			OST_ID_PATH,
+		recordCreationSuccess := CREATE_RECORD(
+			ID_PATH,
 			USER_ID_CLUSTER,
 			recordName,
 			idStr,
@@ -133,15 +132,15 @@ OST_APPEND_ID_TO_COLLECTION :: proc(idStr: string, idType: int) {
 //if isUserId is false then the id is removed from the CLUSTER_ID_CLUSTER
 //in the event that an admin user is deleting another user the id needs to be
 //removed from both clusters so the call is made twice with isUserId set to true and false
-OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
+REMOVE_ID_FROM_ID_COLLECTION :: proc(id: string, isUserId: bool) -> bool {
 	file, cn, rv: string
 
 	if isUserId {
-		file = const.OST_ID_PATH
+		file = const.ID_PATH
 		cn = const.USER_ID_CLUSTER
 		rv = id
 	} else {
-		file = const.OST_ID_PATH
+		file = const.ID_PATH
 		cn = const.CLUSTER_ID_CLUSTER
 		rv = id
 	}
@@ -230,14 +229,14 @@ OST_REMOVE_ID_FROM_CLUSTER :: proc(id: string, isUserId: bool) -> bool {
 	return writeSuccess
 }
 
-//Scans the ids.ost file for a record with the passed in record value
+//Scans the private id collection for a record with the passed in record value
 // cn = cluster name, rt = record type, rv = record value
-OST_SCAN_FOR_ID_RECORD_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
+SCAN_ID_COLLECTION_FOR_ID_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
 	value: string
 	success: bool
 
 
-	data, readSuccess := utils.read_file(const.OST_ID_PATH, #procedure)
+	data, readSuccess := utils.read_file(const.ID_PATH, #procedure)
 	if !readSuccess {
 		return "", false
 	}

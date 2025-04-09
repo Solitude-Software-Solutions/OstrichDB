@@ -20,7 +20,7 @@ File Description:
 *********************************************************/
 
 //Deletes the entire executiable, databases, history files, user files, and cache files.
-OST_DESTROY :: proc() {
+DESTROY_EVERYTHING :: proc() {
 	using const
 
 	if types.user.role.Value != "admin" {
@@ -46,7 +46,7 @@ OST_DESTROY :: proc() {
 		fmt.println("Please enter your password to confirm the destruction of OstrichDB.")
 		j := utils.get_input(true)
 		password := string(j)
-		validatedPassword := security.OST_VALIDATE_USER_PASSWORD(password)
+		validatedPassword := security.VALIDATE_USER_PASSWORD(password)
 		switch (validatedPassword) {
 		case true:
 			fmt.printfln("%sDestroying OstrichDB...%s", utils.RED, utils.RESET)
@@ -67,40 +67,42 @@ OST_DESTROY :: proc() {
 
 
 	dirs := []string {
-		"./backups/",
-		"./collections/",
-		"./logs/",
-		"./quarantine/",
-		"./secure/",
+		const.PRIVATE_PATH,
+		const.PUBLIC_PATH,
+		const.STANDARD_COLLECTION_PATH,
+		const.SECURE_COLLECTION_PATH,
+		const.LOG_DIR_PATH,
 		"./tmp/",
 	}
-
-	//remove files in sub-directories
 	for dir in dirs {
-		dir_handle, err := os.open(dir)
-		if err != 0 {
-			utils.log_err(fmt.tprintf("Failed to open directory %s", dir), #procedure)
-			continue
-		}
-		defer os.close(dir_handle)
-
-		files, read_err := os.read_dir(dir_handle, -1)
-		if read_err != 0 {
-			utils.log_err(fmt.tprintf("Failed to read directory %s", dir), #procedure)
-			continue
-		}
-
-		for file in files {
-			file_path := fmt.tprintf("%s%s", dir, file.name)
-			err := os.remove(file_path)
-			if err != 0 {
-				utils.log_err(fmt.tprintf("Failed to remove file %s", file_path), #procedure)
-			}
-		}
+		os.remove(dir)
 	}
+	// //remove files in sub-directories
+	// for dir in dirs {
+	// 	dir_handle, err := os.open(dir)
+	// 	if err != 0 {
+	// 		utils.log_err(fmt.tprintf("Failed to open directory %s", dir), #procedure)
+	// 		continue
+	// 	}
+	// 	defer os.close(dir_handle)
+
+	// 	files, read_err := os.read_dir(dir_handle, -1)
+	// 	if read_err != 0 {
+	// 		utils.log_err(fmt.tprintf("Failed to read directory %s", dir), #procedure)
+	// 		continue
+	// 	}
+
+	// 	for file in files {
+	// 		file_path := fmt.tprintf("%s%s", dir, file.name)
+	// 		err := os.remove(file_path)
+	// 		if err != 0 {
+	// 			utils.log_err(fmt.tprintf("Failed to remove file %s", file_path), #procedure)
+	// 		}
+	// 	}
+	// }
 
 	//remove files in binary dir
-	files := []string{"./core/ids.ost", "./core/history.ost", "./core/config.ost", "./main.bin"}
+	files := []string{"./main.bin"}
 
 	for file in files {
 		err := os.remove(file)
@@ -121,5 +123,5 @@ OST_DESTROY :: proc() {
 	fmt.printfln("%sOstrichDB has been destroyed.%s", utils.GREEN, utils.RESET)
 	fmt.printfln("%sRebuilding OstrichDB...%s", utils.GREEN, utils.RESET)
 
-	OST_REBUILD()
+	REBUILD_OSTRICHDB()
 }

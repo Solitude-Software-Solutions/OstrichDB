@@ -26,7 +26,7 @@ ostrich_art := `
   $$$$$$  |$$$$$$$  |  \$$$$  |$$ |      $$ |\$$$$$$$\ $$ |  $$ |$$$$$$$  |$$$$$$$  |
   \______/ \_______/    \____/ \__|      \__| \_______|\__|  \__|\_______/ \_______/
  ==================================================================================
- A Document-based NoSQL Database Management System: %s%s%s
+ The NoSQL/NoJSON Natural Language Database Management System: %s%s%s
  ==================================================================================`
 
 //Constants for text colors and styles
@@ -75,4 +75,14 @@ get_line_number :: proc(line: int) -> string {
 //used to help with error handling.
 show_source_file :: proc(file: string) -> string {
 	return fmt.tprintln("Source File: %s%s%s", BOLD, file, RESET)
+}
+
+show_server_kill_msg :: proc() {
+	fmt.printfln(
+		"Enter %s'kill'%s or %s'exit'%s to stop the server\n",
+		BOLD_UNDERLINE,
+		RESET,
+		BOLD_UNDERLINE,
+		RESET,
+	)
 }

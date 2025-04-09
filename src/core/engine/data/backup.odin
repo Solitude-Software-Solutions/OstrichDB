@@ -17,19 +17,21 @@ File Description:
             users to create backups of collections.
 *********************************************************/
 
-OST_CREATE_BACKUP_DIR :: proc() {
-	os.make_directory(const.OST_BACKUP_PATH)
-}
 
-
-OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
+CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	using const
 	using utils
 	//retirve the data from the src collection file
-	srcPath := utils.concat_collection_name(src)
+	srcPath := utils.concat_standard_collection_name(src)
 	f, readSuccess := os.read_entire_file(srcPath)
 	if !readSuccess {
-		error1 := new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_READ_FILE,
+			get_err_msg(.CANNOT_READ_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_custom_err(error1, "Could not read collection file for backup")
 		log_err("Could not read collection file for backup", #procedure)
 		return false
@@ -39,20 +41,32 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	defer delete(data)
 
 	//create a backup file dest and write the src content to it
-	destNameAndPath := fmt.tprintf("%s%s", OST_BACKUP_PATH, dest)
-	destFullPath := fmt.tprintf("%s%s", destNameAndPath, OST_FILE_EXTENSION)
+	destNameAndPath := fmt.tprintf("%s%s", BACKUP_PATH, dest)
+	destFullPath := fmt.tprintf("%s%s", destNameAndPath, OST_EXT)
 
 	c, creationSuccess := os.open(destFullPath, os.O_CREATE | os.O_RDWR, 0o666)
 	defer os.close(c)
 	if creationSuccess != 0 {
-		error1 := new_err(.CANNOT_CREATE_FILE, get_err_msg(.CANNOT_CREATE_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_CREATE_FILE,
+			get_err_msg(.CANNOT_CREATE_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_custom_err(error1, "Could not create collection file for backup")
 		log_err("Could not create backup collection file", #procedure)
 		return false
 	}
 	w, writeSuccess := os.write(c, data)
 	if writeSuccess != 0 {
-		error1 := new_err(.CANNOT_WRITE_TO_FILE, get_err_msg(.CANNOT_WRITE_TO_FILE), #procedure)
+		error1 := new_err(
+			.CANNOT_WRITE_TO_FILE,
+			get_err_msg(.CANNOT_WRITE_TO_FILE),
+			#file,
+			#procedure,
+			#line,
+		)
 		throw_custom_err(error1, "Could not write to collection file for backup")
 		log_err("Could not write to collection file for backup", #procedure)
 		return false
@@ -61,21 +75,11 @@ OST_CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	return true
 }
 
-OST_CHOOSE_BACKUP_NAME :: proc() -> string {
+CHOOSE_BACKUP_NAME :: proc() -> string {
 	using utils
-
-	buf: [1024]byte
 	fmt.printfln("What would you like to name your collection backup?")
-	n, inputSuccess := os.read(os.stdin, buf[:])
-
-	if inputSuccess != 0 {
-		error1 := utils.new_err(.CANNOT_READ_INPUT, get_err_msg(.CANNOT_READ_INPUT), #procedure)
-		throw_err(error1)
-		log_err("Error reading input for backup collection name", #procedure)
-	}
-	str := strings.trim_right(string(buf[:n]), "\r\n")
-
-	return strings.clone(str)
+	input := utils.get_input(false)
+	return strings.clone(input)
 }
 
 //TODO: create a proc that deletes a backup of a collection
