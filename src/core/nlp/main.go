@@ -1,6 +1,7 @@
 package main
 
 import (
+	"C"
 	"bufio"
 	"fmt"
 	"io"
@@ -22,8 +23,8 @@ File Description:
             The main entry point for the OstrichDB AI Assistant.
 *********************************************************/
 
-func main() {
-
+//export run_agent
+func run_agent() {
 	config := zap.NewDevelopmentConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	zLogger, err := config.Build()
@@ -54,9 +55,7 @@ func main() {
 		}
 
 		// Do work
-
-		foo:=run_ostrichdb_ai_agent()
-		fmt.Println("run_ostrichdb_ai_agent() result: ", foo)
+		run_ostrichdb_ai_agent()
 	}
 }
 
@@ -190,3 +189,4 @@ func run_ostrichdb_ai_agent() int{
 	return 0
 }
 
+func main(){} //must be kept blank

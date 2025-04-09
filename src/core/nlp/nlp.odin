@@ -1,10 +1,11 @@
-package llm
+package nlp
+
 import "core:c"
 foreign import go "nlp.dylib"
 foreign go {
-	do_stuff :: proc() ---
+	run_agent :: proc() ---
 }
 
 main :: proc() {
-	do_stuff()
+    run_agent()
 }

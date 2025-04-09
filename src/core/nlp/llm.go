@@ -13,8 +13,7 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            This file contains the core Natural Language Processing (NLP)
-            code for the OstrichDB AI Assistant.
+            This file contains code for interacting with Ollama
 *********************************************************/
 
 type Request struct {

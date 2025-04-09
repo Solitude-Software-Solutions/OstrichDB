@@ -13,7 +13,7 @@ The next two stpes can be done depending on how you want to interact with the NL
 5. Run the generated Go executable `./main`
 
 ### Using Ollama Itself
-4. Run `ollama run ostrichdb1` to run the model
+4. Run `ollama run ostrichdb[recent_version]` to run the model
 
 
 # Importing Golang Code Into Odin Code For OstrichDB
@@ -30,6 +30,8 @@ The next two stpes can be done depending on how you want to interact with the NL
 - `nlp.dylib` (For macOS)
 - `nlp.h` (For all platforms)
 - `nlp` Or whatever executable file Odin built
+- Ensure the Go `main.go` file is importing `"C"`
+- When running GO within Odin the nlp.dylib file needs to be in the bin dir otherwise shit wont work
 
 Then you need to re-run steps 4 and 5 from above.
 
