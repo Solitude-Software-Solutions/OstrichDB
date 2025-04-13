@@ -13,12 +13,24 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Change to the project root directory
 cd "$DIR/.."
 
+# Check if nlp.dylib already exists
+if [ -f "src/core/nlp/nlp.dylib" ]; then
+    echo "$(tput setaf 3)NLP library already exists, skipping build$(tput sgr0)"
+else
+    # Go into nlp package and build NLP Go library
+    cd "src/core/nlp"
+    go mod init main
+    go mod tidy
+    go build -buildmode c-shared -o nlp.dylib
+    # Go back to root dir
+    cd "$DIR/.."
+fi
 
-# Go into nlp package and build NLP Go library
-cd "src/core/nlp"
-go mod init main
-go mod tidy
-go build -buildmode c-shared -o nlp.dylib
+# Check if nlp.dylib exists in bin directory and remove it
+if [ -f "./bin/nlp.dylib" ]; then
+    echo "$(tput setaf 3)Removing existing NLP library$(tput sgr0)"
+    rm "./bin/nlp.dylib"
+fi
 
 # Go back to root dir
 cd "$DIR/.."
