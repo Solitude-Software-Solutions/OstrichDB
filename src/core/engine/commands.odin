@@ -37,10 +37,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using security
 	using types
 
-	//Semi global Server shit
-	ServerConfig := types.Server_Config {
-		port = 8042,
-	}
 
 	defer delete(cmd.l_token)
 	#partial switch (cmd.c_token)
@@ -76,7 +72,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
 		libc.system("stty echo")
 		fmt.printfln("Launching OstrichDB server...")
-		serverResult := server.START_OSTRICH_SERVER(ServerConfig)
+		serverResult := server.START_OSTRICH_SERVER(&ServerConfig)
 		if serverResult == 0 {
 			fmt.printfln("Server stopped. Returning to OstrichDB command line...")
 		} else {
@@ -130,8 +126,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
 		// check boundaries
 		if commandIndex >= i64(len(commandHistory)) || commandIndex < 0 {
+		if commandIndex + 1 == 0{
+		  break
+		}else{
 			fmt.printfln("Command number %d not found", commandIndex + 1) // add one to make it reflect what the user sees
 			break
+		  }
 		}
 		// parses the command that has been stored in the most recent command history index. Crucial for the HISTORY command
 		cmd := PARSE_COMMAND(commandHistory[commandIndex])
