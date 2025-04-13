@@ -127,11 +127,33 @@ func run_ostrichdb_ai_agent() int{
 	}
 
 	//Retrieve the key information needed to build a path
-	m:= get_value(parsedData, "command")
-	col:= get_value(parsedData, "collection_name")
-	clu:= get_value(parsedData, "cluster_name")
-	rec:= get_value(parsedData, "record_name")
+	m, _:= get_value(parsedData, "command")
+	col,_:= get_value(parsedData, "collection_name")
+	clu,_:= get_value(parsedData, "cluster_name")
+	if len(clu.(string)) == 0{
+		clu = ""
+	}
 
+	rec,_:= get_value(parsedData, "record_name")
+	if len(rec.(string)) == 0{
+		rec = ""
+	}
+
+	fmt.Println("m: ", m)
+	// fmt.Println("success1: ", success1)
+	fmt.Println("----------------------")
+
+	fmt.Println("col: ", col)
+	// fmt.Println("success2: ", success2)
+	fmt.Println("----------------------")
+
+	fmt.Println("clu: ", clu)
+	// fmt.Println("success3: ", success3)
+	fmt.Println("----------------------")
+
+	fmt.Println("rec: ", rec)
+	// fmt.Println("success4: ", success4)
+	fmt.Println("----------------------")
 
 	//Convert the interfaces to strings
 	method := m.(string)
@@ -165,8 +187,8 @@ func run_ostrichdb_ai_agent() int{
 	//then the user wants to do work on a record. set path accordingly
 	if len(cluName) != 0 && len(recName) != 0{
 		path = pathRoot + "/c/" + colName + "/cl/" + cluName + "/r/" + recName
-
 	}
+	fmt.Println("Path created from Go: ", path)
 
 
 	request, reqError := new_nlp_request(method, path)
@@ -185,7 +207,7 @@ func run_ostrichdb_ai_agent() int{
 	}
 
 	//Delete the response.json file when all work is done.
-	// delete_response()
+	delete_response()
 	return 0
 }
 

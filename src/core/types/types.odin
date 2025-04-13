@@ -386,6 +386,11 @@ Metadata_Header_Body := [5]string {
 //Server Stuff Below
 //Server Stuff Below
 
+
+ServerConfig := types.Server_Config {
+	port = 8042, //default
+}
+
 Server_Config :: struct {
 	port: int,
 }

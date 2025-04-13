@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 )
+
 /*
 ********************************************************
 Author: Marshall A Burns
@@ -21,7 +22,7 @@ File Description:
 ********************************************************
 */
 
-const responseFile = "../../../bin/response.json"
+const responseFile = "./response.json"
 
 // Takes a natural language query, sends it to the LLM, and returns the response.
 func process_nlp_query(query string) (string, error) {
@@ -34,7 +35,7 @@ func process_nlp_query(query string) (string, error) {
 
 	// Create the request
 	req := Request{
-		Model:    "ostrichdb:2.5",
+		Model:    "ostrichdb:v2.7",
 		Stream:   false,
 		Messages: []Message{userMsg},
 	}
@@ -124,25 +125,25 @@ func print_json_response(v interface{}, indent string) {
 }
 
 // Helper returns the value of the passed in key by traversing the nested JSON structure
-func get_value(data interface{}, key string) interface{} {
+func get_value(data interface{}, key string) (interface{}, bool) {
 	// First check if we're dealing with a map
 	if m, ok := data.(map[string]interface{}); ok {
 		// Try to get the value directly
 		if val, exists := m[key]; exists {
-			return val
+			return val, true
 		}
 
 		// If not found directly, search recursively in each nested object
 		for _, v := range m {
 			// If the value is a map or slice, search within it
 			if nestedMap, ok := v.(map[string]interface{}); ok {
-				if result := get_value(nestedMap, key); result != nil {
-					return result
+				if result, found := get_value(nestedMap, key); found {
+					return result, true
 				}
 			} else if nestedSlice, ok := v.([]interface{}); ok {
 				for _, item := range nestedSlice {
-					if result := get_value(item, key); result != nil {
-						return result
+					if result, found := get_value(item, key); found {
+						return result, true
 					}
 				}
 			}
@@ -150,12 +151,12 @@ func get_value(data interface{}, key string) interface{} {
 	} else if s, ok := data.([]interface{}); ok {
 		// If we're dealing with a slice, search each element
 		for _, item := range s {
-			if result := get_value(item, key); result != nil {
-				return result
+			if result, found := get_value(item, key); found {
+				return result, true
 			}
 		}
 	}
 
-	// Key not found
-	return nil
+	// Key not found - return empty string instead of nil
+	return "", false
 }

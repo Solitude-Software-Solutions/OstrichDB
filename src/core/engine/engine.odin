@@ -57,9 +57,6 @@ INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 START_OSTRICHDB_ENGINE :: proc() -> int {
 	using const
 
-	ServerConfig := types.Server_Config {
-		port = 8042,
-	}
 
 	//Initialize data integrity system
 	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
@@ -114,7 +111,16 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						false,
 					)
 					//Auto-server loop
-					serverDone := server.START_OSTRICH_SERVER(ServerConfig)
+					serverDone := server.START_OSTRICH_SERVER(&types.ServerConfig)
+					if serverDone == 0 {
+						fmt.println("\n\n")
+						cmdLineDone := START_COMMAND_LINE()
+						if cmdLineDone == 0 {
+							return cmdLineDone
+						}
+					}
+
+					serverDone := 0
 					if serverDone == 0 {
 						fmt.println("\n\n")
 						cmdLineDone := START_COMMAND_LINE()
