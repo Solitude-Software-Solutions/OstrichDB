@@ -120,14 +120,6 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						}
 					}
 
-					serverDone := 0
-					if serverDone == 0 {
-						fmt.println("\n\n")
-						cmdLineDone := START_COMMAND_LINE()
-						if cmdLineDone == 0 {
-							return cmdLineDone
-						}
-					}
 				} else {
 					// if the AUTO_SERVE config value is false, then continue starting command line
 					security.ENCRYPT_COLLECTION(
