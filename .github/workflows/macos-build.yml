@@ -15,6 +15,9 @@ jobs:
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
 
+      - name: Set up Go-lang
+        run: brew install go
+
       - name: Install LLVM 18
         run: brew install llvm@18
 
