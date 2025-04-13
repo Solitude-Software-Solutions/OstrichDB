@@ -198,3 +198,5 @@ CL_DYNAMIC_BASE :: "/c/*/cl/*"
 R_DYNAMIC_BASE :: "/c/*/cl/*/r/*"
 R_DYNAMIC_TYPE_QUERY :: "/c/*/cl/*/r/*?type=*" //Only used for creating a new record without a value...POST request
 R_DYNAMIC_TYPE_VALUE_QUERY :: "/c/*/cl/*/r/*?type=*&value=*" //Used for setting an already existing records value...PUT request
+
+Server_Ports:[]int:{8042,8044,8046,8048,8050}

@@ -9,6 +9,8 @@ import "core:os"
 import "core:thread"
 import "core:time"
 import "../nlp"
+import "core:strconv"
+import "core:strings"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -23,7 +25,7 @@ router: ^types.Router
 isRunning := true
 
 //The isAutoServing flag is added for NLP. Auto serving will be set to true by default.
-START_OSTRICH_SERVER :: proc(config: types.Server_Config) -> int {
+START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 	using const
 	using types
 	CREATE_SERVER_LOG_FILE()
@@ -227,8 +229,20 @@ START_OSTRICH_SERVER :: proc(config: types.Server_Config) -> int {
 	// ADD_ROUTE_TO_ROUTER(router, .POST, "/batch/c/foo&bar/cl/foo&bar", HANDLE_POST_REQUEST)
 
 
+	//Assign the first usable OstrichDB port. Default is set to 8042 but might be taken
+	usablePort:= CHECK_IF_PORT_IS_FREE(const.Server_Ports)
+	fmt.println(usablePort)
+    for p in const.Server_Ports {
+        if p != usablePort{
+                config.port = usablePort
+                break
+        }
+    }
+
 	//Create a new endpoint to listen on
 	endpoint := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, config.port} //listen on all interfaces
+
+
 
 	// Creates and listens on a TCP socket
 	listen_socket, listen_err := net.listen_tcp(endpoint, 5)
@@ -363,6 +377,28 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 		fmt.println("Response sent successfully")
 	}
 }
+
+//Looks over all the possible ports that OstrichDB uses. If the first is free, use it, if not use the next available port.
+CHECK_IF_PORT_IS_FREE :: proc(ports: []int) -> int {
+    buf := new([8]byte)
+    defer free(buf)
+
+    for potentialPort in ports {
+        portAsStr := strconv.itoa(buf[:], potentialPort)
+        termCommand := fmt.tprintf("lsof -i :%s > /dev/null 2>&1", portAsStr)
+        cString := strings.clone_to_cstring(termCommand)
+        defer delete(cString)
+
+        result := libc.system(cString)
+        portFree := result != 0
+        if portFree {
+            return potentialPort
+        }
+    }
+
+    return 0
+}
+
 
 HANDLE_SERVER_KILL_INPUT :: proc() {
 	utils.show_server_kill_msg()
