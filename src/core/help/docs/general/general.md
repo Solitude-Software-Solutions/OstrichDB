@@ -6,8 +6,14 @@ OstrichDB allows for the use of dot notation to quickly perform actions on data 
 
 ## General Commands
 
+### AGENT
+Starts the OstrichDB Natural Language Processor agent(Server must be running in another terminal)
+
+### SERVER
+Starts the OstrichDB http server
+
 ### HELP
-Displays information about OstrichDB. Use `HELP` alone for general info or `HELP <command>` for specific details about a token. The verbosity level of the help shown can be set in `/bin/core/config.ost` or by using `SET CONFIG HELP TO VERBOSE/SIMPLE`.
+Displays information about OstrichDB. Use `HELP` alone for general info or `HELP <command>` for specific details about a token. The verbosity level of the help shown can be set in `/bin/private/config.ostrichdb` or by using `SET CONFIG HELP TO VERBOSE/SIMPLE`.
 
 ### VERSION
 Shows the current OstrichDB version. Format: `release type._major.minor.patch_build type` (e.g., `Pre_Rel_v0.4.0_dev`).
@@ -106,7 +112,7 @@ OstrichDB is a Document-based NoSQL Database Management System that organizes da
 
 ### COLLECTION
 - Individual databases within the DBMS
-- Stored as `.ost` files in `/bin/collections`
+- Stored as `.ostrichdb` files in `/bin/public/standard`
 - Equivalent to a database instance in traditional DBMS systems
 
 ### CLUSTER

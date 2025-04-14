@@ -76,7 +76,7 @@ SET_HELP_MODE :: proc() -> bool {
 		break
 	case:
 		fmt.println(
-			"Invalid value detected in config file.\n Please delete the ./bin/core/config.ost file and rebuild OstrichDB.",
+			"Invalid value detected in config file.\n Please delete the ./bin/private/config.ostrichdb file and rebuild OstrichDB.",
 		)
 	}
 

@@ -7,15 +7,17 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 ## **Features**
 
-- Dual Operation Modes:
+- Natural Language Processing for fast queries and data retrieval
+- Three Modes of Operation:
   - Serverless Command-line Interface
   - Server Mode with HTTP API
+  - Server Mode with the built-in natural language processor
 - User Authentication
-- Multi-User Support
-- JSON-like Hierarchical Data Structure
-- Command Based Operations
-- Dot Notation Syntax
-- Basic CRUD Operations
+- User Role-Based Access
+- Database encryption
+- Custom JSON-like Hierarchical Data Structure
+- .CSV file importing
+- Dot Notation Syntax when using the serverless CLI
 - macOS & Linux Support
 ---
 
@@ -27,7 +29,7 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
 - If you are an "End User" you will need `curl` installed on your system.
 
-### Installation For Developers:
+### Installation For Contributors:
 #### **Steps:**
 
 1. **Clone the Repository**:
@@ -104,9 +106,9 @@ You can run the executable by double clicking it or running it from the terminal
 
 OstrichDB organizes data into three levels:
 
-- **Collections**: Files that hold multiple clusters (e.g., a database holding multiple product categories).
-- **Clusters**: Groups of related records (e.g., related information about a person or product). Found within collections.
-- **Records**: The smallest unit of data (e.g., user name, age, or product details). Found within clusters.
+- **Records**: The smallest unit of data. e.g user_name, age, email. Format: [name] :[type]: [value]
+- **Clusters**: Groups of related records. Given a name and an id upon creation.
+- **Collections**: Database files containing clusters, Have the '.ostrichdb' extension.
 
 ---
 
@@ -141,8 +143,9 @@ Explanation:
 ## **Supported Commands**
 
 ### **Single-Token Operations**
-These operations perform simple tasks without needing additional arguments.
+These operations perform a task without any additional arguments.
 
+- **`AGENT`**: Starts the OstrichDB natural language processor. Requires the server to be running in another terminal.
 - **`VERSION`**: Displays the current version of OstrichDB.
 - **`LOGOUT`**: Logs out the current user.
 - **`EXIT`**: Ends the session and closes the DBMS.

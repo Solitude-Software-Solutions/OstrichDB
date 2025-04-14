@@ -4,6 +4,14 @@
 The `HELP` command token is a single-token action. It Displays helpful information about OstrichDB.'
 `HELP `Can be used alone to display general information or chained with specific tokens to display detailed information about that token. For example: `HELP COLLECTION` will display detailed information about collections. The `HELP` command can produce different levels of information depending on if the `OST_HELP` value in the `/bin/config` file is set to `simple` or `verbose`. Currently it is set to `verbose`. If you'd like the help information that us shown to be more simple, set the `OST_HELP` value to `simple`.
 
+### AGENT
+The `AGENT` command token is a single-token action. It starts the OstrichDB natural language processing agent. This agent allows the user to "in plain English" interact with the DBMS and perform queries.
+### AGENT END
+
+### SERVER START
+The `SERVER` command token is a single-token action. It starts the OstrichDB http server allowing the user to access the API layer and interact with the DBMS.
+### SERVER END
+
 ### VERSION START
 The `VERSION` command tokenis a single-token action. It fetches the current version of OstrichDB. The versioning scheme for OstrichDB is `Release_Type_vMajor.Minor.Patch_Status`.
 For example: `Pre_Rel_v0.4.0_dev`.
@@ -85,7 +93,7 @@ The `WHERE` command token is a multi-token action. It is used to search for the 
 ### WHERE END
 
 ### BACKUP START
-The `BACKUP` command token is a multi-token action. It is used to create a backup of a collection file. For example: `BACKUP COLLECTION <col_name>` will create a backup of the collection with the specified name. Backups are stored in the `/bin/backups` directory and end with the `.ost` file extension. This command can only be used to create a backup of a collection file.
+The `BACKUP` command token is a multi-token action. It is used to create a backup of a collection file. For example: `BACKUP COLLECTION <col_name>` will create a backup of the collection with the specified name. Backups are stored in the `/bin/backups` directory and end with the `.ostrichdb` file extension. This command can only be used to create a backup of a collection file.
 ### BACKUP END
 
 ### ISOLATE START
@@ -97,7 +105,7 @@ The `BENCHMARK` command token can be used as a single or multi-token command. It
 ### BENCHMARK END
 
 ### COLLECTION START
-Collections are individual databases that are "collections" of smaller data objects called "clusters". Collection files are stored in the `/bin/collections` and end with the `.ost` file extension. Within the OstrichDB command line `COLLECTION`is a target token. This is used to specify that an action will be preformed on a collection. For example: `NEW COLLECTION <col_name>` will create a new collection with the specified name.
+Collections are individual databases that are "collections" of smaller data objects called "clusters". Collection files are stored in the `/bin/public/standard` and end with the `.ostrichdb` file extension. Within the OstrichDB command line `COLLECTION`is a target token. This is used to specify that an action will be preformed on a collection. For example: `NEW COLLECTION <col_name>` will create a new collection with the specified name.
 ### COLLECTION END
 
 ### CLUSTER START

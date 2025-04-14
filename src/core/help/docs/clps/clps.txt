@@ -1,30 +1,32 @@
-|Token      |Class          |Type             |Definition                                                          |
+|Token      |Command        |Type             |Definition                                                          |
 |-----------|---------------|-----------------|--------------------------------------------------------------------|
-|VERSION    |Action         |Single           |Fetches the current installed version of OstrichDB                  |
-|HELP       |Action         |Single or Multi  |Displays helpful information about OstrichDB                        |
-|EXIT       |Action         |Single           |Safely exits OstrichDB                                              |
-|LOGOUT     |Action         |Single           |Logs out the current user WITHOUT closing OstrichDB                 |
-|TREE       |Action         |Single           |Displays a hierarchical tree of all collections and thier clusters  |
-|HISTORY    |Action         |Single           |Displays the history of all actions performed in the current session|
-|CLEAR      |Action         |Single           |Clears the screen of clutter                                        |
-|RESTART    |Action         |Single           |Restarts OstrichDB                                                  |
-|REBUILD    |Action         |Single           |Rebuilds and restarts OstrichDB                                     |
-|WHERE      |Action         |Multi            |Searches for a specific object within the DBMS                  |
-|NEW        |Action         |Multi            |Creates a new collection, cluster, record or user                   |
-|ERASE      |Action         |Multi            |Deletes a collection, cluster, or record                            |
-|RENAME     |Action         |Multi            |Renames a collection, cluster, or record                            |
-|SET        |Action         |Multi            |Sets the value of a record or config                                 |
-|BACKUP     |Action         |Multi            |Creates a backup of a collection                                    |
-|FETCH      |Action         |Multi            |Fetches all data of the specified collection, cluster, or record    |
-|COUNT      |Action         |Multi            |Counts the number of records in a collection or cluster            |
-|PURGE      |Action         |Multi            |Removed data from an object while mainting it's structure          |
-|SIZE_OF    |Action         |Multi            |Displays the size of a collection, cluster, or record in bytes     |
-|TYPE_OF    |Action         |Multi            |Displays the type of record                                         |
-|CHANGE_TYPE|Action         |Multi            |Changes the type of a record                                        |
-|ISOLATE    |Action         |Multi            |Isolates a collection from the rest of the DBMS         |
-|DESTROY    |Action         |Multi            |Destroys a collection, cluster, or record                           |
-|VALIDATE   |Action         |Multi            |Validates the structure of a collection, cluster, or record         |
-|BENCHMARK  |Action         |Multi            |Runs a benchmark test on the DBMS                                   |
-|TO         |Modifier       |                 |Used with RENAME to specify new name for DBMS objects              |
-|OF_TYPE    |Modifier       |                 |Specifies data type for DBMS records                              |
+|VERSION    |Command         |Single           |Fetches the current installed version of OstrichDB                  |
+|HELP       |Command         |Single or Multi  |Displays helpful information about OstrichDB                        |
+|EXIT       |Command         |Single           |Safely exits OstrichDB                                              |
+|LOGOUT     |Command         |Single           |Logs out the current user WITHOUT closing OstrichDB                 |
+|TREE       |Command         |Single           |Displays a hierarchical tree of all collections and thier clusters  |
+|HISTORY    |Command         |Single           |Displays the history of all actions performed in the current session|
+|CLEAR      |Command         |Single           |Clears the screen of clutter                                        |
+|RESTART    |Command         |Single           |Restarts OstrichDB                                                  |
+|REBUILD    |Command         |Single           |Rebuilds and restarts OstrichDB                                     |
+|SERVE      |Command         |Single           |Starts the OstrichDB http server                                    |
+|AGENT      |Command         |Single           |Starts the OstrichDB Natural Language Processor                     |
+|WHERE      |Command         |Multi            |Searches for a specific object within the DBMS                  |
+|NEW        |Command         |Multi            |Creates a new collection, cluster, record or user                   |
+|ERASE      |Command         |Multi            |Deletes a collection, cluster, or record                            |
+|RENAME     |Command         |Multi            |Renames a collection, cluster, or record                            |
+|SET        |Command         |Multi            |Sets the value of a record or config                                 |
+|BACKUP     |Command         |Multi            |Creates a backup of a collection                                    |
+|FETCH      |Command         |Multi            |Fetches all data of the specified collection, cluster, or record    |
+|COUNT      |Command         |Multi            |Counts the number of records in a collection or cluster            |
+|PURGE      |Command         |Multi            |Removed data from an object while mainting it's structure          |
+|SIZE_OF    |Command         |Multi            |Displays the size of a collection, cluster, or record in bytes     |
+|TYPE_OF    |Command         |Multi            |Displays the type of record                                         |
+|CHANGE_TYPE|Command         |Multi            |Changes the type of a record                                        |
+|ISOLATE    |Command         |Multi            |Isolates a collection from the rest of the DBMS         |
+|DESTROY    |Command         |Multi            |Destroys a collection, cluster, or record                           |
+|VALIDATE   |Command         |Multi            |Validates the structure of a collection, cluster, or record         |
+|BENCHMARK  |Command         |Multi            |Runs a benchmark test on the DBMS                                   |
+|TO         |Parameter      |                 |Used with RENAME to specify new name for DBMS objects              |
+|OF_TYPE    |Parameter      |                 |Specifies data type for DBMS records                              |
 |<Any Token> |Help Target   |                 |Paired with the HELP action to show information about the token     |

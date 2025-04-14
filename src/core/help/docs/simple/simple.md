@@ -4,6 +4,14 @@
 Shows information about OstrichDB. Use `HELP <command>` for specific details.
 ### HELP END
 
+### AGENT START
+Starts the OstrichDB agent.
+### AGENT END
+
+### SERVER START
+Starts the OstrichDB http server
+### SERVER END
+
 ### VERSION START
 Displays the current OstrichDB version.
 ### VERSION END
