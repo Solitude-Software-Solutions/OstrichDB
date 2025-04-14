@@ -160,7 +160,7 @@ GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 }
 
 
-//Creates and appends a new cluster to the specified .ost file
+//Creates and appends a new cluster to the specified .ostrichdb file
 //todo: since I have the CREATE_CLUSTER proc, idk if this is needed anymore
 CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: string) -> int {
 	using utils
@@ -172,7 +172,7 @@ CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: stri
 	}
 
 	FIRST_HALF: []string = {"{\n\tcluster_name :identifier: %n"}
-	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
+	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ostrichdb file
 	buf: [32]byte
 	//step#1: open the file
 	clusterFile, openSuccess := os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
@@ -375,7 +375,7 @@ CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 	}
 
 	FIRST_HALF: []string = {"\n{\n\tcluster_name :identifier: %n"}
-	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ost file
+	LAST_HALF: []string = {"\n\tcluster_id :identifier: %i\n\t\n},\n"} //defines the base structure of a cluster block in a .ostrichdb file
 	buf: [32]byte
 	//step#1: open the file
 	clusterFile, openSuccess := os.open(collectionPath, os.O_APPEND | os.O_WRONLY, 0o666)

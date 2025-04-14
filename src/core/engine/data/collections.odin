@@ -66,7 +66,7 @@ Creates a new collection file with metadata within the DB
 CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
 	pathAndName: string
-	#partial switch (colType) 
+	#partial switch (colType)
 	{
 	case .STANDARD_PUBLIC:
 		//standard cluster file
@@ -110,7 +110,7 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 				#line,
 			)
 			utils.throw_err(error1)
-			utils.log_err("Error creating .ost file", #procedure)
+			utils.log_err("Error creating collection file", #procedure)
 			return false
 		}
 		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
@@ -131,7 +131,7 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 				#line,
 			)
 			utils.throw_err(error1)
-			utils.log_err("Error creating .ost file", #procedure)
+			utils.log_err("Error creating collection file", #procedure)
 			return false
 		}
 		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
@@ -152,7 +152,7 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 				#line,
 			)
 			utils.throw_err(error1)
-			utils.log_err("Error creating .ost file", #procedure)
+			utils.log_err("Error creating collection file", #procedure)
 			return false
 		}
 		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
@@ -173,7 +173,7 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 				#line,
 			)
 			utils.throw_err(error1)
-			utils.log_err("Error creating .ost file", #procedure)
+			utils.log_err("Error creating collection file", #procedure)
 			return false
 		}
 		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
@@ -241,7 +241,7 @@ ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 			#line,
 		)
 		throw_err(error1)
-		log_err("Error deleting .ost file", #procedure)
+		log_err("Error deleting collection file", #procedure)
 		return false
 	}
 
@@ -331,7 +331,7 @@ RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 			#line,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading provided .ost file", #procedure)
+		utils.log_err("Error reading collection file", #procedure)
 		return false
 	}
 
@@ -340,13 +340,13 @@ RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 
 	when ODIN_OS == .Linux {
 		if renamed != os.ERROR_NONE {
-			utils.log_err("Error renaming .ost file", #procedure)
+			utils.log_err("Error renaming collection file", #procedure)
 			return false
 		}
 	}
 	when ODIN_OS == .Darwin {
 		if renamed != true {
-			utils.log_err("Error renaming .ost file", #procedure)
+			utils.log_err("Error renaming collection file", #procedure)
 			return false
 		}
 	}
@@ -369,7 +369,7 @@ FETCH_COLLECTION :: proc(fn: string) -> string {
 			#line,
 		)
 		utils.throw_err(error1)
-		utils.log_err("Error reading .ost file", #procedure)
+		utils.log_err("Error reading collection file", #procedure)
 		return ""
 	}
 	defer delete(data)
@@ -397,6 +397,7 @@ FIND_SECURE_COLLECTION :: proc(fn: string) -> (bool, string) {
 	found := false
 	for file in files {
 		if file.name == fmt.tprintf("secure_%s%s", fn, const.OST_EXT) {
+
 			found = true
 		}
 	}

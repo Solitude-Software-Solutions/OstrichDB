@@ -155,7 +155,7 @@ get_date_and_time :: proc() -> (gmtDate: string, hour: string, minute: string, s
 	Second := strconv.append_int(sBuf[:], S, 10)
 
 
-	switch (mAsInt) 
+	switch (mAsInt)
 	{
 	case 1:
 		Month = "January"

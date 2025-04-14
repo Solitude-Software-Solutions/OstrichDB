@@ -131,6 +131,8 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		current_user.username.Value = strings.clone(usernameCapitalized) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
 
+
+		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 		userLoggedInValue := data.GET_RECORD_VALUE(
 			CONFIG_PATH,
 			CONFIG_CLUSTER,
@@ -205,7 +207,7 @@ RUN_USER_LOGOUT :: proc(param: int) {
 
 	switch loggedOut {
 	case true:
-		switch (param) 
+		switch (param)
 		{
 		case 0:
 			//Logging out but keeps program running

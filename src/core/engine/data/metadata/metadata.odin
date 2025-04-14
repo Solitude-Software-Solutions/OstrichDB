@@ -76,7 +76,7 @@ SUBTRACT_METADATA_SIZE :: proc(file: string) -> (int, int) {
 	return totalSize - metadataSize, metadataSize
 }
 
-// Calculates a SHA-256 checksum for .ost files based on file content
+// Calculates a SHA-256 checksum for .ostrichdb files based on file content
 GENERATE_CHECKSUM :: proc(fn: string) -> string {
 	using const
 	using utils
@@ -118,7 +118,7 @@ GENERATE_CHECKSUM :: proc(fn: string) -> string {
 }
 
 
-//!Only used when to append the meta template upon .ost file creation NOT modification
+//!Only used when to append the meta template upon .ostrichdb file creation NOT modification
 //this appends the metadata header to the file as well as sets the time of creation
 APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	using const
@@ -531,7 +531,7 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 		file = concat_standard_collection_name(fn)
 		break
 	case .SECURE_PRIVATE:
-		file = fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, fn, ".ost")
+		file = fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, fn, OST_EXT)
 		break
 	case .CONFIG_PRIVATE:
 		file = CONFIG_PATH
