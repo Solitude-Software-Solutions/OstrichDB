@@ -62,7 +62,7 @@ func run_agent() {
 //----------CLIENT CODE----------//
 //----------CLIENT CODE----------//
 //----------CLIENT CODE----------//
-const pathRoot = "http://localhost:8042"
+const pathRoot = "http://localhost:8042" //Todo: This port might be different if the default is in use..See https://github.com/Solitude-Software-Solutions/OstrichDB/issues/251
 
 //create a new NLP client that will allow for the AI agent to interact with the OstrichDB API layer
 func new_nlp_client() http.Client{
@@ -117,7 +117,6 @@ func handle_server_response(response *http.Response, method string) int {
 
 
 func run_ostrichdb_ai_agent() int{
-
 	var path string
 
 	//Find the response.json file and parse out its key data
@@ -130,6 +129,11 @@ func run_ostrichdb_ai_agent() int{
 	m, _:= get_value(parsedData, "command")
 	col,_:= get_value(parsedData, "collection_name")
 	clu,_:= get_value(parsedData, "cluster_name")
+
+	//Not using yet, see comment in line 186
+	// recT, _ := get_value(parsedData, "record_type")
+	// recV, _:= get_value(parsedData, "record_value")
+
 	if len(clu.(string)) == 0{
 		clu = ""
 	}
@@ -139,27 +143,17 @@ func run_ostrichdb_ai_agent() int{
 		rec = ""
 	}
 
-	fmt.Println("m: ", m)
-	// fmt.Println("success1: ", success1)
-	fmt.Println("----------------------")
-
-	fmt.Println("col: ", col)
-	// fmt.Println("success2: ", success2)
-	fmt.Println("----------------------")
-
-	fmt.Println("clu: ", clu)
-	// fmt.Println("success3: ", success3)
-	fmt.Println("----------------------")
-
-	fmt.Println("rec: ", rec)
-	// fmt.Println("success4: ", success4)
-	fmt.Println("----------------------")
-
 	//Convert the interfaces to strings
 	method := m.(string)
 	colName := col.(string)
 	cluName := clu.(string)
 	recName := rec.(string)
+
+	//Not using yet, see comment in line 186
+	// recType:= recT.(string)
+	// recValue := recV.(string)
+
+
 
 
 
@@ -188,8 +182,8 @@ func run_ostrichdb_ai_agent() int{
 	if len(cluName) != 0 && len(recName) != 0{
 		path = pathRoot + "/c/" + colName + "/cl/" + cluName + "/r/" + recName
 	}
-	fmt.Println("Path created from Go: ", path)
 
+	//Todo: Need to determine path when using query params. e.g c/[col_name]/cl/clu_name/r/[rec_name]?type=[rec_type]&value=[rec_value]
 
 	request, reqError := new_nlp_request(method, path)
 	if reqError != nil{
