@@ -153,15 +153,7 @@ B_BASIC_SUITE :: proc(colIter, clutIter, recIter: int) -> [dynamic]types.Benchma
 	benchmark8 := B_ERASE_CLUSTER_OP(colNames, clutIter)
 	benchmark9 := B_ERASE_COLLECTION_OP(colIter)
 
-	append(&basicResults, benchmark1)
-	append(&basicResults, benchmark2)
-	append(&basicResults, benchmark3)
-	append(&basicResults, benchmark4)
-	append(&basicResults, benchmark5)
-	append(&basicResults, benchmark6)
-	append(&basicResults, benchmark7)
-	append(&basicResults, benchmark8)
-	append(&basicResults, benchmark9)
+	append(&basicResults, benchmark1, benchmark2, benchmark3, benchmark4, benchmark5, benchmark6, benchmark7, benchmark8, benchmark9)
 
 	return basicResults
 }
@@ -188,16 +180,7 @@ B_MEDIUM_SUITE :: proc(colIter, clutIter, recIter: int) -> [dynamic]types.Benchm
 	benchmark9 := B_ERASE_CLUSTER_OP(colNames, clutIter)
 	benchmark10 := B_ERASE_COLLECTION_OP(colIter)
 
-	append(&mediumResults, benchmark1)
-	append(&mediumResults, benchmark2)
-	append(&mediumResults, benchmark3)
-	append(&mediumResults, benchmark4)
-	append(&mediumResults, benchmark5)
-	append(&mediumResults, benchmark6)
-	append(&mediumResults, benchmark7)
-	append(&mediumResults, benchmark8)
-	append(&mediumResults, benchmark9)
-	append(&mediumResults, benchmark10)
+	append(&mediumResults, benchmark1,benchmark2,benchmark3, benchmark4, benchmark5, benchmark6, benchmark7, benchmark8, benchmark9, benchmark10)
 
 	return mediumResults
 }
@@ -234,21 +217,7 @@ B_ADVANCED_SUITE :: proc(colIter, clutIter, recIter: int) -> [dynamic]types.Benc
 	benchmark14 := B_ERASE_CLUSTER_OP(colNamesAgain, clutIter)
 	benchmark15 := B_ERASE_COLLECTION_OP(colIter)
 
-	append(&advancedResults, benchmark1)
-	append(&advancedResults, benchmark2)
-	append(&advancedResults, benchmark3)
-	append(&advancedResults, benchmark4)
-	append(&advancedResults, benchmark5)
-	append(&advancedResults, benchmark6)
-	append(&advancedResults, benchmark7)
-	append(&advancedResults, benchmark8)
-	append(&advancedResults, benchmark9)
-	append(&advancedResults, benchmark10)
-	append(&advancedResults, benchmark11)
-	append(&advancedResults, benchmark12)
-	append(&advancedResults, benchmark13)
-	append(&advancedResults, benchmark14)
-	append(&advancedResults, benchmark15)
+	append(&advancedResults, benchmark1, benchmark2, benchmark3, benchmark4, benchmark5, benchmark6, benchmark7, benchmark8, benchmark9, benchmark10, benchmark11, benchmark12, benchmark13, benchmark14, benchmark15)
 
 	return advancedResults
 
