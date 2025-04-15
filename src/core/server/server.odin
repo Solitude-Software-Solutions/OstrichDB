@@ -307,7 +307,6 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 
 
 		// Handle the request using router
-		// fmt.printfln("passing %s router: ", #procedure, router) //debugging
 		status, responseBody := HANDLE_HTTP_REQUEST(router, method, path, headers)
 		handleRequestEvent := SET_SERVER_EVENT_INFORMATION(
 			"Attempt Request",

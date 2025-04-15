@@ -166,7 +166,7 @@ GET_GENERAL_HELP_INFO :: proc() -> string {
 	return strings.clone(content)
 }
 
-//shows a table of explaining atoms
+//shows a table of explaining CLPs
 SHOW_TOKEN_HELP_TABLE :: proc() -> string {
 	using const
 
