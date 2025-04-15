@@ -63,6 +63,7 @@ TokenType :: enum {
 	USER,
 	CONFIG,
 	//Parameter tokens
+	WITH,
 	OF_TYPE,
 	TO,
 	//Shorthand and traditional basic type tokens
@@ -159,6 +160,7 @@ Token := #partial [TokenType]string {
 	.USER           = "USER",
 	.CONFIG         = "CONFIG",
 	//Parameter tokens
+	.WITH            = "WITH",
 	.OF_TYPE        = "OF_TYPE",
 	.TO             = "TO",
 	//Shorthand and traditional basic type tokens
@@ -219,6 +221,10 @@ Operation_Permssion_Requirement :: enum {
 	INACCESSABLE,
 }
 
+//Data structure tiers..These just help keep things readable in in the commands.odin file when evaluating the lenght of the location token
+COLLECTION_TIER :int:1
+CLUSTER_TIER :int: 2
+RECORD_TIER :int:3
 
 CommandOperation :: struct {
 	name:          string,
