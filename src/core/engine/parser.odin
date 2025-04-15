@@ -43,7 +43,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 	collectingString := false
 	stringValue := ""
 
-	//iterate over remaining ATOM tokens and set/append them to the cmd
+	//iterate over remaining CLP tokens and set/append them to the cmd
 	for i := 1; i < len(tokens); i += 1 {
 		token := tokens[i]
 
@@ -111,7 +111,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 				} else {
 					append(&cmd.l_token, token)
 				}
-			case:
+			case: //Every other command token
 				cmd.t_token = cmd.t_token
 				if strings.contains(token, ".") {
 					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
@@ -121,7 +121,6 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 				} else {
 					append(&cmd.l_token, token)
 				}
-
 				state = 1
 			}
 		case 1:
@@ -149,8 +148,28 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 	// If we collected a string value, store it
 	if collectingString && stringValue != "" {
 		cmd.p_token[currentParameterToken] = stringValue
-	}
 
+		// If the current parameter token is OF_TYPE and the c_token is NEW
+		// Check if the string value contains the WITH token to handle record values
+		if currentParameterToken == types.Token[.OF_TYPE] && cmd.c_token == types.TokenType.NEW {
+			// Split the string to check for WITH token
+			parts := strings.split(stringValue, " ")
+			if len(parts) >= 2 && strings.to_upper(parts[1]) == types.Token[.WITH] {
+
+				// Store the type in the OF_TYPE map value slot
+				cmd.p_token[currentParameterToken] = parts[0]
+
+				// Store everything after the WITH token in the WITH map value slot
+				if len(parts) > 2 {
+					withValue := strings.join(parts[2:], " ")
+					cmd.p_token[types.Token[.WITH]] = withValue
+				} else {
+					// Handle case where WITH is the last token with no value
+					cmd.p_token[types.Token[.WITH]] = ""
+				}
+			}
+		}
+	}
 	return cmd
 }
 

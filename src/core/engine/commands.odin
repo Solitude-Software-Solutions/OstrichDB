@@ -147,7 +147,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			log_runtime_event("Used HELP command", "User requested general help information.")
 			help.GET_GENERAL_HELP_INFO()
 		} else if cmd.t_token == Token[.CLP] || cmd.t_token == Token[.CLPS] {
-			log_runtime_event("Used HELP command", "User requested atom help information.")
+			log_runtime_event("Used HELP command", "User requested CLP help information.")
 			help.SHOW_TOKEN_HELP_TABLE()
 		} else {
 			help.GET_HELP_INFO_FOR_SPECIFIC_TOKEN(cmd.t_token)
@@ -432,11 +432,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			break
 		case RECORD_TIER:
-			collectionName, clusterName, recordName: string
+			collectionName, clusterName, recordName, rValue: string
 			log_runtime_event("Used NEW RECORD command", "User requested to create a new record.")
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
+
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
@@ -452,7 +453,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			if len(recordName) > 64 {
 				fmt.printfln(
-					"Record name: %s%s%s is too long. Please choose a name less than 128 characters.",
+					"Record name: %s%s%s is too long. Please choose a name less than 64 characters.",
 					BOLD_UNDERLINE,
 					recordName,
 					RESET,
@@ -474,11 +475,20 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 
+					if Token[.WITH] in cmd.p_token  && len(cmd.p_token[Token[.WITH]]) != 0{
+					   rValue = cmd.p_token[Token[.WITH]]
+					} else if Token[.WITH] in cmd.p_token  && len(cmd.p_token[Token[.WITH]]) == 0{
+					   fmt.println("%s%sWARNING%s When using the WITH token there must be a value of the assigned type after. Please try again")
+						return 1
+					}
+					//TODO: Need to work on ensuring the value that is provided when using the WITH token is the appropriate type.
+					//Just like i am doing in the SET_RECORD_VALUE() proc....
+
 					recordCreationSuccess := data.CREATE_RECORD(
 						colPath,
 						clusterName,
 						recordName,
-						"",
+						rValue,
 						rType,
 					)
 					switch (recordCreationSuccess)
@@ -1219,7 +1229,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				if rType == Token[.NULL] {
 					fmt.printfln(
-						"Cannot a value ssign to record: %s%s%s of type %sNULL%s",
+						"Cannot a value assign to record: %s%s%s of type %sNULL%s",
 						BOLD_UNDERLINE,
 						recordName,
 						RESET,

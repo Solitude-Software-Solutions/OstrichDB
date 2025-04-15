@@ -164,6 +164,8 @@ START_COMMAND_LINE :: proc() -> int {
 		security.ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		cmd := PARSE_COMMAND(input)
 
+		// fmt.println("cmd: ", cmd) //Debugging DO NOT DELETE
+
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := security.GET_SESSION_DURATION()
 		maxDurationMet := security.CHECK_IF_SESSION_DURATION_MAXED(sessionDuration)
