@@ -17,7 +17,6 @@ Command :: struct {
 	c_token:            TokenType, //command token
 	l_token:            [dynamic]string, //location token
 	p_token:            map[string]string, //parameter token
-	isUsingDotNotation: bool, //if the command is using dot notation
 	t_token:            string, //target token only needed for very specific commands like WHERE,HELP, and NEW USER
 }
 

@@ -26,10 +26,9 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
 	//dot notation allows for accessing context like this: <action> grandparent.parent.child or <action> parent.child
-	cmd := types.Command {
+	cmd := Command {
 		l_token            = make([dynamic]string),
 		p_token            = make(map[string]string),
-		isUsingDotNotation = false,
 		t_token            = "",
 	}
 
@@ -40,7 +39,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 	// Convert first token to TokenType
 	cmd.c_token = convert_string_to_ostrichdb_token(tokens[0])
 	state := 0 //state machine exclusively used for parameter token shit
-	currentModifier := "" //stores the current modifier such as TO
+	currentParameterToken := "" //stores the current modifier such as TO
 	collectingString := false
 	stringValue := ""
 
@@ -59,7 +58,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 		switch state {
 		case 0:
 			// Expecting target
-			#partial switch (cmd.c_token) 
+			#partial switch (cmd.c_token)
 			{
 			case TokenType.SET:
 				if token == Token[.CONFIG] {
@@ -67,7 +66,6 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 				} else {
 					cmd.t_token = cmd.t_token
 					if strings.contains(token, ".") {
-						cmd.isUsingDotNotation = true
 						objTokensSepByDot := strings.split(strings.trim_space(token), ".")
 						for obj in objTokensSepByDot {
 							append(&cmd.l_token, obj)
@@ -95,7 +93,6 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 				case Token[.CLUSTERS], Token[.RECORDS]:
 					cmd.t_token = token
 					if strings.contains(token, ".") {
-						cmd.isUsingDotNotation = true
 						objTokensSepByDot := strings.split(strings.trim_space(token), ".")
 						for obj in objTokensSepByDot {
 							append(&cmd.l_token, obj)
@@ -107,7 +104,6 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 				break
 			case TokenType.BENCHMARK:
 				if strings.contains(token, ".") {
-					cmd.isUsingDotNotation = true
 					iterations := strings.split(strings.trim_space(token), ".")
 					for i in iterations {
 						append(&cmd.l_token, i)
@@ -118,7 +114,6 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 			case:
 				cmd.t_token = cmd.t_token
 				if strings.contains(token, ".") {
-					cmd.isUsingDotNotation = true
 					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
 					for obj in objTokensSepByDot {
 						append(&cmd.l_token, obj)
@@ -132,11 +127,10 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 		case 1:
 			// Expecting object or modifier
 			if check_if_param_token_is_valid(token) {
-				currentModifier = token
+				currentParameterToken = token
 				state = 2
 			} else {
 				if strings.contains(token, ".") {
-					cmd.isUsingDotNotation = true
 					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
 					for obj in objTokensSepByDot {
 						append(&cmd.l_token, obj)
@@ -154,7 +148,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 
 	// If we collected a string value, store it
 	if collectingString && stringValue != "" {
-		cmd.p_token[currentModifier] = stringValue
+		cmd.p_token[currentParameterToken] = stringValue
 	}
 
 	return cmd
@@ -166,9 +160,9 @@ check_if_param_token_is_valid :: proc(token: string) -> bool {
 	using const
 	using types
 
-	validModifiers := []string{Token[.OF_TYPE], Token[.TO]}
-	for modifier in validModifiers {
-		if strings.to_upper(token) == modifier {
+	validParamTokens := []string{Token[.WITH],Token[.OF_TYPE], Token[.TO]}
+	for paramToken in validParamTokens {
+		if strings.to_upper(token) == paramToken {
 			return true
 		}
 	}
