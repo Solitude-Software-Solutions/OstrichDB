@@ -294,7 +294,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .NEW:
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
-		case 1:
+		case COLLECTION_TIER:
 			exists := data.CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
 			switch (exists) {
 			case false:
@@ -344,7 +344,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				break
 			}
 			break
-		case 2:
+		case CLUSTER_TIER:
 			clusterName: string
 			collectionName: string
 			fn: string
@@ -439,7 +439,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			collectionName, clusterName, recordName: string
 			log_runtime_event("Used NEW RECORD command", "User requested to create a new record.")
 			collectionName = cmd.l_token[0]
@@ -569,7 +569,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used RENAME command", "")
 		switch (len(cmd.l_token))
 		{
-		case 1:
+		case COLLECTION_TIER:
 			if Token[.TO] in cmd.p_token {
 				oldName := cmd.l_token[0]
 				newName := cmd.p_token[Token[.TO]]
@@ -642,7 +642,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println("Incomplete command. Correct Usage: RENAME <old_name> TO <new_name>")
 			}
 			break
-		case 2:
+		case CLUSTER_TIER:
 			collectionName: string
 			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation == true {
 				oldName := cmd.l_token[1]
@@ -714,7 +714,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			oldRName: string
 			newRName: string
 			collectionName: string //only here if using dot notation
@@ -816,7 +816,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used ERASE command", "")
 		switch (len(cmd.l_token))
 		{
-		case 1:
+		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -847,7 +847,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 			break
-		case 2:
+		case CLUSTER_TIER:
 			collectionName: string
 			cluster: string
 
@@ -944,7 +944,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			collectionName: string
 			clusterName: string
 			recordName: string
@@ -1025,7 +1025,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used FETCH command", "")
 		switch (len(cmd.l_token))
 		{
-		case 1:
+		case COLLECTION_TIER:
 			if len(cmd.l_token) > 0 {
 				collectionName := cmd.l_token[0]
 
@@ -1062,7 +1062,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 2:
+		case CLUSTER_TIER:
 			if cmd.isUsingDotNotation == true {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
@@ -1103,7 +1103,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			collectionName: string
 			clusterName: string
 			recordName: string
@@ -1178,7 +1178,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .SET:
 		switch (len(cmd.l_token))
 		{
-		case 3:
+		case RECORD_TIER:
 			//Setting a standard records value
 			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
@@ -1306,7 +1306,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 1:
+		case 1: //Not using the COLLECTION_TIER constant here.  Technically the value is the same but the verbage will confuse me and others :) - Marshall
 			switch (cmd.t_token) {
 			case Token[.CONFIG]:
 				log_runtime_event("Used SET command", "")
@@ -1701,7 +1701,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used PURGE command", "")
 		switch (len(cmd.l_token))
 		{
-		case 1:
+		case COLLECTION_TIER:
 			collectionName = cmd.l_token[0]
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -1740,7 +1740,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 2:
+		case CLUSTER_TIER:
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 
@@ -1791,7 +1791,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
@@ -1852,7 +1852,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .SIZE_OF:
 		log_runtime_event("Used SIZE_OF command", "")
 		switch (len(cmd.l_token)) {
-		case 1:
+		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -1890,7 +1890,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 2:
+		case CLUSTER_TIER:
 			if cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
@@ -1939,7 +1939,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			if cmd.isUsingDotNotation {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
@@ -2068,7 +2068,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .CHANGE_TYPE:
 		//only works on records
 		switch (len(cmd.l_token)) {
-		case 3:
+		case RECORD_TIER:
 			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation == true {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
@@ -2172,9 +2172,8 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .ISOLATE:
 		log_runtime_event("Used ISOLATE command", "")
 		switch (len(cmd.l_token)) {
-		case 1:
+		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
-
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(

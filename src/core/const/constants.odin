@@ -1,6 +1,7 @@
 package const
 import "core:fmt"
 import "core:time"
+import "../types"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
