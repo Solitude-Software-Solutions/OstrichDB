@@ -57,11 +57,11 @@ GET_COLLECTION_TREE :: proc() {
 
 /*
 Creates a new collection file with metadata within the DB
-0 standard
-1 secure
-2 config
-3 history
-4 id
+standard -  CollectionType.STANDARD_PUBLIC
+secure - CollectionType.SECURE_PRIVATE
+config - CollectionType.CONFIG_PRIVATE
+history - CollectionType.HISTORY_PRIVATE
+id - CollectionType.ID_PRIVATE
 */
 CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create

@@ -345,9 +345,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		case CLUSTER_TIER:
-			clusterName: string
-			collectionName: string
-			fn: string
+			fn, collectionName, clusterName: string
 
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
@@ -358,7 +356,11 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					return -1
+					if data.confirm_auto_operation(Token[.NEW],[]string{collectionName}) == -1{
+					   return -1
+					}else{
+					 data.AUTO_CREATE(COLLECTION_TIER, []string{collectionName})
+					}
 				}
 
 				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
@@ -421,6 +423,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					log_err("Failed to create new cluster.", #procedure)
 					break
 				}
+				fmt.printfln(
+					"Cluster: %s%s%s created successfully.\n",
+					BOLD_UNDERLINE,
+					clusterName,
+					RESET,
+				)
 				fn = concat_standard_collection_name(collectionName)
 				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 
