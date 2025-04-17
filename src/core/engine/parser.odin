@@ -23,6 +23,31 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 	using const
 	using types
 
+	// Check if the input contains command chaining
+	if strings.contains(input, "&&") {
+		// This is a chained command, but we'll only parse the first one
+		// The engine will handle executing the chain
+		cmd := Command {
+			l_token            = make([dynamic]string),
+			p_token            = make(map[string]string),
+			t_token            = "",
+			isChained         = true,
+			rawInput          = strings.clone(input),
+		}
+		
+		// Set the first command as the c_token
+		parts := strings.split(input, "&&")
+		if len(parts) > 0 {
+			firstCmd := strings.trim_space(parts[0])
+			firstTokens := strings.split(strings.trim_space(firstCmd), " ")
+			if len(firstTokens) > 0 {
+				cmd.c_token = convert_string_to_ostrichdb_token(firstTokens[0])
+			}
+		}
+		
+		return cmd
+	}
+
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
 	//dot notation allows for accessing context like this: <action> grandparent.parent.child or <action> parent.child
@@ -30,6 +55,8 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 		l_token            = make([dynamic]string),
 		p_token            = make(map[string]string),
 		t_token            = "",
+		isChained         = false,
+		rawInput          = strings.clone(input),
 	}
 
 	if len(tokens) == 0 {

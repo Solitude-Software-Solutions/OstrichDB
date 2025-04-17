@@ -18,6 +18,8 @@ Command :: struct {
 	l_token:            [dynamic]string, //location token
 	p_token:            map[string]string, //parameter token
 	t_token:            string, //target token only needed for very specific commands like WHERE,HELP, and NEW USER
+	isChained:         bool,
+	rawInput:          string
 }
 
 TokenType :: enum {

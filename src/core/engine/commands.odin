@@ -38,6 +38,32 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using types
 
 
+	//Handle command chaining
+	if cmd.isChained {
+		fmt.println("Executing chained commands...")
+		
+		// Split the raw input by the && operator
+		commandArr := strings.split(cmd.rawInput, "&&")
+		result := 1 
+		
+		// Execute each command in sequence
+		for command in commandArr {
+			trimmedCommand := strings.trim_space(command)
+			if len(trimmedCommand) > 0 {
+				parsedCmd := PARSE_COMMAND(trimmedCommand)
+				cmdResult := EXECUTE_COMMAND(&parsedCmd)
+				
+				// If any command fails, return that failure code
+				if cmdResult <= 0 {
+					result = cmdResult
+					break
+				}
+			}
+		}
+		
+		return result
+	}
+
 	defer delete(cmd.l_token)
 	#partial switch (cmd.c_token)
 	{
