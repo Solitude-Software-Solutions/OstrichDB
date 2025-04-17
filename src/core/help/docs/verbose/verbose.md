@@ -88,6 +88,22 @@ The `TYPE_OF` command token is a multi-token action. It is used to return the da
 ### CHANGE_TYPE START
 The `CHANGE_TYPE` command token is a multi-token action. It is used to change the data type of a record. `CHANGE_TYPE`. For example: `CHANGE_TYPE <col_name>.<clu_name>.<rec_name> TO <new_data_type>` will change the data type of the record with the specified name to the new specified data type.
 
+### LOCK START
+The `LOCK` command token is a multi-token action. It is used to set a database's permssions to either Read-Only or Inaccessible mode. Only an admin can perfor this action. For example: `LOCK <collection_name> -n` Will set the permission mode to `Inaccessible` meaning no one aside from the creator can access or modify the contents of the collection.
+### LOCK END
+
+### UNLOCK START
+The `LOCK` command token is a multi-token action. It is used to set a database's permssions to Read-Write mode. Only an admin user can unlock a collection and only collections that are currently locked can be unlocked. For example: `UNLOCK <collection_name>`
+### UNLOCK END
+
+### ENC START
+The `ENC` command token is a multi-token action. Short for ENCRYPT It is used to encrpyt a collection using AES-256 making your data more secure. All collections are encrypted upon creation and while at rest. For example: `ENC <collection_name>`
+### ENC END
+
+### DEC START
+The `DEC` command token is a multi-token action. Short for DECRYPT It is used to decrpyt an already encrypted collection. For example: `DEC <collection_name>`
+### DEC END
+
 ### WHERE START
 The `WHERE` command token is a multi-token action. It is used to search for the location of a cluster or record within OstrichDB. `WHERE` can be followed by the target token ie `CLUSTER` or `RECORD` then the target object name or just the object name. For example: `WHERE RECORD <rec_name>` will search all collections for the location of any record with the specified name.
 ### WHERE END
@@ -117,11 +133,15 @@ Records are individual pieces of data that are stored within clusters. Records a
 ### RECORD END
 
 ### TO START
-The `TO` parameter token is used with the `RENAME` token to specify the new name of an object. `TO` MUST be followed by the new name of the object. For example: `RENAME COLLECTION <col_name> TO <new_col_name>` will rename the collection with the specified name to the new specified name.
+The `TO` parameter token is used with the `RENAME` token to specify the new name of an object. `TO` MUST be followed by the new name of the object. For example: `RENAME <col_name> TO <new_col_name>` will rename the collection with the specified name to the new specified name.
 ### TO END
 
+### WITH START
+The `WITH` parameter token is used witht the `NEW` token to assign a records value at the same time as you create it. This prevents the need for 2 seperate commands to create a record and assign its value. For example: `NEW <col_name>.<clu_name>.<rec_name> OF_TYPE <data_type> WITH <value>`
+### WITH END
+
 ### OF_TYPE START
-The `OF_TYPE` parameter token is used with the `NEW` token to specify the data type of a new record. `OF_TYPE` MUST be followed by the data type of the new record. For example: `NEW RECORD <col_name>.<clu_name>.<rec_name> OF_TYPE <data_type>` will create a new record with the specified name and data type.
+The `OF_TYPE` parameter token is used with the `NEW` token to specify the data type of a new record. `OF_TYPE` MUST be followed by the data type of the new record. For example: `NEW <col_name>.<clu_name>.<rec_name> OF_TYPE <data_type>` will create a new record with the specified name and data type.
 ### OF_TYPE END
 
 ### CLPS START

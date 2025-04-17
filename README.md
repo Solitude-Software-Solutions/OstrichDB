@@ -25,9 +25,13 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 ### **Prerequisites:**
 - A Unix-based system (macOS, Linux).
-- The Odin programming language installed, built, and properly set in the system's PATH. Ideal Odin Version: `dev-2024-11:764c32fd3`
+- The [Go](https://go.dev/) programming language installed, and properly set in the systems PATH. Ideal Go version: `go1.23.1`
+- The [Odin](https://odin-lang.org/) programming language installed, built, and properly set in the system's PATH. Ideal Odin Version: `dev-2024-11:764c32fd3`
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
-- If you are an "End User" you will need `curl` installed on your system.
+
+#### **Special Cases:**
+ -if you wish to use the OstrichDB Natural Language Processor you will need to have [Ollama](https://ollama.com/download) installed
+ -If you are an "End User" and plan install OstrichDB on your machin you will need [curl](https://curl.se/) installed
 
 ### Installation For Contributors:
 #### **Steps:**
@@ -182,14 +186,17 @@ These operations allow you to perform more complex operations.
 - **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
 - **`LOCK`**: Used to change the access mode of a collection. Using `LOCK {collection_name} -r` sets a collection to Read-Only. Removing the `-r` will set a collection to Inaccessible.
 - **`UNLOCK`**: Changes the access mode of a collection to the default Read-Write.
+- **`ENC`** : Encrypts a collection.
+- **`DEC`** : Decrypts a currently encrypted collection.  Use at own discretion.
 - **`IMPORT`**: Allows the user to import a .csv file into OstrichDB. This will create a new collection thay shares the name of the .csv file.
 ---
 
 ### **Parameters**
-
 Modifiers adjust the behavior of commands. The current supported modifiers are:
-- **`TO`**: Used to assign a new value or name (e.g., renaming an object or setting a record's value).
-- **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR, []BOOL).
+
+- **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR, []BOOL)
+- **`WITH`**: Used to assign a value to a record in the same command you are creating it(e.g `NEW {collection_name}.{cluster_name}.{record_name} OF_TYPE {record_type} WITH {record_value}`)
+- **`TO`**: Used to assign a new value or name to a data structure or config(e.g `RENAME {old_collection_name} to {new_collection_name}`)
 
 
 ## **Supported Record Data Type Tokens**

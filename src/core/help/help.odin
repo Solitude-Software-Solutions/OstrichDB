@@ -56,6 +56,14 @@ validCommands := []string {
 	"EXPORT",
 	"LOCK",
 	"UNLOCK",
+	"ENC",
+	"DEC",
+	"CLP",
+	"CLPS",
+	"SERVE",
+	"SERVER",
+	"AGENT",
+	"WHERE"
 }
 //called when user only enters the "HELP" command without any arguments
 // will take in the value from the config file. if verbose is true then show data from verbose help file, and vice versa

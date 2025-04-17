@@ -96,6 +96,22 @@ Example: `TYPE_OF <collection_name>.<cluster_name>.<record_name>`
 Changes the data type of a record.
 Example: `CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_data_type>`
 
+### LOCK
+Sets the permissions of a collection Read-Only or Inaccessible
+Example: `LOCK <collection_name>`
+
+### UNLOCK
+Set the permissions of a collection to Read-Write
+Example: `UNLOCK <collection_name>`
+
+### ENC
+Encrypts a collection, cluster, or record for enhanced security.
+Example: `ENC <collection_name>`
+
+### DEC
+Decrypts a previously encrypted collection.
+Example: `DEC <collection_name>`
+
 ### WHERE
 Either searches all or a specific collection for the location of a cluster or record.
 Example: `WHERE <cluster_name>`
@@ -113,20 +129,23 @@ OstrichDB is a Document-based NoSQL Database Management System that organizes da
 ### COLLECTION
 - Individual databases within the DBMS
 - Stored as `.ostrichdb` files in `/bin/public/standard`
-- Equivalent to a database instance in traditional DBMS systems
 
 ### CLUSTER
 - Groups of related records within a collection
-- Similar to objects in JSON
+- Similar to objects in JSON or SQL tables
 - Must have a cluster name (user-defined) and cluster ID (auto-generated)
 
 ### RECORD
-- Individual pieces of data stored in clusters
+- Individual pieces of data stored within clusters
 - Similar to key-value pairs in JSON
-- Composed of a record name (user-defined) and a record value (the stored data)
+- Composed of a name, dat-type, and a record value
 - Smallest unit of data in OstrichDB
 
 ## Modifiers
+
+### WITH
+Used with NEW to assign a value to a record in the same command you are creating it
+Example: `NEW RECORD <collection_name>.<cluster_name>.<record_name> OF_TYPE <data_type> WITH <value>`
 
 ### TO
 Used with RENAME to specify the new name.

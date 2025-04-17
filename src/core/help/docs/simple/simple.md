@@ -91,6 +91,22 @@ Returns the type of a a record. Use: `TYPE_OF <col_name>.<clu_name>.<rec_name>`.
 Changes the type of a record. Use: `CHANGE_TYPE <col_name>.<clu_name>.<rec_name> TO <new_type>`.
 ### CHANGE_TYPE END
 
+### LOCK START
+Sets the permissions of a collection Read-Only or Inaccessible mode. Use: `LOCK <collection_name>`
+### LOCK END
+
+### UNLOCK START
+Set the permissions of a collection to Read-Write mode. Use: `UNLOCK <collection_name>`
+### UNLOCK END
+
+### ENC START
+Encrypts a collection. Use: `ENC <collection_name>`
+### ENC END
+
+### DEC START
+Decrypts a previously encrypted collection. Use: `DEC <collection_name>`
+### DEC END
+
 ### WHERE START
 Either searches all or a specific collection for the location of a cluster or record. Use: `WHERE <object_name>`.
 ### WHERE END
@@ -102,6 +118,8 @@ Creates a backup of DBMS data and configurations. Use: `BACKUP COLLECTION <objec
 ### ISOLATE START
 Isolates a collection from the DBMS. Use: `ISOLATE <col_name>`.
 ### ISOLATE END
+
+###
 
 ### BENCHMARK START
 Runs a benchmark test on the DBMS. Use: `BENCHMARK` or `BENCHMARK <num>`, `BENCHMARK <num>.<num>`, `BENCHMARK <num>.<num>.<num>`. Where num is the number of iterations.
@@ -118,6 +136,10 @@ Organizational units within a DBMS collection used to group related records.
 ### RECORD START
 The fundamental data storage unit within the DBMS, stored in clusters.
 ### RECORD END
+
+### WITH START
+Used to to assign a value to a record while creating it. Use: `NEW <col_name>.<clu_name>.<rec_name> OF_TYPE <type> WITH <value>`
+### WITH END
 
 ### TO START
 Modifier used with RENAME or SET.
