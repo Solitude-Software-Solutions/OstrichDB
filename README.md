@@ -32,8 +32,8 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
 
 #### **Special Cases:**
- -if you wish to use the OstrichDB Natural Language Processor you will need to have [Ollama](https://ollama.com/download) installed
- -If you are an "End User" and plan install OstrichDB on your machin you will need [curl](https://curl.se/) installed
+ - if you wish to use the OstrichDB Natural Language Processor you will need to have [Ollama](https://ollama.com/download) installed
+ - If you are an "End User" and plan install OstrichDB on your machin you will need [curl](https://curl.se/) installed
 
 ### Installation For Contributors:
 #### **Steps:**
