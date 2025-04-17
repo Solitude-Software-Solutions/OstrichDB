@@ -5,7 +5,7 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 ---
 
-## **Features**
+## **Key Features**
 
 - Natural Language Processing for fast queries and data retrieval
 - Three Modes of Operation:
@@ -14,12 +14,14 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
   - Server Mode with the built-in natural language processor
 - User Authentication
 - User Role-Based Access
-- Database encryption
+- Database permissions
+- Database encryption & decryption
 - Custom JSON-like Hierarchical Data Structure
 - .CSV file importing
 - Dot Notation Syntax when using the serverless CLI
+- Command Chaining
+- Built-in benchmarking, configurations, and user command history
 - macOS & Linux Support
----
 
 ## **Installation**
 
@@ -197,6 +199,14 @@ Modifiers adjust the behavior of commands. The current supported modifiers are:
 - **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR, []BOOL)
 - **`WITH`**: Used to assign a value to a record in the same command you are creating it(e.g `NEW {collection_name}.{cluster_name}.{record_name} OF_TYPE {record_type} WITH {record_value}`)
 - **`TO`**: Used to assign a new value or name to a data structure or config(e.g `RENAME {old_collection_name} to {new_collection_name}`)
+
+### **Command Chaining**
+OstrichDB supports command chaining, allowing you to execute multiple commands in sequence with a single input. Commands are separated by the `&&` operator, and they will be executed in the order they appear.
+
+Example:
+```bash
+RENAME foo.bar.baz TO goob && FETCH fetch foo.bar.goob
+```
 
 
 ## **Supported Record Data Type Tokens**
