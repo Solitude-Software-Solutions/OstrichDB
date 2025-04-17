@@ -454,10 +454,16 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					RESET,
 				)
-				return -1
+				if data.confirm_auto_operation(Token[.NEW],[]string{collectionName, clusterName}) == -1{
+				   return -1
+				}else{
+				 data.AUTO_CREATE(COLLECTION_TIER, []string{collectionName})
+				 data.AUTO_CREATE(CLUSTER_TIER, []string{collectionName, clusterName})
+				}
 			}
 
 			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.NEW], .STANDARD_PUBLIC)
+
 
 			if len(recordName) > 64 {
 				fmt.printfln(
