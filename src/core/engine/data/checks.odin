@@ -189,10 +189,7 @@ VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	}
 
 	//append other check results here
-	append(&checks, checkOneResult)
-	append(&checks, checkTwoResult)
-	append(&checks, checkThreeResult)
-	append(&checks, checkFourResult)
+	append(&checks, checkOneResult, checkTwoResult, checkThreeResult, checkFourResult)
 	return checks
 }
 

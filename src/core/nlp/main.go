@@ -62,7 +62,7 @@ func run_agent() {
 //----------CLIENT CODE----------//
 //----------CLIENT CODE----------//
 //----------CLIENT CODE----------//
-const pathRoot = "http://localhost:8042"
+const pathRoot = "http://localhost:8042" //Todo: This port might be different if the default is in use..See https://github.com/Solitude-Software-Solutions/OstrichDB/issues/251
 
 //create a new NLP client that will allow for the AI agent to interact with the OstrichDB API layer
 func new_nlp_client() http.Client{
@@ -117,7 +117,6 @@ func handle_server_response(response *http.Response, method string) int {
 
 
 func run_ostrichdb_ai_agent() int{
-
 	var path string
 
 	//Find the response.json file and parse out its key data
@@ -127,17 +126,34 @@ func run_ostrichdb_ai_agent() int{
 	}
 
 	//Retrieve the key information needed to build a path
-	m:= get_value(parsedData, "command")
-	col:= get_value(parsedData, "collection_name")
-	clu:= get_value(parsedData, "cluster_name")
-	rec:= get_value(parsedData, "record_name")
+	m, _:= get_value(parsedData, "command")
+	col,_:= get_value(parsedData, "collection_name")
+	clu,_:= get_value(parsedData, "cluster_name")
 
+	//Not using yet, see comment in line 186
+	// recT, _ := get_value(parsedData, "record_type")
+	// recV, _:= get_value(parsedData, "record_value")
+
+	if len(clu.(string)) == 0{
+		clu = ""
+	}
+
+	rec,_:= get_value(parsedData, "record_name")
+	if len(rec.(string)) == 0{
+		rec = ""
+	}
 
 	//Convert the interfaces to strings
 	method := m.(string)
 	colName := col.(string)
 	cluName := clu.(string)
 	recName := rec.(string)
+
+	//Not using yet, see comment in line 186
+	// recType:= recT.(string)
+	// recValue := recV.(string)
+
+
 
 
 
@@ -165,9 +181,9 @@ func run_ostrichdb_ai_agent() int{
 	//then the user wants to do work on a record. set path accordingly
 	if len(cluName) != 0 && len(recName) != 0{
 		path = pathRoot + "/c/" + colName + "/cl/" + cluName + "/r/" + recName
-
 	}
 
+	//Todo: Need to determine path when using query params. e.g c/[col_name]/cl/clu_name/r/[rec_name]?type=[rec_type]&value=[rec_value]
 
 	request, reqError := new_nlp_request(method, path)
 	if reqError != nil{
@@ -185,7 +201,7 @@ func run_ostrichdb_ai_agent() int{
 	}
 
 	//Delete the response.json file when all work is done.
-	// delete_response()
+	delete_response()
 	return 0
 }
 

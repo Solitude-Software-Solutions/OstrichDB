@@ -127,7 +127,7 @@ APPEND_ID_TO_ID_COLLECTION :: proc(idStr: string, idType: int) {
 	}
 }
 
-//removes the passed in id from either cluster in the ids.ost file.
+//removes the passed in id from either cluster in the ids.ostrichdb file.
 //if isUserId is true then the id is removed from the USER_ID_CLUSTER
 //if isUserId is false then the id is removed from the CLUSTER_ID_CLUSTER
 //in the event that an admin user is deleting another user the id needs to be

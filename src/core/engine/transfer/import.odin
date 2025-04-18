@@ -304,7 +304,6 @@ GET_DATA_FROM_CSV_FILE :: proc(fn: string) -> ([dynamic]string, [dynamic]string,
 
 //handles the actual logic for moving csv data into the OstrichDB collection file
 APPEND_CSV_DATA_INTO_OSTRICH_COLLECTION :: proc(fn, cn, rn, rType, rd: string) -> int {
-	// csvCollectionFile := fmt.tprintf("./collections/%s.ost", fn)
 	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
 	if !readSuccess {

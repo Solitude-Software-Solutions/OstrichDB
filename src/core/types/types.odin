@@ -17,8 +17,9 @@ Command :: struct {
 	c_token:            TokenType, //command token
 	l_token:            [dynamic]string, //location token
 	p_token:            map[string]string, //parameter token
-	isUsingDotNotation: bool, //if the command is using dot notation
 	t_token:            string, //target token only needed for very specific commands like WHERE,HELP, and NEW USER
+	isChained:         bool,
+	rawInput:          string
 }
 
 TokenType :: enum {
@@ -63,6 +64,7 @@ TokenType :: enum {
 	USER,
 	CONFIG,
 	//Parameter tokens
+	WITH,
 	OF_TYPE,
 	TO,
 	//Shorthand and traditional basic type tokens
@@ -159,6 +161,7 @@ Token := #partial [TokenType]string {
 	.USER           = "USER",
 	.CONFIG         = "CONFIG",
 	//Parameter tokens
+	.WITH            = "WITH",
 	.OF_TYPE        = "OF_TYPE",
 	.TO             = "TO",
 	//Shorthand and traditional basic type tokens
@@ -219,6 +222,10 @@ Operation_Permssion_Requirement :: enum {
 	INACCESSABLE,
 }
 
+//Data structure tiers..These just help keep things readable in in the commands.odin file when evaluating the lenght of the location token
+COLLECTION_TIER :int:1
+CLUSTER_TIER :int: 2
+RECORD_TIER :int:3
 
 CommandOperation :: struct {
 	name:          string,
@@ -385,6 +392,11 @@ Metadata_Header_Body := [5]string {
 //Server Stuff Below
 //Server Stuff Below
 //Server Stuff Below
+
+
+ServerConfig := types.Server_Config {
+	port = 8042, //default
+}
 
 Server_Config :: struct {
 	port: int,

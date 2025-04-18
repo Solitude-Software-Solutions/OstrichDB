@@ -5,29 +5,37 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 
 ---
 
-## **Features**
+## **Key Features**
 
-- Dual Operation Modes:
+- Natural Language Processing for fast queries and data retrieval
+- Three Modes of Operation:
   - Serverless Command-line Interface
   - Server Mode with HTTP API
+  - Server Mode with the built-in natural language processor
 - User Authentication
-- Multi-User Support
-- JSON-like Hierarchical Data Structure
-- Command Based Operations
-- Dot Notation Syntax
-- Basic CRUD Operations
+- User Role-Based Access
+- Database permissions
+- Database encryption & decryption
+- Custom JSON-like Hierarchical Data Structure
+- .CSV file importing
+- Dot Notation Syntax when using the serverless CLI
+- Command Chaining
+- Built-in benchmarking, configurations, and user command history
 - macOS & Linux Support
----
 
 ## **Installation**
 
 ### **Prerequisites:**
 - A Unix-based system (macOS, Linux).
-- The Odin programming language installed, built, and properly set in the system's PATH. Ideal Odin Version: `dev-2024-11:764c32fd3`
+- The [Go](https://go.dev/) programming language installed, and properly set in the systems PATH. Ideal Go version: `go1.23.1`
+- The [Odin](https://odin-lang.org/) programming language installed, built, and properly set in the system's PATH. Ideal Odin Version: `dev-2024-11:764c32fd3`
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
-- If you are an "End User" you will need `curl` installed on your system.
 
-### Installation For Developers:
+#### **Special Cases:**
+ - if you wish to use the OstrichDB Natural Language Processor you will need to have [Ollama](https://ollama.com/download) installed
+ - If you are an "End User" and plan install OstrichDB on your machine you will need [curl](https://curl.se/) installed
+
+### Installation For Contributors:
 #### **Steps:**
 
 1. **Clone the Repository**:
@@ -104,9 +112,9 @@ You can run the executable by double clicking it or running it from the terminal
 
 OstrichDB organizes data into three levels:
 
-- **Collections**: Files that hold multiple clusters (e.g., a database holding multiple product categories).
-- **Clusters**: Groups of related records (e.g., related information about a person or product). Found within collections.
-- **Records**: The smallest unit of data (e.g., user name, age, or product details). Found within clusters.
+- **Records**: The smallest unit of data. e.g user_name, age, email. Format: [name] :[type]: [value]
+- **Clusters**: Groups of related records. Given a name and an id upon creation.
+- **Collections**: Database files containing clusters, Have the '.ostrichdb' extension.
 
 ---
 
@@ -141,8 +149,9 @@ Explanation:
 ## **Supported Commands**
 
 ### **Single-Token Operations**
-These operations perform simple tasks without needing additional arguments.
+These operations perform a task without any additional arguments.
 
+- **`AGENT`**: Starts the OstrichDB natural language processor. Requires the server to be running in another terminal.
 - **`VERSION`**: Displays the current version of OstrichDB.
 - **`LOGOUT`**: Logs out the current user.
 - **`EXIT`**: Ends the session and closes the DBMS.
@@ -179,14 +188,25 @@ These operations allow you to perform more complex operations.
 - **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
 - **`LOCK`**: Used to change the access mode of a collection. Using `LOCK {collection_name} -r` sets a collection to Read-Only. Removing the `-r` will set a collection to Inaccessible.
 - **`UNLOCK`**: Changes the access mode of a collection to the default Read-Write.
+- **`ENC`** : Encrypts a collection.
+- **`DEC`** : Decrypts a currently encrypted collection.  Use at own discretion.
 - **`IMPORT`**: Allows the user to import a .csv file into OstrichDB. This will create a new collection thay shares the name of the .csv file.
 ---
 
 ### **Parameters**
-
 Modifiers adjust the behavior of commands. The current supported modifiers are:
-- **`TO`**: Used to assign a new value or name (e.g., renaming an object or setting a record's value).
-- **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR, []BOOL).
+
+- **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR, []BOOL)
+- **`WITH`**: Used to assign a value to a record in the same command you are creating it(e.g `NEW {collection_name}.{cluster_name}.{record_name} OF_TYPE {record_type} WITH {record_value}`)
+- **`TO`**: Used to assign a new value or name to a data structure or config(e.g `RENAME {old_collection_name} to {new_collection_name}`)
+
+### **Command Chaining**
+OstrichDB supports command chaining, allowing you to execute multiple commands in sequence with a single input. Commands are separated by the `&&` operator, and they will be executed in the order they appear.
+
+Example:
+```bash
+RENAME foo.bar.baz TO goob && FETCH fetch foo.bar.goob
+```
 
 
 ## **Supported Record Data Type Tokens**

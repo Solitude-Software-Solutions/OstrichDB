@@ -6,8 +6,14 @@ OstrichDB allows for the use of dot notation to quickly perform actions on data 
 
 ## General Commands
 
+### AGENT
+Starts the OstrichDB Natural Language Processor agent(Server must be running in another terminal)
+
+### SERVER
+Starts the OstrichDB http server
+
 ### HELP
-Displays information about OstrichDB. Use `HELP` alone for general info or `HELP <command>` for specific details about a token. The verbosity level of the help shown can be set in `/bin/core/config.ost` or by using `SET CONFIG HELP TO VERBOSE/SIMPLE`.
+Displays information about OstrichDB. Use `HELP` alone for general info or `HELP <command>` for specific details about a token. The verbosity level of the help shown can be set in `/bin/private/config.ostrichdb` or by using `SET CONFIG HELP TO VERBOSE/SIMPLE`.
 
 ### VERSION
 Shows the current OstrichDB version. Format: `release type._major.minor.patch_build type` (e.g., `Pre_Rel_v0.4.0_dev`).
@@ -90,6 +96,22 @@ Example: `TYPE_OF <collection_name>.<cluster_name>.<record_name>`
 Changes the data type of a record.
 Example: `CHANGE_TYPE <collection_name>.<cluster_name>.<record_name> TO <new_data_type>`
 
+### LOCK
+Sets the permissions of a collection Read-Only or Inaccessible
+Example: `LOCK <collection_name>`
+
+### UNLOCK
+Set the permissions of a collection to Read-Write
+Example: `UNLOCK <collection_name>`
+
+### ENC
+Encrypts a collection, cluster, or record for enhanced security.
+Example: `ENC <collection_name>`
+
+### DEC
+Decrypts a previously encrypted collection.
+Example: `DEC <collection_name>`
+
 ### WHERE
 Either searches all or a specific collection for the location of a cluster or record.
 Example: `WHERE <cluster_name>`
@@ -106,21 +128,24 @@ OstrichDB is a Document-based NoSQL Database Management System that organizes da
 
 ### COLLECTION
 - Individual databases within the DBMS
-- Stored as `.ost` files in `/bin/collections`
-- Equivalent to a database instance in traditional DBMS systems
+- Stored as `.ostrichdb` files in `/bin/public/standard`
 
 ### CLUSTER
 - Groups of related records within a collection
-- Similar to objects in JSON
+- Similar to objects in JSON or SQL tables
 - Must have a cluster name (user-defined) and cluster ID (auto-generated)
 
 ### RECORD
-- Individual pieces of data stored in clusters
+- Individual pieces of data stored within clusters
 - Similar to key-value pairs in JSON
-- Composed of a record name (user-defined) and a record value (the stored data)
+- Composed of a name, dat-type, and a record value
 - Smallest unit of data in OstrichDB
 
 ## Modifiers
+
+### WITH
+Used with NEW to assign a value to a record in the same command you are creating it
+Example: `NEW RECORD <collection_name>.<cluster_name>.<record_name> OF_TYPE <data_type> WITH <value>`
 
 ### TO
 Used with RENAME to specify the new name.

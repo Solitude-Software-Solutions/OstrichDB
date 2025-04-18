@@ -282,15 +282,7 @@ convert_case :: proc(str: string) -> [dynamic]string {
 	KEB := strings.to_upper_kebab_case(str)
 
 
-	append(&arr, C)
-	append(&arr, U)
-	append(&arr, l)
-	append(&arr, cml)
-	append(&arr, snk)
-	append(&arr, keb)
-	append(&arr, CML)
-	append(&arr, SNK)
-	append(&arr, KEB)
+	append(&arr, C, U, l, cml, snk, keb, CML, SNK, KEB)
 
 	return arr
 }

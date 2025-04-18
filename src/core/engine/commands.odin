@@ -37,9 +37,31 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using security
 	using types
 
-	//Semi global Server shit
-	ServerConfig := types.Server_Config {
-		port = 8042,
+
+	//Handle command chaining
+	if cmd.isChained {
+		fmt.println("Executing chained commands...")
+		
+		// Split the raw input by the && operator
+		commandArr := strings.split(cmd.rawInput, "&&")
+		result := 1 
+		
+		// Execute each command in sequence
+		for command in commandArr {
+			trimmedCommand := strings.trim_space(command)
+			if len(trimmedCommand) > 0 {
+				parsedCmd := PARSE_COMMAND(trimmedCommand)
+				cmdResult := EXECUTE_COMMAND(&parsedCmd)
+				
+				// If any command fails, return that failure code
+				if cmdResult <= 0 {
+					result = cmdResult
+					break
+				}
+			}
+		}
+		
+		return result
 	}
 
 	defer delete(cmd.l_token)
@@ -76,7 +98,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
 		libc.system("stty echo")
 		fmt.printfln("Launching OstrichDB server...")
-		serverResult := server.START_OSTRICH_SERVER(ServerConfig)
+		serverResult := server.START_OSTRICH_SERVER(&ServerConfig)
 		if serverResult == 0 {
 			fmt.printfln("Server stopped. Returning to OstrichDB command line...")
 		} else {
@@ -130,8 +152,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		commandIndex := libc.atol(strings.clone_to_cstring(string(inputNumber[:n]))) - 1 // subtract one to fix indexing ability
 		// check boundaries
 		if commandIndex >= i64(len(commandHistory)) || commandIndex < 0 {
+		if commandIndex + 1 == 0{
+		  break
+		}else{
 			fmt.printfln("Command number %d not found", commandIndex + 1) // add one to make it reflect what the user sees
 			break
+		  }
 		}
 		// parses the command that has been stored in the most recent command history index. Crucial for the HISTORY command
 		cmd := PARSE_COMMAND(commandHistory[commandIndex])
@@ -147,7 +173,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			log_runtime_event("Used HELP command", "User requested general help information.")
 			help.GET_GENERAL_HELP_INFO()
 		} else if cmd.t_token == Token[.CLP] || cmd.t_token == Token[.CLPS] {
-			log_runtime_event("Used HELP command", "User requested atom help information.")
+			log_runtime_event("Used HELP command", "User requested CLP help information.")
 			help.SHOW_TOKEN_HELP_TABLE()
 		} else {
 			help.GET_HELP_INFO_FOR_SPECIFIC_TOKEN(cmd.t_token)
@@ -294,7 +320,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .NEW:
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
-		case 1:
+		case COLLECTION_TIER:
 			exists := data.CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
 			switch (exists) {
 			case false:
@@ -344,11 +370,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				break
 			}
 			break
-		case 2:
-			clusterName: string
-			collectionName: string
-			fn: string
-			if cmd.isUsingDotNotation == true {
+		case CLUSTER_TIER:
+			fn, collectionName, clusterName: string
+
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
 				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -358,7 +382,11 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					return -1
+					if data.confirm_auto_operation(Token[.NEW],[]string{collectionName}) == -1{
+					   return -1
+					}else{
+					 data.AUTO_CREATE(COLLECTION_TIER, []string{collectionName})
+					}
 				}
 
 				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
@@ -421,17 +449,15 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					log_err("Failed to create new cluster.", #procedure)
 					break
 				}
+				fmt.printfln(
+					"Cluster: %s%s%s created successfully.\n",
+					BOLD_UNDERLINE,
+					clusterName,
+					RESET,
+				)
 				fn = concat_standard_collection_name(collectionName)
 				UPDATE_METADATA_AFTER_OPERATIONS(fn)
-			} else {
-				fmt.printfln(
-					"Invalid command. Correct Usage: NEW <collection_name>.<cluster_name>",
-				)
-				log_runtime_event(
-					"Incomplete NEW command",
-					"User did not provide a cluster name to create.",
-				)
-			}
+
 			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
@@ -439,12 +465,13 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
-			collectionName, clusterName, recordName: string
+		case RECORD_TIER:
+			collectionName, clusterName, recordName, rValue: string
 			log_runtime_event("Used NEW RECORD command", "User requested to create a new record.")
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
+
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(
@@ -453,14 +480,20 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					RESET,
 				)
-				return -1
+				if data.confirm_auto_operation(Token[.NEW],[]string{collectionName, clusterName}) == -1{
+				   return -1
+				}else{
+				 data.AUTO_CREATE(COLLECTION_TIER, []string{collectionName})
+				 data.AUTO_CREATE(CLUSTER_TIER, []string{collectionName, clusterName})
+				}
 			}
 
 			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.NEW], .STANDARD_PUBLIC)
 
+
 			if len(recordName) > 64 {
 				fmt.printfln(
-					"Record name: %s%s%s is too long. Please choose a name less than 128 characters.",
+					"Record name: %s%s%s is too long. Please choose a name less than 64 characters.",
 					BOLD_UNDERLINE,
 					recordName,
 					RESET,
@@ -469,7 +502,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			colPath := concat_standard_collection_name(collectionName)
 
-			if Token[.OF_TYPE] in cmd.p_token && cmd.isUsingDotNotation == true {
+			if Token[.OF_TYPE] in cmd.p_token  {
 				rType, typeSuccess := data.SET_RECORD_TYPE(cmd.p_token[Token[.OF_TYPE]])
 				if typeSuccess == 0 {
 					fmt.printfln(
@@ -482,11 +515,20 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 
+					if Token[.WITH] in cmd.p_token  && len(cmd.p_token[Token[.WITH]]) != 0{
+					   rValue = cmd.p_token[Token[.WITH]]
+					} else if Token[.WITH] in cmd.p_token  && len(cmd.p_token[Token[.WITH]]) == 0{
+					   fmt.println("%s%sWARNING%s When using the WITH token there must be a value of the assigned type after. Please try again")
+						return 1
+					}
+					//TODO: Need to work on ensuring the value that is provided when using the WITH token is the appropriate type.
+					//Just like i am doing in the SET_RECORD_VALUE() proc....
+
 					recordCreationSuccess := data.CREATE_RECORD(
 						colPath,
 						clusterName,
 						recordName,
-						"",
+						rValue,
 						rType,
 					)
 					switch (recordCreationSuccess)
@@ -569,7 +611,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used RENAME command", "")
 		switch (len(cmd.l_token))
 		{
-		case 1:
+		case COLLECTION_TIER:
 			if Token[.TO] in cmd.p_token {
 				oldName := cmd.l_token[0]
 				newName := cmd.p_token[Token[.TO]]
@@ -642,9 +684,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				fmt.println("Incomplete command. Correct Usage: RENAME <old_name> TO <new_name>")
 			}
 			break
-		case 2:
+		case CLUSTER_TIER:
 			collectionName: string
-			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation == true {
+			if Token[.TO] in cmd.p_token  {
 				oldName := cmd.l_token[1]
 				collectionName = cmd.l_token[0]
 				newName := cmd.p_token[Token[.TO]]
@@ -714,13 +756,13 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			oldRName: string
 			newRName: string
 			collectionName: string //only here if using dot notation
 			clusterName: string //only here if using dot notation
-			if Token[.TO] in cmd.p_token || cmd.isUsingDotNotation == true {
-				if cmd.isUsingDotNotation == true {
+			if Token[.TO] in cmd.p_token {
+
 					oldRName = cmd.l_token[2]
 					newRName = cmd.p_token[Token[.TO]]
 					collectionName = cmd.l_token[0]
@@ -749,10 +791,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						.STANDARD_PUBLIC,
 					)
 
-				} else {
-					oldRName = cmd.l_token[0]
-					newRName = cmd.p_token[Token[.TO]]
-				}
 				result := data.RENAME_RECORD(
 					strings.clone(collectionName),
 					strings.clone(clusterName),
@@ -816,7 +854,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used ERASE command", "")
 		switch (len(cmd.l_token))
 		{
-		case 1:
+		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -847,11 +885,10 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 			}
 			break
-		case 2:
+		case CLUSTER_TIER:
 			collectionName: string
 			cluster: string
 
-			if cmd.isUsingDotNotation == true {
 				collectionName = cmd.l_token[0]
 				cluster = cmd.l_token[1]
 
@@ -915,17 +952,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 							RESET,
 						)
 					}
-				} else {
-					fmt.printfln(
-						"Failed to erase cluster: %s%s%s from collection: %s%s%s",
-						BOLD_UNDERLINE,
-						cluster,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-				}
+
 				fn := concat_standard_collection_name(collectionName)
 				UPDATE_METADATA_AFTER_OPERATIONS(fn)
 			} else {
@@ -944,16 +971,14 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			collectionName: string
 			clusterName: string
 			recordName: string
 
-			if cmd.isUsingDotNotation == true {
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
 				recordName = cmd.l_token[2]
-
 
 				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
@@ -1005,7 +1030,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						RESET,
 					)
 				}
-			}
+
 			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
@@ -1025,7 +1050,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used FETCH command", "")
 		switch (len(cmd.l_token))
 		{
-		case 1:
+		case COLLECTION_TIER:
 			if len(cmd.l_token) > 0 {
 				collectionName := cmd.l_token[0]
 
@@ -1062,8 +1087,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 2:
-			if cmd.isUsingDotNotation == true {
+		case CLUSTER_TIER:
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
@@ -1086,16 +1110,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterContent := data.FETCH_CLUSTER(collectionName, clusterName)
 				fmt.printfln(clusterContent)
 
-
-			} else {
-				fmt.println(
-					"Incomplete command. Correct Usage: FETCH <collection_name>.<cluster_name>",
-				)
-				log_runtime_event(
-					"Incomplete FETCH command",
-					"User did not provide a valid cluster name to fetch.",
-				)
-			}
 			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
@@ -1103,12 +1117,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			collectionName: string
 			clusterName: string
 			recordName: string
 
-			if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
+			if len(cmd.l_token) == 3  {
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
 				recordName = cmd.l_token[2]
@@ -1178,9 +1192,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .SET:
 		switch (len(cmd.l_token))
 		{
-		case 3:
+		case RECORD_TIER:
 			//Setting a standard records value
-			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation {
+			if Token[.TO] in cmd.p_token {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
@@ -1255,7 +1269,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				if rType == Token[.NULL] {
 					fmt.printfln(
-						"Cannot a value ssign to record: %s%s%s of type %sNULL%s",
+						"Cannot a value assign to record: %s%s%s of type %sNULL%s",
 						BOLD_UNDERLINE,
 						recordName,
 						RESET,
@@ -1306,7 +1320,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 1:
+		case 1: //Not using the COLLECTION_TIER constant here.  Technically the value is the same but the verbage will confuse me and others :) - Marshall
 			switch (cmd.t_token) {
 			case Token[.CONFIG]:
 				log_runtime_event("Used SET command", "")
@@ -1541,7 +1555,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			break
 		case Token[.RECORDS]:
 			//in the event the users is counting the records in a specific cluster
-			if (len(cmd.l_token) >= 2 || cmd.isUsingDotNotation == true) {
+			if (len(cmd.l_token) >= 2 ) {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
@@ -1619,7 +1633,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					types.current_user.m_k.valAsBytes,
 					false,
 				)
-			} else if len(cmd.l_token) == 1 || cmd.isUsingDotNotation == true { 	//TODO: 12 March, 2025 THIS WHOLE BLOCK IS FUCKED FOR SOME REASON - MARSHALL
+			} else if len(cmd.l_token) == 1  { 	//TODO: 12 March, 2025 THIS WHOLE BLOCK IS FUCKED FOR SOME REASON - MARSHALL
 				//in the event the user is counting all records in a collection
 				collectionName := cmd.l_token[0]
 
@@ -1701,7 +1715,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used PURGE command", "")
 		switch (len(cmd.l_token))
 		{
-		case 1:
+		case COLLECTION_TIER:
 			collectionName = cmd.l_token[0]
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -1740,7 +1754,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 2:
+		case CLUSTER_TIER:
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 
@@ -1756,7 +1770,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.PURGE], .STANDARD_PUBLIC)
 
-			if len(cmd.l_token) >= 2 && cmd.isUsingDotNotation == true {
+			if len(cmd.l_token) >= 2  {
 				result := data.PURGE_CLUSTER(collectionName, clusterName)
 				switch result {
 				case true:
@@ -1791,7 +1805,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
+		case RECORD_TIER:
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
@@ -1852,7 +1866,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .SIZE_OF:
 		log_runtime_event("Used SIZE_OF command", "")
 		switch (len(cmd.l_token)) {
-		case 1:
+		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
@@ -1890,8 +1904,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 2:
-			if cmd.isUsingDotNotation {
+		case CLUSTER_TIER:
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 
@@ -1927,11 +1940,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						clusterName,
 					)
 				}
-			} else {
-				fmt.println(
-					"Invalid command. Use dot notation for clusters: SIZE_OF CLUSTER collection_name.cluster_name",
-				)
-			}
+
 			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
@@ -1939,12 +1948,10 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				false,
 			)
 			break
-		case 3:
-			if cmd.isUsingDotNotation {
+		case RECORD_TIER:
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
-
 
 				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 					fmt.printfln(
@@ -1985,11 +1992,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					types.current_user.m_k.valAsBytes,
 					false,
 				)
-			} else {
-				fmt.println(
-					"Invalid command. Use dot notation for records: SIZE_OF RECORD collection_name.cluster_name.record_name",
-				)
-			}
+
 		case:
 			fmt.println(
 				"Invalid SIZE_OF command. Use SIZE_OF COLLECTION, SIZE_OF CLUSTER, or SIZE_OF RECORD.",
@@ -2001,7 +2004,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .TYPE_OF:
 		log_runtime_event("Used TYPE_OF command", "")
 		//only works on records
-		if len(cmd.l_token) == 3 && cmd.isUsingDotNotation == true {
+		if len(cmd.l_token) == 3  {
 			collectionName := cmd.l_token[0]
 			clusterName := cmd.l_token[1]
 			recordName := cmd.l_token[2]
@@ -2068,8 +2071,8 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .CHANGE_TYPE:
 		//only works on records
 		switch (len(cmd.l_token)) {
-		case 3:
-			if Token[.TO] in cmd.p_token && cmd.isUsingDotNotation == true {
+		case RECORD_TIER:
+			if Token[.TO] in cmd.p_token  {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
@@ -2172,9 +2175,8 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	case .ISOLATE:
 		log_runtime_event("Used ISOLATE command", "")
 		switch (len(cmd.l_token)) {
-		case 1:
+		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
-
 
 			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
 				fmt.printfln(

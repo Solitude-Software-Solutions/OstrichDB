@@ -4,6 +4,14 @@
 The `HELP` command token is a single-token action. It Displays helpful information about OstrichDB.'
 `HELP `Can be used alone to display general information or chained with specific tokens to display detailed information about that token. For example: `HELP COLLECTION` will display detailed information about collections. The `HELP` command can produce different levels of information depending on if the `OST_HELP` value in the `/bin/config` file is set to `simple` or `verbose`. Currently it is set to `verbose`. If you'd like the help information that us shown to be more simple, set the `OST_HELP` value to `simple`.
 
+### AGENT
+The `AGENT` command token is a single-token action. It starts the OstrichDB natural language processing agent. This agent allows the user to "in plain English" interact with the DBMS and perform queries.
+### AGENT END
+
+### SERVER START
+The `SERVER` command token is a single-token action. It starts the OstrichDB http server allowing the user to access the API layer and interact with the DBMS.
+### SERVER END
+
 ### VERSION START
 The `VERSION` command tokenis a single-token action. It fetches the current version of OstrichDB. The versioning scheme for OstrichDB is `Release_Type_vMajor.Minor.Patch_Status`.
 For example: `Pre_Rel_v0.4.0_dev`.
@@ -80,12 +88,28 @@ The `TYPE_OF` command token is a multi-token action. It is used to return the da
 ### CHANGE_TYPE START
 The `CHANGE_TYPE` command token is a multi-token action. It is used to change the data type of a record. `CHANGE_TYPE`. For example: `CHANGE_TYPE <col_name>.<clu_name>.<rec_name> TO <new_data_type>` will change the data type of the record with the specified name to the new specified data type.
 
+### LOCK START
+The `LOCK` command token is a multi-token action. It is used to set a database's permssions to either Read-Only or Inaccessible mode. Only an admin can perfor this action. For example: `LOCK <collection_name> -n` Will set the permission mode to `Inaccessible` meaning no one aside from the creator can access or modify the contents of the collection.
+### LOCK END
+
+### UNLOCK START
+The `LOCK` command token is a multi-token action. It is used to set a database's permssions to Read-Write mode. Only an admin user can unlock a collection and only collections that are currently locked can be unlocked. For example: `UNLOCK <collection_name>`
+### UNLOCK END
+
+### ENC START
+The `ENC` command token is a multi-token action. Short for ENCRYPT It is used to encrpyt a collection using AES-256 making your data more secure. All collections are encrypted upon creation and while at rest. For example: `ENC <collection_name>`
+### ENC END
+
+### DEC START
+The `DEC` command token is a multi-token action. Short for DECRYPT It is used to decrpyt an already encrypted collection. For example: `DEC <collection_name>`
+### DEC END
+
 ### WHERE START
 The `WHERE` command token is a multi-token action. It is used to search for the location of a cluster or record within OstrichDB. `WHERE` can be followed by the target token ie `CLUSTER` or `RECORD` then the target object name or just the object name. For example: `WHERE RECORD <rec_name>` will search all collections for the location of any record with the specified name.
 ### WHERE END
 
 ### BACKUP START
-The `BACKUP` command token is a multi-token action. It is used to create a backup of a collection file. For example: `BACKUP COLLECTION <col_name>` will create a backup of the collection with the specified name. Backups are stored in the `/bin/backups` directory and end with the `.ost` file extension. This command can only be used to create a backup of a collection file.
+The `BACKUP` command token is a multi-token action. It is used to create a backup of a collection file. For example: `BACKUP COLLECTION <col_name>` will create a backup of the collection with the specified name. Backups are stored in the `/bin/backups` directory and end with the `.ostrichdb` file extension. This command can only be used to create a backup of a collection file.
 ### BACKUP END
 
 ### ISOLATE START
@@ -97,7 +121,7 @@ The `BENCHMARK` command token can be used as a single or multi-token command. It
 ### BENCHMARK END
 
 ### COLLECTION START
-Collections are individual databases that are "collections" of smaller data objects called "clusters". Collection files are stored in the `/bin/collections` and end with the `.ost` file extension. Within the OstrichDB command line `COLLECTION`is a target token. This is used to specify that an action will be preformed on a collection. For example: `NEW COLLECTION <col_name>` will create a new collection with the specified name.
+Collections are individual databases that are "collections" of smaller data objects called "clusters". Collection files are stored in the `/bin/public/standard` and end with the `.ostrichdb` file extension. Within the OstrichDB command line `COLLECTION`is a target token. This is used to specify that an action will be preformed on a collection. For example: `NEW COLLECTION <col_name>` will create a new collection with the specified name.
 ### COLLECTION END
 
 ### CLUSTER START
@@ -109,11 +133,15 @@ Records are individual pieces of data that are stored within clusters. Records a
 ### RECORD END
 
 ### TO START
-The `TO` parameter token is used with the `RENAME` token to specify the new name of an object. `TO` MUST be followed by the new name of the object. For example: `RENAME COLLECTION <col_name> TO <new_col_name>` will rename the collection with the specified name to the new specified name.
+The `TO` parameter token is used with the `RENAME` token to specify the new name of an object. `TO` MUST be followed by the new name of the object. For example: `RENAME <col_name> TO <new_col_name>` will rename the collection with the specified name to the new specified name.
 ### TO END
 
+### WITH START
+The `WITH` parameter token is used witht the `NEW` token to assign a records value at the same time as you create it. This prevents the need for 2 seperate commands to create a record and assign its value. For example: `NEW <col_name>.<clu_name>.<rec_name> OF_TYPE <data_type> WITH <value>`
+### WITH END
+
 ### OF_TYPE START
-The `OF_TYPE` parameter token is used with the `NEW` token to specify the data type of a new record. `OF_TYPE` MUST be followed by the data type of the new record. For example: `NEW RECORD <col_name>.<clu_name>.<rec_name> OF_TYPE <data_type>` will create a new record with the specified name and data type.
+The `OF_TYPE` parameter token is used with the `NEW` token to specify the data type of a new record. `OF_TYPE` MUST be followed by the data type of the new record. For example: `NEW <col_name>.<clu_name>.<rec_name> OF_TYPE <data_type>` will create a new record with the specified name and data type.
 ### OF_TYPE END
 
 ### CLPS START

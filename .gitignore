@@ -2,6 +2,7 @@
 /bin
 ols.json
 .ost
+.ostrichdb
 .log
 .exe
 .out

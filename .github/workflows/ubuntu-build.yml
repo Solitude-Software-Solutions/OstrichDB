@@ -11,6 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install Go-lang
+        run: |
+          sudo apt install golang
+
+      - name: Install Clang
+        run: |
+          sudo apt install clang
+
       - name: Install Odin
         run: |
           git clone https://github.com/odin-lang/Odin

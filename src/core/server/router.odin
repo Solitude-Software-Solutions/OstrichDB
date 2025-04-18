@@ -115,8 +115,11 @@ is_path_match :: proc(routePath: string, requestPath: string) -> bool {
 
 	// If we have query parameters in the route, verify they exist in the request
 	if strings.contains(lastRouteSegment, "?") {
-		routeQuery := strings.split(lastRouteSegment, "?")[1]
-		requestQuery := strings.split(lastRequestSegment, "?")[1]
+		// routeQuery := strings.split(lastRouteSegment, "?")[1]
+		// requestQuery := strings.split(lastRequestSegment, "?")[1]
+
+		routeQuery := strings.split(lastRouteSegment, "?")[0]
+		requestQuery := strings.split(lastRequestSegment, "?")[0]
 
 		// Split query parameters
 		route_params := strings.split(routeQuery, "&")

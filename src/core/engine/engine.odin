@@ -57,9 +57,6 @@ INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 START_OSTRICHDB_ENGINE :: proc() -> int {
 	using const
 
-	ServerConfig := types.Server_Config {
-		port = 8042,
-	}
 
 	//Initialize data integrity system
 	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
@@ -114,7 +111,7 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						false,
 					)
 					//Auto-server loop
-					serverDone := server.START_OSTRICH_SERVER(ServerConfig)
+					serverDone := server.START_OSTRICH_SERVER(&types.ServerConfig)
 					if serverDone == 0 {
 						fmt.println("\n\n")
 						cmdLineDone := START_COMMAND_LINE()
@@ -122,6 +119,7 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 							return cmdLineDone
 						}
 					}
+
 				} else {
 					// if the AUTO_SERVE config value is false, then continue starting command line
 					security.ENCRYPT_COLLECTION(
@@ -165,6 +163,8 @@ START_COMMAND_LINE :: proc() -> int {
 		APPEND_COMMAND_TO_HISTORY(input)
 		security.ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		cmd := PARSE_COMMAND(input)
+
+		// fmt.println("cmd: ", cmd) //Debugging DO NOT DELETE
 
 		//Check to ensure that before the next command is executed, the max session time hasnt been met
 		sessionDuration := security.GET_SESSION_DURATION()

@@ -1,6 +1,7 @@
 package const
 import "core:fmt"
 import "core:time"
+import "../types"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -26,9 +27,9 @@ when DEV_MODE == true {
 	STANDARD_COLLECTION_PATH :: "./public/standard/"
 	SECURE_COLLECTION_PATH :: "./private/secure/"
 	BACKUP_PATH :: "./public/backups/"
-	CONFIG_PATH :: "./private/config.ost"
-	ID_PATH :: "./private/ids.ost"
-	HISTORY_PATH :: "./private/history.ost"
+	CONFIG_PATH :: "./private/config.ostrichdb"
+	ID_PATH :: "./private/ids.ostrichdb"
+	HISTORY_PATH :: "./private/history.ostrichdb"
 	BENCHMARK_PATH :: "./private/benchmark/"
 	LOG_DIR_PATH :: "./logs/"
 	RUNTIME_LOG_PATH :: "./logs/runtime.log"
@@ -45,9 +46,9 @@ when DEV_MODE == true {
 	STANDARD_COLLECTION_PATH :: "./.ostrichdb/public/standard/"
 	SECURE_COLLECTION_PATH :: "./.ostrichdb/private/secure/"
 	BACKUP_PATH :: "./.ostrichdb/public/backups/"
-	CONFIG_PATH :: "./.ostrichdb/private/config.ost"
-	ID_PATH :: "./.ostrichdb/private/ids.ost"
-	HISTORY_PATH :: "./.ostrichdb/private/history.ost"
+	CONFIG_PATH :: "./.ostrichdb/private/config.ostrichdb"
+	ID_PATH :: "./.ostrichdb/private/ids.ostrichdb"
+	HISTORY_PATH :: "./.ostrichdb/private/history.ostrichdb"
 	BENCHMARK_PATH :: "./.ostrichdb/private/benchmark/"
 	LOG_DIR_PATH :: "./.ostrichdb/logs/"
 	RUNTIME_LOG_PATH :: "./.ostrichdb/logs/runtime.log"
@@ -63,7 +64,7 @@ FFVF_PATH :: "ost_file_format_version.tmp"
 CONFIG_CLUSTER :: "OSTRICH_CONFIGS"
 CLUSTER_ID_CLUSTER :: "CLUSTER__IDS"
 USER_ID_CLUSTER :: "USER__IDS"
-OST_EXT :: ".ost"
+OST_EXT :: ".ostrichdb"
 VERBOSE_HELP_FILE :: "../src/core/help/docs/verbose/verbose.md"
 SIMPLE_HELP_FILE :: "../src/core/help/docs/simple/simple.md"
 GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
@@ -198,3 +199,5 @@ CL_DYNAMIC_BASE :: "/c/*/cl/*"
 R_DYNAMIC_BASE :: "/c/*/cl/*/r/*"
 R_DYNAMIC_TYPE_QUERY :: "/c/*/cl/*/r/*?type=*" //Only used for creating a new record without a value...POST request
 R_DYNAMIC_TYPE_VALUE_QUERY :: "/c/*/cl/*/r/*?type=*&value=*" //Used for setting an already existing records value...PUT request
+
+Server_Ports:[]int:{8042,8044,8046,8048,8050}

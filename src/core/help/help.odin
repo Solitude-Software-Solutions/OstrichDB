@@ -56,6 +56,14 @@ validCommands := []string {
 	"EXPORT",
 	"LOCK",
 	"UNLOCK",
+	"ENC",
+	"DEC",
+	"CLP",
+	"CLPS",
+	"SERVE",
+	"SERVER",
+	"AGENT",
+	"WHERE"
 }
 //called when user only enters the "HELP" command without any arguments
 // will take in the value from the config file. if verbose is true then show data from verbose help file, and vice versa
@@ -76,7 +84,7 @@ SET_HELP_MODE :: proc() -> bool {
 		break
 	case:
 		fmt.println(
-			"Invalid value detected in config file.\n Please delete the ./bin/core/config.ost file and rebuild OstrichDB.",
+			"Invalid value detected in config file.\n Please delete the ./bin/private/config.ostrichdb file and rebuild OstrichDB.",
 		)
 	}
 
@@ -166,7 +174,7 @@ GET_GENERAL_HELP_INFO :: proc() -> string {
 	return strings.clone(content)
 }
 
-//shows a table of explaining atoms
+//shows a table of explaining CLPs
 SHOW_TOKEN_HELP_TABLE :: proc() -> string {
 	using const
 
