@@ -21,7 +21,7 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 - Dot Notation Syntax when using the serverless CLI
 - Command Chaining
 - Built-in benchmarking, configurations, and user command history
-- macOS & Linux Support
+- Exclusive macOS Support
 
 ## **Installation**
 
@@ -296,6 +296,7 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
   - `MERGE`: Combine multiple collections or clusters into one
 - Command chaining for even more complex operations
 - OstrichDB web application
+- Linux support
 - Windows support
 - External API support for even more programming languages!
 - Integration with the planned Feather query language!
