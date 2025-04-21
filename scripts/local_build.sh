@@ -13,23 +13,37 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Change to the project root directory
 cd "$DIR/.."
 
-# Check if nlp.dylib already exists
-if [ -f "src/core/nlp/nlp.dylib" ]; then
+OS_TYPE="$(uname)"
+case "$OS_TYPE" in
+    "Linux")
+        LIB_EXT="so"
+        ;;
+    "Darwin")
+        LIB_EXT="dylib"
+        ;;
+    *)
+        echo "Unsupported OS: $OS_TYPE"
+        exit 1
+        ;;
+esac
+
+# Check if nlp.${LIB_EXT} already exists
+if [ -f "src/core/nlp/nlp.${LIB_EXT}" ]; then
     echo "$(tput setaf 3)NLP library already exists, skipping build$(tput sgr0)"
 else
     # Go into nlp package and build NLP Go library
     cd "src/core/nlp"
     go mod init main
     go mod tidy
-    go build -buildmode c-shared -o nlp.dylib
+    go build -buildmode c-shared -o nlp.${LIB_EXT}
     # Go back to root dir
     cd "$DIR/.."
 fi
 
-# Check if nlp.dylib exists in bin directory and remove it
-if [ -f "./bin/nlp.dylib" ]; then
+# Check if nlp.${LIB_EXT} exists in bin directory and remove it
+if [ -f "./bin/nlp.${LIB_EXT}" ]; then
     echo "$(tput setaf 3)Removing existing NLP library$(tput sgr0)"
-    rm "./bin/nlp.dylib"
+    rm "./bin/nlp.${LIB_EXT}"
 fi
 
 # Go back to root dir
@@ -45,7 +59,7 @@ if [ $? -eq 0 ]; then
     mkdir -p ./bin
     
     # Move the NLP library from src/core/nlp to the bin dir
-    cp src/core/nlp/nlp.dylib ./bin/
+    cp src/core/nlp/nlp.${LIB_EXT} ./bin/
     
     # Try to move the executable
     if mv main.bin ./bin/ 2>/dev/null; then

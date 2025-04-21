@@ -2,10 +2,19 @@ package nlp
 
 import "core:c"
 import "core:c/libc"
-foreign import go "nlp.dylib"
-foreign go {
-	run_agent :: proc() ---
+when ODIN_OS == .Linux {
+    foreign import go "nlp.so" 
+
+    foreign go {
+        run_agent :: proc() ---
+    }
+} else when ODIN_OS == .Darwin {
+    foreign import go "nlp.dylib"
+    foreign go {
+        run_agent :: proc() ---
+    }
 }
+
 
 /********************************************************
 Author: Marshall A Burns
