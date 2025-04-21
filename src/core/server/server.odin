@@ -406,7 +406,10 @@ HANDLE_SERVER_KILL_INPUT :: proc() {
 		fmt.println("Stopping OstrichDB server...")
 		isRunning = false
 		//ping the server to essentially refresh it to ensure it stops thus breaking the server main loop
-		libc.system("nc -zv localhost 8042")
+		for port in const.Server_Ports{
+		portCString:= strings.clone_to_cstring(fmt.tprintf("nc -zv localhost %d", port))
+		libc.system(portCString )
+		}
 		return
 	} else {
 		fmt.printfln("Invalid input")
