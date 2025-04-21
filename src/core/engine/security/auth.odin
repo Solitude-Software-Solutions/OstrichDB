@@ -54,7 +54,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		return false
 	}
 
-	secCollection := utils.concat_secure_collection_name(userName)
+	secCollection := utils.concat_secure_collection_name(usernameCapitalized)
 
 	//decrypt the user secure collection
 	decSuccess, _ := DECRYPT_COLLECTION(
