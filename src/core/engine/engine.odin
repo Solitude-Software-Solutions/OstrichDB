@@ -57,7 +57,6 @@ INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 START_OSTRICHDB_ENGINE :: proc() -> int {
 	using const
 
-
 	//Initialize data integrity system
 	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
 	switch (types.OstrichEngine.Initialized)
