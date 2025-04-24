@@ -231,7 +231,6 @@ START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 
 	//Assign the first usable OstrichDB port. Default is set to 8042 but might be taken
 	usablePort:= CHECK_IF_PORT_IS_FREE(const.Server_Ports)
-	fmt.println(usablePort)
     for p in const.Server_Ports {
         if p != usablePort{
                 config.port = usablePort
@@ -241,7 +240,6 @@ START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 
 	//Create a new endpoint to listen on
 	endpoint := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, config.port} //listen on all interfaces
-
 
 
 	// Creates and listens on a TCP socket
@@ -408,7 +406,7 @@ HANDLE_SERVER_KILL_INPUT :: proc() {
 		//ping the server to essentially refresh it to ensure it stops thus breaking the server main loop
 		for port in const.Server_Ports{
 		portCString:= strings.clone_to_cstring(fmt.tprintf("nc -zv localhost %d", port))
-		libc.system(portCString )
+		libc.system(portCString)
 		}
 		return
 	} else {
