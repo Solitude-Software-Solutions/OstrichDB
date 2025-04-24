@@ -6,7 +6,7 @@
 3. Navigate to the directory where the `ModelFile` is located
 3. Run `ollama create ostrichdb[recent_version] -f ModelFile` to generate the model
 
-The next two stpes can be done depending on how you want to interact with the NLP module
+The next two steps can be done depending on how you want to interact with the NLP module
 
 ### Using Go code
 4. Build the Go code using `go build`
