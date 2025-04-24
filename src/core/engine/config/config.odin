@@ -63,10 +63,7 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	using const
 	using utils
 
-	fn := CONFIG_PATH
-	cn := CONFIG_CLUSTER
-
-	data, readSuccess := utils.read_file(fn, #procedure)
+	data, readSuccess := utils.read_file(CONFIG_PATH, #procedure)
 	defer delete(data)
 	if !readSuccess {
 		return -1
@@ -80,7 +77,7 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	closingBrace := -1
 
 	for i := 0; i < len(lines); i += 1 {
-		if strings.contains(lines[i], cn) {
+		if strings.contains(lines[i], CONFIG_CLUSTER) {
 			clusterStart = i
 		}
 		if clusterStart != -1 && strings.contains(lines[i], "}") {
@@ -116,7 +113,7 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	}
 
 	newContent := strings.join(newLines[:], "\n")
-	writeSuccess := utils.write_to_file(fn, transmute([]byte)newContent, #procedure)
+	writeSuccess := utils.write_to_file(CONFIG_PATH, transmute([]byte)newContent, #procedure)
 	if !writeSuccess {
 		return -1
 	}
@@ -129,30 +126,33 @@ APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	using utils
 	using types
 
-	bool := Token[.BOOLEAN]
+
 
 	successCount := 0
 	// Append all the records to the config cluster
-	if APPEND_CONFIG_RECORD(ENGINE_INIT, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(ENGINE_INIT, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(ENGINE_LOGGING, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(ENGINE_LOGGING, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(USER_LOGGED_IN, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(USER_LOGGED_IN, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(HELP_IS_VERBOSE, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(HELP_IS_VERBOSE, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(AUTO_SERVE, "true", bool) == 0 { 	//server mode on by default while working on it
+	if APPEND_CONFIG_RECORD(AUTO_SERVE, "true", Token[.BOOLEAN]) == 0 { 	//server mode on by default while working on it
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(ERROR_SUPPRESSION, "false", bool) == 0 {
+	if APPEND_CONFIG_RECORD(ERROR_SUPPRESSION, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", bool) == 0 {
+	if APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", Token[.BOOLEAN]) == 0 {
 		successCount += 1
+	}
+	if APPEND_CONFIG_RECORD(LIMIT_SESSION_TIME, "true", Token[.BOOLEAN]) == 0{ //CLI session time limit is on by defualt
+	   successCount += 1
 	}
 
 	metadata.UPDATE_METADATA_UPON_CREATION(CONFIG_PATH)
@@ -193,10 +193,6 @@ UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	switch (recordType) {
 	case Token[.BOOLEAN]:
 		valueAny, ok = data.CONVERT_RECORD_TO_BOOL(rValue)
-		break
-	case Token[.STRING]:
-		valueAny = rValue
-		ok = true
 		break
 	}
 
