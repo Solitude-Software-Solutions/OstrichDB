@@ -77,11 +77,12 @@ ENGINE_LOGGING :: "ENGINE_LOGGING"
 USER_LOGGED_IN :: "USER_LOGGED_IN"
 HELP_IS_VERBOSE :: "HELP_IS_VERBOSE"
 AUTO_SERVE :: "AUTO_SERVE" //whenever cli tool starts it runs the server if this is set to true
-ERROR_SUPPRESSION :: "ERROR_SUPPRESSION" //whether errors are printed to the console or not
+SUPPRESS_ERRORS :: "SUPPRESS_ERRORS" //whether errors are printed to the console or not
 LIMIT_HISTORY :: "LIMIT_HISTORY" //whether or not to limit how the number of commands are stored in the users history cluster
+LIMIT_SESSION_TIME:: "LIMIT_SESSION_TIME" //whether or not the 24hr session time limit is on or off. default is `true`
 
 //MISC CONSTANTS
-ost_carrot :: "OST>>>"
+ostCarrat :: "OstrichDB>>"
 VALID_RECORD_TYPES: []string : {
 	"CHAR",
 	"STR",

@@ -273,14 +273,16 @@ When setting a record value, you must specify the records data type by using the
 ---
 
 ## **Configs**
-OstrichDB has a configuration file that allows the user to customize the DBMS to their liking.
-- **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is false)
-- **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is false)
-- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is true)
+OstrichDB has a configuration file that allows the user to customize certain aspects of the DBMS to their liking.
 
+- **`HELP_IS_VERBOSE`**: Decide whether help information is simple or verbose. Default is `false`
+- **`SUPPRESS_ERRORS`**: Show or hide error messages. Default is `false`
+- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) Default is `true`
+- **`AUTO_SERVE`**: Determines if the built-in OstrichDB server automatically starts the moment the user logs in. Default is `true`
+- **`LIMIT_SESSION_TIME`**: Determines if the CLI session timer is enabled or disabled. If enabled a user can only be logged in for 24hrs. Default is `true`
 
 **Note: ALL configs must be set using the following command:**
-Values can only be `true` or `false`
+Config values can only be `true` or `false`
 
 ```
 SET CONFIG {CONFIG_NAME} TO {VALUE}

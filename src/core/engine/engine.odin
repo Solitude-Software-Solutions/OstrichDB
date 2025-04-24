@@ -57,7 +57,6 @@ INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 START_OSTRICHDB_ENGINE :: proc() -> int {
 	using const
 
-
 	//Initialize data integrity system
 	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
 	switch (types.OstrichEngine.Initialized)
@@ -149,6 +148,10 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 //Command line loop
 START_COMMAND_LINE :: proc() -> int {
+    using const
+    using types
+    using security
+
 	result := 0
 	fmt.println("Welcome to the OstrichDB DBMS Command Line")
 	utils.log_runtime_event("Entered DBMS command line", "")
@@ -156,40 +159,43 @@ START_COMMAND_LINE :: proc() -> int {
 		//Command line start
 		buf: [1024]byte
 
-		fmt.print(const.ost_carrot, "\t")
+		fmt.print(const.ostCarrat, "\t")
 		input := utils.get_input(false)
 
-		security.DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		DECRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 		APPEND_COMMAND_TO_HISTORY(input)
-		security.ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
 		cmd := PARSE_COMMAND(input)
-
 		// fmt.println("cmd: ", cmd) //Debugging DO NOT DELETE
 
-		//Check to ensure that before the next command is executed, the max session time hasnt been met
-		sessionDuration := security.GET_SESSION_DURATION()
-		maxDurationMet := security.CHECK_IF_SESSION_DURATION_MAXED(sessionDuration)
-		switch (maxDurationMet)
-		{
-		case false:
-			break
-		case true:
-			security.HANDLE_MAXED_SESSION()
+
+		//check if  the LIMIT_SESSION_TIME config is enabled.
+		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		sessionLimitValue:= data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER,Token[.BOOLEAN],LIMIT_SESSION_TIME)
+		ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, true,)
+
+		if sessionLimitValue == "true"{
+		  //Check to ensure that BEFORE the next command is executed, the max session time hasnt been met
+		  sessionDuration := GET_SESSION_DURATION()
+		  maxDurationMet := CHECK_IF_SESSION_DURATION_MAXED(sessionDuration)
+		  switch (maxDurationMet)
+		  {
+		  case false:
+		      break
+		  case true:
+		      HANDLE_MAXED_SESSION()
+		  }
 		}
-
 		result = EXECUTE_COMMAND(&cmd)
-
-		//Command line end
 	}
 
 	//Re-engage the loop
-	if types.USER_SIGNIN_STATUS == false {
-		security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	if USER_SIGNIN_STATUS == false {
+		security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 		START_OSTRICHDB_ENGINE()
 	}
 
 	return result
-
 }
 
 //Used to restart the engine
