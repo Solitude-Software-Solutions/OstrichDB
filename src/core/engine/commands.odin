@@ -41,18 +41,18 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//Handle command chaining
 	if cmd.isChained {
 		fmt.println("Executing chained commands...")
-		
+
 		// Split the raw input by the && operator
 		commandArr := strings.split(cmd.rawInput, "&&")
-		result := 1 
-		
+		result := 1
+
 		// Execute each command in sequence
 		for command in commandArr {
 			trimmedCommand := strings.trim_space(command)
 			if len(trimmedCommand) > 0 {
 				parsedCmd := PARSE_COMMAND(trimmedCommand)
 				cmdResult := EXECUTE_COMMAND(&parsedCmd)
-				
+
 				// If any command fails, return that failure code
 				if cmdResult <= 0 {
 					result = cmdResult
@@ -60,7 +60,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			}
 		}
-		
+
 		return result
 	}
 
@@ -1333,112 +1333,36 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					for key, val in cmd.p_token {
 						value = strings.to_lower(val)
 					}
-					fmt.printfln(
-						"Setting config: %s%s%s to %s%s%s",
-						BOLD_UNDERLINE,
-						configName,
-						RESET,
-						BOLD_UNDERLINE,
-						value,
-						RESET,
-					)
+
 					switch (configName)
 					{
-					case "HELP_VERBOSE":
-						if value == "true" || value == "false" {
-							success := config.UPDATE_CONFIG_VALUE(HELP_IS_VERBOSE, value)
-							if success == false {
-								fmt.printfln("Failed to set HELP config to %s", value)
-							} else {
-								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 4)
-								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
-								fmt.printfln("Successfully set HELP config to %s", value)
-							}
-							help.SET_HELP_MODE()
+					case "HELP_IS_VERBOSE", "SUPPRESS_ERRORS","LIMIT_HISTORY", "AUTO_SERVE","LIMIT_SESSION_TIME":
+					if value == "true" || value == "false" {
+						fmt.printfln(
+							"Setting config: %s%s%s to %s%s%s",
+							BOLD_UNDERLINE,
+							configName,
+							RESET,
+							BOLD_UNDERLINE,
+							value,
+							RESET,
+						)
+						success := config.UPDATE_CONFIG_VALUE(configName, value)
+						if success == false {
+							fmt.printfln("%sFailed%s to set %s%s%s configuration to %s%s%s", RED, RESET, BOLD_UNDERLINE, configName, RESET, BOLD_UNDERLINE, value, RESET)
 						} else {
-							fmt.println(
-								"Invalid value. Valid values for config HELP_VERBOSE are: 'true' or 'false'",
-							)
+						    AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 4)
+							AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
+							fmt.printfln("%sSuccessfully%s set %s%s%s configuration to %s%s%s", GREEN, RESET, BOLD_UNDERLINE, configName, RESET, BOLD_UNDERLINE, value, RESET)
 						}
 						break
-					case "SUPPRESS_ERRORS":
-						if value == "true" || value == "false" {
-							fmt.printfln(
-								"Setting config: %s%s%s to %s%s%s",
-								BOLD_UNDERLINE,
-								configName,
-								RESET,
-								BOLD_UNDERLINE,
-								value,
-								RESET,
-							)
-							success := config.UPDATE_CONFIG_VALUE(ERROR_SUPPRESSION, value)
-							if success == false {
-								fmt.printfln("Failed to set SUPPRESS_ERRORS config to %s", value)
-							} else {
-								fmt.printfln(
-									"Successfully set SUPPRESS_ERRORS config to %s",
-									value,
-								)
-							}
-							break
-						} else {
-							fmt.println(
-								"Invalid value. Valid values for config SUPPRESS_ERRORS are: 'true' or 'false'",
-							)
-						}
-						break
-					case "LIMIT_HISTORY":
-						if value == "true" || value == "false" {
-							fmt.printfln(
-								"Setting config: %s%s%s to %s%s%s",
-								BOLD_UNDERLINE,
-								configName,
-								RESET,
-								BOLD_UNDERLINE,
-								value,
-								RESET,
-							)
-							success := config.UPDATE_CONFIG_VALUE(LIMIT_HISTORY, value)
-							if success == false {
-								fmt.printfln("Failed to set LIMIT_HISTORY config to %s", value)
-							} else {
-								fmt.printfln("Successfully set LIMIT_HISTORY config to %s", value)
-							}
-							break
-						} else {
-							fmt.println(
-								"Invalid value. Valid values for config LIMIT_HISTORY are: 'true' or 'false'",
-							)
-						}
-						break
-					case "AUTO_SERVE":
-						if value == "true" || value == "false" {
-							fmt.printfln(
-								"Setting config: %s%s%s to %s%s%s",
-								BOLD_UNDERLINE,
-								configName,
-								RESET,
-								BOLD_UNDERLINE,
-								value,
-								RESET,
-							)
-							success := config.UPDATE_CONFIG_VALUE(AUTO_SERVE, value)
-							if success == false {
-								fmt.printfln("Failed to set AUTO_SERVE config to %s", value)
-							} else {
-								fmt.printfln("Successfully set AUTO_SERVE config to %s", value)
-							}
-							break
-						} else {
-							fmt.println(
-								"Invalid value. Valid values for config AUTO_SERVE are: 'true' or 'false'",
-							)
-						}
-						break
+					} else {
+						fmt.printfln("%sInvalid value provided.%s Configuration values can only be: 'true' or 'false'",RED, RESET)
+					}
+					break
 					case:
 						fmt.printfln(
-							"Invalid config name provided. Valid config names are:\nHELP_VERBOSE\nSUPPRESS_ERRORS\nLIMIT_HISTORY\nSERVER_ON\n",
+							"%sInvalid configuration name provided%s Valid configuration names are:\nHELP_IS_VERBOSE\nSUPPRESS_ERRORS\nLIMIT_HISTORY\nAUTO_SERVE, LIMIT_SESSION_TIME\n",
 						)
 					}
 				} else {
