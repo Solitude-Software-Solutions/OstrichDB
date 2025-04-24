@@ -126,9 +126,8 @@ APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	using utils
 	using types
 
-
-
 	successCount := 0
+
 	// Append all the records to the config cluster
 	if APPEND_CONFIG_RECORD(ENGINE_INIT, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
@@ -145,7 +144,7 @@ APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	if APPEND_CONFIG_RECORD(AUTO_SERVE, "true", Token[.BOOLEAN]) == 0 { 	//server mode on by default while working on it
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(ERROR_SUPPRESSION, "false", Token[.BOOLEAN]) == 0 {
+	if APPEND_CONFIG_RECORD(SUPPRESS_ERRORS, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
 	if APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", Token[.BOOLEAN]) == 0 {
@@ -157,7 +156,7 @@ APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 
 	metadata.UPDATE_METADATA_UPON_CREATION(CONFIG_PATH)
 
-	if successCount != 7 {
+	if successCount != 8 {
 		return false
 	}
 	return true
