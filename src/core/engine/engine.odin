@@ -156,7 +156,7 @@ START_COMMAND_LINE :: proc() -> int {
 		//Command line start
 		buf: [1024]byte
 
-		fmt.print(const.ost_carrot, "\t")
+		fmt.print(const.ostCarrat, "\t")
 		input := utils.get_input(false)
 
 		security.DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
