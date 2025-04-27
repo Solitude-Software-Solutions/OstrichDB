@@ -11,6 +11,7 @@ import "core:encoding/json"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "../../type_inference"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -50,7 +51,7 @@ CSV__IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool
 
 	csvClusterName := strings.to_upper(desiredColName)
 	head, body, recordCount := CSV__GET_DATA_FROM_CSV_FILE(fullPath[0])
-	inferSucces, csvTypes := INFER_CSV_RECORD_TYPES(head, recordCount)
+	inferSucces, csvTypes := type_inference.INFER_CSV_RECORD_TYPES(head, recordCount)
 	if !inferSucces {
 		fmt.printfln("Failed to infer record types")
 		return success

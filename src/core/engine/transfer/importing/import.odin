@@ -69,15 +69,15 @@ AUTO_DETECT_AND_HANDLE_IMPORT_FILES :: proc() -> (detected: bool, autoImportSucc
 		confirmation := utils.get_input(false)
 		if confirmation == "Y" || confirmation == "y" {
 			autoImportSuccess = select_import_file_from_executable_root(fileNames)
+			fmt.printfln("%s is returning: %v & %v ", #procedure, detected, autoImportSuccess)
 			return detected, autoImportSuccess //Files were detected AND user auto imported successfully
-
 		} else if confirmation == "N" || confirmation == "n" {
 			fmt.println("Ok, Please continue manually importing")
+			fmt.printfln("%s is returning: %v & %v ", #procedure, detected, autoImportSuccess)
 			return detected, autoImportSuccess //Files were detected but user chose to manually import
 		} else {
 			fmt.println("Please enter a valid input...[Y/N]")
 			AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
-
 		}
 	} else {
 		fmt.printfln(
@@ -86,29 +86,31 @@ AUTO_DETECT_AND_HANDLE_IMPORT_FILES :: proc() -> (detected: bool, autoImportSucc
 			utils.RESET,
 		)
 	}
-	return false, false //none detected and thus no auto import could happen
+	return detected, autoImportSuccess //none detected and thus no auto import could happen
 }
 
 
-HANDLE_IMPORT :: proc() -> (success: bool) {
+
+ HANDLE_IMPORT :: proc() -> (success: bool) {
     success = false
     name, fullPath, size, importType := GET_IMPORT_FILE_INFO()
     if confirm_import_exists(fullPath) {
-        //now ensure the file is not empty.
-        if importType == 0 {
-            // CSV file
+        //Todo:  ensure the file is not empty.
+        switch(importType){
+        case 0:
             if import_formats.CSV__IMPORT_CSV_FILE(name, fullPath) {
                 success = true
             } else {
                 fmt.println("Import operation could not be completed. Please try again.")
             }
-        } else if importType == 1 {
-            // JSON file
+            break
+        case 1:
             if import_formats.JSON__IMPORT_JSON_FILE(name, fullPath) {
                 success = true
             } else {
                 fmt.println("Import operation could not be completed. Please try again.")
             }
+            break
         }
     }
     return success

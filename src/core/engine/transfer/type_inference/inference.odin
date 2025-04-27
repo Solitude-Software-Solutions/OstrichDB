@@ -1,4 +1,4 @@
-package importing
+package type_inference
 
 import "../../../../utils"
 import "../../../const"
