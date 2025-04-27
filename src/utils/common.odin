@@ -29,7 +29,7 @@ read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
 			#line,
 		)
 		throw_err(error)
-		log_err("Error reading file", procedure)
+		log_err(fmt.tprintf("Error reading file %s", filepath), procedure)
 		return nil, false
 	}
 	return data, true

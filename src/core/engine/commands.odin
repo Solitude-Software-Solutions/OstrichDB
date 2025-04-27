@@ -4,7 +4,7 @@ import "../nlp"
 import "../../utils"
 import "../benchmark"
 import "../const"
-import "../engine/transfer"
+import "../engine/transfer/importing"
 import "../help"
 import "../server"
 import "../types"
@@ -2234,12 +2234,13 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// //IMPORT: Imports foreign data formats into OstrichDB. Currently only supports .csv files
 	case .IMPORT:
-		detected, autoImportSuccess := transfer.AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
+		detected, autoImportSuccess := importing.AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
 		if detected && autoImportSuccess == true {
 			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
 			break
 		} else if detected == true && autoImportSuccess == false { 	//files were detected but user wanted to continue manually or the import failed
-			importSuccess := transfer.HANDLE_IMPORT()
+			fmt.printfln("%sERROR automatically importing data%s\n", RED, RESET)
+			importSuccess := importing.HANDLE_IMPORT()
 			if importSuccess {
 				fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
 			} else {
@@ -2247,11 +2248,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		}
-
-		fmt.println("detected: ", detected)
-		fmt.println("autoImportSuccess: ", autoImportSuccess)
-
-
 	case .EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")
 		break

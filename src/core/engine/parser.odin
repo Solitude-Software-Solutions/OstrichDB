@@ -12,7 +12,7 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            Ah yes... the parser. Within you can find a poorlu written
+            Ah yes... the parser. Within you can find a poorly written
             state machine that parses the users input into a command.
             Commands are then returned to the caller in engine.odin,
             then executed.
@@ -34,7 +34,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 			isChained         = true,
 			rawInput          = strings.clone(input),
 		}
-		
+
 		// Set the first command as the c_token
 		parts := strings.split(input, "&&")
 		if len(parts) > 0 {
@@ -44,7 +44,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 				cmd.c_token = convert_string_to_ostrichdb_token(firstTokens[0])
 			}
 		}
-		
+
 		return cmd
 	}
 
