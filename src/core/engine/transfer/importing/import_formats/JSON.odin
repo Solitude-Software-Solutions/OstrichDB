@@ -61,6 +61,7 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 		}
 
 
+		//Create a collection and cluster for the data
 		colCreated := data.CREATE_COLLECTION(desiredColName, .STANDARD_PUBLIC)
 		if !colCreated {
 			fmt.println("Failed to create collection:", desiredColName)
@@ -68,13 +69,15 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 		}
 
 		clusterID:= data.GENERATE_ID(false)
-		//Create a new cluster
-		data.CREATE_CLUSTER(desiredColName, desiredColName, clusterID)
+		if data.CREATE_CLUSTER(desiredColName, desiredColName, clusterID) != 0{
+			fmt.println("Failed to create cluster:", desiredColName)
+			return false
+		}
 
 		// Process JSON data based on its structure
 		#partial switch v in jsonValue {
 		case json.Array:
-			// Handle array of objects
+			//Handles array of objects. This is good for the standard 'data' array most people use when working with JSON on web
 			for i := 0; i < len(v); i += 1 {
 				if v[i] != nil {
 					#partial switch obj in v[i] {
@@ -85,21 +88,18 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 
 						JSON__FLATTEN_JSON_VALUE("", v[i], &flattenedData)
 
-						// Convert flattened data to document fields
+						// Convert flattened data to record fields
 						fields := make(map[string]string)
 						defer delete(fields)
 
 						for key, val in flattenedData {
 							fields[key] = val.value
 						}
-
-						fmt.println("Flattened data:", flattenedData)
-						// Insert document
-						recordVal := fmt.tprintf("doc_%d", i)
-						// docInserted := data.DATA__INSERT_DOCUMENT(desiredColName, docId, fields)
-						// if !docInserted {
-						// 	fmt.println("Failed to insert document:", docId)
-						// }
+						//Create a record for each field with value and name
+						for k in fields {
+							filePath:= utils.concat_standard_collection_name(desiredColName)
+							data.CREATE_RECORD(filePath,desiredColName,k,fields[k],"JSON")
+						}
 					case:
 						fmt.println("Skipping non-object array element at index:", i)
 					}
@@ -107,6 +107,7 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 			}
 		case json.Object:
 			// Handle single object
+			fmt.println("Handling single object")
 			flattenedData := make(map[string]FlattenedValue)
 			defer delete(flattenedData)
 
@@ -120,7 +121,8 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 				fields[key] = val.value
 			}
 
-			fmt.println("Flattened data:", flattenedData)
+
+
 			// Insert as a single document
 			// docInserted := data.DATA__INSERT_DOCUMENT(desiredColName, "doc_1", fields)
 			// if !docInserted {

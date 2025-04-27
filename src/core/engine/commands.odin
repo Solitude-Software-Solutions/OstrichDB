@@ -2248,8 +2248,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			break
 		}
-		fmt.println("detected: ", detected)
-		fmt.println("autoImportSuccess: ", autoImportSuccess)
 	case .EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")
 		break
