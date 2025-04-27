@@ -1,11 +1,11 @@
 package import_formats
 
-import "../../../utils"
-import "../../const"
-import "../../types"
-import "../data"
-import "../data/metadata"
-import "../security"
+import "../../../../../utils"
+import "../../../../const"
+import "../../../../types"
+import "../../../data"
+import "../../../data/metadata"
+import "../../../security"
 import "core:encoding/csv"
 import "core:encoding/json"
 import "core:fmt"

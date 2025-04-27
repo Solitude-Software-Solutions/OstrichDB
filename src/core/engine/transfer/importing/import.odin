@@ -1,11 +1,11 @@
 package importing
 
-import "../../../utils"
-import "../../const"
-import "../../types"
-import "../data"
-import "../data/metadata"
-import "../security"
+import "../../../../utils"
+import "../../../const"
+import "../../../types"
+import "../../data"
+import "../../data/metadata"
+import "../../security"
 import "core:encoding/csv"
 import "core:encoding/json"
 import "core:fmt"
@@ -97,14 +97,14 @@ HANDLE_IMPORT :: proc() -> (success: bool) {
         //now ensure the file is not empty.
         if importType == 0 {
             // CSV file
-            if CSV__IMPORT_CSV_FILE(name, fullPath) {
+            if import_formats.CSV__IMPORT_CSV_FILE(name, fullPath) {
                 success = true
             } else {
                 fmt.println("Import operation could not be completed. Please try again.")
             }
         } else if importType == 1 {
             // JSON file
-            if JSON__IMPORT_JSON_FILE(name, fullPath) {
+            if import_formats.JSON__IMPORT_JSON_FILE(name, fullPath) {
                 success = true
             } else {
                 fmt.println("Import operation could not be completed. Please try again.")
@@ -216,9 +216,9 @@ select_import_file_from_executable_root :: proc(fileNames: [dynamic]string) -> b
 
             // Check file extension and call appropriate import function
             if strings.has_suffix(name, ".csv") {
-                importSuccess = CSV__IMPORT_CSV_FILE(name, pathConcat)
+                importSuccess = import_formats.CSV__IMPORT_CSV_FILE(name, pathConcat)
             } else if strings.has_suffix(name, ".json") {
-                importSuccess = JSON__IMPORT_JSON_FILE(name, pathConcat)
+                importSuccess = import_formats.JSON__IMPORT_JSON_FILE(name, pathConcat)
             }
         }
     }
