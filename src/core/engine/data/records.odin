@@ -69,13 +69,6 @@ CHECK_IF_SPECIFIC_RECORD_EXISTS :: proc(fn, cn, rn: string) -> bool {
 //appends a line to the end of a cluster with the data thats passed in
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 CREATE_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -> int {
-    fmt.println("CREATE_RECORD() getting the following arguments:")
-    fmt.println("fn:", fn)
-    fmt.println("cn:", cn)
-    fmt.println("rn:", rn)
-    fmt.println("rd:", rd)
-    fmt.println("rType:", rType)
-    fmt.println("ID:", ID)
 	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
 	if !readSuccess {
