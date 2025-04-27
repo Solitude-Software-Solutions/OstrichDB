@@ -45,8 +45,8 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 
 	if colNameConfirmation == "y" || colNameConfirmation == "Y" {
 		// Read the JSON file
-		jsonData, readErr := os.read_entire_file(fullPath[0])
-		if readErr != false {
+		jsonData, readErr := utils.read_file(fullPath[0],#procedure)
+		if readErr == false {
 			fmt.println("Error reading JSON file:", fullPath[0])
 			return false
 		}
@@ -93,12 +93,13 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 							fields[key] = val.value
 						}
 
+						fmt.println("Flattened data:", flattenedData)
 						// Insert document
 						recordVal := fmt.tprintf("doc_%d", i)
-						docInserted := data.DATA__INSERT_DOCUMENT(desiredColName, docId, fields)
-						if !docInserted {
-							fmt.println("Failed to insert document:", docId)
-						}
+						// docInserted := data.DATA__INSERT_DOCUMENT(desiredColName, docId, fields)
+						// if !docInserted {
+						// 	fmt.println("Failed to insert document:", docId)
+						// }
 					case:
 						fmt.println("Skipping non-object array element at index:", i)
 					}
@@ -119,12 +120,13 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 				fields[key] = val.value
 			}
 
+			fmt.println("Flattened data:", flattenedData)
 			// Insert as a single document
-			docInserted := data.DATA__INSERT_DOCUMENT(desiredColName, "doc_1", fields)
-			if !docInserted {
-				fmt.println("Failed to insert document")
-				return false
-			}
+			// docInserted := data.DATA__INSERT_DOCUMENT(desiredColName, "doc_1", fields)
+			// if !docInserted {
+			// 	fmt.println("Failed to insert document")
+			// 	return false
+			// }
 		case:
 			fmt.println("Unsupported JSON structure. Root must be an object or array of objects.")
 			return false

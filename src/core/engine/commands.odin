@@ -2235,12 +2235,11 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// //IMPORT: Imports foreign data formats into OstrichDB. Currently only supports .csv files
 	case .IMPORT:
 		detected, autoImportSuccess := importing.AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
-		fmt.println("detected: ", detected)
-		fmt.println("autoImportSuccess: ", autoImportSuccess)
 		if detected && autoImportSuccess == true {
 			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
 			break
 		} else if detected == true && autoImportSuccess == false { 	//files were detected but user wanted to continue manually or the import failed
+			fmt.printfln("%sERROR automatically importing data%s\n", RED, RESET)
 			importSuccess := importing.HANDLE_IMPORT()
 			if importSuccess {
 				fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
