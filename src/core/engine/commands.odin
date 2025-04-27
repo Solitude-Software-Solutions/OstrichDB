@@ -4,7 +4,7 @@ import "../nlp"
 import "../../utils"
 import "../benchmark"
 import "../const"
-import "../engine/transfer"
+import "../engine/transfer/importing"
 import "../help"
 import "../server"
 import "../types"
@@ -2234,7 +2234,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		break
 	// //IMPORT: Imports foreign data formats into OstrichDB. Currently only supports .csv files
 	case .IMPORT:
-		detected, autoImportSuccess := transfer.AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
+		detected, autoImportSuccess := importing.AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
 		if detected && autoImportSuccess == true {
 			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
 			break
