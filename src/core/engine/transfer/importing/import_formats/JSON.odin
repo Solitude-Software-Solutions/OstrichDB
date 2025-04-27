@@ -61,24 +61,28 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 		}
 
 
-		//Create a collection and cluster for the data
+		//Create a collection for the data
 		colCreated := data.CREATE_COLLECTION(desiredColName, .STANDARD_PUBLIC)
 		if !colCreated {
 			fmt.println("Failed to create collection:", desiredColName)
 			return false
 		}
 
-		clusterID:= data.GENERATE_ID(false)
-		if data.CREATE_CLUSTER(desiredColName, desiredColName, clusterID) != 0{
-			fmt.println("Failed to create cluster:", desiredColName)
-			return false
-		}
 
 		// Process JSON data based on its structure
 		#partial switch v in jsonValue {
 		case json.Array:
 			//Handles array of objects. This is good for the standard 'data' array most people use when working with JSON on web
+			fmt.println(len(v))
 			for i := 0; i < len(v); i += 1 {
+
+			//for each element create a new cluster
+			clusterID:= data.GENERATE_ID(false)
+			if data.CREATE_CLUSTER(desiredColName, fmt.tprintf("%s_%d", desiredColName, i), clusterID) != 0{
+				fmt.println("Failed to create cluster:", desiredColName)
+				return false
+			}
+
 				if v[i] != nil {
 					#partial switch obj in v[i] {
 					case json.Object:
@@ -98,7 +102,7 @@ JSON__IMPORT_JSON_FILE ::proc(name:string, fullPath:..string) -> (success:bool){
 						//Create a record for each field with value and name
 						for k in fields {
 							filePath:= utils.concat_standard_collection_name(desiredColName)
-							data.CREATE_RECORD(filePath,desiredColName,k,fields[k],"JSON")
+							data.CREATE_RECORD(filePath,fmt.tprintf("%s_%d", desiredColName, i),k,fields[k],"JSON")
 						}
 					case:
 						fmt.println("Skipping non-object array element at index:", i)
