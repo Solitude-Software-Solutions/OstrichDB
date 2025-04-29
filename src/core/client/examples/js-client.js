@@ -21,7 +21,7 @@ the best way to do things nor do they represent the final product of working wit
 
 
 TL;DR:
-Store you db information in to variables and pass them to the fetch calls, The API might change
+Store your db information in to variables and pass them to the fetch calls, The API might change
 drastically in the future so dont get to comfortable with this for now.
 
   - Marshall Burns
