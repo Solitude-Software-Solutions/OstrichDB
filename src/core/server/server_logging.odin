@@ -57,6 +57,7 @@ SET_SERVER_EVENT_INFORMATION :: proc(
 	newEvent.isRequestEvent = isRequestEvent
 	newEvent.Route.p = path
 	newEvent.Route.m = method
+	newEvent.methodAsStr = fmt.tprintf("%v",method)
 
 	return newEvent^
 }
@@ -75,12 +76,10 @@ PRINT_SERVER_EVENT_INFORMATION :: proc(event: types.ServerEvent) {
 }
 
 //Takes in an event and writes the events data to the log file
-LOG_AND_PRINT_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
-	PRINT_SERVER_EVENT_INFORMATION(event)
+LOG_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
 
-	//Logging shit
 	logMsg := fmt.tprintf(
-		"Server Event Triggered: ",
+		"Server Event Triggered: %s",
 		event.Name,
 		"\n",
 		"Server Event Time: ",
@@ -99,10 +98,10 @@ LOG_AND_PRINT_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
 	concatLogMsg: string
 	if event.isRequestEvent == true {
 		routeInfo := fmt.tprintf(
-			"Server Event Route Path: ",
+			"Server Event Route Path: %s",
 			event.Route.p,
 			"\n",
-			"Server Event Route Method: ",
+			"Server Event Route Method: %s",
 			event.Route.m,
 		)
 		concatLogMsg = strings.concatenate([]string{logMsg, routeInfo})
