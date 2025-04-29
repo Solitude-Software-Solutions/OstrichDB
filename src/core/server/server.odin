@@ -1,4 +1,4 @@
-package server
+ package server
 import "../../utils"
 import "../const"
 import "../types"
@@ -363,6 +363,7 @@ handle_connection :: proc(socket: net.TCP_Socket) {
             m,
         )
 
+        PRINT_SERVER_EVENT_INFORMATION(handleRequestEvent)
         LOG_SERVER_EVENT(handleRequestEvent)
 
 
@@ -377,6 +378,7 @@ handle_connection :: proc(socket: net.TCP_Socket) {
             path,
             m,
         )
+        PRINT_SERVER_EVENT_INFORMATION(buildResponseEvent)
         LOG_SERVER_EVENT(buildResponseEvent)
 
         if len(response) == 0 {
@@ -389,6 +391,7 @@ handle_connection :: proc(socket: net.TCP_Socket) {
                 path,
                 m,
             )
+            PRINT_SERVER_EVENT_INFORMATION(buildResponseFailEvent)
             LOG_SERVER_EVENT(buildResponseFailEvent)
         }
 
@@ -402,7 +405,10 @@ handle_connection :: proc(socket: net.TCP_Socket) {
             path,
             m,
         )
+
+        PRINT_SERVER_EVENT_INFORMATION(writeResponseToSocket)
         LOG_SERVER_EVENT(writeResponseToSocket)
+
         if write_err != nil {
             writeResponseToSocketFail := SET_SERVER_EVENT_INFORMATION(
                 "Failed To Write To Socket",
@@ -413,6 +419,7 @@ handle_connection :: proc(socket: net.TCP_Socket) {
                 path,
                 m,
             )
+            PRINT_SERVER_EVENT_INFORMATION(writeResponseToSocketFail)
             LOG_SERVER_EVENT(writeResponseToSocketFail)
 
             fmt.println("Error writing to socket:", write_err)
