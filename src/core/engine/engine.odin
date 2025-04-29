@@ -110,7 +110,7 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						false,
 					)
 					//Auto-server loop
-					serverDone := server.START_OSTRICH_SERVER(&types.ServerConfig)
+					serverDone := server.START_OSTRICH_SERVER(&types.OstrichServer)
 					if serverDone == 0 {
 						fmt.println("\n\n")
 						cmdLineDone := START_COMMAND_LINE()

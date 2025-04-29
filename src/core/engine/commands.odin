@@ -98,7 +98,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
 		libc.system("stty echo")
 		fmt.printfln("Launching OstrichDB server...")
-		serverResult := server.START_OSTRICH_SERVER(&ServerConfig)
+		serverResult := server.START_OSTRICH_SERVER(&OstrichServer)
 		if serverResult == 0 {
 			fmt.printfln("Server stopped. Returning to OstrichDB command line...")
 		} else {
