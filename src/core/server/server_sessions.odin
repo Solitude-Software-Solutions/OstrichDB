@@ -27,3 +27,13 @@ CREATE_SERVER_SESSION ::proc(user: types.User) -> ^types.Server_Session{
     //newSession.end_timestamp is set when the kill switch is activated or server loop ends
     return newSession
 }
+
+//Checks if the current server session duration has met the max session time, returns true if it has
+SERVER_SESSION_LIMIT_MET :: proc(session: ^types.Server_Session) ->(maxDurationMet: bool){
+    maxDurationMet = false
+    if session.total_runtime >= const.MAX_SESSION_TIME{
+        maxDurationMet = true
+    }
+    return maxDurationMet
+}
+
