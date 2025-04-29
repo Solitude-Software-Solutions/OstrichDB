@@ -255,6 +255,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 		return -1
 	}
 
+
 	//Start a thread to handle user input for killing the server
 	thread.run(HANDLE_SERVER_KILL_SWITCH)
 	defer net.close(net.TCP_Socket(listen_socket))
@@ -267,9 +268,23 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	)
 	//Main server loop
 	for isRunning {
+		//update the session runtime periodically to check against the limit
+		newServerSession.end_timestamp = time.now()
+		newServerSession.total_runtime = time.diff(newServerSession.start_timestamp, newServerSession.end_timestamp)
+		result:=SERVER_SESSION_LIMIT_MET(newServerSession)
+		if result  {
+		    fmt.printfln("%sWARNING:%s Maximum server session time of 24 hours reached. Shutting down server...", utils.YELLOW, utils.RESET)
+		    isRunning = false
+		    // Ping each possible OstrichDB port and if its running kill it
+		    for port in const.Server_Ports {
+		        portCString := strings.clone_to_cstring(fmt.tprintf("nc -zv localhost %d", port))
+		        libc.system(portCString)
+		    }
+		    break
+		}
+
 		fmt.println("Waiting for new connection...")
 		client_socket, remote_endpoint, accept_err := net.accept_tcp(listen_socket)
-
 
 		if accept_err != nil {
 			fmt.println("Error accepting connection: ", accept_err)
@@ -278,10 +293,9 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 		handle_connection(client_socket)
 	}
 	newServerSession.end_timestamp = time.now()
-	newServerSession.total_runtime =time.diff( newServerSession.start_timestamp, newServerSession.end_timestamp)
+	newServerSession.total_runtime = time.diff(newServerSession.start_timestamp, newServerSession.end_timestamp)
 	fmt.println("Server stopped successfully")
 	fmt.println("Total Session runtime time was: ", newServerSession.total_runtime)
-
 	//Destroy the session
 	free(newServerSession)
 	return 0
@@ -315,11 +329,11 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 		responseHeaders["Content-Type"] = "text/plain"
 		responseHeaders["Server"] = "OstrichDB"
 
-		defer delete(responseHeaders)
+        defer delete(responseHeaders)
 
-		m:types.HttpMethod
+        m:types.HttpMethod
 
-		switch(method) {
+        switch(method) {
         case "HEAD":
             m = .HEAD
             break
@@ -335,78 +349,80 @@ handle_connection :: proc(socket: net.TCP_Socket) {
         case "DELETE":
             m = .DELETE
             break
-		}
+        }
 
-		// Handle the request using router
-		status, responseBody := HANDLE_HTTP_REQUEST(router, method, path, headers)
-		handleRequestEvent := SET_SERVER_EVENT_INFORMATION(
-			"Attempt Request",
-			"Attempting handle request made on the server",
-			types.ServerEventType.ROUTINE,
-			time.now(),
-			true,
-			path,
-			m,
-		)
+        // Handle the request using router
+        status, responseBody := HANDLE_HTTP_REQUEST(router, method, path, headers)
+        handleRequestEvent := SET_SERVER_EVENT_INFORMATION(
+            "Attempt Request",
+            "Attempting to handle request made over the server",
+            types.ServerEventType.ROUTINE,
+            time.now(),
+            true,
+            path,
+            m,
+        )
 
-		LOG_SERVER_EVENT(handleRequestEvent)
+        LOG_SERVER_EVENT(handleRequestEvent)
 
 
-		// Build and send response
-		response := BUILD_HTTP_RESPONSE(status, responseHeaders, responseBody)
-		buildResponseEvent := SET_SERVER_EVENT_INFORMATION(
-			"Build Response",
-			"Attempting build a response for the request",
-			types.ServerEventType.ROUTINE,
-			time.now(),
-			false,
-			path,
-			m,
-		)
-		LOG_SERVER_EVENT(buildResponseEvent)
+        // Build and send response
+        response := BUILD_HTTP_RESPONSE(status, responseHeaders, responseBody)
+        buildResponseEvent := SET_SERVER_EVENT_INFORMATION(
+            "Build Response",
+            "Attempting to build a response for the request",
+            types.ServerEventType.ROUTINE,
+            time.now(),
+            false,
+            path,
+            m,
+        )
+        LOG_SERVER_EVENT(buildResponseEvent)
 
-		if len(response) == 0 {
-			buildResponseFailEvent := SET_SERVER_EVENT_INFORMATION(
-				"Failed Reponse Build",
-				"Failed to build a response",
-				types.ServerEventType.WARNING,
-				time.now(),
-				false,
-				path,
-				m,
-			)
-			LOG_SERVER_EVENT(buildResponseFailEvent)
-		}
+        if len(response) == 0 {
+            buildResponseFailEvent := SET_SERVER_EVENT_INFORMATION(
+                "Failed Reponse Build",
+                "Failed to build a response",
+                types.ServerEventType.WARNING,
+                time.now(),
+                false,
+                path,
+                m,
+            )
+            LOG_SERVER_EVENT(buildResponseFailEvent)
+        }
 
-		_, write_err := net.send(socket, response)
-		writeResponseToSocket := SET_SERVER_EVENT_INFORMATION(
-			"Write Respone To Socket",
-			"Attempting to write a response to the socket",
-			types.ServerEventType.ROUTINE,
-			time.now(),
-			false,
-			path,
-			m,
-		)
-		LOG_SERVER_EVENT(writeResponseToSocket)
-		if write_err != nil {
-			writeResponseToSocketFail := SET_SERVER_EVENT_INFORMATION(
-				"Failed To Write To Socket",
-				"Failed to write a response to the socket",
-				types.ServerEventType.CRITICAL_ERROR,
-				time.now(),
-				false,
-				path,
-				m,
-			)
-			LOG_SERVER_EVENT(writeResponseToSocketFail)
+        _, write_err := net.send(socket, response)
+        writeResponseToSocket := SET_SERVER_EVENT_INFORMATION(
+            "Write Respone To Socket",
+            "Attempting to write a response to the socket",
+            types.ServerEventType.ROUTINE,
+            time.now(),
+            false,
+            path,
+            m,
+        )
+        LOG_SERVER_EVENT(writeResponseToSocket)
+        if write_err != nil {
+            writeResponseToSocketFail := SET_SERVER_EVENT_INFORMATION(
+                "Failed To Write To Socket",
+                "Failed to write a response to the socket",
+                types.ServerEventType.CRITICAL_ERROR,
+                time.now(),
+                false,
+                path,
+                m,
+            )
+            LOG_SERVER_EVENT(writeResponseToSocketFail)
 
-			fmt.println("Error writing to socket:", write_err)
-			return
-		}
+            fmt.println("Error writing to socket:", write_err)
+            return
+        }
 
-		fmt.println("Response sent successfully")
-	}
+        fmt.println("Response sent successfully")
+    }
+
+    fmt.println("Connection handler stopping due to server shutdown")
 }
 
 //Looks over all the possible ports that OstrichDB uses. If the first is free, use it, if not use the next available port.
@@ -432,19 +448,19 @@ CHECK_IF_PORT_IS_FREE :: proc(ports: []int) -> int {
 
 
 HANDLE_SERVER_KILL_SWITCH :: proc() {
-	utils.show_server_kill_msg()
-	input := utils.get_input(false)
-	if input == "kill" || input == "exit" {
-		fmt.println("Stopping OstrichDB server...")
-		isRunning = false
-		//ping the server to essentially refresh it to ensure it stops thus breaking the server main loop
-		for port in const.Server_Ports{
-		portCString:= strings.clone_to_cstring(fmt.tprintf("nc -zv localhost %d", port))
-		libc.system(portCString)
+	for isRunning {
+		input := utils.get_input(false)
+		if input == "kill" || input == "exit" {
+			fmt.println("Stopping OstrichDB server...")
+			isRunning = false
+			//ping the server to essentially refresh it to ensure it stops thus breaking the server main loop
+			for port in const.Server_Ports{
+				portCString := strings.clone_to_cstring(fmt.tprintf("nc -zv localhost %d", port))
+				libc.system(portCString)
+			}
+			return
+		} else {
+			fmt.printfln("Invalid input. Type 'kill' or 'exit' to stop the server.")
 		}
-		return
-	} else {
-		fmt.printfln("Invalid input")
-		HANDLE_SERVER_KILL_SWITCH()
 	}
 }
