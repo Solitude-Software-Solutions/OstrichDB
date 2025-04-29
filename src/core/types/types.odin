@@ -394,12 +394,22 @@ Metadata_Header_Body := [5]string {
 //Server Stuff Below
 
 
-ServerConfig := types.Server_Config {
+OstrichServer := types.OstrichDB_Server {
 	port = 8042, //default
+	//session is set upon server startup
 }
 
-Server_Config :: struct {
+OstrichDB_Server :: struct {
 	port: int,
+	session: Server_Session
+}
+
+Server_Session :: struct {
+    Id:                 i64,
+    user:                     User,
+    start_timestamp:     time.Time,
+    end_timestamp:      time.Time,
+    total_runtime:          time.Duration
 }
 
 HttpStatusCode :: enum {
@@ -498,6 +508,8 @@ Benchmark_Result :: struct {
 	success:        bool,
 }
 
+
+
 //Server logging stuff
 new_event: ServerEvent
 ServerEvent :: struct {
@@ -507,6 +519,7 @@ ServerEvent :: struct {
 	Timestamp:      time.Time,
 	isRequestEvent: bool,
 	Route:          Route,
+	methodAsStr: string, //the http method in the route is an enum, need string of this for other procs... - Marshall
 	StatusCode:     HttpStatusCode,
 }
 
