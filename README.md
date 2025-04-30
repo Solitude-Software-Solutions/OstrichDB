@@ -1,13 +1,12 @@
 # **OstrichDB**
 
-OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin programming language. It can be run serverless from the command line or deployed in server mode, offering flexibility for different use cases. With a focus on simplicity and straightforward setup, OstrichDB provides an intuitive command structure for managing data using both single and multi-token commands.
+OstrichDB is a lightweight document-based NoSQL/NoJSON database management system written in Odin. It features an intuitive command structure with hierarchical data organization and built-in security, making it ideal for developers seeking a easy-to-use, flexible, high-performance database solution.
 
 
 ---
 
 ## **Key Features**
 
-- Natural Language Processing for fast queries and data retrieval
 - Three Modes of Operation:
   - Serverless Command-line Interface
   - Server Mode with HTTP API
@@ -17,7 +16,7 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 - Database permissions
 - Database encryption & decryption
 - Custom JSON-like Hierarchical Data Structure
-- .CSV file importing
+- .CSV & .JSON file importing
 - Dot Notation Syntax when using the serverless CLI
 - Command Chaining
 - Built-in benchmarking, configurations, and user command history
@@ -190,7 +189,7 @@ These operations allow you to perform more complex operations.
 - **`UNLOCK`**: Changes the access mode of a collection to the default Read-Write.
 - **`ENC`** : Encrypts a collection.
 - **`DEC`** : Decrypts a currently encrypted collection.  Use at own discretion.
-- **`IMPORT`**: Allows the user to import a .csv file into OstrichDB. This will create a new collection thay shares the name of the .csv file.
+- **`IMPORT`**: Allows the user to import a .csv or .json files into OstrichDB.
 ---
 
 ### **Parameters**
@@ -296,7 +295,6 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
   - `EXPORT`: Export data to various formats
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
-- Command chaining for even more complex operations
 - OstrichDB web application
 - Windows support
 - External API support for even more programming languages!
