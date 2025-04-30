@@ -64,7 +64,11 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		return result
 	}
 
+	//Parser memory cleanup
 	defer delete(cmd.l_token)
+	defer delete(cmd.p_token)
+	defer delete(cmd.rawInput)
+
 	#partial switch (cmd.c_token)
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
