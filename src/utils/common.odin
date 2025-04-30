@@ -113,7 +113,7 @@ get_input :: proc(isPassword: bool) -> string {
 	}
 	n, err := os.read(os.stdin, buf[:])
 	if err != 0 {
-		fmt.printlfn("%sINTERNAL ERROR: OstrichDB failed to read input from command line.%s", const.RED, const.RESET)
+		fmt.printfln("%sINTERNAL ERROR%s: OstrichDB failed to read input from command line.", RED, RESET)
 		return ""
 	}
 	result := strings.trim_right(string(buf[:n]), "\r\n")
