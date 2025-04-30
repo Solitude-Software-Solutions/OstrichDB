@@ -59,7 +59,7 @@ SET_FILE_PERMISSIONS_ON_OS_LEVEL :: proc(fn, permission: string) -> (success:boo
 
 	switch permission {
 	case "Read-Write":
-		mode = R_ONLY_MODE
+		mode = RW_MODE
 	case "Read-Only":
 		mode = R_ONLY_MODE
 	case "Inaccessible":
