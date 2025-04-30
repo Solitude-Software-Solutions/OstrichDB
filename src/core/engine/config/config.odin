@@ -105,6 +105,8 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 
 	// Insert the new line and adjust the closing brace
 	newLines := make([dynamic]string, len(lines) + 1)
+	defer delete(newLines)
+
 	copy(newLines[:closingBrace], lines[:closingBrace])
 	newLines[closingBrace] = newLine
 	newLines[closingBrace + 1] = "},"
