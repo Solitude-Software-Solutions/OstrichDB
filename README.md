@@ -245,13 +245,10 @@ When setting a record value, you must specify the records data type by using the
 ## **Usage Examples**
    ```bash
    
-
    # Create a new record: 
    # Note: If collection staff and cluster engineering do not exist
    # Don't worry, that will be created all at once!
-   NEW staff.engineering.team_one OF_TYPE []STRING
-   # Set a record value:
-   SET staff.engineers.team_one TO Alice,Bob,Charlie
+   NEW staff.engineering.team_one OF_TYPE []STRING WITH "John","Ana","Wayne"
    # Fetch the record value:
    FETCH staff.engineers.team_one
    # Rename a cluster:
