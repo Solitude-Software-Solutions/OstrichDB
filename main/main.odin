@@ -12,6 +12,7 @@ import "../src/utils"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "core:math/rand"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -45,7 +46,10 @@ main :: proc() {
 
 	//Print the Ostrich logo and version
 	version := string(get_ost_version())
-	fmt.println(fmt.tprintf(ostrich_art, BLUE, version, RESET))
+
+	//Randomly choose which project description to display in the startup art
+	chosenDescription := rand.choice(const.project_descriptions)
+	fmt.println(fmt.tprintf( ostrich_art, chosenDescription, BLUE, version, RESET))
 
 	//Check if the config collection is already encrypted
 	isEncrypted, _ := ENCRYPT_COLLECTION(
