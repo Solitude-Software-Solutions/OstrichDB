@@ -24,25 +24,17 @@ File Description:
 //generates a random ID, ensures its not currently in use by a user or a cluster
 //the uponCreation param is used to evalute at whether or not the cluster or user that the ID will be assigned to has been created yet
 GENERATE_ID :: proc(uponCreation: bool) -> i64 {
-	idAlreadyExists := false
-	//ensure the generated id length is 16 digits
-	ID := rand.int63_max(1e16 + 1)
-
-
-	if uponCreation == true {
-		return ID
-	} else {
-		if CHECK_IF_USER_ID_EXISTS(ID) == true && CHECK_IF_CLUSTER_ID_EXISTS(ID) == true {
-			utils.log_err("Generated ID already exists in cache file", #procedure)
-			idAlreadyExists = true
-		}
-
-		if idAlreadyExists == true {
-			GENERATE_ID(false)
-		}
-
-		return ID
-	}
+    if uponCreation == true {
+        return rand.int63_max(1e16 + 1)
+    }
+    
+    for { //Tries to create a random ID until it is not already in use
+        ID := rand.int63_max(1e16 + 1)
+        if !CHECK_IF_USER_ID_EXISTS(ID) || !CHECK_IF_CLUSTER_ID_EXISTS(ID) {
+            return ID
+        }
+        utils.log_err("Generated ID already exists in cache file, retrying", #procedure)
+    }
 }
 
 // takes in an id and checks if it exists in the USER_IDS cluster
