@@ -7,7 +7,6 @@ This directory contains example clients demonstrating how to interact with the O
 - [Python Client](./examples/python-client.py)
 - [JavaScript Client](./examples/js-client.js)
 - [Go Client](./examples/go-client.go)
-- [Odin Client](./examples/odin-client.odin)
 
 ## Future Client Examples Written In:
 
