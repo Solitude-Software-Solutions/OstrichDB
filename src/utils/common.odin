@@ -107,16 +107,16 @@ get_input :: proc(isPassword: bool) -> string {
 	defer free(buf)
 	if isPassword {
 		libc.system("stty -echo") //hide input
+		defer libc.system("stty echo") //show input no matter what after proc is done
 	} else {
 		libc.system("stty echo")
 	}
 	n, err := os.read(os.stdin, buf[:])
 	if err != 0 {
-		fmt.println("Debug: Error occurred")
+		fmt.printlfn("%sINTERNAL ERROR: OstrichDB failed to read input from command line.%s", const.RED, const.RESET)
 		return ""
 	}
 	result := strings.trim_right(string(buf[:n]), "\r\n")
-	libc.system("stty echo") //show input
 	return strings.clone(result)
 }
 
