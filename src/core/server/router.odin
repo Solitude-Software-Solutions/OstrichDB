@@ -15,7 +15,7 @@ File Description:
 
 //Create a new router
 CREATE_NEW_ROUTER :: proc() -> ^types.Router {
-	router := new(types.Router)
+	router := new(types.Router) //Memeory gets free in parent calling procedure
 	router.routes = make([dynamic]types.Route)
 
 	return router
