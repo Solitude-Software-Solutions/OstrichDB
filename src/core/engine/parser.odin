@@ -40,13 +40,19 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 		rawInput          = strings.clone(input),
 	}
 
+	ParserState :: enum {
+		ExpectingCommand = 0,
+		ExpectingParmeterToken,
+		ExpectingValue,
+	}
+
 	if len(tokens) == 0 {
 		return cmd
 	}
 
 	// Convert first token to TokenType
 	cmd.c_token = convert_string_to_ostrichdb_token(tokens[0])
-	state := 0 //state machine exclusively used for parameter token shit
+	state := ParserState.ExpectingCommand //state machine exclusively used for parameter token shit
 	currentParameterToken := "" //stores the current modifier such as TO
 	collectingString := false
 	stringValue := ""
@@ -64,8 +70,8 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 			continue
 		}
 		switch state {
-		case 0:
-			// Expecting target
+		case .ExpectingCommand:
+			// Expecting command token
 			#partial switch (cmd.c_token)
 			{
 			case TokenType.SET:
@@ -80,7 +86,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 						}
 					}
 				}
-				state = 1
+				state = .ExpectingParmeterToken
 				break
 			case TokenType.WHERE:
 				if token == Token[.CLUSTER] || token == Token[.RECORD] {
@@ -108,7 +114,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 					}
 					break
 				}
-				state = 1
+				state = .ExpectingParmeterToken
 				break
 			case TokenType.BENCHMARK:
 				if strings.contains(token, ".") {
@@ -129,13 +135,13 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 				} else {
 					append(&cmd.l_token, token)
 				}
-				state = 1
+				state = .ExpectingParmeterToken
 			}
-		case 1:
+		case .ExpectingParmeterToken:
 			// Expecting object or modifier
 			if check_if_param_token_is_valid(token) {
 				currentParameterToken = token
-				state = 2
+				state = .ExpectingValue
 			} else {
 				if strings.contains(token, ".") {
 					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
@@ -146,7 +152,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 					append(&cmd.l_token, token)
 				}
 			}
-		case 2:
+		case .ExpectingValue:
 			stringValue = token
 			collectingString = true
 		}
@@ -190,7 +196,7 @@ parse_chained_command :: proc(input: string) -> types.Command {
         isChained = true,
         rawInput = strings.clone(input),
     }
-    
+
     parts := strings.split(input, "&&")
     if len(parts) > 0 {
         firstCmd := strings.trim_space(parts[0])
@@ -199,7 +205,7 @@ parse_chained_command :: proc(input: string) -> types.Command {
             cmd.c_token = convert_string_to_ostrichdb_token(firstTokens[0])
         }
     }
-    
+
     return cmd
 }
 
