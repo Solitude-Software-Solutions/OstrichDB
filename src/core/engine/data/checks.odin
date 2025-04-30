@@ -121,7 +121,7 @@ VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	using types
 	using utils
 
-	checks := [dynamic]bool{} //gets free somewhere else
+	checks := make([dynamic]bool) //gets freed in the parent calling procedure
 	checkOneResult := VALIDATE_IDS(fn)
 	checkTwoResult := VALIDATE_FILE_SIZE(fn)
 	checkThreeResult := VALIDATE_COLLECTION_FORMAT(fn)
