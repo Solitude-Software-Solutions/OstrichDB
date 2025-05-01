@@ -311,9 +311,8 @@ CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> boo
 //reads over the passed in collection file and
 //the specified cluster and stores the value of each record into the array
 push_records_to_array :: proc(cn: string) -> [dynamic]string {
-	records: [dynamic]string
+	records:= make([dynamic]string)
 	histBuf: [1024]byte
-
 
 	data, readSuccess := utils.read_file(const.HISTORY_PATH, #procedure)
 	defer delete(data)

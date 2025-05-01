@@ -1,9 +1,9 @@
- package nlp
+package nlp
 
 import "core:c"
 import "core:c/libc"
 when ODIN_OS == .Linux {
-    foreign import go "nlp.so" 
+    foreign import go "nlp.so"
 
     foreign go {
         run_agent :: proc() ---
