@@ -33,11 +33,12 @@ File Description:
 INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -> (success: int) {
 	using types
 
-	data_integrity_checks.File_Size.Severity = .LOW
-	data_integrity_checks.File_Format_Version.Severity = .MEDIUM
-	data_integrity_checks.Cluster_IDs.Severity = .HIGH
-	data_integrity_checks.Data_Types.Severity = .HIGH
-	data_integrity_checks.File_Format.Severity = .HIGH
+	//Todo: Passing an arg and not even fucking using it.... - Marshall
+	checks.File_Size.Severity = .LOW
+	checks.File_Format_Version.Severity = .MEDIUM
+	checks.Cluster_IDs.Severity = .HIGH
+	checks.Data_Types.Severity = .HIGH
+	checks.File_Format.Severity = .HIGH
 
 	data_integrity_checks.File_Size.Error_Message =
 	"Collection file size is larger than the maxmimum size of 10mb"
