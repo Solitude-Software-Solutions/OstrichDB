@@ -42,3 +42,19 @@ test_parse_command ::proc(test: ^testing.T){
     testing.expect_value(test, resultCommand.isChained, testCommand.isChained)
     testing.expect_value(test, resultCommand.rawInput, testCommand.rawInput)
 }
+
+@(test)
+test_check_if_param_token_is_valid ::proc(test: ^testing.T){
+    using types
+
+    result := engine.check_if_param_token_is_valid(Token[.OF_TYPE])
+    testing.expect(test, true)
+}
+
+@(test)
+test_convert_string_to_token ::proc(test: ^testing.T){
+    using types
+
+    result := engine.convert_string_to_ostrichdb_token(Token[.NEW])
+    testing.expect_value(test, result, TokenType.NEW)
+}
