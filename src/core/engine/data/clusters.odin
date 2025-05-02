@@ -31,12 +31,11 @@ GET_ALL_CLUSTER_IDS :: proc(fn: string) -> ([dynamic]i64, [dynamic]string) {
 	fullPath := concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(fullPath)
 	if !readSuccess {
-		error1 := new_err(
+	errorLocation := utils.get_caller_location()
+		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
-			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			utils.get_err_msg(.CANNOT_READ_FILE),
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error reading collection file", #procedure)
@@ -74,12 +73,11 @@ GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 		fullPath := concat_standard_collection_name(fn)
 		data, readSuccess := os.read_entire_file(fullPath)
 		if !readSuccess {
+		errorLocation:= get_caller_location()
 			error1 := new_err(
 				.CANNOT_READ_FILE,
 				get_err_msg(.CANNOT_READ_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			throw_err(error1)
 			log_err("Error reading collection file", #procedure)
@@ -118,12 +116,11 @@ GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 
 		data, readSuccess := os.read_entire_file(secCollection)
 		if !readSuccess {
+		errorLocation:= get_caller_location()
 			error1 := new_err(
 				.CANNOT_READ_FILE,
 				get_err_msg(.CANNOT_READ_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			throw_err(error1)
 			log_err("Error reading secure file", #procedure)
@@ -177,12 +174,11 @@ CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: stri
 	//step#1: open the file
 	clusterFile, openSuccess := os.open(fileName, os.O_APPEND | os.O_WRONLY, 0o666)
 	if openSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_OPEN_FILE,
 			get_err_msg(.CANNOT_OPEN_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error opening collection file", #procedure)
@@ -208,24 +204,22 @@ CREATE_CLUSTER_BLOCK :: proc(fileName: string, clusterID: i64, clusterName: stri
 				-1,
 			)
 			if replaceSuccess == false {
+			errorLocation:= get_caller_location()
 				error2 := new_err(
 					.CANNOT_UPDATE_CLUSTER,
 					get_err_msg(.CANNOT_UPDATE_CLUSTER),
-					#file,
-					#procedure,
-					#line,
+					errorLocation
 				)
 				throw_err(error2)
 				log_err("Error placing id into cluster template", #procedure)
 			}
 			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
 			if writeSuccess != 0 {
+				errorLocation := get_caller_location()
 				error2 := new_err(
 					.CANNOT_WRITE_TO_FILE,
 					get_err_msg(.CANNOT_WRITE_TO_FILE),
-					#file,
-					#procedure,
-					#line,
+					errorLocation
 				)
 
 				log_err("Error writing cluster block to file", #procedure)
@@ -335,6 +329,7 @@ RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 
 
 	if !clusterFound {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_FIND_CLUSTER,
@@ -347,9 +342,7 @@ RENAME_CLUSTER :: proc(fn: string, old: string, new: string) -> bool {
 					fn,
 					RESET,
 				),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error finding cluster in collection file", #procedure)
@@ -381,12 +374,11 @@ CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 	clusterFile, openSuccess := os.open(collectionPath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(clusterFile)
 	if openSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_OPEN_FILE,
 			get_err_msg(.CANNOT_OPEN_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error opening collection file", #procedure)
@@ -413,12 +405,11 @@ CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 				-1,
 			)
 			if replaceSuccess == false {
+			errorLocation:= get_caller_location()
 				error2 := new_err(
 					.CANNOT_UPDATE_CLUSTER,
 					get_err_msg(.CANNOT_UPDATE_CLUSTER),
-					#file,
-					#procedure,
-					#line,
+					errorLocation
 				)
 				throw_err(error2)
 				log_err("Error placing id into cluster template", #procedure)
@@ -426,12 +417,11 @@ CREATE_CLUSTER :: proc(fn: string, clusterName: string, id: i64) -> int {
 			}
 			writeClusterID, writeSuccess := os.write(clusterFile, transmute([]u8)newClusterID)
 			if writeSuccess != 0 {
+			errorLocation:= get_caller_location()
 				error2 := new_err(
 					.CANNOT_WRITE_TO_FILE,
 					get_err_msg(.CANNOT_WRITE_TO_FILE),
-					#file,
-					#procedure,
-					#line,
+					errorLocation
 				)
 				log_err("Error writing cluster block to file", #procedure)
 				return 3
@@ -475,12 +465,11 @@ ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 				"User entered invalid input",
 				"User entered invalid input when trying to delete cluster",
 			)
-			error2 := new_err(
+			errorLocation:=utils.get_caller_location()
+			error2 := utils.new_err(
 				.INVALID_INPUT,
 				get_err_msg(.INVALID_INPUT),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false
@@ -536,6 +525,7 @@ ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 
 
 	if !clusterFound {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_FIND_CLUSTER,
@@ -548,9 +538,7 @@ ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 					fn,
 					RESET,
 				),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error finding cluster in collection", #procedure)
@@ -589,8 +577,9 @@ FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 	}
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), errorLocation),
 		)
 		return ""
 	}
@@ -612,7 +601,7 @@ FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 			}
 		}
 	}
-
+errorLocation:= get_caller_location()
 	throw_err(
 		new_err(
 			.CANNOT_FIND_CLUSTER,
@@ -625,9 +614,7 @@ FETCH_CLUSTER :: proc(fn: string, cn: string) -> string {
 				fn,
 				RESET,
 			),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		),
 	)
 	log_err("Error finding cluster in collection", #procedure)
@@ -644,8 +631,9 @@ LIST_CLUSTERS_IN_COLLECTION :: proc(fn: string, showRecords: bool) -> int {
 	filePath := concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(filePath)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), errorLocation),
 		)
 		return 0
 	}
@@ -793,8 +781,9 @@ PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), errorLocation),
 		)
 		log_err("Error reading collection file", #procedure)
 		return false
@@ -866,13 +855,12 @@ PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	}
 
 	if !clusterFound {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_FIND_CLUSTER,
 				get_err_msg(.CANNOT_FIND_CLUSTER),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error finding cluster in collection", #procedure)
@@ -881,13 +869,12 @@ PURGE_CLUSTER :: proc(fn: string, cn: string) -> bool {
 	//write the new content to the collection file
 	writeSuccess := os.write_entire_file(collectionPath, newContent[:])
 	if !writeSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_WRITE_TO_FILE,
 				get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error writing to collection file", #procedure)

@@ -127,12 +127,11 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	rawData, readSuccess := os.read_entire_file(fn)
 	defer delete(rawData)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error readinding collection file", #procedure)
@@ -149,12 +148,11 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	defer os.close(file)
 
 	if openSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_OPEN_FILE,
 			get_err_msg(.CANNOT_OPEN_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error opening collection file", #procedure)
@@ -165,12 +163,11 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 	writter, ok := os.write(file, blockAsBytes)
 	if ok != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_WRITE_TO_FILE,
 			get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error writing metadata header to collection file", #procedure)
@@ -187,12 +184,11 @@ AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		return
@@ -290,12 +286,11 @@ CREATE_FFV_FILE :: proc() {
 	defer os.close(file)
 
 	if createSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_CREATE_FILE,
 			get_err_msg(.CANNOT_CREATE_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_custom_err(error1, "Cannot create file format version file")
 	}
@@ -308,12 +303,11 @@ CREATE_FFV_FILE :: proc() {
 	ffvAsBytes := transmute([]u8)CURRENT_FFV
 	writter, ok := os.write(f, ffvAsBytes)
 	if ok != 0 {
+	errorLocation:= get_caller_location()
 		error1 := utils.new_err(
 			.CANNOT_WRITE_TO_FILE,
 			get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_custom_err(error1, "Cannot write to file format version file")
 	}
@@ -548,13 +542,11 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
-		fmt.printfln("Error reading file: %s", file)
+		errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		return false

@@ -24,12 +24,11 @@ CREATE_SERVER_LOG_FILE :: proc() -> int {
 		0o666,
 	)
 	if creationSuccess != 0 {
+	errorLocation:= utils.get_caller_location()
 		error := utils.new_err(
 			.CANNOT_CREATE_FILE,
 			utils.get_err_msg(.CANNOT_CREATE_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error)
 		utils.log_err("Error creating server log file", #procedure)

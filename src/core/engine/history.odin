@@ -94,8 +94,9 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	data, readSuccess := os.read_entire_file(HISTORY_PATH)
 	defer delete(data)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), errorLocation),
 		)
 		log_err("Error reading collection file", #procedure)
 		return false
@@ -120,6 +121,7 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	}
 
 	if !clusterFound {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_FIND_CLUSTER,
@@ -132,9 +134,7 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 					userName,
 					RESET,
 				),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error finding cluster in collection", #procedure)
@@ -142,13 +142,12 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	}
 	writeSuccess := os.write_entire_file(HISTORY_PATH, newContent[:])
 	if !writeSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_WRITE_TO_FILE,
 				get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#file,
-				#procedure,
-				#line,
+    				errorLocation,
 			),
 		)
 		log_err("Error writing to collection file", #procedure)
@@ -170,8 +169,9 @@ PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(const.HISTORY_PATH)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), errorLocation),
 		)
 		log_err("Error reading collection file", #procedure)
 		return false
@@ -243,13 +243,12 @@ PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 	}
 
 	if !clusterFound {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_FIND_CLUSTER,
 				get_err_msg(.CANNOT_FIND_CLUSTER),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error finding cluster in collection", #procedure)
@@ -258,13 +257,12 @@ PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 	//write the new content to the collection file
 	writeSuccess := os.write_entire_file(const.HISTORY_PATH, newContent[:])
 	if !writeSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_WRITE_TO_FILE,
 				get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error writing to collection file", #procedure)
@@ -285,6 +283,7 @@ CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> boo
 		//remove the oldest command from the history buffer .....NOT DOING THIS...NEED TO ACTUALLY REMOVE ALL RECORDS FROM THE CLUSTER 
 		historyPurgeSuccess := PURGE_USERS_HISTORY_CLUSTER(currentUser.username.Value)
 		if !historyPurgeSuccess {
+		errorLocation:= get_caller_location()
 			throw_err(
 				new_err(
 					.CANNOT_PURGE_HISTORY,
@@ -294,9 +293,7 @@ CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> boo
 						currentUser.username.Value,
 						RESET,
 					),
-					#file,
-					#procedure,
-					#line,
+					errorLocation
 				),
 			)
 			log_err("Error purging history cluster", #procedure)

@@ -185,12 +185,11 @@ CSV__APPEND_CSV_DATA_INTO_OSTRICH_COLLECTION :: proc(fn, cn, rn, rType, rd: stri
 
 	//if the cluster is not found or the structure is invalid, return
 	if clusterStart == -1 || closingBrace == -1 {
+	errorLocation:= utils.get_caller_location()
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structure", #procedure)

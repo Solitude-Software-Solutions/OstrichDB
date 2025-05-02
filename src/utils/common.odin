@@ -21,12 +21,11 @@ File Description:
 read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
 	data, success := os.read_entire_file(filepath)
 	if !success {
+	errorLocation := get_caller_location()
 		error := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error)
 		log_err(fmt.tprintf("Error reading file %s", filepath), procedure)
@@ -35,16 +34,17 @@ read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
 	return data, true
 }
 
+
+
 // Helper proc that writes data to a file and returns a success boolean
 write_to_file :: proc(filepath: string, data: []byte, procedure: string) -> bool {
 	success := os.write_entire_file(filepath, data)
 	if !success {
+	errorLocation:= get_caller_location()
 		error := new_err(
 			.CANNOT_WRITE_TO_FILE,
 			get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#file,
-			procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error)
 		log_err("Error writing to file", procedure)
@@ -65,12 +65,11 @@ open_file :: proc(
 ) {
 	handle, err := os.open(filepath, flags, mode)
 	if err != 0 {
+		errorLocation := get_caller_location()
 		error := new_err(
 			.CANNOT_OPEN_FILE,
 			get_err_msg(.CANNOT_OPEN_FILE),
-			#file,
-			procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error)
 		log_err("Error opening file", procedure)

@@ -38,12 +38,11 @@ GENERATE_SECURE_DIRECTORY :: proc() -> int {
 	}
 	createDirSuccess := os.make_directory(const.SECURE_COLLECTION_PATH)
 	if createDirSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := utils.new_err(
 			.CANNOT_CREATE_DIRECTORY,
 			get_err_msg(.CANNOT_CREATE_DIRECTORY),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error occured while attempting to generate new secure file", #procedure)
@@ -123,7 +122,7 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 
 	engineInit := config.UPDATE_CONFIG_VALUE(ENGINE_INIT, "true")
 
-	switch (engineInit) 
+	switch (engineInit)
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -306,7 +305,7 @@ CREATE_NEW_USER_PASSWORD :: proc(isInitializing: bool) -> string {
 
 	strongPassword := check_password_strength(enteredStr)
 
-	switch strongPassword 
+	switch strongPassword
 	{
 	case true:
 		CONFIRM_NEW_USER_PASSWORD(enteredStr, isInitializing)
@@ -383,12 +382,11 @@ STORE_USER_CREDENTIALS :: proc(fn: string, cn: string, id: i64, rn: string, rd: 
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
 	if openSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
 			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error opening user credentials file", #procedure)
@@ -472,7 +470,7 @@ check_password_strength :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p)) 
+	switch (len(p))
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -509,7 +507,7 @@ check_password_strength :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true) 
+	switch (true)
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true

@@ -78,12 +78,11 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
 		if createSuccess != 0 {
+		errorLocation:= utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating new collection file", #procedure)
@@ -102,12 +101,11 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
 		if createSuccess != 0 {
+		errorLocation:= utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating collection file", #procedure)
@@ -123,12 +121,11 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
 		if createSuccess != 0 {
+		errorLocation:= utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating collection file", #procedure)
@@ -144,12 +141,11 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
 		if createSuccess != 0 {
+			errorLocation:= utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating collection file", #procedure)
@@ -165,12 +161,11 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
 		if createSuccess != 0 {
+		errorLocation := utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating collection file", #procedure)
@@ -217,12 +212,11 @@ ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 				"User entered invalid input",
 				"User entered invalid input when trying to delete collection",
 			)
+			errorLocation:= get_caller_location()
 			error2 := new_err(
 				.INVALID_INPUT,
 				get_err_msg(.INVALID_INPUT),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false
@@ -233,12 +227,11 @@ ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 	// Delete the file
 	deleteSuccess := os.remove(collectionPath)
 	if deleteSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_DELETE_FILE,
 			get_err_msg(.CANNOT_DELETE_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error deleting collection file", #procedure)
@@ -264,12 +257,11 @@ VALIDATE_COLLECTION_NAME :: proc(fn: string) -> int {
 	//CHECK#2: check if the file already exists
 	existenceCheck, readSuccess := os.read_entire_file_from_filename(fn)
 	if readSuccess {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.FILE_ALREADY_EXISTS,
 			get_err_msg(.FILE_ALREADY_EXISTS),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("collection file already exists", #procedure)
@@ -323,12 +315,11 @@ RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 
 	file, readSuccess := os.read_entire_file_from_filename(colPath)
 	if !readSuccess {
+	errorLocation:= utils.get_caller_location()
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error1)
 		utils.log_err("Error reading collection file", #procedure)
@@ -361,12 +352,11 @@ FETCH_COLLECTION :: proc(fn: string) -> string {
 	collectionPath := utils.concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
+	errorLocation:= utils.get_caller_location()
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error1)
 		utils.log_err("Error reading collection file", #procedure)
@@ -431,8 +421,9 @@ PURGE_COLLECTION :: proc(fn: string) -> bool {
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), errorLocation),
 		)
 		log_err("Error reading collection file", #procedure)
 		return false
@@ -443,8 +434,9 @@ PURGE_COLLECTION :: proc(fn: string) -> bool {
 	content := string(data)
 	headerEndIndex := strings.index(content, const.METADATA_END)
 	if headerEndIndex == -1 {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #file, #procedure, #line),
+			new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", errorLocation),
 		)
 		log_err("Invalid collection file format", #procedure)
 		return false
@@ -458,13 +450,12 @@ PURGE_COLLECTION :: proc(fn: string) -> bool {
 	// Write back only the header
 	writeSuccess := os.write_entire_file(collectionPath, transmute([]byte)metaDataHeader)
 	if !writeSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_WRITE_TO_FILE,
 				get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error writing purged collection file", #procedure)

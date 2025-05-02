@@ -141,12 +141,11 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		inputNumber: [1024]byte
 		n, inputSuccess := os.read(os.stdin, inputNumber[:])
 		if inputSuccess != 0 {
+		errorLocation:= get_caller_location()
 			error := new_err(
 				.CANNOT_READ_INPUT,
 				get_err_msg(.CANNOT_READ_INPUT),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			throw_err(error)
 			log_err("Cannot read user input for HISTORY command.", #procedure)
@@ -439,12 +438,11 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					break
 				case 1, 2, 3:
+				errorLocation:= get_caller_location()
 					error1 := new_err(
 						.CANNOT_CREATE_CLUSTER,
 						get_err_msg(.CANNOT_CREATE_CLUSTER),
-						#file,
-						#procedure,
-						#line,
+						errorLocation
 					)
 					throw_custom_err(
 						error1,

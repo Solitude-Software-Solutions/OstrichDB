@@ -28,12 +28,11 @@ create_log_files :: proc() -> int {
 
 	runtimeFile, openError := os.open(RUNTIME_LOG_PATH, os.O_CREATE, 0o666)
 	if openError != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_CREATE_FILE,
 			get_err_msg(.CANNOT_CREATE_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error creating runtime log file", "create_log_files")

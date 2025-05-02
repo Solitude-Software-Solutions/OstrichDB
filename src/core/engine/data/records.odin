@@ -52,13 +52,12 @@ CHECK_IF_SPECIFIC_RECORD_EXISTS :: proc(fn, cn, rn: string) -> bool {
 		}
 	}
 
+	errorLocation:= utils.get_caller_location()
 	// If we've gone through all clusters and didn't find the specified cluster
 	error2 := utils.new_err(
 		.CANNOT_FIND_CLUSTER,
 		utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-		#file,
-		#procedure,
-		#line,
+		errorLocation
 	)
 	utils.throw_custom_err(error2, fmt.tprintf("Specified cluster not found: %s", cn))
 	utils.log_err("Specified cluster not found", #procedure)
@@ -111,12 +110,11 @@ CREATE_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -> int {
 	}
 	//if the cluster is not found or the structure is invalid, return
 	if clusterStart == -1 || closingBrace == -1 {
+	errorLocation:= utils.get_caller_location()
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structure", #procedure)
@@ -172,12 +170,11 @@ CREATE_AND_APPEND_PRIVATE_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i6
 
 	//if the cluster is not found or the structure is invalid, return
 	if clusterStart == -1 || closingBrace == -1 {
+	errorLocation:= utils.get_caller_location()
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structure", #procedure)
@@ -232,12 +229,11 @@ GET_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
 
 	// If the cluster is not found or the structure is invalid, return an empty string
 	if clusterStart == -1 || closingBrace == -1 {
+	errorLocation:= utils.get_caller_location()
 		error2 := utils.new_err(
 			.CANNOT_FIND_CLUSTER,
 			utils.get_err_msg(.CANNOT_FIND_CLUSTER),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error2)
 		utils.log_err("Unable to find cluster/valid structure", #procedure)
@@ -376,13 +372,12 @@ RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 	case false:
 		data, readSuccess := os.read_entire_file(collectionPath)
 		if !readSuccess {
+		errorLocation:= utils.get_caller_location()
 			utils.throw_err(
 				utils.new_err(
 					.CANNOT_READ_FILE,
 					utils.get_err_msg(.CANNOT_READ_FILE),
-					#file,
-					#procedure,
-					#line,
+					errorLocation
 				),
 			)
 			utils.log_err("Could not read file", #procedure)
@@ -457,13 +452,12 @@ RENAME_RECORD :: proc(fn, cn, old, new: string) -> (result: int) {
 		// write new content to file
 		writeSuccess := os.write_entire_file(collectionPath, newContent[:])
 		if !writeSuccess {
+		errorLocation:= utils.get_caller_location()
 			utils.throw_err(
 				utils.new_err(
 					.CANNOT_WRITE_TO_FILE,
 					utils.get_err_msg(.CANNOT_WRITE_TO_FILE),
-					#file,
-					#procedure,
-					#line,
+					errorLocation
 				),
 			)
 			utils.log_err("Could not write to file", #procedure)
@@ -855,12 +849,11 @@ SET_RECORD_VALUE :: proc(file, cn, rn, rValue: string) -> bool {
 	}
 
 	if setValueOk != true {
+	errorLocation:= utils.get_caller_location()
 		valueTypeError := utils.new_err(
 			.INVALID_VALUE_FOR_EXPECTED_TYPE,
 			utils.get_err_msg(.INVALID_VALUE_FOR_EXPECTED_TYPE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_custom_err(
 			valueTypeError,
@@ -1023,13 +1016,12 @@ FETCH_RECORD :: proc(fn: string, cn: string, rn: string) -> (types.Record, bool)
 	//read the file and find the passed in cluster
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
+	errorLocation:= utils.get_caller_location()
 		utils.throw_err(
 			utils.new_err(
 				.CANNOT_READ_FILE,
 				utils.get_err_msg(.CANNOT_READ_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		return types.Record{}, false
@@ -1090,12 +1082,11 @@ ERASE_RECORD :: proc(fn: string, cn: string, rn: string, isOnServer: bool) -> bo
 				"User entered invalid input",
 				"User entered invalid input when trying to delete record",
 			)
+			errorLocation:= get_caller_location()
 			error2 := utils.new_err(
 				.INVALID_INPUT,
 				utils.get_err_msg(.INVALID_INPUT),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false

@@ -44,9 +44,9 @@ CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)
 
 	if readDirSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_DIRECTORY, get_err_msg(.CANNOT_READ_DIRECTORY), #file,
-		#procedure,
-		#line,)
+	errorLocation:= get_caller_location()
+		error1 := new_err(.CANNOT_READ_DIRECTORY, get_err_msg(.CANNOT_READ_DIRECTORY),
+		errorLocation)
 		log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
@@ -88,12 +88,11 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 
 	//if the cluster is not found or the structure is invalid, return
 	if clusterStart == -1 || closingBrace == -1 {
+	errorLocation:= get_caller_location()
 		error2 := new_err(
 			.CANNOT_FIND_CLUSTER,
 			get_err_msg(.CANNOT_FIND_CLUSTER),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error2)
 		log_err("Unable to find cluster/valid structure", #procedure)
@@ -198,12 +197,11 @@ UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	}
 
 	if ok != true {
+	errorLocation:= get_caller_location()
 		valueTypeError := new_err(
 			.INVALID_VALUE_FOR_EXPECTED_TYPE,
 			get_err_msg(.INVALID_VALUE_FOR_EXPECTED_TYPE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_custom_err(
 			valueTypeError,
