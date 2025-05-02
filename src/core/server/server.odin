@@ -295,7 +295,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	newServerSession.end_timestamp = time.now()
 	newServerSession.total_runtime = time.diff(newServerSession.start_timestamp, newServerSession.end_timestamp)
 	fmt.println("Server stopped successfully")
-	fmt.println("Total Session runtime time was: ", newServerSession.total_runtime)
+	fmt.println("Total server session runtime time was: ", newServerSession.total_runtime)
 	//Destroy the session
 	free(newServerSession)
 	return 0

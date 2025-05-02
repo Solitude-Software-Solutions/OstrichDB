@@ -106,7 +106,6 @@ get_input :: proc(isPassword: bool) -> string {
 	defer free(buf)
 	if isPassword {
 		libc.system("stty -echo") //hide input
-		defer libc.system("stty echo") //show input no matter what after proc is done
 	} else {
 		libc.system("stty echo")
 	}
