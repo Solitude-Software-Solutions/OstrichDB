@@ -205,6 +205,10 @@ BannedUserNames := []string {
 }
 
 //SERVER DYNAMIC ROUTE CONSTANTS
+BATCH_C_DYNAMIC_BASE :: "batch/c/*"
+BATCH_CL_DYNAMIC_BASE::"batch/c/*/cl/*"
+BATCH_R_DYNAMIC_BASE::"batch/c/*/cl/*/r/*"
+
 C_DYNAMIC_BASE :: "/c/*"
 CL_DYNAMIC_BASE :: "/c/*/cl/*"
 R_DYNAMIC_BASE :: "/c/*/cl/*/r/*"

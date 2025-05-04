@@ -67,7 +67,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .HEAD, C_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
 	addHeadColRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*' dynamic HEAD route to router",
+		give_description("HEAD",C_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -79,7 +79,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .POST, C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
 	addPostColRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*' dynamic POST route to router",
+		give_description("POST",C_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -91,7 +91,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .GET, C_DYNAMIC_BASE, HANDLE_GET_REQUEST)
 	addGetColRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*' dynamic GET route to router",
+		give_description("GET",C_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -103,7 +103,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .DELETE, C_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
 	addDeleteColRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*' dynamic DELETE route to router",
+		give_description("DELETE",C_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -117,7 +117,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .HEAD, CL_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
 	addHeadCluRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*' dynamic HEAD route to router",
+		give_description("HEAD",CL_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -129,7 +129,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .POST, CL_DYNAMIC_BASE, HANDLE_POST_REQUEST)
 	addPostCluRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*' dynamic POST route to router",
+		give_description("POST",CL_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -141,7 +141,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .GET, CL_DYNAMIC_BASE, HANDLE_GET_REQUEST)
 	addGetCluRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*' dynamic GET route to router",
+		give_description("GET",CL_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -153,7 +153,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .DELETE, CL_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
 	addDeleteCluRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*' dynamic DELETE route to router",
+		give_description("DELETE",CL_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -167,7 +167,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .HEAD, R_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
 	addHeadRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*' dynamic HEAD route to router",
+		give_description("HEAD",R_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -179,7 +179,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .POST, R_DYNAMIC_TYPE_QUERY, HANDLE_POST_REQUEST)
 	addPostRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*?type=*' dynamic POST route to router",
+		give_description("POST",R_DYNAMIC_TYPE_QUERY),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -191,7 +191,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .PUT, R_DYNAMIC_TYPE_VALUE_QUERY, HANDLE_PUT_REQUEST)
 	addPutRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*?type=*&value=*' dynamic PUT route to router",
+		give_description("PUT",R_DYNAMIC_TYPE_VALUE_QUERY),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -203,7 +203,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .GET, R_DYNAMIC_BASE, HANDLE_GET_REQUEST)
 	addGetRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*' dynamic GET route to router",
+		give_description("GET",R_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -215,7 +215,7 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	ADD_ROUTE_TO_ROUTER(router, .DELETE, R_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
 	addDeleteRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*' dynamic DELETE route to router",
+		give_description("DELETE",R_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
@@ -223,6 +223,19 @@ START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 		nil,
 	)
 	PRINT_SERVER_EVENT_INFORMATION(addDeleteRecRoute)
+
+
+	ADD_ROUTE_TO_ROUTER(router, .POST, BATCH_C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	   addBatchColPostRoute:= SET_SERVER_EVENT_INFORMATION("Add Route",
+				give_description("POST",BATCH_C_DYNAMIC_BASE),
+				ServerEventType.ROUTINE,
+			    time.now(),
+				false,
+				"",
+				nil
+		)
+
+	PRINT_SERVER_EVENT_INFORMATION(addBatchColPostRoute)
 
 
 	//TODO: Need to come back to batch requests...
@@ -470,4 +483,9 @@ HANDLE_SERVER_KILL_SWITCH :: proc() {
 			fmt.printfln("Invalid input. Type 'kill' or 'exit' to stop the server.")
 		}
 	}
+}
+
+
+give_description ::proc(method:string, constant:string) -> string{
+    return strings.clone(fmt.tprintf("Added %s dynamic %s route to router", method, constant),)
 }
