@@ -26,7 +26,6 @@ const responseFile = "./response.json"
 
 // Takes a natural language query, sends it to the LLM, and returns the response.
 func process_nlp_query(query string) (string, error) {
-
 	// Add the user query message
 	userMsg := Message{
 		Role:    "user",
@@ -44,7 +43,6 @@ func process_nlp_query(query string) (string, error) {
 
 	// Send to LLM
 	resp, err := talk_to_ollama(defaultOllamaURL, req)
-
 	if err != nil {
 		return "Error communicating with LLM: " + err.Error(), nil
 	}
@@ -53,7 +51,7 @@ func process_nlp_query(query string) (string, error) {
 		return "Received nil response from Ollama", nil
 	}
 
-	//store the response so further work can be done with it
+	// store the response so further work can be done with it
 	store_response(resp.Message.Content)
 
 	return "Successfully recieved and stored AI response.", nil
@@ -62,7 +60,7 @@ func process_nlp_query(query string) (string, error) {
 // stores the llms response as json in the response.json file
 func store_response(resp string) int {
 	data := []byte(resp)
-	err := os.WriteFile(responseFile, data, 0644)
+	err := os.WriteFile(responseFile, data, 0o644)
 	if err != nil {
 		fmt.Println("There was an issue creating the response.json file")
 		return -1
@@ -103,7 +101,7 @@ func parse_response() (parsedData interface{}, success bool) {
 
 func print_json_response(v interface{}, indent string) {
 	switch val := v.(type) {
-	//in the event of an interface of type string
+	// in the event of an interface of type string
 	case map[string]interface{}:
 		fmt.Println("{")
 		for k, v := range val {
@@ -111,7 +109,7 @@ func print_json_response(v interface{}, indent string) {
 			print_json_response(v, indent+"  ")
 		}
 		fmt.Printf("%s}\n", indent)
-		//in the event of an generic interface
+		// in the event of an generic interface
 	case []interface{}:
 		fmt.Println("[")
 		for _, item := range val {
