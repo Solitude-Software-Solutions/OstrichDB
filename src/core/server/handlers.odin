@@ -180,10 +180,10 @@ HANDLE_PUT_REQUEST :: proc(
 	recordName := strings.split(pathSegments[5], "?")
 	slicedRecordName := strings.to_upper(recordName[0])
 
-	switch (pathSegments[0]) 
+	switch (pathSegments[0])
 	{
 	case "c":
-		switch (segments) 
+		switch (segments)
 		{
 		case 2:
 			// In the event of something like: /collection/collecion_name
@@ -399,17 +399,13 @@ HANDLE_POST_REQUEST :: proc(
 		}
 	}
 
-	//Creating a new cluster
-	if len(segments) == 4 && segments[0] == "c" {
+	//Creating a new cluster if len(segments) == 4 && segments[0] == "c" {
 		collectionName = strings.to_upper(segments[1])
 		clusterName = strings.to_upper(segments[3])
 		colFilePath := utils.concat_standard_collection_name(collectionName)
 
 		if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-			return types.HttpStatus {
-				code = .NOT_FOUND,
-				text = types.HttpStatusText[.NOT_FOUND],
-			}, fmt.tprintf("COLLECTION: %s not found", collectionName)
+			data.AUTO_CREATE(types.COLLECTION_TIER, []string{collectionName})
 		}
 
 
@@ -445,20 +441,11 @@ HANDLE_POST_REQUEST :: proc(
 
 		colExists := data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
 		if !colExists {
-			fmt.printfln("COLLECTION: %s not found", collectionName)
-			return types.HttpStatus {
-				code = .NOT_FOUND,
-				text = types.HttpStatusText[.NOT_FOUND],
-			}, fmt.tprintf("COLLECTION: %s not found", collectionName)
+			data.AUTO_CREATE(types.COLLECTION_TIER, []string{collectionName})
 		}
 
-		fmt.println("Looking in: ", colFilePath)
 		if !data.CHECK_IF_CLUSTER_EXISTS(colFilePath, clusterName) {
-			fmt.printfln("CLUSTER: %s not found", clusterName)
-			return types.HttpStatus {
-				code = .NOT_FOUND,
-				text = types.HttpStatusText[.NOT_FOUND],
-			}, fmt.tprintf("CLUSTER: %s not found", clusterName)
+			data.AUTO_CREATE(types.CLUSTER_TIER, []string{collectionName, clusterName})
 		}
 
 
