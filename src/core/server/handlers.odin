@@ -399,7 +399,8 @@ HANDLE_POST_REQUEST :: proc(
 		}
 	}
 
-	//Creating a new cluster if len(segments) == 4 && segments[0] == "c" {
+	//Creating a new cluster
+	if len(segments) == 4 && segments[0] == "c" {
 		collectionName = strings.to_upper(segments[1])
 		clusterName = strings.to_upper(segments[3])
 		colFilePath := utils.concat_standard_collection_name(collectionName)
