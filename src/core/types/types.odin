@@ -432,6 +432,14 @@ HttpMethod :: enum {
 	DELETE,
 }
 
+methodString:=[HttpMethod]string{
+    .HEAD = "HEAD",
+    .GET = "GET",
+    .POST = "POST",
+    .PUT = "PUT",
+    .DELETE = "DELETE"
+}
+
 // m -  method p - path h - headers
 RouteHandler :: proc(
 	m: string,
@@ -465,12 +473,6 @@ HttpStatusText :: #sparse[HttpStatusCode]string {
 //BATCH OPERATION STUFF
 //BATCH OPERATION STUFF
 //BATCH OPERATION STUFF
-
-
-// OST_BATCH_OPERATION :: proc(batch: BatchRequest, params: [dynamic]string) -> int
-OST_BATCH_COLLECTION_PROC :: proc(names: []string, operation: BatchOperation) -> int //Used for batch operations on collections using the NEW/ERASE/FETCH tokens
-//used when multiple operations are to be performed
-
 BatchOperations :: enum {
 	//Rename is not uncluded because that token will require 2 inputs...ie the old name and new name. these only need 1
 	NEW   = 1,
