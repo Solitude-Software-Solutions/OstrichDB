@@ -469,8 +469,25 @@ HANDLE_POST_REQUEST :: proc(
 		}
 	}
 
+	if len(segments) == 3 && segments[0] == "batch" &&  segments[1] == "c"{
+	    fmt.println("making batch collection request")
 
-	// case "batch":
+		collectionNames:= strings.split(segments[2], "&")
+		fmt.println("collectionNames: ", collectionNames )
+
+		handleSuccess, str := data.HANDLE_COLLECTION_BATCH_REQ(collectionNames, .NEW)
+		switch(handleSuccess){
+		case 0:
+		    return types.HttpStatus{code = .OK, text = types.HttpStatusText[.OK]}, "Success"
+		case:
+			return types.HttpStatus {
+				code = .SERVER_ERROR,
+				text = types.HttpStatusText[.SERVER_ERROR],
+			}, "FAILED TO HANDLE COLLECTION BATCH REQ"
+		}
+	}
+
+
 	// 	if segments[1] == "collection" {
 	// 		switch (len(segments)) {
 	// 		case 3:
