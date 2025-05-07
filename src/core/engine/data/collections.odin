@@ -69,12 +69,15 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	#partial switch (colType)
 	{
 	case .STANDARD_PUBLIC:
+	fmt.println("Attempting to create a file with name: ",fn)
 		//standard cluster file
 		if VALIDATE_COLLECTION_NAME(fn) == 1 {
 			return false
 		}
 		collectionPath := utils.concat_standard_collection_name(fn)
+		fmt.println("collectionPath: ", collectionPath)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
+		fmt.println("createSuccess: ", createSuccess)
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
 		if createSuccess != 0 {
