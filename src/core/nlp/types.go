@@ -2,8 +2,8 @@ package main
 
 
 type AgentResponse struct {
-	OperationQueryResponse        *AgentOperationQueryResponse       `json:"operation_query_response"`
-	GeneralInformationQueryResponse *AgentGeneralInformationQueryResponse `json:"general_information_query_response"`
+	OperationQueryResponse        AgentOperationQueryResponse
+	GeneralInformationQueryResponse AgentGeneralInformationQueryResponse
 }
 
 type AgentOperationQueryResponse struct {
