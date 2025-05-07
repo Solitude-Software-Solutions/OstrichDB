@@ -1,18 +1,21 @@
 package main
+
 /*
 #include <stdlib.h>
-#cgo LDFLAGS: ${SRCDIR}/../shared/shared.dylib
+#cgo LDFLAGS: ${SRCDIR}/../shared/shared.so
 #include "../shared/sharedlib.h"
 */
 import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"unsafe"
-	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -27,6 +30,22 @@ Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 File Description:
             The main entry point for the OstrichDB AI Assistant.
 *********************************************************/
+
+type AgentResonse struct {
+	HTTPRequestMethod     string        `json:"http_request_method"`
+	IsBatchRequest        bool          `json:"is_batch_request"`
+	BatchDataStructures   []string      `json:"batch_data_structures"`
+	TotalCollectionCount  int           `json:"total_collection_count"`
+	TotalClusterCount     int           `json:"total_cluster_count"`
+	TotalRecordCount      int           `json:"total_record_count"`
+	ClustersPerCollection int           `json:"clusters_per_collection"`
+	RecordsPerCluster     int           `json:"records_per_cluster"`
+	CollectionNames       []string      `json:"collection_names"`
+	ClusterNames          []string      `json:"cluster_names"`
+	RecordNames           []string      `json:"record_names"`
+	RecordTypes           []string      `json:"record_types"`
+	RecordValues          []interface{} `json:"record_values"`
+}
 
 func main() {
 	err := godotenv.Load()
@@ -52,11 +71,10 @@ func main() {
 	chatCompletion, err := client.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(content),
-			openai.UserMessage("Create a new database with one cluster"),
+			openai.UserMessage("Create a new database called users with two clusters"),
 		},
-		Model: openai.ChatModelGPT4o,
+		Model: openai.ChatModelGPT4oMini,
 	})
-
 	if err != nil {
 		panic(err.Error())
 	}
@@ -66,9 +84,17 @@ func main() {
 		fmt.Println("SOMETHING TERRIBLE HAS HAPPENED")
 		return
 	}
-	println(chatCompletion.Choices[0].Message.Content)
-}
+	res := chatCompletion.Choices[0].Message.Content
+	println(res)
+	var payload []AgentResonse
+	if err := json.Unmarshal([]byte(res), &payload); err != nil {
+		panic(err)
+	}
 
+	for _, obj := range payload {
+		fmt.Println(obj)
+	}
+}
 
 // func do_thing(command Command, collectionNames , clusterNames, recordNames, recordTypes, recordValues []string)(bool){
 // 	success:= false
@@ -92,13 +118,13 @@ func get_file_count() int {
 // Stores the passed in response from the AI into a num_response.json file
 func store_response(resp string) error {
 	current_count := get_file_count()
-	//create a new filewith response count
+	// create a new filewith response count
 	file, creationError := os.Create(fmt.Sprintf("%d_response.json", current_count))
 	if creationError != nil {
 		return creationError
 	}
 
-	//open the file
+	// open the file
 	_, openError := os.Open(file.Name())
 	if openError != nil {
 		return openError
