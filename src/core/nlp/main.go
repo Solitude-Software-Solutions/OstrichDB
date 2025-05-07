@@ -88,13 +88,14 @@ func run_agent() ([]AgentResponse, int) {
 
 			// Create AgentResponse objects from the parsed general info responses
 			for _, infoResp := range generalInfoResponses {
-				fmt.Println(infoResp.GeneralInformationQueryResponse) // Print for user feedback
+				fmt.Println(infoResp.GeneralInformationQueryResponse)
 				agentResponses = append(agentResponses, AgentResponse{
-					GeneralInformationQueryResponse: &infoResp,
+					GeneralInformationQueryResponse: infoResp,
 				})
 			}
 		} else {
 			//Parse as an operation response
+			agentResponseType = 1
 			var operationResponses []AgentOperationQueryResponse
 			if err := json.Unmarshal([]byte(response), &operationResponses); err != nil {
 				panic(err)
@@ -102,12 +103,12 @@ func run_agent() ([]AgentResponse, int) {
 
 			// Create AgentResponse objects from the parsed operation responses
 			for _, opResp := range operationResponses {
-				fmt.Println(opResp) // Print for user feedback
 				agentResponses = append(agentResponses, AgentResponse{
-					OperationQueryResponse: &opResp,
+					OperationQueryResponse: opResp,
 				})
 			}
 		}
+		handle_payload_response(agentResponses, agentResponseType)
 	}
 
 	return agentResponses, agentResponseType
@@ -148,19 +149,79 @@ func get_file_count() int {
 }
 
 
-//EXPORTED FUNCTIONS BELOW
 
-//export init_nlp
-func init_nlp(){
-	payload, responseType := run_agent()
-	switch(responseType){
+//Takes the passed in payload and  prepares it to be sent to the OstrichDB core functions
+func gather_data(payload []AgentResponse){
+	for _, val := range payload {
+
+		//Setup the operation
+        op := val.OperationQueryResponse
+
+        fmt.Println("Command:", op.Command)
+
+        isBatchRequest:= op.IsBatchRequest
+        totalCollectionCount:=op.TotalCollectionCount
+        totalClusterCount:= op.TotalClusterCount
+        totalRecordCount:= op.TotalRecordCount
+
+        //Iterate over collection, cluster and record names
+        //maybe append them to a slice???
+        // Wish they had dynamic arrays like Odin
+        for _, collectionName := range op.CollectionNames {
+            fmt.Println("Collection:", collectionName)
+
+        }
+
+        //Iterate over cluster names if needed
+        if len(op.ClusterNames) > 0{
+        	for _, clusterName := range op.ClusterNames {
+          		fmt.Println("Cluster:", clusterName)
+         	}
+        }
+
+        //Iterate over record names if needed
+        if len(op.RecordNames) > 0{
+        	for _, recordName := range op.RecordNames {
+          		fmt.Println("Record:", recordName)
+         	}
+        }
+
+        //Iterate over record types if needed
+        if len(op.RecordTypes) > 0{
+        	for _, recordType := range op.RecordTypes {
+          		fmt.Println("Record type:",  recordType)
+         	}
+        }
+
+        //Iterate over record values if needed
+        if len(op.RecordValues) > 0{
+        	for _, recordValue := range op.RecordValues {
+          		fmt.Println("Record value:",  recordValue)
+         	}
+        }
+    }
+}
+
+
+
+func handle_payload_response(payload []AgentResponse, payloadType int){
+	switch(payloadType){
 		case 0: //If its a general information query just print it
-				fmt.Println(payload)
+			fmt.Println(payload)
 			break
 		case 1: //If its an operation query do more work
+			gather_data(payload)
 			break
 	}
-
 }
+
+
+//EXPORTED FUNCTIONS BELOW
+//export init_nlp
+func init_nlp(){
+	run_agent()
+}
+
+
 
 func main() {} // must be kept blank
