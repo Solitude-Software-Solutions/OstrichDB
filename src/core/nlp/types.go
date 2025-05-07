@@ -1,7 +1,13 @@
 package main
 
-type AgentResonse struct {
-	HTTPRequestMethod     string        `json:"http_request_method"`
+
+type AgentResponse struct {
+	OperationQueryResponse        *AgentOperationQueryResponse       `json:"operation_query_response"`
+	GeneralInformationQueryResponse *AgentGeneralInformationQueryResponse `json:"general_information_query_response"`
+}
+
+type AgentOperationQueryResponse struct {
+	Command     string        `json:"command"`
 	IsBatchRequest        bool          `json:"is_batch_request"`
 	BatchDataStructures   []string      `json:"batch_data_structures"`
 	TotalCollectionCount  int           `json:"total_collection_count"`
@@ -14,4 +20,10 @@ type AgentResonse struct {
 	RecordNames           []string      `json:"record_names"`
 	RecordTypes           []string      `json:"record_types"`
 	RecordValues          []interface{} `json:"record_values"`
+}
+
+//In the event a user asks for information about OstrichDB rather than attempting to make a request
+type AgentGeneralInformationQueryResponse struct {
+	IsGeneralInformationQuery      bool   `json:"general_ostrichdb_information_query_made"`
+	GeneralInformationQueryResponse string `json:"general_query_answer"`
 }

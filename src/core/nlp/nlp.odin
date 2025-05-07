@@ -2,6 +2,8 @@ package nlp
 
 import "core:c"
 import "core:c/libc"
+import "core:fmt"
+
 when ODIN_OS == .Linux {
     foreign import go "nlp.so"
 
@@ -11,11 +13,9 @@ when ODIN_OS == .Linux {
 } else when ODIN_OS == .Darwin {
     foreign import go "nlp.dylib"
     foreign go {
-        run_agent :: proc() ---
+        init_nlp:: proc() ---
     }
 }
-
-
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -27,7 +27,13 @@ File Description:
             1. Call Golang functions from within Odin code
             2. Ensure the NLP builds correctly to be used within the core
 *********************************************************/
-
-main :: proc() {
-    run_agent() //See this Go function in main.go
+main ::proc(){
+    //Don't touch me :)
 }
+
+runner :: proc() ->int {
+    init_nlp()
+    return 0
+}
+
+

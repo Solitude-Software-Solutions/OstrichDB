@@ -74,7 +74,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern void run_agent();
+extern void init_nlp();
 
 #ifdef __cplusplus
 }

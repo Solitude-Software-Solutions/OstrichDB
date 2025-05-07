@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"bufio"
 
 	"github.com/joho/godotenv"
 	"github.com/openai/openai-go"
@@ -23,8 +24,9 @@ File Description:
             The main entry point for the OstrichDB AI Assistant.
 *********************************************************/
 
-//export run_agent
-func run_agent() {
+func run_agent() ([]AgentResponse, int) {
+	var agentResponses []AgentResponse
+	var agentResponseType int
 
 	err := godotenv.Load()
 	if err != nil {
@@ -45,35 +47,71 @@ func run_agent() {
 	// Convert file content to string
 	content := string(data)
 
-	// Create a chat completion request with system instructions
-	chatCompletion, err := client.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(content),
-			openai.UserMessage("Create a new database called users with two clusters"),
-		},
-		Model: openai.ChatModelGPT4oMini,
-	})
-	if err != nil {
-		panic(err.Error())
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("OstrichDB AI Assistant ready. Type 'exit' to quit.")
+	for {
+		fmt.Print("\nEnter your prompt for OstrichDB AI: ")
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		if input == "exit" {
+			break
+		}
+
+		// Create a chat completion request with system instructions
+		chatCompletion, err := client.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.SystemMessage(content),
+				openai.UserMessage(input),
+			},
+			Model: openai.ChatModelGPT4oMini,
+		})
+		if err != nil {
+			panic(err.Error())
+		}
+
+		response := chatCompletion.Choices[0].Message.Content
+
+		storeResponseError := store_response(response)
+		if storeResponseError != nil {
+			panic(storeResponseError)
+		}
+
+		// Determine if the response is a general information query or an operation query
+		if strings.Contains(response, "is_general_ostrichdb_information_query") {
+			agentResponseType = 0
+			// Try to parse as a general information response
+			var generalInfoResponses []AgentGeneralInformationQueryResponse
+			if err := json.Unmarshal([]byte(response), &generalInfoResponses); err != nil {
+				panic(err)
+			}
+
+			// Create AgentResponse objects from the parsed general info responses
+			for _, infoResp := range generalInfoResponses {
+				fmt.Println(infoResp.GeneralInformationQueryResponse) // Print for user feedback
+				agentResponses = append(agentResponses, AgentResponse{
+					GeneralInformationQueryResponse: &infoResp,
+				})
+			}
+		} else {
+			//Parse as an operation response
+			var operationResponses []AgentOperationQueryResponse
+			if err := json.Unmarshal([]byte(response), &operationResponses); err != nil {
+				panic(err)
+			}
+
+			// Create AgentResponse objects from the parsed operation responses
+			for _, opResp := range operationResponses {
+				fmt.Println(opResp) // Print for user feedback
+				agentResponses = append(agentResponses, AgentResponse{
+					OperationQueryResponse: &opResp,
+				})
+			}
+		}
 	}
 
-	storeResponseError := store_response(chatCompletion.Choices[0].Message.Content)
-	if storeResponseError != nil {
-		fmt.Println("SOMETHING TERRIBLE HAS HAPPENED")
-		return
-	}
-	res := chatCompletion.Choices[0].Message.Content
-	println(res)
-	var payload []AgentResonse
-	if err := json.Unmarshal([]byte(res), &payload); err != nil {
-		panic(err)
-	}
-
-	for _, obj := range payload {
-		fmt.Println(obj)
-	}
+	return agentResponses, agentResponseType
 }
-
 
 
 // A helper function that stores the passed in response from the AI into a new num_response.json file
@@ -106,8 +144,23 @@ func get_file_count() int {
 			count++
 		}
 	}
-
 	return count
+}
+
+
+//EXPORTED FUNCTIONS BELOW
+
+//export init_nlp
+func init_nlp(){
+	payload, responseType := run_agent()
+	switch(responseType){
+		case 0: //If its a general information query just print it
+				fmt.Println(payload)
+			break
+		case 1: //If its an operation query do more work
+			break
+	}
+
 }
 
 func main() {} // must be kept blank

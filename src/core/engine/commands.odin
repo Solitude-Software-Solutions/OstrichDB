@@ -110,7 +110,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	case .AGENT: //Used to interact with the OstrichDB ai agent
-	   nlp.main() //TODO: This wont do anything because it requires the server to be running for work to be done
+	   nlp.runner() //TODO: This wont do anything because it requires the server to be running for work to be done
 	// Used to completley destroy the program and all its files, rebuilds after on macOs and Linux
 	case .DESTROY:
 		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
