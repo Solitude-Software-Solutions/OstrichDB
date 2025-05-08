@@ -532,3 +532,35 @@ ServerEventType :: enum {
 	ERROR          = 3,
 	CRITICAL_ERROR = 4,
 }
+
+
+//NLP RELATED TYPES
+AgentResponse :: struct {
+    OperationQueryResponse:        AgentOperationQueryResponse,
+	GeneralInformationQueryResponse: AgentGeneralInformationQueryResponse,
+}
+
+AgentOperationQueryResponse :: struct {
+    Command:               string     `json:"command"`,
+    HTTPRequestMethod:     string     `json:"http_request_method"`,
+    IsBatchRequest:        bool       `json:"is_batch_request"`,
+    BatchDataStructures:   []string   `json:"batch_data_structures"`,
+    TotalCollectionCount:  int        `json:"total_collection_count"`,
+    TotalClusterCount:     int        `json:"total_cluster_count"`,
+    TotalRecordCount:      int        `json:"total_record_count"`,
+    ClustersPerCollection: int        `json:"clusters_per_collection"`,
+    RecordsPerCluster:     int        `json:"records_per_cluster"`,
+    CollectionNames:       []string   `json:"collection_names"`,
+    ClusterNames:          []string   `json:"cluster_names"`,
+    RecordNames:           []string   `json:"record_names"`,
+    RecordTypes:           []string   `json:"record_types"`,
+    // Use string instead of any for records as the AI is
+    // prompted to output strings in the response.
+    // May need to be modified!
+    RecordValues:          [][]string `json:"record_values"`,
+}
+
+AgentGeneralInformationQueryResponse :: struct {
+    IsGeneralInformationQuery:       bool   `json:"general_ostrichdb_information_query_made"`,
+	GeneralInformationQueryResponse: string `json:"general_query_answer"`,
+}
