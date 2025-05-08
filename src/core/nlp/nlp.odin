@@ -91,6 +91,98 @@ handle_collection_creation :: proc(collectionName: string) {
     }
 }
 
+handle_cluster_creation :: proc(collectionName: string, clusterName: string) -> int {
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        if data.confirm_auto_operation(T.Token[.NEW],[]string{collectionName}) == -1{
+           return -1
+        }else{
+         data.AUTO_CREATE(T.COLLECTION_TIER, []string{collectionName})
+        }
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+        collectionName,
+        T.Token[.NEW],
+       T.CollectionType.STANDARD_PUBLIC,
+    )
+
+    fmt.printf(
+        "Creating cluster: %s%s%s within collection: %s%s%s\n",
+        utils.BOLD_UNDERLINE,
+        clusterName,
+        utils.RESET,
+        utils.BOLD_UNDERLINE,
+        collectionName,
+        utils.RESET,
+    )
+    // checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+    // switch (checks)
+    // {
+    // case -1:
+    // 	return -1
+    // }
+
+    id := data.GENERATE_ID(true)
+    result := data.CREATE_CLUSTER(collectionName, clusterName, id)
+    data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
+
+    switch (result)
+    {
+    case -1:
+        fmt.printfln(
+            "Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
+            utils.BOLD_UNDERLINE,
+            clusterName,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        security.ENCRYPT_COLLECTION(
+            collectionName,
+           T.CollectionType.STANDARD_PUBLIC,
+            T.current_user.m_k.valAsBytes,
+            false,
+        )
+        break
+    case 1, 2, 3:
+    errorLocation:= utils.get_caller_location()
+        error1 := utils.new_err(
+            utils.ErrorType.CANNOT_CREATE_CLUSTER,
+            utils.get_err_msg(utils.ErrorType.CANNOT_CREATE_CLUSTER),
+            errorLocation
+        )
+        utils.throw_custom_err(
+            error1,
+            "Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
+        )
+        utils.log_err("Failed to create new cluster.", #procedure)
+        break
+    }
+    fmt.printfln(
+        "Cluster: %s%s%s created successfully.\n",
+        utils.BOLD_UNDERLINE,
+        clusterName,
+        utils.RESET,
+    )
+    fn := utils.concat_standard_collection_name(collectionName)
+    metadata.UPDATE_METADATA_AFTER_OPERATIONS(fn)
+
+    security.ENCRYPT_COLLECTION(
+        collectionName,
+        T.CollectionType.STANDARD_PUBLIC,
+        T.current_user.m_k.valAsBytes,
+        false,
+    )
+    return 1
+}
+
 runner :: proc() ->int {
     agentResponseType: int
     agentResponses: [dynamic]T.AgentResponse
@@ -189,7 +281,13 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
         for val in payload {
             op := val.OperationQueryResponse
             for collection in op.CollectionNames {
-                handle_collection_creation(collection)
+                if len(op.ClusterNames) == 0 {
+                    handle_collection_creation(strings.to_upper(collection))
+                }
+                // will not loop if len is 0, so no else needed
+                for cluster in op.ClusterNames {
+                    handle_cluster_creation(strings.to_upper(collection), strings.to_upper(cluster))
+                }
             }
         }
         break

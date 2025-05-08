@@ -331,94 +331,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 				collectionName = cmd.l_token[0]
 				clusterName = cmd.l_token[1]
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					if data.confirm_auto_operation(Token[.NEW],[]string{collectionName}) == -1{
-					   return -1
-					}else{
-					 data.AUTO_CREATE(COLLECTION_TIER, []string{collectionName})
-					}
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.NEW],
-					.STANDARD_PUBLIC,
-				)
-
-				fmt.printf(
-					"Creating cluster: %s%s%s within collection: %s%s%s\n",
-					BOLD_UNDERLINE,
-					clusterName,
-					RESET,
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
-
-				id := data.GENERATE_ID(true)
-				result := data.CREATE_CLUSTER(collectionName, clusterName, id)
-				data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
-
-				switch (result)
-				{
-				case -1:
-					fmt.printfln(
-						"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
-						BOLD_UNDERLINE,
-						clusterName,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					ENCRYPT_COLLECTION(
-						cmd.l_token[0],
-						.STANDARD_PUBLIC,
-						types.current_user.m_k.valAsBytes,
-						false,
-					)
-					break
-				case 1, 2, 3:
-				errorLocation:= get_caller_location()
-					error1 := new_err(
-						.CANNOT_CREATE_CLUSTER,
-						get_err_msg(.CANNOT_CREATE_CLUSTER),
-						errorLocation
-					)
-					throw_custom_err(
-						error1,
-						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
-					)
-					log_err("Failed to create new cluster.", #procedure)
-					break
-				}
-				fmt.printfln(
-					"Cluster: %s%s%s created successfully.\n",
-					BOLD_UNDERLINE,
-					clusterName,
-					RESET,
-				)
-				fn = concat_standard_collection_name(collectionName)
-				UPDATE_METADATA_AFTER_OPERATIONS(fn)
-
-			ENCRYPT_COLLECTION(
-				cmd.l_token[0],
-				.STANDARD_PUBLIC,
-				types.current_user.m_k.valAsBytes,
-				false,
-			)
+            if nlp.handle_cluster_creation(collectionName, clusterName) == -1 {
+                return -1
+            }
 			break
 		case RECORD_TIER:
 			collectionName, clusterName, recordName, rValue: string
