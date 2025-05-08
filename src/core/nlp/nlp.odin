@@ -39,20 +39,23 @@ AgentResponse :: struct {
 }
 
 AgentOperationQueryResponse :: struct {
-    Command:               string   `json:"command"`,
-    HTTPRequestMethod:     string   `json:"http_request_method"`,
-    IsBatchRequest:        bool     `json:"is_batch_request"`,
-    BatchDataStructures:   []string `json:"batch_data_structures"`,
-    TotalCollectionCount:  int      `json:"total_collection_count"`,
-    TotalClusterCount:     int      `json:"total_cluster_count"`,
-    TotalRecordCount:      int      `json:"total_record_count"`,
-    ClustersPerCollection: int      `json:"clusters_per_collection"`,
-    RecordsPerCluster:     int      `json:"records_per_cluster"`,
-    CollectionNames:       []string `json:"collection_names"`,
-    ClusterNames:          []string `json:"cluster_names"`,
-    RecordNames:           []string `json:"record_names"`,
-    RecordTypes:           []string `json:"record_types"`,
-    RecordValues:          []any    `json:"record_values"`,
+    Command:               string     `json:"command"`,
+    HTTPRequestMethod:     string     `json:"http_request_method"`,
+    IsBatchRequest:        bool       `json:"is_batch_request"`,
+    BatchDataStructures:   []string   `json:"batch_data_structures"`,
+    TotalCollectionCount:  int        `json:"total_collection_count"`,
+    TotalClusterCount:     int        `json:"total_cluster_count"`,
+    TotalRecordCount:      int        `json:"total_record_count"`,
+    ClustersPerCollection: int        `json:"clusters_per_collection"`,
+    RecordsPerCluster:     int        `json:"records_per_cluster"`,
+    CollectionNames:       []string   `json:"collection_names"`,
+    ClusterNames:          []string   `json:"cluster_names"`,
+    RecordNames:           []string   `json:"record_names"`,
+    RecordTypes:           []string   `json:"record_types"`,
+    // Use string instead of any for records as the AI is
+    // prompted to output strings in the response.
+    // May need to be modified!
+    RecordValues:          [][]string `json:"record_values"`,
 }
 
 AgentGeneralInformationQueryResponse :: struct {
@@ -119,39 +122,29 @@ gather_data :: proc(payload: [dynamic]AgentResponse) {
 		fmt.println(isBatchRequest, totalClusterCount, totalCollectionCount, totalRecordCount)
 
 		// Iterate over collection, cluster and record names
-		// maybe append them to a slice???
-		// Wish they had dynamic arrays like Odin
 		for collectionName in op.CollectionNames {
 			fmt.println("Collection:", collectionName)
 		}
 
 		// Iterate over cluster names if needed
-		if len(op.ClusterNames) > 0 {
-			for clusterName in op.ClusterNames {
-				fmt.println("Cluster:", clusterName)
-			}
-		}
+        for clusterName in op.ClusterNames {
+            fmt.println("Cluster:", clusterName)
+        }
 
 		// Iterate over record names if needed
-		if len(op.RecordNames) > 0 {
-			for recordName in op.RecordNames {
-				fmt.println("Record:", recordName)
-			}
-		}
+        for recordName in op.RecordNames {
+            fmt.println("Record:", recordName)
+        }
 
 		// Iterate over record types if needed
-		if len(op.RecordTypes) > 0 {
-			for recordType in op.RecordTypes {
-				fmt.println("Record type:", recordType)
-			}
-		}
+        for recordType in op.RecordTypes {
+            fmt.println("Record type:", recordType)
+        }
 
 		// Iterate over record values if needed
-		if len(op.RecordValues) > 0 {
-			for recordValue in op.RecordValues {
-				fmt.println("Record value:", recordValue)
-			}
-		}
+        for recordValue in op.RecordValues {
+            fmt.println("Record value:", recordValue)
+        }
 	}
 }
 
