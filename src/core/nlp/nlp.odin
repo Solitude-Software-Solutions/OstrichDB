@@ -39,6 +39,7 @@ AgentResponse :: struct {
 }
 
 AgentOperationQueryResponse :: struct {
+    Command:               string   `json:"command"`,
     HTTPRequestMethod:     string   `json:"http_request_method"`,
     IsBatchRequest:        bool     `json:"is_batch_request"`,
     BatchDataStructures:   []string `json:"batch_data_structures"`,
@@ -98,6 +99,71 @@ runner :: proc() ->int {
         handle_payload_response(agentResponses, agentResponseType)
     }
     return 0
+}
+
+
+// Takes the passed in payload and  prepares it to be sent to the OstrichDB core functions
+gather_data :: proc(payload: [dynamic]AgentResponse) {
+	for val in payload {
+
+		// Setup the operation
+		op := val.OperationQueryResponse
+
+		fmt.println("Command:", op.Command)
+
+		isBatchRequest := op.IsBatchRequest
+		totalCollectionCount := op.TotalCollectionCount
+		totalClusterCount := op.TotalClusterCount
+		totalRecordCount := op.TotalRecordCount
+
+		fmt.println(isBatchRequest, totalClusterCount, totalCollectionCount, totalRecordCount)
+
+		// Iterate over collection, cluster and record names
+		// maybe append them to a slice???
+		// Wish they had dynamic arrays like Odin
+		for collectionName in op.CollectionNames {
+			fmt.println("Collection:", collectionName)
+		}
+
+		// Iterate over cluster names if needed
+		if len(op.ClusterNames) > 0 {
+			for clusterName in op.ClusterNames {
+				fmt.println("Cluster:", clusterName)
+			}
+		}
+
+		// Iterate over record names if needed
+		if len(op.RecordNames) > 0 {
+			for recordName in op.RecordNames {
+				fmt.println("Record:", recordName)
+			}
+		}
+
+		// Iterate over record types if needed
+		if len(op.RecordTypes) > 0 {
+			for recordType in op.RecordTypes {
+				fmt.println("Record type:", recordType)
+			}
+		}
+
+		// Iterate over record values if needed
+		if len(op.RecordValues) > 0 {
+			for recordValue in op.RecordValues {
+				fmt.println("Record value:", recordValue)
+			}
+		}
+	}
+}
+
+handle_payload_response :: proc(payload: [dynamic]AgentResponse, payloadType: int) {
+	switch payloadType {
+	case 0: // If its a general information query just print it
+		fmt.println(payload)
+		break
+	case 1: // If its an operation query do more work
+		gather_data(payload)
+		break
+	}
 }
 
 
