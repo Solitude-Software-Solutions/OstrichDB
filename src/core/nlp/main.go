@@ -2,18 +2,19 @@ package main
 
 import (
 	"C"
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"strings"
-	"bufio"
 
 	"github.com/joho/godotenv"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
+
 /*********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -28,7 +29,8 @@ func run_agent() ([]AgentResponse, int) {
 	var agentResponses []AgentResponse
 	var agentResponseType int
 
-	err := godotenv.Load()
+	// navigate outside of bin directory (when running using local_build_run.sh)
+	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -38,8 +40,8 @@ func run_agent() ([]AgentResponse, int) {
 		option.WithAPIKey(OPENAI_API_KEY),
 	)
 
-	// Read the file content
-	data, err := os.ReadFile("SYS_INSTRUCTIONS")
+	// Read the file content (same logic to escape bin dir)
+	data, err := os.ReadFile("../SYS_INSTRUCTIONS")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -94,7 +96,7 @@ func run_agent() ([]AgentResponse, int) {
 				})
 			}
 		} else {
-			//Parse as an operation response
+			// Parse as an operation response
 			agentResponseType = 1
 			var operationResponses []AgentOperationQueryResponse
 			if err := json.Unmarshal([]byte(response), &operationResponses); err != nil {
@@ -113,7 +115,6 @@ func run_agent() ([]AgentResponse, int) {
 
 	return agentResponses, agentResponseType
 }
-
 
 // A helper function that stores the passed in response from the AI into a new num_response.json file
 func store_response(resp string) error {
@@ -148,80 +149,75 @@ func get_file_count() int {
 	return count
 }
 
-
-
-//Takes the passed in payload and  prepares it to be sent to the OstrichDB core functions
-func gather_data(payload []AgentResponse){
+// Takes the passed in payload and  prepares it to be sent to the OstrichDB core functions
+func gather_data(payload []AgentResponse) {
 	for _, val := range payload {
 
-		//Setup the operation
-        op := val.OperationQueryResponse
+		// Setup the operation
+		op := val.OperationQueryResponse
 
-        fmt.Println("Command:", op.Command)
+		fmt.Println("Command:", op.Command)
 
-        isBatchRequest:= op.IsBatchRequest
-        totalCollectionCount:=op.TotalCollectionCount
-        totalClusterCount:= op.TotalClusterCount
-        totalRecordCount:= op.TotalRecordCount
+		isBatchRequest := op.IsBatchRequest
+		totalCollectionCount := op.TotalCollectionCount
+		totalClusterCount := op.TotalClusterCount
+		totalRecordCount := op.TotalRecordCount
 
-        //Iterate over collection, cluster and record names
-        //maybe append them to a slice???
-        // Wish they had dynamic arrays like Odin
-        for _, collectionName := range op.CollectionNames {
-            fmt.Println("Collection:", collectionName)
+		fmt.Println(isBatchRequest, totalClusterCount, totalCollectionCount, totalRecordCount)
 
-        }
+		// Iterate over collection, cluster and record names
+		// maybe append them to a slice???
+		// Wish they had dynamic arrays like Odin
+		for _, collectionName := range op.CollectionNames {
+			fmt.Println("Collection:", collectionName)
+		}
 
-        //Iterate over cluster names if needed
-        if len(op.ClusterNames) > 0{
-        	for _, clusterName := range op.ClusterNames {
-          		fmt.Println("Cluster:", clusterName)
-         	}
-        }
+		// Iterate over cluster names if needed
+		if len(op.ClusterNames) > 0 {
+			for _, clusterName := range op.ClusterNames {
+				fmt.Println("Cluster:", clusterName)
+			}
+		}
 
-        //Iterate over record names if needed
-        if len(op.RecordNames) > 0{
-        	for _, recordName := range op.RecordNames {
-          		fmt.Println("Record:", recordName)
-         	}
-        }
+		// Iterate over record names if needed
+		if len(op.RecordNames) > 0 {
+			for _, recordName := range op.RecordNames {
+				fmt.Println("Record:", recordName)
+			}
+		}
 
-        //Iterate over record types if needed
-        if len(op.RecordTypes) > 0{
-        	for _, recordType := range op.RecordTypes {
-          		fmt.Println("Record type:",  recordType)
-         	}
-        }
+		// Iterate over record types if needed
+		if len(op.RecordTypes) > 0 {
+			for _, recordType := range op.RecordTypes {
+				fmt.Println("Record type:", recordType)
+			}
+		}
 
-        //Iterate over record values if needed
-        if len(op.RecordValues) > 0{
-        	for _, recordValue := range op.RecordValues {
-          		fmt.Println("Record value:",  recordValue)
-         	}
-        }
-    }
-}
-
-
-
-func handle_payload_response(payload []AgentResponse, payloadType int){
-	switch(payloadType){
-		case 0: //If its a general information query just print it
-			fmt.Println(payload)
-			break
-		case 1: //If its an operation query do more work
-			gather_data(payload)
-			break
+		// Iterate over record values if needed
+		if len(op.RecordValues) > 0 {
+			for _, recordValue := range op.RecordValues {
+				fmt.Println("Record value:", recordValue)
+			}
+		}
 	}
 }
 
-
-//EXPORTED FUNCTIONS BELOW
-//export init_nlp
-func init_nlp(){
-	run_agent()
+func handle_payload_response(payload []AgentResponse, payloadType int) {
+	switch payloadType {
+	case 0: // If its a general information query just print it
+		fmt.Println(payload)
+		break
+	case 1: // If its an operation query do more work
+		gather_data(payload)
+		break
+	}
 }
 
-
+// EXPORTED FUNCTIONS BELOW
+//
+//export init_nlp
+func init_nlp() {
+	run_agent()
+}
 
 func main() {} // must be kept blank

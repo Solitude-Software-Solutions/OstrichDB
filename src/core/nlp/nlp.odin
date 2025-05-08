@@ -8,7 +8,7 @@ when ODIN_OS == .Linux {
     foreign import go "nlp.so"
 
     foreign go {
-        run_agent :: proc() ---
+        init_nlp :: proc() ---
     }
 } else when ODIN_OS == .Darwin {
     foreign import go "nlp.dylib"

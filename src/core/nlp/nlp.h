@@ -74,6 +74,9 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
+
+// EXPORTED FUNCTIONS BELOW
+//
 extern void init_nlp();
 
 #ifdef __cplusplus
