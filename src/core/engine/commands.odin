@@ -329,143 +329,20 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case CLUSTER_TIER:
 			fn, collectionName, clusterName: string
 
-				collectionName = cmd.l_token[0]
-				clusterName = cmd.l_token[1]
+            collectionName = cmd.l_token[0]
+            clusterName = cmd.l_token[1]
             if nlp.handle_cluster_creation(collectionName, clusterName) == -1 {
                 return -1
             }
 			break
 		case RECORD_TIER:
-			collectionName, clusterName, recordName, rValue: string
+			collectionName, clusterName, recordName: string
 			log_runtime_event("Used NEW RECORD command", "User requested to create a new record.")
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
+            nlp.handle_record_creation(collectionName, clusterName, recordName, cmd.p_token)
 
-
-			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-				fmt.printfln(
-					"Collection: %s%s%s does not exist.",
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				if data.confirm_auto_operation(Token[.NEW],[]string{collectionName, clusterName}) == -1{
-				   return -1
-				}else{
-				 data.AUTO_CREATE(COLLECTION_TIER, []string{collectionName})
-				 data.AUTO_CREATE(CLUSTER_TIER, []string{collectionName, clusterName})
-				}
-			}
-
-			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.NEW], .STANDARD_PUBLIC)
-
-
-			if len(recordName) > 64 {
-				fmt.printfln(
-					"Record name: %s%s%s is too long. Please choose a name less than 64 characters.",
-					BOLD_UNDERLINE,
-					recordName,
-					RESET,
-				)
-				return -1
-			}
-			colPath := concat_standard_collection_name(collectionName)
-
-			if Token[.OF_TYPE] in cmd.p_token  {
-				rType, typeSuccess := data.SET_RECORD_TYPE(cmd.p_token[Token[.OF_TYPE]])
-				if typeSuccess == 0 {
-					fmt.printfln(
-						"Creating record: %s%s%s of type: %s%s%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						rType,
-						RESET,
-					)
-
-					if Token[.WITH] in cmd.p_token  && len(cmd.p_token[Token[.WITH]]) != 0{
-					   rValue = cmd.p_token[Token[.WITH]]
-					} else if Token[.WITH] in cmd.p_token  && len(cmd.p_token[Token[.WITH]]) == 0{
-					   fmt.println("%s%sWARNING%s When using the WITH token there must be a value of the assigned type after. Please try again")
-						return 1
-					}
-					//TODO: Need to work on ensuring the value that is provided when using the WITH token is the appropriate type.
-					//Just like i am doing in the SET_RECORD_VALUE() proc....
-
-					recordCreationSuccess := data.CREATE_RECORD(
-						colPath,
-						clusterName,
-						recordName,
-						rValue,
-						rType,
-					)
-					switch (recordCreationSuccess)
-					{
-					case 0:
-						fmt.printfln(
-							"Record: %s%s%s of type: %s%s%s created successfully",
-							BOLD_UNDERLINE,
-							recordName,
-							RESET,
-							BOLD_UNDERLINE,
-							rType,
-							RESET,
-						)
-
-						//IF a records type is NULL, technically it cant hold a value, the word NULL in the value slot
-						// of a record is mostly a placeholder
-						if rType == Token[.NULL] {
-							data.SET_RECORD_VALUE(colPath, clusterName, recordName, Token[.NULL])
-						}
-
-						fn := concat_standard_collection_name(collectionName)
-						UPDATE_METADATA_AFTER_OPERATIONS(fn)
-						break
-					case -1, 1:
-						fmt.printfln(
-							"Failed to create record: %s%s%s of type: %s%s%s",
-							BOLD_UNDERLINE,
-							recordName,
-							RESET,
-							BOLD_UNDERLINE,
-							rType,
-							RESET,
-						)
-						log_runtime_event(
-							"Failed to create record",
-							"User requested to create a record but failed.",
-						)
-						log_err("Failed to create a new record.", #procedure)
-						break
-					}
-				} else {
-					fmt.printfln(
-						"Failed to create record: %s%s%s of type: %s%s%s. Please try again.",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						rType,
-						RESET,
-					)
-				}
-				ENCRYPT_COLLECTION(
-					cmd.l_token[0],
-					.STANDARD_PUBLIC,
-					types.current_user.m_k.valAsBytes,
-					false,
-				)
-			} else {
-				fmt.printfln(
-					"Incomplete command. Correct Usage: NEW <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
-				)
-				log_runtime_event(
-					"Incomplete NEW RECORD command",
-					"User did not provide a record name or type to create.",
-				)
-			}
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Location> <Parameters>")

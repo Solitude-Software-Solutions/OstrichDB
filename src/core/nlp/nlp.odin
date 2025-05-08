@@ -183,11 +183,138 @@ handle_cluster_creation :: proc(collectionName: string, clusterName: string) -> 
     return 1
 }
 
+handle_record_creation :: proc(collectionName, clusterName, recordName: string, p_token: map[string]string) -> int {
+    rValue: string
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        if data.confirm_auto_operation(T.Token[.NEW],[]string{collectionName, clusterName}) == -1{
+           return -1
+        }else{
+         data.AUTO_CREATE(T.COLLECTION_TIER, []string{collectionName})
+         data.AUTO_CREATE(T.CLUSTER_TIER, []string{collectionName, clusterName})
+        }
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, T.Token[.NEW], .STANDARD_PUBLIC)
+
+
+    if len(recordName) > 64 {
+        fmt.printfln(
+            "Record name: %s%s%s is too long. Please choose a name less than 64 characters.",
+            utils.BOLD_UNDERLINE,
+            recordName,
+            utils.RESET,
+        )
+        return -1
+    }
+    colPath := utils.concat_standard_collection_name(collectionName)
+
+    if T.Token[.OF_TYPE] in p_token {
+        rType, typeSuccess := data.SET_RECORD_TYPE(p_token[T.Token[.OF_TYPE]])
+        if typeSuccess == 0 {
+            fmt.printfln(
+                "Creating record: %s%s%s of type: %s%s%s",
+                utils.BOLD_UNDERLINE,
+                recordName,
+                utils.RESET,
+                utils.BOLD_UNDERLINE,
+                rType,
+                utils.RESET,
+            )
+
+            if T.Token[.WITH] in p_token  && len(p_token[T.Token[.WITH]]) != 0{
+               rValue = p_token[T.Token[.WITH]]
+            } else if T.Token[.WITH] in p_token  && len(p_token[T.Token[.WITH]]) == 0{
+               fmt.println("%s%sWARNING%s When using the WITH token there must be a value of the assigned type after. Please try again")
+                return 1
+            }
+            //TODO: Need to work on ensuring the value that is provided when using the WITH token is the appropriate type.
+            //Just like i am doing in the SET_RECORD_VALUE() proc....
+
+            recordCreationSuccess := data.CREATE_RECORD(
+                colPath,
+                clusterName,
+                recordName,
+                rValue,
+                rType,
+            )
+            switch (recordCreationSuccess)
+            {
+            case 0:
+                fmt.printfln(
+                    "Record: %s%s%s of type: %s%s%s created successfully",
+                    utils.BOLD_UNDERLINE,
+                    recordName,
+                    utils.RESET,
+                    utils.BOLD_UNDERLINE,
+                    rType,
+                    utils.RESET,
+                )
+
+                //IF a records type is NULL, technically it cant hold a value, the word NULL in the value slot
+                // of a record is mostly a placeholder
+                if rType == T.Token[.NULL] {
+                    data.SET_RECORD_VALUE(colPath, clusterName, recordName, T.Token[.NULL])
+                }
+
+                fn := utils.concat_standard_collection_name(collectionName)
+                metadata.UPDATE_METADATA_AFTER_OPERATIONS(fn)
+                break
+            case -1, 1:
+                fmt.printfln(
+                    "Failed to create record: %s%s%s of type: %s%s%s",
+                    utils.BOLD_UNDERLINE,
+                    recordName,
+                    utils.RESET,
+                    utils.BOLD_UNDERLINE,
+                    rType,
+                    utils.RESET,
+                )
+                utils.log_runtime_event(
+                    "Failed to create record",
+                    "User requested to create a record but failed.",
+                )
+                utils.log_err("Failed to create a new record.", #procedure)
+                break
+            }
+        } else {
+            fmt.printfln(
+                "Failed to create record: %s%s%s of type: %s%s%s. Please try again.",
+                utils.BOLD_UNDERLINE,
+                recordName,
+                utils.RESET,
+                utils.BOLD_UNDERLINE,
+                rType,
+                utils.RESET,
+            )
+        }
+        security.ENCRYPT_COLLECTION(
+            collectionName,
+            .STANDARD_PUBLIC,
+            T.current_user.m_k.valAsBytes,
+            false,
+        )
+    } else {
+        fmt.printfln(
+            "Incomplete command. Correct Usage: NEW <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
+        )
+        utils.log_runtime_event(
+            "Incomplete NEW RECORD command",
+            "User did not provide a record name or type to create.",
+        )
+    }
+    return 1
+}
+
 runner :: proc() ->int {
     agentResponseType: int
     agentResponses: [dynamic]T.AgentResponse
     response := string(init_nlp())
-    fmt.println("res is: ", string(response))
     if strings.contains(response, "is_general_ostrichdb_information_query") {
         agentResponseType = 0
         // Try to parse as a general information response
@@ -199,7 +326,6 @@ runner :: proc() ->int {
 
         // Create AgentResponse objects from the parsed general info responses
         for infoResp in generalInfoResponses {
-            fmt.println(infoResp.GeneralInformationQueryResponse)
             append(&agentResponses, T.AgentResponse{
                 GeneralInformationQueryResponse = infoResp,
             })
@@ -233,14 +359,10 @@ gather_data :: proc(payload: [dynamic]T.AgentResponse) {
 		// Setup the operation
 		op := val.OperationQueryResponse
 
-		fmt.println("Command:", op.Command)
-
 		isBatchRequest := op.IsBatchRequest
 		totalCollectionCount := op.TotalCollectionCount
 		totalClusterCount := op.TotalClusterCount
 		totalRecordCount := op.TotalRecordCount
-
-		fmt.println(isBatchRequest, totalClusterCount, totalCollectionCount, totalRecordCount)
 
 		// Iterate over collection, cluster and record names
 		for collectionName in op.CollectionNames {
@@ -276,8 +398,7 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
 		break
 	case 1: // If its an operation query do more work
 		gather_data(payload)
-        // TODO: Need to condense this and remove redundancy with
-        // the same calls in commands.odin
+        // TODO: need to abstract some of the code here away
         for val in payload {
             op := val.OperationQueryResponse
             for collection in op.CollectionNames {
@@ -286,7 +407,20 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
                 }
                 // will not loop if len is 0, so no else needed
                 for cluster in op.ClusterNames {
-                    handle_cluster_creation(strings.to_upper(collection), strings.to_upper(cluster))
+                    if len(op.RecordNames) == 0 {
+                        handle_cluster_creation(strings.to_upper(collection), strings.to_upper(cluster))
+                    }
+                    for record, record_index in op.RecordNames {
+                        for value in op.RecordValues[record_index] {
+                            record_info: map[string]string 
+                            if len(op.RecordValues) > record_index {
+                                record_info[T.Token[.WITH]] = value
+                                // if values are present the types will be as well
+                                record_info[T.Token[.OF_TYPE]] = op.RecordTypes[record_index]
+                            }
+                            handle_record_creation(strings.to_upper(collection), strings.to_upper(cluster), strings.to_upper(record), record_info)
+                        }
+                    }
                 }
             }
         }
