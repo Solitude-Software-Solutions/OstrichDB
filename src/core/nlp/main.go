@@ -4,6 +4,7 @@ import (
 	"C"
 	"bufio"
 	"context"
+	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -24,6 +25,9 @@ File Description:
             The main entry point for the OstrichDB AI Assistant.
 *********************************************************/
 
+//go:embed SYS_INSTRUCTIONS
+var data []byte
+
 func run_agent() *C.char {
 	// navigate outside of bin directory (when running using local_build_run.sh)
 	err := godotenv.Load("../.env")
@@ -35,12 +39,6 @@ func run_agent() *C.char {
 	client := openai.NewClient(
 		option.WithAPIKey(OPENAI_API_KEY),
 	)
-
-	// Read the file content (same logic to escape bin dir)
-	data, err := os.ReadFile("../SYS_INSTRUCTIONS")
-	if err != nil {
-		panic(err.Error())
-	}
 
 	// Convert file content to string
 	content := string(data)

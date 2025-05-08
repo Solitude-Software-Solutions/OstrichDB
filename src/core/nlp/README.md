@@ -24,6 +24,7 @@
 
 - Ensure the Go `main.go` file is importing `"C"`
 - When running GO within Odin the nlp.dylib file needs to be in the bin dir otherwise shit wont work
+- Ensure the SYS_INSTRUCTIONS file is in the nlp directory during compile time
 
 Then you need to re-run steps 4 and 5 from above.
 
