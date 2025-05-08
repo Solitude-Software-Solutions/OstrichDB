@@ -29,7 +29,6 @@ File Description:
             running the main loop.
 *********************************************************/
 
-
 EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using metadata
 	using const
@@ -324,54 +323,8 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case COLLECTION_TIER:
-			exists := data.CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
-			switch (exists) {
-			case false:
-				fmt.printf("Creating collection: %s%s%s\n", BOLD_UNDERLINE, cmd.l_token[0], RESET)
-				success := data.CREATE_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC)
-				if success {
-					fmt.printf(
-						"Collection: %s%s%s created successfully.\n",
-						BOLD_UNDERLINE,
-						cmd.l_token[0],
-						RESET,
-					)
-					fileName := concat_standard_collection_name(cmd.l_token[0])
-					UPDATE_METADATA_UPON_CREATION(fileName)
-
-					ENCRYPT_COLLECTION(
-						cmd.l_token[0],
-						.STANDARD_PUBLIC,
-						types.current_user.m_k.valAsBytes,
-						false,
-					)
-				} else {
-					fmt.printf(
-						"Failed to create collection %s%s%s.\n",
-						BOLD_UNDERLINE,
-						cmd.l_token[0],
-						RESET,
-					)
-					log_runtime_event(
-						"Failed to create collection",
-						"User tried to create a collection but failed.",
-					)
-					log_err("Failed to create new collection", #procedure)
-				}
-				break
-			case true:
-				fmt.printf(
-					"Collection: %s%s%s already exists. Please choose a different name.\n",
-					BOLD_UNDERLINE,
-					cmd.l_token[0],
-					RESET,
-				)
-				log_runtime_event(
-					"Duplicate collection name",
-					"User tried to create a collection with a name that already exists.",
-				)
-				break
-			}
+            collectionName := cmd.l_token[0]
+            nlp.handle_collection_creation(collectionName)
 			break
 		case CLUSTER_TIER:
 			fn, collectionName, clusterName: string

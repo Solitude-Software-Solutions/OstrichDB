@@ -33,7 +33,6 @@ main :: proc() {
 	CREATE_AND_FILL_PRIVATE_ID_COLLECTION()
 }
 
-
 //Displays all collections. total also shows size of the data in bytes.
 //Todo: Not really a tree, was implemented before but i took it out because it was fucking up - Marshall
 GET_COLLECTION_TREE :: proc() {

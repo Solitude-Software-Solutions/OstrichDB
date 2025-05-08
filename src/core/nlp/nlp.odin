@@ -5,6 +5,11 @@ import "core:c/libc"
 import "core:fmt"
 import "core:strings"
 import "core:encoding/json"
+import "../../utils"
+import "../const"
+import "../engine/data"
+import "../engine/security"
+import "../engine/data/metadata"
 import T "../types"
 
 when ODIN_OS == .Linux {
@@ -34,6 +39,57 @@ main ::proc(){
     //Don't touch me :)
 }
 
+// needs to be placed in a different file, probably in engine/
+handle_collection_creation :: proc(collectionName: string) {
+    exists := data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
+    switch (exists) {
+    case false:
+        fmt.printf("Creating collection: %s%s%s\n", utils.BOLD_UNDERLINE, collectionName, utils.RESET)
+        success := data.CREATE_COLLECTION(collectionName, T.CollectionType.STANDARD_PUBLIC)
+        if success {
+            fmt.printf(
+                "Collection: %s%s%s created successfully.\n",
+                utils.BOLD_UNDERLINE,
+                collectionName,
+                utils.RESET,
+            )
+            fileName := utils.concat_standard_collection_name(collectionName)
+            metadata.UPDATE_METADATA_UPON_CREATION(fileName)
+
+            security.ENCRYPT_COLLECTION(
+                collectionName,
+                T.CollectionType.STANDARD_PUBLIC,
+                T.current_user.m_k.valAsBytes,
+                false,
+            )
+        } else {
+            fmt.printf(
+                "Failed to create collection %s%s%s.\n",
+                utils.BOLD_UNDERLINE,
+                collectionName,
+                utils.RESET,
+            )
+            utils.log_runtime_event(
+                "Failed to create collection",
+                "User tried to create a collection but failed.",
+            )
+            utils.log_err("Failed to create new collection", #procedure)
+        }
+        break
+    case true:
+        fmt.printf(
+            "Collection: %s%s%s already exists. Please choose a different name.\n",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        utils.log_runtime_event(
+            "Duplicate collection name",
+            "User tried to create a collection with a name that already exists.",
+        )
+        break
+    }
+}
 
 runner :: proc() ->int {
     agentResponseType: int
@@ -128,7 +184,15 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
 		break
 	case 1: // If its an operation query do more work
 		gather_data(payload)
-		break
+        // TODO: Need to condense this and remove redundancy with
+        // the same calls in commands.odin
+        for val in payload {
+            op := val.OperationQueryResponse
+            for collection in op.CollectionNames {
+                handle_collection_creation(collection)
+            }
+        }
+        break
 	}
 }
 
