@@ -4,7 +4,6 @@ import (
 	"C"
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -25,10 +24,7 @@ File Description:
             The main entry point for the OstrichDB AI Assistant.
 *********************************************************/
 
-func run_agent() ([]AgentResponse, int) {
-	var agentResponses []AgentResponse
-	var agentResponseType int
-
+func run_agent() *C.char {
 	// navigate outside of bin directory (when running using local_build_run.sh)
 	err := godotenv.Load("../.env")
 	if err != nil {
@@ -74,46 +70,10 @@ func run_agent() ([]AgentResponse, int) {
 
 		response := chatCompletion.Choices[0].Message.Content
 
-		storeResponseError := store_response(response)
-		if storeResponseError != nil {
-			panic(storeResponseError)
-		}
-
-		// Determine if the response is a general information query or an operation query
-		if strings.Contains(response, "is_general_ostrichdb_information_query") {
-			agentResponseType = 0
-			// Try to parse as a general information response
-			var generalInfoResponses []AgentGeneralInformationQueryResponse
-			if err := json.Unmarshal([]byte(response), &generalInfoResponses); err != nil {
-				panic(err)
-			}
-
-			// Create AgentResponse objects from the parsed general info responses
-			for _, infoResp := range generalInfoResponses {
-				fmt.Println(infoResp.GeneralInformationQueryResponse)
-				agentResponses = append(agentResponses, AgentResponse{
-					GeneralInformationQueryResponse: infoResp,
-				})
-			}
-		} else {
-			// Parse as an operation response
-			agentResponseType = 1
-			var operationResponses []AgentOperationQueryResponse
-			if err := json.Unmarshal([]byte(response), &operationResponses); err != nil {
-				panic(err)
-			}
-
-			// Create AgentResponse objects from the parsed operation responses
-			for _, opResp := range operationResponses {
-				agentResponses = append(agentResponses, AgentResponse{
-					OperationQueryResponse: opResp,
-				})
-			}
-		}
-		handle_payload_response(agentResponses, agentResponseType)
+		return C.CString(response)
 	}
 
-	return agentResponses, agentResponseType
+	return C.CString("")
 }
 
 // A helper function that stores the passed in response from the AI into a new num_response.json file
@@ -216,8 +176,10 @@ func handle_payload_response(payload []AgentResponse, payloadType int) {
 // EXPORTED FUNCTIONS BELOW
 //
 //export init_nlp
-func init_nlp() {
-	run_agent()
+func init_nlp() *C.char {
+	res := run_agent()
+	fmt.Println(res)
+	return res
 }
 
 func main() {} // must be kept blank

@@ -77,7 +77,7 @@ extern "C" {
 
 // EXPORTED FUNCTIONS BELOW
 //
-extern void init_nlp();
+extern char* init_nlp();
 
 #ifdef __cplusplus
 }
