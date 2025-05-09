@@ -7,9 +7,14 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+import "core:path/filepath"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
+
+Contributors:
+    @CobbCoding1
+
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
@@ -32,7 +37,6 @@ main :: proc() {
 	os.make_directory(BACKUP_PATH)
 	CREATE_AND_FILL_PRIVATE_ID_COLLECTION()
 }
-
 
 //Displays all collections. total also shows size of the data in bytes.
 //Todo: Not really a tree, was implemented before but i took it out because it was fucking up - Marshall
@@ -69,12 +73,15 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	#partial switch (colType)
 	{
 	case .STANDARD_PUBLIC:
+	fmt.println("Attempting to create a file with name: ",fn)
 		//standard cluster file
 		if VALIDATE_COLLECTION_NAME(fn) == 1 {
 			return false
 		}
 		collectionPath := utils.concat_standard_collection_name(fn)
+		fmt.println("collectionPath: ", collectionPath)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
+		fmt.println("createSuccess: ", createSuccess)
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
 		if createSuccess != 0 {

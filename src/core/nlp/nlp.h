@@ -74,7 +74,10 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern void run_agent();
+
+// EXPORTED FUNCTIONS BELOW
+//
+extern char* init_nlp(GoSlice database);
 
 #ifdef __cplusplus
 }

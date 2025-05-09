@@ -142,16 +142,16 @@ APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
 	if APPEND_CONFIG_RECORD(HELP_IS_VERBOSE, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(AUTO_SERVE, "true", Token[.BOOLEAN]) == 0 { 	//server mode on by default while working on it
+	if APPEND_CONFIG_RECORD(AUTO_SERVE, "false", Token[.BOOLEAN]) == 0 { 	//Auto serve off by default
 		successCount += 1
 	}
 	if APPEND_CONFIG_RECORD(SUPPRESS_ERRORS, "false", Token[.BOOLEAN]) == 0 {
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", Token[.BOOLEAN]) == 0 {
+	if APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", Token[.BOOLEAN]) == 0 { //users command history limit is on by default
 		successCount += 1
 	}
-	if APPEND_CONFIG_RECORD(LIMIT_SESSION_TIME, "true", Token[.BOOLEAN]) == 0{ //CLI session time limit is on by defualt
+	if APPEND_CONFIG_RECORD(LIMIT_SESSION_TIME, "true", Token[.BOOLEAN]) == 0{ //CLI session time limit is on by default
 	   successCount += 1
 	}
 
