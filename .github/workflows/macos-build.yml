@@ -15,9 +15,6 @@ jobs:
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
 
-      - name: Install Ollama
-        id: install-ollama
-        run: brew install ollama
 
       - name: Set up Go-lang
         run: brew install go
