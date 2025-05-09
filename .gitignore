@@ -19,6 +19,7 @@ src/core/nlp/nlp
 *go.mod
 SYS_INSTRUCTIONS
 *ModelFile
+*.py
 #Ignore NLP libs and executables
 *.dylib
 *so
