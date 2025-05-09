@@ -33,15 +33,13 @@ case "$OS_TYPE" in
         ;;
 esac
 
-#Needed for CI to pass
-touch SYS_INSTRUCTIONS
-
 # Check if nlp dynamic library already exists
 if [ -f "src/core/nlp/nlp.${LIB_EXT}" ]; then
     echo "$(tput setaf 3)NLP library already exists, skipping build$(tput sgr0)"
 else
     # Go into nlp package and build NLP Go library
     cd "src/core/nlp"
+    touch SYS_INSTRUCTIONS #Needed for CI to pass
     go mod init main
     go mod tidy
     go build -buildmode c-shared -o nlp.${LIB_EXT}
