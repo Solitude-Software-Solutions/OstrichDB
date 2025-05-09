@@ -25,8 +25,12 @@ when ODIN_OS == .Linux {
     }
 }
 /********************************************************
-Author: Marshall A Burns
+Authors: Marshall A Burns
 GitHub: @SchoolyB
+
+Contributors:
+    @CobbCoding1
+
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
@@ -412,7 +416,7 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
                     }
                     for record, record_index in op.RecordNames {
                         for value in op.RecordValues[record_index] {
-                            record_info: map[string]string 
+                            record_info: map[string]string
                             if len(op.RecordValues) > record_index {
                                 record_info[T.Token[.WITH]] = value
                                 // if values are present the types will be as well
