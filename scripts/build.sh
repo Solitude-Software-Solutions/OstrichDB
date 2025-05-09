@@ -43,6 +43,7 @@ else
     go mod init main
     go mod tidy
     go build -buildmode c-shared -o nlp.${LIB_EXT}
+    odin build nlp.odin -file
     # Go back to root dir
     cd "$DIR/.."
 fi
