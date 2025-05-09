@@ -804,25 +804,10 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case COLLECTION_TIER:
 			if len(cmd.l_token) > 0 {
 				collectionName := cmd.l_token[0]
-
-				//check that the collection even exists
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.FETCH],
-					.STANDARD_PUBLIC,
-				)
-
-				str := data.FETCH_COLLECTION(collectionName)
+                str := nlp.handle_collection_fetch(collectionName)
+                if str == "" {
+                    return -1
+                }
 				fmt.println(str)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: FETCH <collection_name>")

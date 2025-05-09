@@ -77,7 +77,7 @@ extern "C" {
 
 // EXPORTED FUNCTIONS BELOW
 //
-extern char* init_nlp();
+extern char* init_nlp(GoSlice database);
 
 #ifdef __cplusplus
 }

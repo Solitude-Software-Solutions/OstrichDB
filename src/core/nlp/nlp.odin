@@ -1,5 +1,6 @@
 package nlp
 
+import "core:os"
 import "core:c"
 import "core:c/libc"
 import "core:fmt"
@@ -16,12 +17,12 @@ when ODIN_OS == .Linux {
     foreign import go "nlp.so"
 
     foreign go {
-        init_nlp :: proc() -> cstring ---
+        init_nlp :: proc([dynamic]cstring) -> cstring ---
     }
 } else when ODIN_OS == .Darwin {
     foreign import go "nlp.dylib"
     foreign go {
-        init_nlp:: proc() -> cstring ---
+        init_nlp:: proc([dynamic]cstring) -> cstring ---
     }
 }
 /********************************************************
@@ -315,10 +316,51 @@ handle_record_creation :: proc(collectionName, clusterName, recordName: string, 
     return 1
 }
 
+handle_collection_fetch :: proc(collectionName: string) -> string {
+    //check that the collection even exists
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        return "" 
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+        collectionName,
+        T.Token[.FETCH],
+        .STANDARD_PUBLIC,
+    )
+
+    return data.FETCH_COLLECTION(collectionName)
+}
+
 runner :: proc() ->int {
     agentResponseType: int
     agentResponses: [dynamic]T.AgentResponse
-    response := string(init_nlp())
+
+	dir, _ := os.open(const.STANDARD_COLLECTION_PATH)
+	collections, _ := os.read_dir(dir, 1)
+    database_data: [dynamic]cstring
+	for collection, index in collections {
+		nameWithoutExtension := strings.trim_suffix(collection.name, const.OST_EXT)
+        col := handle_collection_fetch(nameWithoutExtension)
+        if col != "" {
+            // allocates
+            append(&database_data, strings.clone_to_cstring(collection.name))
+            append(&database_data, strings.clone_to_cstring(col))
+            security.ENCRYPT_COLLECTION(
+                nameWithoutExtension,
+                .STANDARD_PUBLIC,
+                T.current_user.m_k.valAsBytes,
+                false,
+            )
+        }
+	}
+
+    response := string(init_nlp(database_data))
     if strings.contains(response, "is_general_ostrichdb_information_query") {
         agentResponseType = 0
         // Try to parse as a general information response
@@ -401,30 +443,44 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
 		fmt.println(payload)
 		break
 	case 1: // If its an operation query do more work
-		gather_data(payload)
         // TODO: need to abstract some of the code here away
         for val in payload {
             op := val.OperationQueryResponse
-            for collection in op.CollectionNames {
-                if len(op.ClusterNames) == 0 {
-                    handle_collection_creation(strings.to_upper(collection))
-                }
-                // will not loop if len is 0, so no else needed
-                for cluster in op.ClusterNames {
-                    if len(op.RecordNames) == 0 {
-                        handle_cluster_creation(strings.to_upper(collection), strings.to_upper(cluster))
+            if op.Command == "POST" {
+                for collection in op.CollectionNames {
+                    if len(op.ClusterNames) == 0 {
+                        handle_collection_creation(strings.to_upper(collection))
                     }
-                    for record, record_index in op.RecordNames {
-                        for value in op.RecordValues[record_index] {
-                            record_info: map[string]string
-                            if len(op.RecordValues) > record_index {
-                                record_info[T.Token[.WITH]] = value
-                                // if values are present the types will be as well
-                                record_info[T.Token[.OF_TYPE]] = op.RecordTypes[record_index]
+                    // will not loop if len is 0, so no else needed
+                    for cluster in op.ClusterNames {
+                        if len(op.RecordNames) == 0 {
+                            handle_cluster_creation(strings.to_upper(collection), strings.to_upper(cluster))
+                        }
+                        for record, record_index in op.RecordNames {
+                            for value in op.RecordValues[record_index] {
+                                record_info: map[string]string
+                                if len(op.RecordValues) > record_index {
+                                    record_info[T.Token[.WITH]] = value
+                                    // if values are present the types will be as well
+                                    record_info[T.Token[.OF_TYPE]] = op.RecordTypes[record_index]
+                                }
+                                handle_record_creation(strings.to_upper(collection), strings.to_upper(cluster), strings.to_upper(record), record_info)
                             }
-                            handle_record_creation(strings.to_upper(collection), strings.to_upper(cluster), strings.to_upper(record), record_info)
                         }
                     }
+                }
+            } else if op.Command == "FETCH" {
+                for collection in op.CollectionNames {
+                    str := handle_collection_fetch(collection)
+                    if str != "" {
+                        security.ENCRYPT_COLLECTION(
+                            collection,
+                            .STANDARD_PUBLIC,
+                            T.current_user.m_k.valAsBytes,
+                            false,
+                        )
+                    }
+                    fmt.println(str)
                 }
             }
         }
