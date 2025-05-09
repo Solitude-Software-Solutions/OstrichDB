@@ -337,6 +337,27 @@ handle_collection_fetch :: proc(collectionName: string) -> string {
     return data.FETCH_COLLECTION(collectionName)
 }
 
+
+handle_cluster_fetch :: proc(collectionName, clusterName: string) -> string {
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        return "" 
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+        collectionName,
+        T.Token[.FETCH],
+        .STANDARD_PUBLIC,
+    )
+
+    return data.FETCH_CLUSTER(collectionName, clusterName)
+}
+
 runner :: proc() ->int {
     agentResponseType: int
     agentResponses: [dynamic]T.AgentResponse
@@ -471,7 +492,15 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
                 }
             } else if op.Command == "FETCH" {
                 for collection in op.CollectionNames {
-                    str := handle_collection_fetch(collection)
+                    str: string
+                    if len(op.ClusterNames) == 0 {
+                        str = handle_collection_fetch(collection)
+                    }
+
+                    for cluster in op.ClusterNames {
+                        str = handle_cluster_fetch(collection, cluster)
+                    }
+
                     if str != "" {
                         security.ENCRYPT_COLLECTION(
                             collection,

@@ -826,24 +826,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case CLUSTER_TIER:
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
+                clusterContent := nlp.handle_cluster_fetch(collectionName, clusterName)
 
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
+                if clusterContent == "" {
+                    return -1
+                }
 
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.FETCH],
-					.STANDARD_PUBLIC,
-				)
-
-				clusterContent := data.FETCH_CLUSTER(collectionName, clusterName)
 				fmt.printfln(clusterContent)
 
 			ENCRYPT_COLLECTION(
