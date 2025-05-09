@@ -33,7 +33,7 @@ var data []byte
 
 func run_agent() *C.char {
 	// navigate outside of bin directory (when running using local_build_run.sh)
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("./.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}

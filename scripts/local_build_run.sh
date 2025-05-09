@@ -31,18 +31,15 @@ case "$OS_TYPE" in
         ;;
 esac
 
-# Check if nlp dynamic library already exists
-if [ -f "src/core/nlp/nlp.${LIB_EXT}" ]; then
-    echo "$(tput setaf 3)NLP library already exists, skipping build$(tput sgr0)"
-else
     # Go into nlp package and build NLP Go library
     cd "src/core/nlp"
     go mod init main
     go mod tidy
+    rm -f nlp.so nlp.dylib nlp.h
     go build -buildmode c-shared -o nlp.${LIB_EXT}
     # Go back to root dir
     cd "$DIR/.."
-fi
+# fi
 
 # Check if nlp dynamic lib exists in bin directory and remove it
 if [ -f "./bin/nlp.${LIB_EXT}" ]; then
