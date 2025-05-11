@@ -27,28 +27,6 @@ File Description:
             user accounts.
 *********************************************************/
 
-//Generates the 'secure' directory for storing user credentials.
-GENERATE_SECURE_DIRECTORY :: proc() -> int {
-	using utils
-
-	//perform a check to see if the secure directory already exists to prevent errors and overwriting
-	_, err := os.stat(const.SECURE_COLLECTION_PATH)
-	if err == nil {
-		return 0
-	}
-	createDirSuccess := os.make_directory(const.SECURE_COLLECTION_PATH)
-	if createDirSuccess != 0 {
-	errorLocation:= get_caller_location()
-		error1 := utils.new_err(
-			.CANNOT_CREATE_DIRECTORY,
-			get_err_msg(.CANNOT_CREATE_DIRECTORY),
-			errorLocation
-		)
-		throw_err(error1)
-		log_err("Error occured while attempting to generate new secure file", #procedure)
-	}
-	return 0
-}
 
 //Handle initial setup of the admin account on first run of the program
 HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
@@ -57,7 +35,6 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	using const
 
 	buf: [256]byte
-	GENERATE_SECURE_DIRECTORY()
 	GENERATE_USER_ID()
 	fmt.printfln("Welcome to the OstrichDB Database Management System")
 	fmt.printfln("Before getting started please setup your admin account")
@@ -76,21 +53,24 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	algoMethodAsString := fmt.tprintf("%d", user.store_method)
 	user.user_id = data.GENERATE_ID(true) //for secure clustser, the cluster id is the user id
 
-	CREATE_COLLECTION("", .HISTORY_PRIVATE)
 	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
 	user.username.Value = inituserName
+	types.current_user.username.Value = inituserName
 	// //store the id to both clusters in the id collection
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
 
 
-	// //Create a cluster in the history collection that will hold this users command history
-	CREATE_CLUSTER_BLOCK(HISTORY_PATH, user.user_id, user.username.Value)
+	//Create a directory and a credentials collection for the user
+	os.make_directory(fmt.tprintf("%s/%s/", USERS_PATH, user.username.Value))
+	CREATE_COLLECTION( user.username.Value, .SECURE_PRIVATE)
 
+	//Create the users own query history collection
+	CREATE_COLLECTION(user.username.Value, .HISTORY_PRIVATE)
 
-	//Create a secure collection for the user
-	inituserName = fmt.tprintf("secure_%s", inituserName)
-	CREATE_COLLECTION(inituserName, .SECURE_PRIVATE)
+	//Create the users own config collection
+	CREATE_COLLECTION(user.username.Value, .USER_CONFIG_PRIVATE)
+
 	// GENERATE_MASTER_KEY returns a 32 byte master key that is hex encoded
 	mk := GENERATE_MASTER_KEY()
 	mkAsString := transmute(string)mk //dont worry about this
@@ -120,7 +100,9 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 
 	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
 
-	engineInit := config.UPDATE_CONFIG_VALUE(ENGINE_INIT, "true")
+	//update the engine init value in th system configs
+	engineInit := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE,ENGINE_INIT, "true")
+
 
 	switch (engineInit)
 	{
@@ -131,16 +113,15 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-	metadata.UPDATE_METADATA_UPON_CREATION(HISTORY_PATH)
+	metadata.UPDATE_METADATA_UPON_CREATION(utils.concat_user_history_path(types.user.username.Value))
 	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)
-	metadata.UPDATE_METADATA_UPON_CREATION(CONFIG_PATH)
-	metadata.UPDATE_METADATA_UPON_CREATION(
-		fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, inituserName, OST_EXT),
+	metadata.UPDATE_METADATA_UPON_CREATION(SYSTEM_CONFIG_PATH)
+	metadata.UPDATE_METADATA_UPON_CREATION(utils.concat_user_credential_path(types.user.username.Value)
 	)
 
 	//Encrypt the the config, history, id, and new users secure collection
-	ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
+	// ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
 	ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
 	ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes, false)
 
@@ -377,7 +358,7 @@ STORE_USER_CREDENTIALS :: proc(fn: string, cn: string, id: i64, rn: string, rd: 
 	using const
 	using utils
 
-	secureFilePath := concat_secure_collection_name(fn)
+	secureFilePath := concat_user_credential_path(fn)
 
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)

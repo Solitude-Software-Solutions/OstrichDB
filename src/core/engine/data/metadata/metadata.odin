@@ -443,11 +443,13 @@ GET_METADATA_MEMBER_VALUE :: proc(
 	case .STANDARD_PUBLIC:
 		file = concat_standard_collection_name(fn)
 		break
-	case .CONFIG_PRIVATE:
-		file = CONFIG_PATH
+	case .USER_CONFIG_PRIVATE:
+	    file = concat_user_config_collection_name(fn)
+	case .SYSTEM_CONFIG_PRIVATE:
+		file = SYSTEM_CONFIG_PATH
 		break
 	case .HISTORY_PRIVATE:
-		file = HISTORY_PATH
+		file = utils.concat_user_history_path(types.current_user.username.Value)
 		break
 	case .ID_PRIVATE:
 		file = ID_PATH
@@ -509,7 +511,6 @@ GET_METADATA_MEMBER_VALUE :: proc(
 //Similar to the UPDATE_METADATA_VALUE but updates a value wiht the passed in param
 //member is the metadata field to update
 //For now , only used for the "Permission" field, may add more in the future - Marshall
-// 0 - public, 1 - secure, 2 - config, 3 - history, 4 - id
 CHANGE_METADATA_MEMBER_VALUE :: proc(
 	fn, newValue: string,
 	member: int,
@@ -524,14 +525,16 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 	case .STANDARD_PUBLIC:
 		file = concat_standard_collection_name(fn)
 		break
+	case .USER_CONFIG_PRIVATE:
+	    file = concat_user_config_collection_name(fn)
 	case .SECURE_PRIVATE:
-		file = fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, fn, OST_EXT)
+		file = utils.concat_user_credential_path(fn)
 		break
-	case .CONFIG_PRIVATE:
-		file = CONFIG_PATH
+	case .SYSTEM_CONFIG_PRIVATE:
+		file = SYSTEM_CONFIG_PATH
 		break
 	case .HISTORY_PRIVATE:
-		file = HISTORY_PATH
+		file = utils.concat_user_history_path(types.current_user.username.Value)
 		break
 	case .ID_PRIVATE:
 		file = ID_PATH
@@ -548,6 +551,7 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 			get_err_msg(.CANNOT_READ_FILE),
 			errorLocation
 		)
+		fmt.println("Cannot read file: ", file)
 		throw_err(error1)
 		return false
 	}

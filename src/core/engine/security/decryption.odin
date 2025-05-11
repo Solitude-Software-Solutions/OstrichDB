@@ -55,14 +55,17 @@ DECRYPT_COLLECTION :: proc(
 	case .STANDARD_PUBLIC:
 		file = utils.concat_standard_collection_name(colName)
 		break
-	case .SECURE_PRIVATE:
-		file = utils.concat_secure_collection_name(colName)
+	case .USER_CONFIG_PRIVATE:
+	    file = utils.concat_user_config_collection_name(colName)
 		break
-	case .CONFIG_PRIVATE:
-		file = const.CONFIG_PATH
+	case .SECURE_PRIVATE:
+		file = utils.concat_user_credential_path(colName)
+		break
+	case .SYSTEM_CONFIG_PRIVATE:
+		file = const.SYSTEM_CONFIG_PATH
 		break
 	case .HISTORY_PRIVATE:
-		file = const.HISTORY_PATH
+		file = utils.concat_user_history_path(types.current_user.username.Value)
 		break
 	case .ID_PRIVATE:
 		file = const.ID_PATH

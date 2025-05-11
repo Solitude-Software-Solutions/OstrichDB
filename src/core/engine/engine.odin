@@ -79,11 +79,11 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 				)
 
 				//Check to see if the server AUTO_SERVE config value is true. If so start server
-				security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+				security.DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 
 				autoServeConfigValue := data.GET_RECORD_VALUE(
-					CONFIG_PATH,
-					CONFIG_CLUSTER,
+					SYSTEM_CONFIG_PATH,
+					SYSTEM_CONFIG_CLUSTER,
 					types.Token[.BOOLEAN],
 					AUTO_SERVE,
 				)
@@ -98,7 +98,7 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 					fmt.println("2. Use command: 'SET CONFIG AUTO_SERVE TO false'\n\n")
 					security.ENCRYPT_COLLECTION(
 						"",
-						.CONFIG_PRIVATE,
+						.SYSTEM_CONFIG_PRIVATE,
 						types.system_user.m_k.valAsBytes,
 						false,
 					)
@@ -116,7 +116,7 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 					// if the AUTO_SERVE config value is false, then continue starting command line
 					security.ENCRYPT_COLLECTION(
 						"",
-						.CONFIG_PRIVATE,
+						.SYSTEM_CONFIG_PRIVATE,
 						types.system_user.m_k.valAsBytes,
 						false,
 					)
@@ -128,7 +128,7 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 				fmt.printfln("Sign in failed. Please try again.")
 				security.ENCRYPT_COLLECTION(
 					"",
-					.CONFIG_PRIVATE,
+					.SYSTEM_CONFIG_PRIVATE,
 					types.system_user.m_k.valAsBytes,
 					false,
 				)
@@ -163,9 +163,10 @@ START_COMMAND_LINE :: proc() -> int {
 
 
 		//check if  the LIMIT_SESSION_TIME config is enabled.
-		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-		sessionLimitValue:= data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER,Token[.BOOLEAN],LIMIT_SESSION_TIME)
-		ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, true,)
+		DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		userName:= current_user.username.Value
+		sessionLimitValue:= data.GET_RECORD_VALUE(utils.concat_user_config_collection_name(userName),utils.concat_user_config_cluster_name(userName) ,Token[.BOOLEAN],LIMIT_SESSION_TIME)
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, true,)
 
 		if sessionLimitValue == "true"{
 		  //Check to ensure that BEFORE the next command is executed, the max session time hasnt been met
@@ -184,7 +185,7 @@ START_COMMAND_LINE :: proc() -> int {
 
 	//Re-engage the loop
 	if USER_SIGNIN_STATUS == false {
-		security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+		// security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 		START_OSTRICHDB_ENGINE()
 	}
 

@@ -26,64 +26,64 @@ APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	using utils
 	using const
 
-	histBuf: [1024]byte
-	//append the last command to the history buffer
-	current_user.commandHistory.cHistoryCount = data.GET_RECORD_COUNT_WITHIN_CLUSTER(
-		"history",
-		current_user.username.Value,
-		false,
-	)
+	// histBuf: [1024]byte
+	// //append the last command to the history buffer
+	// current_user.commandHistory.cHistoryCount = data.GET_RECORD_COUNT_WITHIN_CLUSTER(
+	// 	"history",
+	// 	current_user.username.Value,
+	// 	false,
+	// )
 
-	// History Collection file size limit.
-	// Doesnt measure bytes of the file but instead
-	// the num of records of the users command history cluster
-	//
+	// // History Collection file size limit.
+	// // Doesnt measure bytes of the file but instead
+	// // the num of records of the users command history cluster
+	// //
 
-	security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	limitOn := data.GET_RECORD_VALUE(
-		const.CONFIG_PATH,
-		const.CONFIG_CLUSTER,
-		types.Token[.BOOLEAN],
-		const.LIMIT_HISTORY,
-	)
-	security.ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+	// security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	// limitOn := data.GET_RECORD_VALUE(
+	// 	const.CONFIG_PATH,
+	// 	const.CONFIG_CLUSTER,
+	// 	types.Token[.BOOLEAN],
+	// 	const.LIMIT_HISTORY,
+	// )
+	// security.ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 
-	if limitOn == "true" {
-		limitReached := CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET(&current_user)
-		if limitReached {
-			if PURGE_USERS_HISTORY_CLUSTER(current_user.username.Value) {
-				//set the count back to 0
-				current_user.commandHistory.cHistoryCount = 0
-			}
-		}
-	}
+	// if limitOn == "true" {
+	// 	limitReached := CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET(&current_user)
+	// 	if limitReached {
+	// 		if PURGE_USERS_HISTORY_CLUSTER(current_user.username.Value) {
+	// 			//set the count back to 0
+	// 			current_user.commandHistory.cHistoryCount = 0
+	// 		}
+	// 	}
+	// }
 
-	histCountStr := strconv.itoa(histBuf[:], current_user.commandHistory.cHistoryCount)
-	recordName := fmt.tprintf("%s%s", "history_", histCountStr)
+	// histCountStr := strconv.itoa(histBuf[:], current_user.commandHistory.cHistoryCount)
+	// recordName := fmt.tprintf("%s%s", "history_", histCountStr)
 
-	//append the last command to the history file
-	data.CREATE_RECORD(
-		const.HISTORY_PATH,
-		current_user.username.Value,
-		strings.to_upper(recordName),
-		strings.to_upper(strings.clone(input)),
-		"COMMAND",
-	)
+	// //append the last command to the history file
+	// data.CREATE_RECORD(
+	// 	const.HISTORY_PATH,
+	// 	current_user.username.Value,
+	// 	strings.to_upper(recordName),
+	// 	strings.to_upper(strings.clone(input)),
+	// 	"COMMAND",
+	// )
 
-	//get value of the command that was just stored as a record
-	historyRecordValue := data.GET_RECORD_VALUE(
-		const.HISTORY_PATH,
-		current_user.username.Value,
-		"COMMAND",
-		strings.to_upper(recordName),
-	)
+	// //get value of the command that was just stored as a record
+	// historyRecordValue := data.GET_RECORD_VALUE(
+	// 	const.HISTORY_PATH,
+	// 	current_user.username.Value,
+	// 	"COMMAND",
+	// 	strings.to_upper(recordName),
+	// )
 
-	//append the command from the file to the command history buffer
-	append(&current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
+	// //append the command from the file to the command history buffer
+	// append(&current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
 
 
-	//update the history file size, date last modified and checksum
-	UPDATE_METADATA_AFTER_OPERATIONS(const.HISTORY_PATH)
+	// //update the history file size, date last modified and checksum
+	UPDATE_METADATA_AFTER_OPERATIONS(utils.concat_user_history_path(types.current_user.username.Value))
 }
 
 
@@ -91,7 +91,7 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	using const
 	using utils
 
-	data, readSuccess := os.read_entire_file(HISTORY_PATH)
+	data, readSuccess := os.read_entire_file(utils.concat_user_credential_path(types.current_user.username.Value))
 	defer delete(data)
 	if !readSuccess {
 	errorLocation:= get_caller_location()
@@ -140,7 +140,7 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
-	writeSuccess := os.write_entire_file(HISTORY_PATH, newContent[:])
+	writeSuccess := os.write_entire_file(utils.concat_user_credential_path(types.user.username.Value), newContent[:])
 	if !writeSuccess {
 	errorLocation:= get_caller_location()
 		throw_err(
@@ -167,7 +167,7 @@ PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 	using utils
 
 	// Read the entire file
-	data, readSuccess := os.read_entire_file(const.HISTORY_PATH)
+	data, readSuccess := os.read_entire_file(utils.concat_user_history_path(types.user.username.Value))
 	if !readSuccess {
 	errorLocation:= get_caller_location()
 		throw_err(
@@ -255,7 +255,7 @@ PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 		return false
 	}
 	//write the new content to the collection file
-	writeSuccess := os.write_entire_file(const.HISTORY_PATH, newContent[:])
+	writeSuccess := os.write_entire_file(utils.concat_user_history_path(types.current_user.username.Value), newContent[:])
 	if !writeSuccess {
 	errorLocation:= get_caller_location()
 		throw_err(
@@ -312,7 +312,7 @@ push_records_to_array :: proc(cn: string) -> [dynamic]string {
 	histBuf: [1024]byte
 
 
-	data, readSuccess := utils.read_file(const.HISTORY_PATH, #procedure)
+	data, readSuccess := utils.read_file(utils.concat_user_history_path(types.current_user.username.Value), #procedure)
 	defer delete(data)
 	if !readSuccess {
 		return records

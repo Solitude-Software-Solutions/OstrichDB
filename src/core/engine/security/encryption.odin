@@ -60,17 +60,19 @@ ENCRYPT_COLLECTION :: proc(
 		//Public Standard Collection
 		file = utils.concat_standard_collection_name(colName)
 		break
+	case .USER_CONFIG_PRIVATE:
+	    file = utils.concat_user_config_collection_name(colName)
 	case .SECURE_PRIVATE:
 		//Private Secure Collection
-		file = utils.concat_secure_collection_name(colName)
+		file = utils.concat_user_credential_path(colName)
 		break
-	case .CONFIG_PRIVATE:
+	case .SYSTEM_CONFIG_PRIVATE:
 		//Private Config Collection
-		file = const.CONFIG_PATH
+		file = const.SYSTEM_CONFIG_PATH
 		break
 	case .HISTORY_PRIVATE:
 		//Private History Collection
-		file = const.HISTORY_PATH
+		file = utils.concat_user_history_path(types.user.username.Value)
 		break
 	case .ID_PRIVATE:
 		//Private ID Collection

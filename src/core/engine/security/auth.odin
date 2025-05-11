@@ -54,7 +54,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		return false
 	}
 
-	secCollection := utils.concat_secure_collection_name(usernameCapitalized)
+	secCollection := utils.concat_user_credential_path(usernameCapitalized)
 
 	//decrypt the user secure collection
 	decSuccess, _ := DECRYPT_COLLECTION(
@@ -132,10 +132,10 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		current_user.role.Value = strings.clone(userRole)
 
 
-		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		DECRYPT_COLLECTION("", .USER_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 		userLoggedInValue := data.GET_RECORD_VALUE(
-			CONFIG_PATH,
-			CONFIG_CLUSTER,
+		    utils.concat_user_config_collection_name(usernameCapitalized),
+			utils.concat_user_config_cluster_name(usernameCapitalized),
 			Token[.BOOLEAN],
 			USER_LOGGED_IN,
 		)
@@ -155,7 +155,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 
 		if userLoggedInValue == "false" {
 			// config.OST_TOGGLE_CONFIG(const.USER_LOGGED_IN)
-			config.UPDATE_CONFIG_VALUE(const.USER_LOGGED_IN, "true")
+			config.UPDATE_CONFIG_VALUE(.USER_CONFIG_PRIVATE, const.USER_LOGGED_IN, "true",usernameCapitalized)
 		}
 		break
 	case false:
@@ -202,8 +202,8 @@ CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 //Handles logic for signing out a user and exiting the program
 //param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
 RUN_USER_LOGOUT :: proc(param: int) {
-	security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	loggedOut := config.UPDATE_CONFIG_VALUE(const.USER_LOGGED_IN, "false")
+	security.DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	loggedOut := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE,const.USER_LOGGED_IN, "false")
 
 	switch loggedOut {
 	case true:
@@ -211,19 +211,19 @@ RUN_USER_LOGOUT :: proc(param: int) {
 		{
 		case 0:
 			//Logging out but keeps program running
-			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 		case 1:
 			//Exiting
-			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)
 		}
 		break
 	case false:
-		ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		types.USER_SIGNIN_STATUS = true
 		fmt.printfln("You have NOT been logged out.")
 		break
@@ -234,7 +234,7 @@ RUN_USER_LOGOUT :: proc(param: int) {
 //shorter version of sign in but exclusively for checking passwords for certain db actions
 VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 	succesfulValidation := false
-	secCollection := utils.concat_secure_collection_name(types.user.username.Value)
+	secCollection := utils.concat_user_credential_path(types.user.username.Value)
 
 	//PRE-MESHING START
 	salt := data.GET_RECORD_VALUE(secCollection, types.user.username.Value, "identifier", "salt")

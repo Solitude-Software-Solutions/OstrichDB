@@ -34,7 +34,7 @@ main :: proc() {
 	utils.main()
 
 
-	configFound := config.CHECK_IF_CONFIG_FILE_EXISTS()
+	configFound := config.CHECK_IF_SYSTEM_CONFIG_FILE_EXISTS()
 	switch (configFound)
 	{
 	case false:
@@ -50,21 +50,21 @@ main :: proc() {
 	chosenDescription := rand.choice(const.project_descriptions)
 	fmt.println(fmt.tprintf( ostrich_art, chosenDescription, BLUE, version, RESET))
 
-	success, value:= data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
-fmt.println("GET_RECORD_VALUE result: ", success)
-	if success ==false{ //in the event that the record cant be retireved, try decrypting the file first then try again
-	    DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-			_, val:= data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
-			if val == "true"{
-            ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes,false,)
-            OstrichEngine.Initialized = true
-            log_runtime_event("OstrichDB Engine Initialized", "")
-		}else{
-		    OstrichEngine.Initialized = false
-		}
-	}else {
-	        ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes,false,)
-	}
+	// success, value:= data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
+// fmt.println("GET_RECORD_VALUE result: ", success)
+// 	if success ==false{ //in the event that the record cant be retireved, try decrypting the file first then try again
+// 	    DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+// 			_, val:= data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
+// 			if val == "true"{
+//             ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes,false,)
+//             OstrichEngine.Initialized = true
+//             log_runtime_event("OstrichDB Engine Initialized", "")
+// 		}else{
+// 		    OstrichEngine.Initialized = false
+// 		}
+// 	}else {
+// 	        ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes,false,)
+// 	}
 
 	fmt.println("Starting OstrichDB DBMS")
 	engine.START_OSTRICHDB_ENGINE()

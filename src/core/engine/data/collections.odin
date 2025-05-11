@@ -28,6 +28,7 @@ main :: proc() {
 	os.make_directory(PRIVATE_PATH)
 	os.make_directory(PUBLIC_PATH)
 	os.make_directory(STANDARD_COLLECTION_PATH)
+	os.make_directory(USERS_PATH)
 	os.make_directory(QUARANTINE_PATH)
 	os.make_directory(BACKUP_PATH)
 	CREATE_AND_FILL_PRIVATE_ID_COLLECTION()
@@ -96,7 +97,7 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		if VALIDATE_COLLECTION_NAME(fn) == 1 {
 			return false
 		}
-		collectionPath := fmt.tprintf("%s%s%s", const.SECURE_COLLECTION_PATH, fn, const.OST_EXT)
+		collectionPath := utils.concat_user_credential_path(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
@@ -115,8 +116,8 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		defer os.close(createFile)
 		return true
 
-	case .CONFIG_PRIVATE:
-		collectionPath := const.CONFIG_PATH
+	case .SYSTEM_CONFIG_PRIVATE:
+		collectionPath := const.SYSTEM_CONFIG_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
@@ -134,9 +135,27 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 		defer os.close(createFile)
 		return true
-
+	case .USER_CONFIG_PRIVATE:
+	collectionPath := utils.concat_user_config_collection_name(fn)
+	createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
+	metadata.APPEND_METADATA_HEADER(collectionPath)
+	metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
+	if createSuccess != 0 {
+	errorLocation:= utils.get_caller_location()
+		error1 := utils.new_err(
+			.CANNOT_CREATE_FILE,
+			utils.get_err_msg(.CANNOT_CREATE_FILE),
+			errorLocation
+		)
+		utils.throw_err(error1)
+		utils.log_err("Error creating collection file", #procedure)
+		return false
+	}
+	metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
+	defer os.close(createFile)
+	return true
 	case .HISTORY_PRIVATE:
-		collectionPath := const.HISTORY_PATH
+		collectionPath := utils.concat_user_history_path(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.APPEND_METADATA_HEADER(collectionPath)
 		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
@@ -294,7 +313,7 @@ CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 		}
 		break
 	case 1:
-		secCollection, openSuccess := os.open(const.SECURE_COLLECTION_PATH)
+		secCollection, openSuccess := os.open(utils.concat_user_credential_path(types.user.username.Value))
 		secureCollections, readSuccess := os.read_dir(secCollection, -1)
 
 		for collection in secureCollections {
@@ -382,7 +401,7 @@ FETCH_COLLECTION :: proc(fn: string) -> string {
 
 //Searches for a secure collection file
 FIND_SECURE_COLLECTION :: proc(fn: string) -> (bool, string) {
-	secDir, e := os.open(const.SECURE_COLLECTION_PATH)
+	secDir, e := os.open(utils.concat_user_credential_path(types.current_user.username.Value))
 	files, readDirSuccess := os.read_dir(secDir, -1)
 	found := false
 	for file in files {

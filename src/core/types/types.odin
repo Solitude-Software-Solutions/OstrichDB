@@ -236,10 +236,11 @@ CommandOperation :: struct {
 CollectionType :: enum {
 	STANDARD_PUBLIC = 0, //Enc/Dec with users master key
 	SECURE_PRIVATE  = 1, //Enc/Dec with users master key even though its private
-	CONFIG_PRIVATE  = 2, //Enc/Dec with systems master key
-	HISTORY_PRIVATE = 3, //Enc/Dec with systems master key
-	ID_PRIVATE      = 4, //Enc/Dec with systems master key
-	ISOLATE_PUBLIC  = 5, //Enc/Dec with users master key
+	SYSTEM_CONFIG_PRIVATE  = 2, //Enc/Dec with systems master key
+	USER_CONFIG_PRIVATE = 3,
+	HISTORY_PRIVATE = 4, //Enc/Dec with systems master key
+	ID_PRIVATE      = 5, //Enc/Dec with systems master key
+	ISOLATE_PUBLIC  = 6, //Enc/Dec with users master key
 	//Todo: Add backup, and benchmark
 }
 
