@@ -51,20 +51,15 @@ main :: proc() {
 	chosenDescription := rand.choice(const.project_descriptions)
 	fmt.println(fmt.tprintf( ostrich_art, chosenDescription, BLUE, version, RESET))
 
-	//Check if the config collection is already encrypted
-	isEncrypted, _ := ENCRYPT_COLLECTION(
+	DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	if data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT) == "true" {
+	    ENCRYPT_COLLECTION(
 		"",
 		.CONFIG_PRIVATE,
 		types.system_user.m_k.valAsBytes,
 		true,
-	)
+		)
 
-	if isEncrypted == 2 {
-		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	}
-
-
-	if data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT) == "true" {
 		OstrichEngine.Initialized = true
 		log_runtime_event("OstrichDB Engine Initialized", "")
 	} else {
