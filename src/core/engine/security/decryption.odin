@@ -90,20 +90,29 @@ DECRYPT_COLLECTION :: proc(
 
 	if !aes.open_gcm(&gcmContext, decryptedData, iv, aad, encryptedData, tag) {
 		delete(decryptedData)
-		fmt.println("Failed to decrypt data")
+		fmt.println("Failed to decrypt data in file: ", file)
 		return -3, nil
 	}
 
 	aes.reset_gcm(&gcmContext)
 
-	//delete the decrypted file then create a new one with the same name and write the decrypted data to it
-	os.remove(file)
-	writeSuccess := utils.write_to_file(file, decryptedData, #procedure)
-	if !writeSuccess {
-		fmt.println("Failed to write to file")
-		return -4, nil
+	//For all NON-secure collections :
+	//1. delete the decrypted file
+	//2. Create a new file with the same name
+	//3. Write the decrypted data to that new file
+	 #partial switch(colType){
+	case .SECURE_PRIVATE:
+	    // buf:= make([]byte ,size_of(decryptedData)) //create a buffer in mem that will hold the decrypted data
+		return 0, decryptedData
+	case:
+	    os.remove(file)
+		writeSuccess := utils.write_to_file(file, decryptedData, #procedure)
+        if !writeSuccess {
+            fmt.println("Failed to write to file")
+           	return -4, nil
+        }
+        break
 	}
-
-
 	return 0, decryptedData
 }
+
