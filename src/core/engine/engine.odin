@@ -68,12 +68,6 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 	case true:
 		for {
-			security.ENCRYPT_COLLECTION(
-				"",
-				.CONFIG_PRIVATE,
-				types.system_user.m_k.valAsBytes,
-				false,
-			)
 			userSignedIn := security.RUN_USER_SIGNIN()
 			switch (userSignedIn)
 			{
@@ -86,7 +80,6 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 				//Check to see if the server AUTO_SERVE config value is true. If so start server
 				security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-
 
 				autoServeConfigValue := data.GET_RECORD_VALUE(
 					CONFIG_PATH,
