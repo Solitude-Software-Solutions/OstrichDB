@@ -448,10 +448,10 @@ GET_METADATA_MEMBER_VALUE :: proc(
 	case .SYSTEM_CONFIG_PRIVATE:
 		file = SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
 		file = utils.concat_user_history_path(types.current_user.username.Value)
 		break
-	case .ID_PRIVATE:
+	case .SYSTEM_ID_PRIVATE:
 		file = ID_PATH
 		break
 	}
@@ -514,7 +514,7 @@ GET_METADATA_MEMBER_VALUE :: proc(
 CHANGE_METADATA_MEMBER_VALUE :: proc(
 	fn, newValue: string,
 	member: int,
-	colType: types.CollectionType,
+	colType: types.CollectionType, username:..string
 ) -> bool {
 	using utils
 	using const
@@ -527,16 +527,20 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 		break
 	case .USER_CONFIG_PRIVATE:
 	    file = concat_user_config_collection_name(fn)
-	case .SECURE_PRIVATE:
+	case .USER_CREDENTIALS_PRIVATE:
 		file = utils.concat_user_credential_path(fn)
 		break
 	case .SYSTEM_CONFIG_PRIVATE:
 		file = SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
-		file = utils.concat_user_history_path(types.current_user.username.Value)
-		break
-	case .ID_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
+	if len(types.current_user.username.Value) == 0 && len(types.user.username.Value) != 0  {
+		file = utils.concat_user_history_path(types.user.username.Value)
+	}else{
+	    file = utils.concat_user_history_path(types.current_user.username.Value)
+	}
+	break
+	case .SYSTEM_ID_PRIVATE:
 		file = ID_PATH
 		break
 	//TODO: add case for benchmark collection
