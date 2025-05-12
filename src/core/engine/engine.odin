@@ -155,9 +155,9 @@ START_COMMAND_LINE :: proc() -> int {
 		fmt.print(const.ostCarrat, "\t")
 		input := utils.get_input(false)
 
-		DECRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+		DECRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 		APPEND_COMMAND_TO_HISTORY(input)
-		ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
 		cmd := PARSE_COMMAND(input)
 		// fmt.println("cmd: ", cmd) //Debugging DO NOT DELETE
 

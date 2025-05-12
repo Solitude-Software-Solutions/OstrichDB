@@ -59,7 +59,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	//decrypt the user secure collection
 	decSuccess, _ := DECRYPT_COLLECTION(
 		usernameCapitalized,
-		.SECURE_PRIVATE,
+		.USER_CREDENTIALS_PRIVATE,
 		types.system_user.m_k.valAsBytes,
 	)
 
@@ -171,7 +171,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	}
 	ENCRYPT_COLLECTION(
 		usernameCapitalized,
-		.SECURE_PRIVATE,
+		.USER_CREDENTIALS_PRIVATE,
 		types.system_user.m_k.valAsBytes,
 		false,
 	)

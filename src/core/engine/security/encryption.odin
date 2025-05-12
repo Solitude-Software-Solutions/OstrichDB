@@ -55,14 +55,14 @@ ENCRYPT_COLLECTION :: proc(
 	file: string
 	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
-	switch (colType) {
+	#partial switch (colType) {
 	case .STANDARD_PUBLIC:
 		//Public Standard Collection
 		file = utils.concat_standard_collection_name(colName)
 		break
 	case .USER_CONFIG_PRIVATE:
 	    file = utils.concat_user_config_collection_name(colName)
-	case .SECURE_PRIVATE:
+	case .USER_CREDENTIALS_PRIVATE:
 		//Private Secure Collection
 		file = utils.concat_user_credential_path(colName)
 		break
@@ -70,15 +70,15 @@ ENCRYPT_COLLECTION :: proc(
 		//Private Config Collection
 		file = const.SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
 		//Private History Collection
 		file = utils.concat_user_history_path(types.user.username.Value)
 		break
-	case .ID_PRIVATE:
+	case .SYSTEM_ID_PRIVATE:
 		//Private ID Collection
 		file = const.ID_PATH
 		break
-	case .ISOLATE_PUBLIC:
+	case .ISOLATED_PUBLIC:
 		file = fmt.tprintf("%s%s", const.QUARANTINE_PATH, colName)
 		break
 	//case 5: Todo: Add case for benchmark collections

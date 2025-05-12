@@ -58,16 +58,16 @@ DECRYPT_COLLECTION :: proc(
 	case .USER_CONFIG_PRIVATE:
 	    file = utils.concat_user_config_collection_name(colName)
 		break
-	case .SECURE_PRIVATE:
+	case .USER_CREDENTIALS_PRIVATE:
 		file = utils.concat_user_credential_path(colName)
 		break
 	case .SYSTEM_CONFIG_PRIVATE:
 		file = const.SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
 		file = utils.concat_user_history_path(types.current_user.username.Value)
 		break
-	case .ID_PRIVATE:
+	case .SYSTEM_ID_PRIVATE:
 		file = const.ID_PATH
 		break
 	}
@@ -104,7 +104,7 @@ DECRYPT_COLLECTION :: proc(
 	//2. Create a new file with the same name
 	//3. Write the decrypted data to that new file
 	 #partial switch(colType){
-	case .SECURE_PRIVATE:
+	case .USER_CREDENTIALS_PRIVATE:
 	    // buf:= make([]byte ,size_of(decryptedData)) //create a buffer in mem that will hold the decrypted data
 		return 0, decryptedData
 	case:

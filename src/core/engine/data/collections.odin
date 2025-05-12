@@ -59,10 +59,10 @@ GET_COLLECTION_TREE :: proc() {
 /*
 Creates a new collection file with metadata within the DB
 standard -  CollectionType.STANDARD_PUBLIC
-secure - CollectionType.SECURE_PRIVATE
+secure - CollectionType.USER_CREDENTIALS_PRIVATE
 config - CollectionType.CONFIG_PRIVATE
-history - CollectionType.HISTORY_PRIVATE
-id - CollectionType.ID_PRIVATE
+history - CollectionType.USER_HISTORY_PRIVATE
+id - CollectionType.SYSTEM_ID_PRIVATE
 */
 CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	// concat the path and the file name into a string depending on the type of file to create
@@ -92,7 +92,7 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 		defer os.close(createFile)
 		return true
-	case .SECURE_PRIVATE:
+	case .USER_CREDENTIALS_PRIVATE:
 		//secure file
 		if VALIDATE_COLLECTION_NAME(fn) == 1 {
 			return false
@@ -154,7 +154,7 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 	metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
 	defer os.close(createFile)
 	return true
-	case .HISTORY_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
 		collectionPath := utils.concat_user_history_path(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.APPEND_METADATA_HEADER(collectionPath)
@@ -174,7 +174,7 @@ CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
 		defer os.close(createFile)
 		return true
 
-	case .ID_PRIVATE:
+	case .SYSTEM_ID_PRIVATE:
 		collectionPath := const.ID_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
 		metadata.APPEND_METADATA_HEADER(collectionPath)

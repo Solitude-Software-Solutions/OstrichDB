@@ -267,7 +267,7 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 	//Decrypt the logged in users secure collection to ensure their role allows for the requested operation to be performed
 	DECRYPT_COLLECTION(
 		types.current_user.username.Value,
-		.SECURE_PRIVATE,
+		.USER_CREDENTIALS_PRIVATE,
 		types.system_user.m_k.valAsBytes,
 	)
 
@@ -279,7 +279,7 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 		//If the permission check passes, re-encrypt the "secure" collection and continue with the operation
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
-			.SECURE_PRIVATE,
+			.USER_CREDENTIALS_PRIVATE,
 			types.system_user.m_k.valAsBytes,
 			false,
 		)
@@ -290,8 +290,8 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 		case .SYSTEM_CONFIG_PRIVATE:
 			ENCRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes, false)
 			break
-		case .ISOLATE_PUBLIC:
-			ENCRYPT_COLLECTION(colName, .ISOLATE_PUBLIC, types.current_user.m_k.valAsBytes, false)
+		case .ISOLATED_PUBLIC:
+			ENCRYPT_COLLECTION(colName, .ISOLATED_PUBLIC, types.current_user.m_k.valAsBytes, false)
 			break
 
 		case:
@@ -300,7 +300,7 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 		}
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
-			.SECURE_PRIVATE,
+			.USER_CREDENTIALS_PRIVATE,
 			types.system_user.m_k.valAsBytes,
 			false,
 		)

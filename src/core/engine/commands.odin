@@ -128,10 +128,10 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// Shows the current users past command history
 	case .HISTORY:
 		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
-		DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		DECRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		commandHistory := push_records_to_array(types.current_user.username.Value)
 
-		ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
 		for cmd, index in commandHistory {
 			fmt.printfln("%d: %s", index + 1, cmd)
 		}
@@ -928,18 +928,18 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						collectionName,
 						RESET,
 					)
-					DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user.m_k.valAsBytes)
+					DECRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, types.system_user.m_k.valAsBytes)
 					if data.REMOVE_ID_FROM_ID_COLLECTION(fmt.tprintf("%d", clusterID), false) {
 						ENCRYPT_COLLECTION(
 							"",
-							.ID_PRIVATE,
+							.SYSTEM_ID_PRIVATE,
 							types.system_user.m_k.valAsBytes,
 							false,
 						)
 					} else {
 						ENCRYPT_COLLECTION(
 							"",
-							.ID_PRIVATE,
+							.SYSTEM_ID_PRIVATE,
 							types.system_user.m_k.valAsBytes,
 							false,
 						)
@@ -2142,7 +2142,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			ENCRYPT_COLLECTION(
 				isolatedColName,
-				.ISOLATE_PUBLIC,
+				.ISOLATED_PUBLIC,
 				types.current_user.m_k.valAsBytes,
 				false,
 			)
@@ -2282,7 +2282,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			//next make sure the "locker" is an admin
 			DECRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 			)
 			isAdmin := security.CHECK_ADMIN_STATUS(&types.current_user)
@@ -2357,7 +2357,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			ENCRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 				false,
 			)
@@ -2409,7 +2409,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			DECRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 			)
 			collectionAlreadyLocked := security.GET_COLLECTION_LOCK_STATUS(colName)
@@ -2459,7 +2459,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			ENCRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 				false,
 			)
