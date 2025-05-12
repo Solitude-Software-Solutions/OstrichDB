@@ -91,7 +91,7 @@ concat_user_config_collection_name :: proc(username:string) -> string{
 }
 
 concat_user_config_cluster_name ::proc(username:string) -> string{
-    return strings.clone(fmt.tprintf("OSTRICH_%s_CONFIGS", username))
+    return strings.clone(fmt.tprintf("%s_OSTRICH_CONFIGS", username))
 }
 
 concat_user_credential_path ::proc(username:string) -> string{
