@@ -63,14 +63,17 @@ APPEND_CONFIG_RECORD :: proc(configFileType: types.CollectionType, rn, rd, rType
 	using const
 	using utils
 
-	path:string
+	path, clusterName:string
+
 
 	#partial switch(configFileType){
 	case .SYSTEM_CONFIG_PRIVATE:
 	    path = SYSTEM_CONFIG_PATH
+		clusterName=SYSTEM_CONFIG_CLUSTER
 	    break
 	case .USER_CONFIG_PRIVATE:
 	    path =  concat_user_config_collection_name(fn[0])
+		clusterName = concat_user_config_cluster_name(fn[0])
 	    break
 	}
 
@@ -88,8 +91,8 @@ APPEND_CONFIG_RECORD :: proc(configFileType: types.CollectionType, rn, rd, rType
 	closingBrace := -1
 
 	for i := 0; i < len(lines); i += 1 {
-		if strings.contains(lines[i], SYSTEM_CONFIG_CLUSTER) {
 			clusterStart = i
+		if strings.contains(lines[i], clusterName) {
 		}
 		if clusterStart != -1 && strings.contains(lines[i], "}") {
 			closingBrace = i
@@ -125,7 +128,7 @@ APPEND_CONFIG_RECORD :: proc(configFileType: types.CollectionType, rn, rd, rType
 	}
 
 	newContent := strings.join(newLines[:], "\n")
-	writeSuccess := utils.write_to_file(SYSTEM_CONFIG_PATH, transmute([]byte)newContent, #procedure)
+	writeSuccess := utils.write_to_file(path, transmute([]byte)newContent, #procedure)
 	if !writeSuccess {
 		return -1
 	}
