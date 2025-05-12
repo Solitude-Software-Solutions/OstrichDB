@@ -55,20 +55,22 @@ DECRYPT_COLLECTION :: proc(
 	case .STANDARD_PUBLIC:
 		file = utils.concat_standard_collection_name(colName)
 		break
-	case .SECURE_PRIVATE:
-		file = utils.concat_secure_collection_name(colName)
+	case .USER_CONFIG_PRIVATE:
+	    file = utils.concat_user_config_collection_name(colName)
 		break
-	case .CONFIG_PRIVATE:
-		file = const.CONFIG_PATH
+	case .USER_CREDENTIALS_PRIVATE:
+		file = utils.concat_user_credential_path(colName)
 		break
-	case .HISTORY_PRIVATE:
-		file = const.HISTORY_PATH
+	case .SYSTEM_CONFIG_PRIVATE:
+		file = const.SYSTEM_CONFIG_PATH
 		break
-	case .ID_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
+		file = utils.concat_user_history_path(types.current_user.username.Value)
+		break
+	case .SYSTEM_ID_PRIVATE:
 		file = const.ID_PATH
 		break
 	}
-
 
 	ciphertext, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
@@ -101,14 +103,14 @@ DECRYPT_COLLECTION :: proc(
 	//2. Create a new file with the same name
 	//3. Write the decrypted data to that new file
 	 #partial switch(colType){
-	case .SECURE_PRIVATE:
+	case .USER_CREDENTIALS_PRIVATE:
 	    // buf:= make([]byte ,size_of(decryptedData)) //create a buffer in mem that will hold the decrypted data
 		return 0, decryptedData
 	case:
 	    os.remove(file)
 		writeSuccess := utils.write_to_file(file, decryptedData, #procedure)
         if !writeSuccess {
-            fmt.println("Failed to write to file")
+            fmt.println("Failed to write DECRYPTED data to file: ", file)
            	return -4, nil
         }
         break

@@ -27,7 +27,7 @@ GENERATE_ID :: proc(uponCreation: bool) -> i64 {
     if uponCreation == true {
         return rand.int63_max(1e16 + 1)
     }
-    
+
     for { //Tries to create a random ID until it is not already in use
         ID := rand.int63_max(1e16 + 1)
         if !CHECK_IF_USER_ID_EXISTS(ID) || !CHECK_IF_CLUSTER_ID_EXISTS(ID) {
@@ -59,7 +59,7 @@ CHECK_IF_CLUSTER_ID_EXISTS :: proc(id: i64) -> bool {
 CREATE_AND_FILL_PRIVATE_ID_COLLECTION :: proc() {
 	using const
 
-	CREATE_COLLECTION("", .ID_PRIVATE)
+	CREATE_COLLECTION("", .SYSTEM_ID_PRIVATE)
 	cluOneid := GENERATE_ID(true)
 
 	// doing this prevents the creation of cluster_id records each time the program starts up. Only allows it once

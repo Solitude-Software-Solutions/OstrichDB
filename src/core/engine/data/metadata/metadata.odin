@@ -443,13 +443,15 @@ GET_METADATA_MEMBER_VALUE :: proc(
 	case .STANDARD_PUBLIC:
 		file = concat_standard_collection_name(fn)
 		break
-	case .CONFIG_PRIVATE:
-		file = CONFIG_PATH
+	case .USER_CONFIG_PRIVATE:
+	    file = concat_user_config_collection_name(fn)
+	case .SYSTEM_CONFIG_PRIVATE:
+		file = SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
-		file = HISTORY_PATH
+	case .USER_HISTORY_PRIVATE:
+		file = utils.concat_user_history_path(types.current_user.username.Value)
 		break
-	case .ID_PRIVATE:
+	case .SYSTEM_ID_PRIVATE:
 		file = ID_PATH
 		break
 	}
@@ -509,11 +511,10 @@ GET_METADATA_MEMBER_VALUE :: proc(
 //Similar to the UPDATE_METADATA_VALUE but updates a value wiht the passed in param
 //member is the metadata field to update
 //For now , only used for the "Permission" field, may add more in the future - Marshall
-// 0 - public, 1 - secure, 2 - config, 3 - history, 4 - id
 CHANGE_METADATA_MEMBER_VALUE :: proc(
 	fn, newValue: string,
 	member: int,
-	colType: types.CollectionType,
+	colType: types.CollectionType, username:..string
 ) -> bool {
 	using utils
 	using const
@@ -524,16 +525,22 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 	case .STANDARD_PUBLIC:
 		file = concat_standard_collection_name(fn)
 		break
-	case .SECURE_PRIVATE:
-		file = fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, fn, OST_EXT)
+	case .USER_CONFIG_PRIVATE:
+	    file = concat_user_config_collection_name(fn)
+	case .USER_CREDENTIALS_PRIVATE:
+		file = utils.concat_user_credential_path(fn)
 		break
-	case .CONFIG_PRIVATE:
-		file = CONFIG_PATH
+	case .SYSTEM_CONFIG_PRIVATE:
+		file = SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
-		file = HISTORY_PATH
-		break
-	case .ID_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
+	if len(types.current_user.username.Value) == 0 && len(types.user.username.Value) != 0  {
+		file = utils.concat_user_history_path(types.user.username.Value)
+	}else{
+	    file = utils.concat_user_history_path(types.current_user.username.Value)
+	}
+	break
+	case .SYSTEM_ID_PRIVATE:
 		file = ID_PATH
 		break
 	//TODO: add case for benchmark collection
@@ -548,6 +555,7 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 			get_err_msg(.CANNOT_READ_FILE),
 			errorLocation
 		)
+		fmt.println("Cannot read file: ", file)
 		throw_err(error1)
 		return false
 	}

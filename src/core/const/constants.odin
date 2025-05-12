@@ -25,11 +25,10 @@ when DEV_MODE == true {
 	PRIVATE_PATH :: "./private/"
 	PUBLIC_PATH :: "./public/"
 	STANDARD_COLLECTION_PATH :: "./public/standard/"
-	SECURE_COLLECTION_PATH :: "./private/secure/"
+	USERS_PATH :: "./private/users/"
 	BACKUP_PATH :: "./public/backups/"
-	CONFIG_PATH :: "./private/config.ostrichdb"
+	SYSTEM_CONFIG_PATH :: "./private/ostrich.config.ostrichdb"
 	ID_PATH :: "./private/ids.ostrichdb"
-	HISTORY_PATH :: "./private/history.ostrichdb"
 	BENCHMARK_PATH :: "./private/benchmark/"
 	LOG_DIR_PATH :: "./logs/"
 	RUNTIME_LOG_PATH :: "./logs/runtime.log"
@@ -44,11 +43,10 @@ when DEV_MODE == true {
 	PRIVATE_PATH :: "./.ostrichdb/private/"
 	PUBLIC_PATH :: "./.ostrichdb/public/"
 	STANDARD_COLLECTION_PATH :: "./.ostrichdb/public/standard/"
-	SECURE_COLLECTION_PATH :: "./.ostrichdb/private/secure/"
+	USERS_PATH :: "./private/users/"
 	BACKUP_PATH :: "./.ostrichdb/public/backups/"
-	CONFIG_PATH :: "./.ostrichdb/private/config.ostrichdb"
+	SYSTEM_CONFIG_PATH :: "./.ostrichdb/private/config.ostrichdb"
 	ID_PATH :: "./.ostrichdb/private/ids.ostrichdb"
-	HISTORY_PATH :: "./.ostrichdb/private/history.ostrichdb"
 	BENCHMARK_PATH :: "./.ostrichdb/private/benchmark/"
 	LOG_DIR_PATH :: "./.ostrichdb/logs/"
 	RUNTIME_LOG_PATH :: "./.ostrichdb/logs/runtime.log"
@@ -61,7 +59,7 @@ when DEV_MODE == true {
 
 //Non-changing PATH CONSTANTS
 FFVF_PATH :: "ost_file_format_version.tmp"
-CONFIG_CLUSTER :: "OSTRICH_CONFIGS"
+SYSTEM_CONFIG_CLUSTER :: "OSTRICH_SYSTEM_CONFIGS"
 CLUSTER_ID_CLUSTER :: "CLUSTER__IDS"
 USER_ID_CLUSTER :: "USER__IDS"
 OST_EXT :: ".ostrichdb"
@@ -70,6 +68,10 @@ SIMPLE_HELP_FILE :: "../src/core/help/docs/simple/simple.md"
 GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
 CLPS_HELP_FILE :: "../src/core/help/docs/clps/clps.txt"
 
+//All users share these names just in their own dirs
+USER_CREDENTIAL_FILE_NAME:: "user.credentials.ostrichdb"
+USER_CONFIGS_FILE_NAME ::"user.configs.ostrichdb"
+USER_HISTORY_FILE_NAME:: "user.history.ostrichdb"
 
 //CONFIG FILE CONSTANTS
 ENGINE_INIT :: "ENGINE_INIT"

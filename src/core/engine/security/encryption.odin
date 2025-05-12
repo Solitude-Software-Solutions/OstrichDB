@@ -55,28 +55,30 @@ ENCRYPT_COLLECTION :: proc(
 	file: string
 	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
-	switch (colType) {
+	#partial switch (colType) {
 	case .STANDARD_PUBLIC:
 		//Public Standard Collection
 		file = utils.concat_standard_collection_name(colName)
 		break
-	case .SECURE_PRIVATE:
+	case .USER_CONFIG_PRIVATE:
+	    file = utils.concat_user_config_collection_name(colName)
+	case .USER_CREDENTIALS_PRIVATE:
 		//Private Secure Collection
-		file = utils.concat_secure_collection_name(colName)
+		file = utils.concat_user_credential_path(colName)
 		break
-	case .CONFIG_PRIVATE:
+	case .SYSTEM_CONFIG_PRIVATE:
 		//Private Config Collection
-		file = const.CONFIG_PATH
+		file = const.SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
 		//Private History Collection
-		file = const.HISTORY_PATH
+		file = utils.concat_user_history_path(types.user.username.Value)
 		break
-	case .ID_PRIVATE:
+	case .SYSTEM_ID_PRIVATE:
 		//Private ID Collection
 		file = const.ID_PATH
 		break
-	case .ISOLATE_PUBLIC:
+	case .ISOLATED_PUBLIC:
 		file = fmt.tprintf("%s%s", const.QUARANTINE_PATH, colName)
 		break
 	//case 5: Todo: Add case for benchmark collections
@@ -116,7 +118,7 @@ ENCRYPT_COLLECTION :: proc(
 	writeSuccess := utils.write_to_file(file, dst, #procedure) //write the encrypted data to the file
 
 	if !writeSuccess {
-		fmt.printfln("Failed to write to file: %s", file)
+		fmt.printfln("Failed to write ENCRYPTED data to file: %s", file)
 		return -3, nil
 	}
 

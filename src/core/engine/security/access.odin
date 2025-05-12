@@ -25,7 +25,7 @@ File Description:
 
 //Ensure that the user is an admin before allowing an operation
 CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
-	secCollection := utils.concat_secure_collection_name(user.username.Value)
+	secCollection := utils.concat_user_credential_path(user.username.Value)
 	userCluster := strings.to_upper(user.username.Value)
 	isAdmin := false
 
@@ -256,8 +256,8 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 
 	//Decrypt the "working" collection to see what specific permission is set for operations to be performed
 	#partial switch (colType) {
-	case .CONFIG_PRIVATE:
-		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	case .SYSTEM_CONFIG_PRIVATE:
+		DECRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes)
 		break
 	case:
 		DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
@@ -267,7 +267,7 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 	//Decrypt the logged in users secure collection to ensure their role allows for the requested operation to be performed
 	DECRYPT_COLLECTION(
 		types.current_user.username.Value,
-		.SECURE_PRIVATE,
+		.USER_CREDENTIALS_PRIVATE,
 		types.system_user.m_k.valAsBytes,
 	)
 
@@ -279,7 +279,7 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 		//If the permission check passes, re-encrypt the "secure" collection and continue with the operation
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
-			.SECURE_PRIVATE,
+			.USER_CREDENTIALS_PRIVATE,
 			types.system_user.m_k.valAsBytes,
 			false,
 		)
@@ -287,11 +287,11 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 	case:
 		// If the permission check fails, re-encrypt the "working" and "secure" collections
 		#partial switch (colType) {
-		case .CONFIG_PRIVATE:
-			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		case .SYSTEM_CONFIG_PRIVATE:
+			ENCRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes, false)
 			break
-		case .ISOLATE_PUBLIC:
-			ENCRYPT_COLLECTION(colName, .ISOLATE_PUBLIC, types.current_user.m_k.valAsBytes, false)
+		case .ISOLATED_PUBLIC:
+			ENCRYPT_COLLECTION(colName, .ISOLATED_PUBLIC, types.current_user.m_k.valAsBytes, false)
 			break
 
 		case:
@@ -300,7 +300,7 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 		}
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
-			.SECURE_PRIVATE,
+			.USER_CREDENTIALS_PRIVATE,
 			types.system_user.m_k.valAsBytes,
 			false,
 		)
