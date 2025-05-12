@@ -50,15 +50,21 @@ main :: proc() {
 	chosenDescription := rand.choice(const.project_descriptions)
 	fmt.println(fmt.tprintf( ostrich_art, chosenDescription, BLUE, version, RESET))
 
-	// success, value:= data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
+	 value:= data.GET_RECORD_VALUE(SYSTEM_CONFIG_PATH, SYSTEM_CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
+		if value == "true"{
+            OstrichEngine.Initialized = true
+		}else{
+		    OstrichEngine.Initialized = false
+		}
+
+
 // fmt.println("GET_RECORD_VALUE result: ", success)
-// 	if success ==false{ //in the event that the record cant be retireved, try decrypting the file first then try again
+	// if success ==false{ //in the event that the record cant be retireved, try decrypting the file first then try again
 // 	    DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-// 			_, val:= data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
-// 			if val == "true"{
-//             ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes,false,)
-//             OstrichEngine.Initialized = true
-//             log_runtime_event("OstrichDB Engine Initialized", "")
+// 			val:= data.GET_RECORD_VALUE(SYSTEM_CONFIG_PATH, SYSTEM_CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
+// // 			if val == "true"{
+// //             ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes,false,)
+// //             log_runtime_event("OstrichDB Engine Initialized", "")
 // 		}else{
 // 		    OstrichEngine.Initialized = false
 // 		}

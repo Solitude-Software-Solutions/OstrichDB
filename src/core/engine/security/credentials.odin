@@ -642,3 +642,58 @@ check_if_username_is_banned :: proc(un: string) -> bool {
 	}
 	return false
 }
+
+//Searches the `{root}/private/users` dir for a sub dir for with the passed in username
+FIND_USERS_PROFILE :: proc(username: string) -> (bool) {
+    using const
+    found:= false
+
+    //Look for a dir with the passed in username
+    userDir, _:= os.open(USERS_PATH,0)
+	userProfiles, readDirError:= os.read_dir(userDir, -1)
+	for profile in userProfiles  {
+		if  profile.is_dir  {
+		    if profile.name == username{
+				found = true
+				break
+			}
+		}
+	}
+
+	return found
+}
+
+//looks over the passed in users dir for the passed in files if found, return true. Assumes the user does exist
+//Each users should have the following core files in their profile:
+//- user.config.ostrichdb
+//- user.credentials.ostrichdb
+//- user.history.ostrichdb
+FIND_USERS_CORE_FILE ::proc(username:string, fileToFind: int) -> bool{
+    using const
+    found:= false
+    fileName:string
+
+    switch(fileToFind){
+    case 0:
+        fileName = USER_CREDENTIAL_FILE_NAME
+        break
+    case 1:
+        fileName = USER_CONFIGS_FILE_NAME
+        break
+    case 2:
+        fileName = USER_HISTORY_FILE_NAME
+        break
+    }
+
+    userProfileDir, _:= os.open(fmt.tprintf("%s/%s", USERS_PATH, username),0)
+	coreFiles, readDirError:= os.read_dir(userProfileDir, -1)
+	for coreFile in coreFiles  {
+		if coreFile.name  == fileName{
+		    found = true
+		    break
+		    }
+	    }
+
+
+	return found
+}

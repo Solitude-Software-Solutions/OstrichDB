@@ -69,9 +69,9 @@ GENERAL_HELP_FILE :: "../src/core/help/docs/general/general.md"
 CLPS_HELP_FILE :: "../src/core/help/docs/clps/clps.txt"
 
 //All users share these names just in their own dirs
-USER_HISTORY_FILE_NAME:: "user.history.ostrichdb"
 USER_CREDENTIAL_FILE_NAME:: "user.credentials.ostrichdb"
 USER_CONFIGS_FILE_NAME ::"user.configs.ostrichdb"
+USER_HISTORY_FILE_NAME:: "user.history.ostrichdb"
 
 //CONFIG FILE CONSTANTS
 ENGINE_INIT :: "ENGINE_INIT"

@@ -399,19 +399,6 @@ FETCH_COLLECTION :: proc(fn: string) -> string {
 }
 
 
-//Searches for a secure collection file
-FIND_SECURE_COLLECTION :: proc(fn: string) -> (bool, string) {
-	secDir, e := os.open(utils.concat_user_credential_path(types.current_user.username.Value))
-	files, readDirSuccess := os.read_dir(secDir, -1)
-	found := false
-	for file in files {
-		if file.name == fmt.tprintf("secure_%s%s", fn, const.OST_EXT) {
-
-			found = true
-		}
-	}
-	return found, ""
-}
 
 //gets the number of standard collections
 GET_COLLECTION_COUNT :: proc() -> int {
