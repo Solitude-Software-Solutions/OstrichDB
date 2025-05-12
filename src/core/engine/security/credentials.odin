@@ -40,69 +40,29 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
 
-	inituserName := CREATE_NEW_USERNAME(true)
+	userName := CREATE_NEW_USERNAME(true)
 	fmt.printfln("Please enter a password for the admin account")
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
 	libc.system("stty -echo")
-	initpassword := CREATE_NEW_USER_PASSWORD(true)
-	saltAsString := string(user.salt.valAsBytes)
-	hashAsString := string(user.hashedPassword.valAsBytes)
+	CREATE_NEW_USER_PASSWORD(true)
+	salt := string(user.salt.valAsBytes)
+	hash := string(user.hashedPassword.valAsBytes)
+	storeMethod := fmt.tprintf("%d", user.store_method)
+	userID := data.GENERATE_ID(true) //for secure clustser, the cluster id is the user id
+	user.username.Value = userName
+	types.current_user.username.Value = userName
 
-	algoMethodAsString := fmt.tprintf("%d", user.store_method)
-	user.user_id = data.GENERATE_ID(true) //for secure clustser, the cluster id is the user id
 
-	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
-	user.username.Value = inituserName
-	types.current_user.username.Value = inituserName
 	// //store the id to both clusters in the id collection
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
 
-
-	//Create a directory and a credentials collection for the user
-	os.make_directory(fmt.tprintf("%s/%s/", USERS_PATH, user.username.Value))
-	CREATE_COLLECTION( user.username.Value, .SECURE_PRIVATE)
-
-	//Create the users own query history collection
-	CREATE_COLLECTION(user.username.Value, .HISTORY_PRIVATE)
-
-	//Create the users own config collection
-	CREATE_COLLECTION(user.username.Value, .USER_CONFIG_PRIVATE)
-
-	// GENERATE_MASTER_KEY returns a 32 byte master key that is hex encoded
-	mk := GENERATE_MASTER_KEY()
-	mkAsString := transmute(string)mk //dont worry about this
-	// user.m_k.valAsStr = mkAsString //dont worry about this
-
-	//this value is passed to my encryption and decryption functions. must be 32 bytes
-	user.m_k.valAsBytes = DECODE_MASTER_KEY(mk)
-
-	//Store all the user credentials within the secure collection
-	STORE_USER_CREDENTIALS(
-		inituserName,
-		user.username.Value,
-		user.user_id,
-		"user_name",
-		user.username.Value,
-	)
-	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "role", "admin")
-	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "salt", saltAsString)
-	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "hash", hashAsString)
-	STORE_USER_CREDENTIALS(
-		inituserName,
-		user.username.Value,
-		user.user_id,
-		"store_method",
-		algoMethodAsString,
-	)
-
-	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
+    CREATE_NEW_USERS_PROFILE(userName, userID, salt, hash, storeMethod)
 
 	//update the engine init value in th system configs
 	engineInit := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE,ENGINE_INIT, "true")
-
 
 	switch (engineInit)
 	{
@@ -120,10 +80,10 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	)
 
 	//Encrypt the the config, history, id, and new users secure collection
-	// ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes, false)
+	// ENCRYPT_COLLECTION(user.username.Value, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes, false)
+	// ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
+	// ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
+	// ENCRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, system_user.m_k.valAsBytes, false)
 
 
 	fmt.println("Please re-launch OstrichDB...")
@@ -352,13 +312,14 @@ CONFIRM_NEW_USER_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 }
 
 //Stores the entered user credentials in the users secure collection file/cluster
-// cn- cluster name, id- cluster id, rn- record name, rd- record data
-STORE_USER_CREDENTIALS :: proc(fn: string, cn: string, id: i64, rn: string, rd: string) -> int {
+// The file(collection) and clustername will always be the same value when this is called
+// id- cluster id, rn- record name, rd- record data
+STORE_USER_CREDENTIALS :: proc(fileAndClusterName: string, id: i64, rn: string, rd: string) -> int {
 	using metadata
 	using const
 	using utils
 
-	secureFilePath := concat_user_credential_path(fn)
+	secureFilePath := concat_user_credential_path(fileAndClusterName)
 
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
@@ -375,8 +336,8 @@ STORE_USER_CREDENTIALS :: proc(fn: string, cn: string, id: i64, rn: string, rd: 
 	defer os.close(file)
 
 
-	data.CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
-	data.CREATE_AND_APPEND_PRIVATE_RECORD(secureFilePath, cn, rn, rd, "identifier", id)
+	data.CREATE_CLUSTER_BLOCK(secureFilePath, id, fileAndClusterName)
+	data.CREATE_AND_APPEND_PRIVATE_RECORD(secureFilePath, fileAndClusterName, rn, rd, "identifier", id)
 
 	UPDATE_METADATA_AFTER_OPERATIONS(secureFilePath)
 	return 0
@@ -506,6 +467,49 @@ check_password_strength :: proc(p: string) -> bool {
 	return strong
 }
 
+CREATE_NEW_USERS_PROFILE::proc(userName:string, id:i64, salt, hash, storeMethod:string ){
+    using data
+    using types
+    using const
+
+    //Create a directory and a credentials collection for the user
+	os.make_directory(fmt.tprintf("%s/%s/", USERS_PATH, userName))
+	CREATE_COLLECTION( userName, .USER_CREDENTIALS_PRIVATE)
+
+	//Create the users own command(query) history collection
+	CREATE_COLLECTION(userName, .USER_HISTORY_PRIVATE)
+
+	//Create the users own collection backup directory
+	os.make_directory(fmt.tprintf("%s/%s/backups/", USERS_PATH, userName))
+
+	//Create the users own config collection
+	CREATE_COLLECTION(userName, .USER_CONFIG_PRIVATE)
+	CREATE_CLUSTER_BLOCK(utils.concat_user_config_collection_name(userName), user.user_id, utils.concat_user_config_cluster_name(userName))
+	config.APPEND_ALL_CONFIGS_TO_CONFIG_FILE(types.CollectionType.USER_CONFIG_PRIVATE, userName)
+
+	// GENERATE_MASTER_KEY returns a 32 byte master key that is hex encoded
+	mk := GENERATE_MASTER_KEY()
+	mkAsString := transmute(string)mk //dont worry about this
+	// user.m_k.valAsStr = mkAsString //dont worry about this
+
+	//this value is passed to my encryption and decryption functions. must be 32 bytes
+	user.m_k.valAsBytes = DECODE_MASTER_KEY(mk)
+
+	//Store all the user credentials within the secure collection
+	STORE_USER_CREDENTIALS(
+		userName,
+		user.user_id,
+		"user_name",
+		userName,
+	)
+	STORE_USER_CREDENTIALS(userName, user.user_id, "role", "admin")
+	STORE_USER_CREDENTIALS(userName, user.user_id, "salt", salt)
+	STORE_USER_CREDENTIALS(userName, user.user_id, "hash", hash)
+	STORE_USER_CREDENTIALS(userName,user.user_id,"store_method",storeMethod,)
+	STORE_USER_CREDENTIALS(userName, user.user_id, "m_k", mkAsString)
+
+}
+
 // creates a new user account post engine initialization
 //also determines if the currently logged in user has permission to create a new user account
 //allows for test mode to be used to create a new user without the need for interactive input
@@ -566,7 +570,7 @@ check_password_strength :: proc(p: string) -> bool {
 // 		return 1
 // 	}
 
-// 	result := data.CREATE_COLLECTION(newColName, .SECURE_PRIVATE)
+// 	result := data.CREATE_COLLECTION(newColName, .USER_CREDENTIALS_PRIVATE)
 // 	fmt.printf(
 // 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 // 	)
