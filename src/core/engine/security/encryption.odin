@@ -118,7 +118,7 @@ ENCRYPT_COLLECTION :: proc(
 	writeSuccess := utils.write_to_file(file, dst, #procedure) //write the encrypted data to the file
 
 	if !writeSuccess {
-		fmt.printfln("Failed to write to file: %s", file)
+		fmt.printfln("Failed to write ENCRYPTED data to file: %s", file)
 		return -3, nil
 	}
 

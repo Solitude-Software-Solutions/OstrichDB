@@ -72,7 +72,6 @@ DECRYPT_COLLECTION :: proc(
 		break
 	}
 
-
 	ciphertext, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
 		fmt.println("Failed to read file")
@@ -111,7 +110,7 @@ DECRYPT_COLLECTION :: proc(
 	    os.remove(file)
 		writeSuccess := utils.write_to_file(file, decryptedData, #procedure)
         if !writeSuccess {
-            fmt.println("Failed to write to file")
+            fmt.println("Failed to write DECRYPTED data to file: ", file)
            	return -4, nil
         }
         break
