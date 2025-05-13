@@ -546,17 +546,13 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
                         }
                     }
 
-                    if str != "" || found {
-                        security.ENCRYPT_COLLECTION(
-                            collection,
-                            .STANDARD_PUBLIC,
-                            T.current_user.m_k.valAsBytes,
-                            false,
-                        )
-                    }
-                    if !found {
-                        fmt.println(str)
-                    }
+                    security.ENCRYPT_COLLECTION(
+                        collection,
+                        .STANDARD_PUBLIC,
+                        T.current_user.m_k.valAsBytes,
+                        false,
+                    )
+                    fmt.println(str)
                 }
             }
         }
