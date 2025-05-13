@@ -139,7 +139,7 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	}
 
 	dataAsStr := cast(string)rawData
-	if strings.has_prefix(dataAsStr, "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@") {
+	if strings.has_prefix(dataAsStr, METADATA_START) {
 		log_err("Metadata header already present", #procedure)
 		return false
 	}
