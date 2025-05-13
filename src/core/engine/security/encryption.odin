@@ -10,6 +10,7 @@ import "core:encoding/hex"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "../data/metadata"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -97,6 +98,13 @@ ENCRYPT_COLLECTION :: proc(
 	n := len(data) //n is the size of the data
 
 
+	//Update the ecnryption state metadaheader member to  1
+	successfulChange:= metadata.CHANGE_METADATA_MEMBER_VALUE(colName, "1" ,0, colType)
+	if !successfulChange{
+	    fmt.println("Could not update the encryption state for file: " ,file)
+		return -3, nil
+	}
+
 	aad: []u8 = nil
 	dst := make([]u8, n + aes.GCM_IV_SIZE + aes.GCM_TAG_SIZE) //create a buffer that is the size of the data plus 16 bytes for the iv and 16 bytes for the tag
 	iv := dst[:aes.GCM_IV_SIZE] //set the iv to the first 16 bytes of the buffer
@@ -109,6 +117,7 @@ ENCRYPT_COLLECTION :: proc(
 	aes.init_gcm(&gcmContext, key) //initialize the gcm context with the key
 
 
+
 	aes.seal_gcm(&gcmContext, encryptedData, tag, iv, aad, data) //encrypt the data
 
 	if checkingEncryptStatus == true {
@@ -119,7 +128,9 @@ ENCRYPT_COLLECTION :: proc(
 
 	if !writeSuccess {
 		fmt.printfln("Failed to write ENCRYPTED data to file: %s", file)
-		return -3, nil
+		//If we fail to write the encrypted data to the file, reset the encrypted state metadata back to 0
+		metadata.CHANGE_METADATA_MEMBER_VALUE(colName, "0" ,0, colType)
+		return -4, nil
 	}
 
 	return 0, dst

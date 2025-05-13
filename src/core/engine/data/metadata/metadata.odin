@@ -178,7 +178,7 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 
 //fn = file name, param = metadata value to update.
-//1 = File Format Version, 2 = Permission, 3 = Date of Creation, 4 = Date Last Modified, 5 = File Size, 6 = Checksum
+// 0 = Encryption state, 1 = File Format Version, 2 = Permission, 3 = Date of Creation, 4 = Date Last Modified, 5 = File Size, 6 = Checksum
 AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	using utils
 
@@ -207,6 +207,12 @@ AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	found := false
 	for line, i in lines {
 		switch param {
+		case 0:
+			if strings.has_prefix(line, "# Encryption State:") {
+				lines[i] = fmt.tprintf("# Encryption State: %d", 0)
+				found = true
+			}
+			break
 		case 1:
 			if strings.has_prefix(line, "# File Format Version:") {
 				lines[i] = fmt.tprintf("# File Format Version: %s", SET_FFV())
@@ -253,21 +259,12 @@ AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	}
 
 	if !found {
-		fmt.printfln("Metadata field not found in file. Proc: %s", #procedure)
+		fmt.printfln("Metadata field not found in file: ", fn)
 		return
 	}
 
 	newContent := strings.join(lines, "\n")
 	writeSuccess := os.write_entire_file(fn, transmute([]byte)newContent)
-}
-
-//used when creating a new collection file whether public or not
-UPDATE_METADATA_UPON_CREATION :: proc(fn: string) {
-	AUTO_UPDATE_METADATA_VALUE(fn, 1)
-	AUTO_UPDATE_METADATA_VALUE(fn, 3)
-	AUTO_UPDATE_METADATA_VALUE(fn, 4)
-	AUTO_UPDATE_METADATA_VALUE(fn, 5)
-	AUTO_UPDATE_METADATA_VALUE(fn, 6)
 }
 
 
@@ -569,6 +566,12 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 	fieldFound := false
 	for line, i in lines {
 		switch member {
+		case 0:
+		if strings.has_prefix(line, "# Encryption State:") {
+			lines[i] = fmt.tprintf("# Encryption State: %s", newValue)
+			fieldFound = true
+		break
+		}
 		case 1:
 			if strings.has_prefix(line, "# Permission:") {
 				lines[i] = fmt.tprintf("# Permission: %s", newValue)
@@ -589,6 +592,17 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 	newContent := strings.join(lines, "\n")
 	success := os.write_entire_file(file, transmute([]byte)newContent)
 	return success
+}
+
+
+//used when creating a new collection file whether public or not
+UPDATE_METADATA_UPON_CREATION :: proc(fn: string) {
+    AUTO_UPDATE_METADATA_VALUE(fn, 0)
+	AUTO_UPDATE_METADATA_VALUE(fn, 1)
+	AUTO_UPDATE_METADATA_VALUE(fn, 3)
+	AUTO_UPDATE_METADATA_VALUE(fn, 4)
+	AUTO_UPDATE_METADATA_VALUE(fn, 5)
+	AUTO_UPDATE_METADATA_VALUE(fn, 6)
 }
 
 
