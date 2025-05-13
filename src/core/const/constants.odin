@@ -127,6 +127,7 @@ METADATA_END :: "@@@@@@@@@@@@@@@BTM@@@@@@@@@@@@@@@\n"
 
 METADATA_HEADER: []string : {
 	METADATA_START,
+	"# Encryption State: %d\n", //0 = decrypted/1 = encrypted
 	"# File Format Version: %ffv\n",
 	"# Permission: %perm\n", //Read-Only/Read-Write/Inaccessible
 	"# Date of Creation: %fdoc\n",
