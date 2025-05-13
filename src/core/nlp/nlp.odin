@@ -358,6 +358,40 @@ handle_cluster_fetch :: proc(collectionName, clusterName: string) -> string {
     return data.FETCH_CLUSTER(collectionName, clusterName)
 }
 
+
+handle_record_fetch :: proc(collectionName, clusterName, recordName: string) -> (T.Record, bool) {
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        return T.Record{}, false 
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+        collectionName,
+        T.Token[.FETCH],
+        .STANDARD_PUBLIC,
+    )
+
+    record, found := data.FETCH_RECORD(collectionName, clusterName, recordName)
+    fmt.printfln(
+        "Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
+        utils.BOLD_UNDERLINE,
+        recordName,
+        utils.RESET,
+        utils.BOLD_UNDERLINE,
+        clusterName,
+        utils.RESET,
+        utils.BOLD_UNDERLINE,
+        collectionName,
+        utils.RESET,
+    )
+    return record, found
+}
+
 runner :: proc() ->int {
     agentResponseType: int
     agentResponses: [dynamic]T.AgentResponse
@@ -493,15 +527,26 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
             } else if op.Command == "FETCH" {
                 for collection in op.CollectionNames {
                     str: string
+                    found := false
                     if len(op.ClusterNames) == 0 {
                         str = handle_collection_fetch(collection)
                     }
 
                     for cluster in op.ClusterNames {
-                        str = handle_cluster_fetch(collection, cluster)
+                        if len(op.RecordNames) == 0 {
+                            str = handle_cluster_fetch(collection, cluster)
+                        }
+                        for record in op.RecordNames {
+                            record, found := handle_record_fetch(collection, cluster, record)
+                            if found {
+                                fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
+                                fmt.println("\t^^^\t^^^\t^^^")
+                                fmt.println("\tName\tType\tValue\n\n")
+                            }
+                        }
                     }
 
-                    if str != "" {
+                    if str != "" || found {
                         security.ENCRYPT_COLLECTION(
                             collection,
                             .STANDARD_PUBLIC,
@@ -509,7 +554,9 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
                             false,
                         )
                     }
-                    fmt.println(str)
+                    if !found {
+                        fmt.println(str)
+                    }
                 }
             }
         }

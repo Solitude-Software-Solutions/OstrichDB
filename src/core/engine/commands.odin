@@ -851,46 +851,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName = cmd.l_token[1]
 				recordName = cmd.l_token[2]
 
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.FETCH],
-					.STANDARD_PUBLIC,
-				)
-
-				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
-				record, found := data.FETCH_RECORD(collectionName, clusterName, recordName)
-				fmt.printfln(
-					"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
-					BOLD_UNDERLINE,
-					recordName,
-					RESET,
-					BOLD_UNDERLINE,
-					clusterName,
-					RESET,
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				if found {
-					fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
-					fmt.println("\t^^^\t^^^\t^^^")
-					fmt.println("\tName\tType\tValue\n\n")
-				}
+                record, found := nlp.handle_record_fetch(collectionName, clusterName, recordName)
+                if found {
+                    fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
+                    fmt.println("\t^^^\t^^^\t^^^")
+                    fmt.println("\tName\tType\tValue\n\n")
+                }
 			} else {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: FETCH <collection_name>.<cluster_name>.<record_name>",
