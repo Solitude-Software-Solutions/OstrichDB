@@ -40,13 +40,13 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
 
-	userName := CREATE_NEW_USERNAME(true)
+	userName := CREATE_NEW_USERNAME()
 	fmt.printfln("Please enter a password for the admin account")
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
 	libc.system("stty -echo")
-	CREATE_NEW_USER_PASSWORD(true)
+	CREATE_NEW_USER_PASSWORD()
 	salt := string(user.salt.valAsBytes)
 	hash := string(user.hashedPassword.valAsBytes)
 	storeMethod := fmt.tprintf("%d", user.store_method)
@@ -105,40 +105,31 @@ GENERATE_USER_ID :: proc() -> i64 {
 
 //Prompts user to select a username, ensures it not too long/short or taken, then returns the username
 //the isInitializing param will be false when if creating an account post engine initialization,
-CREATE_NEW_USERNAME :: proc(isInitializing: bool) -> string {
+CREATE_NEW_USERNAME :: proc() -> string {
 	using types
 	using utils
 
-	show_current_step("Set Up Username", "1", "3")
+	show_current_step("Set Up Username", "1", "4")
 	buf: [256]byte
 	input := utils.get_input(false)
 
-
-	if len(input) > 0 {
-		enteredStr := input
-
-		//trim the string of any whitespace or newline characters at the beginning and end
-		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
-
 		//At the first instance of a space in the username, warn then prompt again
-		for r in enteredStr {
+		for r in input {
 			if r == ' ' {
 				fmt.printfln(
 					"%sWARNING:%s The entered username: %s%s%s contains spaces. Please enter a username that does NOT contain spaces.\n",
 					utils.YELLOW,
 					utils.RESET,
 					utils.BOLD_UNDERLINE,
-					enteredStr,
+					input,
 					utils.RESET,
 				)
-				CREATE_NEW_USERNAME(true)
+				CREATE_NEW_USERNAME()
 			}
 		}
 
 		// Ensure there are no invalid special characters in the username
-		for r in enteredStr {
+		for r in input {
 			if r == '!' ||
 			   r == '@' ||
 			   r == '#' ||
@@ -172,108 +163,87 @@ CREATE_NEW_USERNAME :: proc(isInitializing: bool) -> string {
 					utils.YELLOW,
 					utils.RESET,
 					utils.BOLD_UNDERLINE,
-					enteredStr,
+					input,
 					utils.RESET,
 				)
 				fmt.println("The only valid special character is '-'.\n")
-				CREATE_NEW_USERNAME(true)
+				CREATE_NEW_USERNAME()
 			}
 		}
 
-
-		if (len(enteredStr) > 32) {
-			fmt.printfln(
-				"Username is too long. Please enter a username that is 32 characters or less",
-			)
-			if isInitializing == true {
-				CREATE_NEW_USERNAME(true)
-			} else if isInitializing == false {
-				CREATE_NEW_USERNAME(false)
-			}
-		} else if (len(enteredStr) < 2) {
-			fmt.printfln(
-				"Username is too short. Please enter a username that is 2 characters or more",
-			)
-			if isInitializing == true {
-				CREATE_NEW_USERNAME(true)
-			} else if isInitializing == false {
-				CREATE_NEW_USERNAME(false)
-			}
-		} else {
-			if isInitializing == true {
-				user.username.Value = strings.clone(enteredStr)
-				user.username.Length = len(enteredStr)
-			} else if isInitializing == false {
-				new_user.username.Value = strings.clone(enteredStr)
-				new_user.username.Length = len(enteredStr)
-			}
+		 switch (len(input)){
+			case len(input)> 32:
+			    fmt.printfln("Username is too long. Please enter a username that is 32 characters or less",)
+			    CREATE_NEW_USERNAME()
+			case len(input) < 2:
+			    fmt.printfln("Username is too short. Please enter a username that is 2 characters or more",)
+				CREATE_NEW_USERNAME()
 		}
 
-	}
-	if isInitializing == false {
-		return strings.clone(strings.to_upper(new_user.username.Value))
+	if CONFIRM_NEW_USERNAME(strings.to_upper(input)){
+	    user.username.Value = strings.clone(input)
+	    user.username.Length = len(input)
+	}else {
+	    fmt.printfln("%sUsernames did not match. Please try again.%s", RED, RESET)
+		CREATE_NEW_USERNAME()
 	}
 
-	return strings.clone(strings.to_upper(user.username.Value))
+	return strings.clone(strings.to_upper(input))
 }
 
+CONFIRM_NEW_USERNAME::proc(username:string) ->(match:bool){
+    using utils
+    match = false
+    show_current_step("Confirm Username", "2", "4")
+    fmt.println("Please re-enter your username")
+
+    confirmation:= get_input(false)
+
+    if username == strings.to_upper(confirmation){
+        match = true
+    }
+    return match
+}
 
 //Prompts the user for a password, checks if it is strong enough, then calls the confirm password proc
 //the isInitializing param will be false when if creating an account post engine initialization,
-CREATE_NEW_USER_PASSWORD :: proc(isInitializing: bool) -> string {
+CREATE_NEW_USER_PASSWORD :: proc() -> string {
 	using types
 	using utils
 
-	utils.show_current_step("Set Up Password", "2", "3")
 	buf: [256]byte
+	show_current_step("Set Up Password", "3", "4")
+	fmt.printfln("Please enter a password for %s%s%s :", BOLD_UNDERLINE,user.username.Value, RESET)
 	input := utils.get_input(true)
-	enteredStr: string
 
-	if len(input) > 0 {
-		enteredStr = input
-		//trim the string of any whitespace or newline characters
+	isStrongPassword := check_password_strength(input)
 
-		//Shoutout to the OdinLang Discord for helping me with this...
-		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
-		if (isInitializing == true) {
-			user.password.Value = enteredStr
-		} else if (isInitializing == false) {
-			new_user.password.Value = enteredStr
-		}
-	}
-
-	strongPassword := check_password_strength(enteredStr)
-
-	switch strongPassword
-	{
+	switch isStrongPassword{
 	case true:
-		CONFIRM_NEW_USER_PASSWORD(enteredStr, isInitializing)
+		CONFIRM_NEW_USER_PASSWORD(input)
 		break
 	case false:
 		fmt.printfln("Please try again")
-		CREATE_NEW_USER_PASSWORD(isInitializing)
+		CREATE_NEW_USER_PASSWORD()
 		break
 	}
 
-	return strings.clone(enteredStr)
+	return strings.clone(input)
 }
 
 //Takes in p as password and compares it to the confirmation password
 //if the passwords do not match, the user is prompted to re-enter the password
 //the isInitializing param will be false when if creating an account post engine initialization,
-CONFIRM_NEW_USER_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
+CONFIRM_NEW_USER_PASSWORD :: proc(p: string) -> string {
 	using types
 	using utils
 
-	utils.show_current_step("Confirm Password", "3", "3")
+	show_current_step("Confirm Password", "4", "4")
 	buf: [256]byte
 
-	fmt.printfln("Re-enter the password:")
+	fmt.printfln("Please re-enter the password for %s%s%s :", BOLD_UNDERLINE,user.username.Value, RESET)
 	input := utils.get_input(true)
 	confirmation: string
-
 
 	if len(input) > 0 {
 		confirmation = input
@@ -286,26 +256,13 @@ CONFIRM_NEW_USER_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 	}
 	if p != confirmation {
 		fmt.printfln("Passwords do not match. Please try again")
-		CREATE_NEW_USER_PASSWORD(isInitializing)
+		CREATE_NEW_USER_PASSWORD()
 	} else {
-
-		if isInitializing == true {
 			user.password.Length = len(p)
 			user.password.Value = strings.clone(p)
 			user.hashedPassword.valAsBytes = HASH_PASSWORD(p, 0, false, true)
-
 			encodedPassword := ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
 			user.hashedPassword.valAsBytes = encodedPassword
-
-		} else if isInitializing == false {
-			new_user.password.Length = len(p)
-			new_user.password.Value = strings.clone(p)
-			new_user.hashedPassword.valAsBytes = HASH_PASSWORD(p, 0, false, false)
-
-			encodedPassword := ENCODE_HASHED_PASSWORD(new_user.hashedPassword.valAsBytes)
-			new_user.hashedPassword.valAsBytes = encodedPassword
-			return new_user.password.Value
-		}
 	}
 	libc.system("stty echo")
 	return strings.clone(types.user.password.Value)
