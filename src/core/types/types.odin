@@ -384,12 +384,14 @@ Message_Color: string //used in checks.odin
 Severity_Code: int //used in checks.odin
 
 
-Metadata_Header_Body := [5]string {
-	"# File Format Version: ",
-	"# Date of Creation: ",
-	"# Date Last Modified: ",
-	"# File Size: ",
-	"# Checksum: ",
+MetadataField :: enum {
+    ENCRYPTION_STATE = 0,
+    FILE_FORMAT_VERSION = 1,
+    PERMISSION = 2,
+    DATE_CREATION = 3,
+    DATE_MODIFIED = 4,
+    FILE_SIZE = 5,
+    CHECKSUM = 6,
 }
 
 //Server Stuff Below
@@ -535,3 +537,6 @@ ServerEventType :: enum {
 	ERROR          = 3,
 	CRITICAL_ERROR = 4,
 }
+
+
+TempBuffer: []byte
