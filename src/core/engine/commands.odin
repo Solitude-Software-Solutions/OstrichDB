@@ -608,113 +608,20 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
 
-			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-				fmt.printfln(
-					"Collection: %s%s%s does not exist.",
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				return -1
-			}
+            if nlp.handle_collection_delete(collectionName) == -1 {
+                return -1
+            }
 
-			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
-
-			if data.ERASE_COLLECTION(collectionName, false) == true {
-				fmt.printfln(
-					"Collection: %s%s%s erased successfully",
-					BOLD_UNDERLINE,
-					cmd.l_token[0],
-					RESET,
-				)
-			} else {
-				fmt.printfln(
-					"Failed to erase collection: %s%s%s",
-					BOLD_UNDERLINE,
-					cmd.l_token[0],
-					RESET,
-				)
-			}
 			break
 		case CLUSTER_TIER:
-			collectionName: string
-			cluster: string
+            collectionName := cmd.l_token[0]
+            cluster := cmd.l_token[1]
+            fmt.println(collectionName, cluster)
 
-				collectionName = cmd.l_token[0]
-				cluster = cmd.l_token[1]
+            if nlp.handle_cluster_delete(collectionName, cluster) == -1 {
+                return -1
+            }
 
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.ERASE],
-					.STANDARD_PUBLIC,
-				)
-
-				clusterID := data.GET_CLUSTER_ID(collectionName, cluster)
-				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
-
-				if data.ERASE_CLUSTER(collectionName, cluster, false) == true {
-					fmt.printfln(
-						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
-						BOLD_UNDERLINE,
-						cluster,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user.m_k.valAsBytes)
-					if data.REMOVE_ID_FROM_ID_COLLECTION(fmt.tprintf("%d", clusterID), false) {
-						ENCRYPT_COLLECTION(
-							"",
-							.ID_PRIVATE,
-							types.system_user.m_k.valAsBytes,
-							false,
-						)
-					} else {
-						ENCRYPT_COLLECTION(
-							"",
-							.ID_PRIVATE,
-							types.system_user.m_k.valAsBytes,
-							false,
-						)
-
-						fmt.printfln(
-							"Failed to erase cluster: %s%s%s from collection: %s%s%s",
-							BOLD_UNDERLINE,
-							cluster,
-							RESET,
-							BOLD_UNDERLINE,
-							collectionName,
-							RESET,
-						)
-					}
-
-				fn := concat_standard_collection_name(collectionName)
-				UPDATE_METADATA_AFTER_OPERATIONS(fn)
-			} else {
-				fmt.println(
-					"Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
-				)
-				log_runtime_event(
-					"Incomplete ERASE command",
-					"User did not provide a valid cluster name to erase.",
-				)
-			}
 			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
@@ -723,64 +630,13 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 			break
 		case RECORD_TIER:
-			collectionName: string
-			clusterName: string
-			recordName: string
+            collectionName := cmd.l_token[0]
+            clusterName := cmd.l_token[1]
+            recordName := cmd.l_token[2]
 
-				collectionName = cmd.l_token[0]
-				clusterName = cmd.l_token[1]
-				recordName = cmd.l_token[2]
-
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.ERASE],
-					.STANDARD_PUBLIC,
-				)
-
-				clusterID := data.GET_CLUSTER_ID(collectionName, clusterName)
-				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
-				if data.ERASE_RECORD(collectionName, clusterName, recordName, false) == true {
-					fmt.printfln(
-						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						clusterName,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-				} else {
-					fmt.printfln(
-						"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						clusterName,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-				}
+            if nlp.handle_record_delete(collectionName, clusterName, recordName) == -1 {
+                return -1
+            }
 
 			ENCRYPT_COLLECTION(
 				collectionName,

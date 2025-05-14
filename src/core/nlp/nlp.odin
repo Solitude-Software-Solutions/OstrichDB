@@ -392,6 +392,161 @@ handle_record_fetch :: proc(collectionName, clusterName, recordName: string) -> 
     return record, found
 }
 
+handle_collection_delete :: proc(collectionName: string) -> int {
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        return -1
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, T.Token[.ERASE], .STANDARD_PUBLIC)
+
+    if data.ERASE_COLLECTION(collectionName, false) == true {
+        fmt.printfln(
+            "Collection: %s%s%s erased successfully",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+    } else {
+        fmt.printfln(
+            "Failed to erase collection: %s%s%s",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+    }
+    return 1
+}
+
+handle_cluster_delete :: proc(collectionName, cluster: string) -> int {
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        return -1
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+        collectionName,
+        T.Token[.ERASE],
+        .STANDARD_PUBLIC,
+    )
+
+    clusterID := data.GET_CLUSTER_ID(collectionName, cluster)
+
+    if data.ERASE_CLUSTER(collectionName, cluster, false) == true {
+        fmt.printfln(
+            "Cluster: %s%s%s successfully erased from collection: %s%s%s",
+            utils.BOLD_UNDERLINE,
+            cluster,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        security.DECRYPT_COLLECTION("", .ID_PRIVATE, T.system_user.m_k.valAsBytes)
+        if data.REMOVE_ID_FROM_ID_COLLECTION(fmt.tprintf("%d", clusterID), false) {
+            security.ENCRYPT_COLLECTION(
+                "",
+                .ID_PRIVATE,
+                T.system_user.m_k.valAsBytes,
+                false,
+            )
+        } else {
+            security.ENCRYPT_COLLECTION(
+                "",
+                .ID_PRIVATE,
+                T.system_user.m_k.valAsBytes,
+                false,
+            )
+
+            fmt.printfln(
+                "Failed to erase cluster: %s%s%s from collection: %s%s%s",
+                utils.BOLD_UNDERLINE,
+                cluster,
+                utils.RESET,
+                utils.BOLD_UNDERLINE,
+                collectionName,
+                utils.RESET,
+            )
+        }
+    } else {
+        fmt.println(
+            "Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
+        )
+        utils.log_runtime_event(
+            "Incomplete ERASE command",
+            "User did not provide a valid cluster name to erase.",
+        )
+    }
+
+    fn := utils.concat_standard_collection_name(collectionName)
+    metadata.UPDATE_METADATA_AFTER_OPERATIONS(fn)
+    return 1
+}
+
+handle_record_delete :: proc (collectionName, clusterName, recordName: string) -> int {
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        return -1
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+        collectionName,
+        T.Token[.ERASE],
+        .STANDARD_PUBLIC,
+    )
+
+    clusterID := data.GET_CLUSTER_ID(collectionName, clusterName)
+    // checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
+    // switch (checks)
+    // {
+    // case -1:
+    // 	return -1
+    // }
+    if data.ERASE_RECORD(collectionName, clusterName, recordName, false) == true {
+        fmt.printfln(
+            "Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
+            utils.BOLD_UNDERLINE,
+            recordName,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            clusterName,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+    } else {
+        fmt.printfln(
+            "Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
+            utils.BOLD_UNDERLINE,
+            recordName,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            clusterName,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+    }
+    return 1
+}
+
 runner :: proc() ->int {
     agentResponseType: int
     agentResponses: [dynamic]T.AgentResponse
@@ -416,6 +571,7 @@ runner :: proc() ->int {
 	}
 
     response := string(init_nlp(database_data))
+    fmt.println(response)
     if strings.contains(response, "is_general_ostrichdb_information_query") {
         agentResponseType = 0
         // Try to parse as a general information response
