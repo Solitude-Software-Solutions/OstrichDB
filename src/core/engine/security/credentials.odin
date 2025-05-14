@@ -73,17 +73,17 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-	metadata.UPDATE_METADATA_UPON_CREATION(utils.concat_user_history_path(types.user.username.Value))
-	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)
-	metadata.UPDATE_METADATA_UPON_CREATION(SYSTEM_CONFIG_PATH)
-	metadata.UPDATE_METADATA_UPON_CREATION(utils.concat_user_credential_path(types.user.username.Value)
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(utils.concat_user_history_path(types.user.username.Value))
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(ID_PATH)
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(SYSTEM_CONFIG_PATH)
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(utils.concat_user_credential_path(types.user.username.Value)
 	)
 
-	//Encrypt the the config, history, id, and new users secure collection
-	// ENCRYPT_COLLECTION(user.username.Value, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes, false)
-	// ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
-	// ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
-	// ENCRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, system_user.m_k.valAsBytes, false)
+	//Encrypt the the system id, user credentials,configs & history collections
+	ENCRYPT_COLLECTION(user.username.Value, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION(user.username.Value, .USER_CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION(user.username.Value, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, system_user.m_k.valAsBytes, false)
 
 
 	fmt.println("Please re-launch OstrichDB...")
@@ -339,7 +339,7 @@ STORE_USER_CREDENTIALS :: proc(fileAndClusterName: string, id: i64, rn: string, 
 	data.CREATE_CLUSTER_BLOCK(secureFilePath, id, fileAndClusterName)
 	data.CREATE_AND_APPEND_PRIVATE_RECORD(secureFilePath, fileAndClusterName, rn, rd, "identifier", id)
 
-	UPDATE_METADATA_AFTER_OPERATIONS(secureFilePath)
+	UPDATE_METADATA_FIELD_AFTER_OPERATION(secureFilePath)
 	return 0
 }
 
