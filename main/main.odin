@@ -59,8 +59,8 @@ main :: proc() {
 		    OstrichEngine.Initialized = false
 		}
 
-
-	fmt.println("Starting OstrichDB DBMS")
-	engine.START_OSTRICHDB_ENGINE()
-
+	fmt.println("Starting OstrichDB DBMS CLI")
+	for engine.START_OSTRICHDB_ENGINE() == 1{
+	    engine.START_OSTRICHDB_ENGINE()
+	}
 }
