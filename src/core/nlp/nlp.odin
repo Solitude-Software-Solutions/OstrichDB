@@ -681,7 +681,9 @@ handle_payload_operations :: proc(val: T.AgentResponse) {
                         break
                 }
             }
-            for record, record_index in op.RecordNames {
+            record_start := cluster_index * op.RecordsPerCluster
+            for record_index in record_start..<record_start+op.RecordsPerCluster {
+                record := op.RecordNames[record_index]
                 switch (op.Command) {
                 case "POST":
                     for value in op.RecordValues[record_index] {
