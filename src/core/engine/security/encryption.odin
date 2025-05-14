@@ -43,7 +43,6 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-//checkingEncryptStatus is false if we are just encrypting and true if we are just checking if the collection is already encrypted
 ENCRYPT_COLLECTION :: proc(
 	colName: string,
 	colType: types.CollectionType,
@@ -53,8 +52,8 @@ ENCRYPT_COLLECTION :: proc(
 	success: int,
 	encData: []u8,
 ) {
+    using types
 	file: string
-	// assert(len(key) == aes.KEY_SIZE_256) //key MUST be 32 bytes
 
 	#partial switch (colType) {
 	case .STANDARD_PUBLIC:
@@ -88,6 +87,9 @@ ENCRYPT_COLLECTION :: proc(
 		return -1, nil
 	}
 
+	//Update the encryption state metadaheader member to 1 before reading bytes
+	metadata.ASSIGN_EXPLICIT_METADATA_VALUE(file, MetadataField.ENCRYPTION_STATE, "1")
+
 	data, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
 		fmt.printfln("Failed to read file: %s for encryption", file)
@@ -96,14 +98,6 @@ ENCRYPT_COLLECTION :: proc(
 	defer delete(data)
 
 	n := len(data) //n is the size of the data
-
-
-	//Update the ecnryption state metadaheader member to  1
-	successfulChange:= metadata.CHANGE_METADATA_MEMBER_VALUE(colName, "1" ,0, colType)
-	if !successfulChange{
-	    fmt.println("Could not update the encryption state for file: " ,file)
-		return -3, nil
-	}
 
 	aad: []u8 = nil
 	dst := make([]u8, n + aes.GCM_IV_SIZE + aes.GCM_TAG_SIZE) //create a buffer that is the size of the data plus 16 bytes for the iv and 16 bytes for the tag
@@ -116,20 +110,14 @@ ENCRYPT_COLLECTION :: proc(
 	gcmContext: aes.Context_GCM //create a gcm context
 	aes.init_gcm(&gcmContext, key) //initialize the gcm context with the key
 
-
-
 	aes.seal_gcm(&gcmContext, encryptedData, tag, iv, aad, data) //encrypt the data
-
-	if checkingEncryptStatus == true {
-		return 2, nil
-	}
 
 	writeSuccess := utils.write_to_file(file, dst, #procedure) //write the encrypted data to the file
 
 	if !writeSuccess {
 		fmt.printfln("Failed to write ENCRYPTED data to file: %s", file)
 		//If we fail to write the encrypted data to the file, reset the encrypted state metadata back to 0
-		metadata.CHANGE_METADATA_MEMBER_VALUE(colName, "0" ,0, colType)
+		metadata.ASSIGN_EXPLICIT_METADATA_VALUE(file, MetadataField.ENCRYPTION_STATE)
 		return -4, nil
 	}
 
