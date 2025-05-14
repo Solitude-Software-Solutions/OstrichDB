@@ -21,7 +21,6 @@ File Description:
 *********************************************************/
 main :: proc() {
 	using data
-
 	CREATE_COLLECTION("", .SYSTEM_CONFIG_PRIVATE)
 	id := GENERATE_ID(true)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
@@ -156,7 +155,7 @@ APPEND_ALL_CONFIGS_TO_CONFIG_FILE :: proc(configFileType:types.CollectionType, f
 				successCount += 1
 			}
 
-			metadata.UPDATE_METADATA_UPON_CREATION(SYSTEM_CONFIG_PATH)
+			metadata.INIT_METADATA_IN_NEW_COLLECTION(SYSTEM_CONFIG_PATH)
 			if successCount == 3 {
 				return true
 			}else{
@@ -178,7 +177,7 @@ APPEND_ALL_CONFIGS_TO_CONFIG_FILE :: proc(configFileType:types.CollectionType, f
 		    if APPEND_CONFIG_RECORD(configFileType,LIMIT_SESSION_TIME, "true", Token[.BOOLEAN],fn[0]) == 0{ //CLI session time limit is on by defualt
 		    successCount += 1
 		    }
-			metadata.UPDATE_METADATA_UPON_CREATION(concat_user_config_collection_name(fn[0]))
+			metadata.INIT_METADATA_IN_NEW_COLLECTION(concat_user_config_collection_name(fn[0]))
 			if successCount == 5 {
 				return true
 			}else{

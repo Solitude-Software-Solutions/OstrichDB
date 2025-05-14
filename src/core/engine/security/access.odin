@@ -192,7 +192,7 @@ PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 	defer free(commandOperation)
 
 
-	permissionValue, success := metadata.GET_METADATA_MEMBER_VALUE(
+	permissionValue, success := metadata.GET_METADATA_FIELD_VALUE(
 		colName,
 		"# Permission",
 		colType,
@@ -216,7 +216,7 @@ PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 //Used to check if a collection is already locked before attempting to lock it again
 GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
-	lockStatus, success := metadata.GET_METADATA_MEMBER_VALUE(
+	lockStatus, success := metadata.GET_METADATA_FIELD_VALUE(
 		colName,
 		"# Permission",
 		.STANDARD_PUBLIC,

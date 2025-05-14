@@ -76,7 +76,7 @@ CREATE_AND_FILL_PRIVATE_ID_COLLECTION :: proc() {
 	CREATE_CLUSTER_BLOCK(const.ID_PATH, cluTwoid, USER_ID_CLUSTER)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
-	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(ID_PATH)
 }
 
 //appends either a user id or a cluster id to their respective clusters in the private id collection

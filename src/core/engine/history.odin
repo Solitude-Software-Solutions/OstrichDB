@@ -83,7 +83,7 @@ APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 
 	// //update the history file size, date last modified and checksum
-	UPDATE_METADATA_AFTER_OPERATIONS(utils.concat_user_history_path(types.current_user.username.Value))
+	UPDATE_METADATA_FIELD_AFTER_OPERATION(utils.concat_user_history_path(types.current_user.username.Value))
 }
 
 
