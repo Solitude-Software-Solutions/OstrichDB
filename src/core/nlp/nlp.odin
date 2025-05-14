@@ -571,7 +571,6 @@ runner :: proc() ->int {
 	}
 
     response := string(init_nlp(database_data))
-    fmt.println(response)
     if strings.contains(response, "is_general_ostrichdb_information_query") {
         agentResponseType = 0
         // Try to parse as a general information response
@@ -656,18 +655,40 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
 	case 1: // If its an operation query do more work
         // TODO: need to abstract some of the code here away
         for val in payload {
+            str: string
             op := val.OperationQueryResponse
-            if op.Command == "POST" {
-                for collection in op.CollectionNames {
-                    if len(op.ClusterNames) == 0 {
+            for collection in op.CollectionNames {
+                if len(op.ClusterNames) == 0 {
+                    switch (op.Command) {
+                    case "POST":
                         handle_collection_creation(strings.to_upper(collection))
+                        break
+                    case "FETCH":
+                        str = handle_collection_fetch(collection)
+                        break
+                    case "DELETE":
+                        handle_collection_delete(collection)
+                        break
                     }
-                    // will not loop if len is 0, so no else needed
-                    for cluster in op.ClusterNames {
-                        if len(op.RecordNames) == 0 {
-                            handle_cluster_creation(strings.to_upper(collection), strings.to_upper(cluster))
+                }
+                // will not loop if len is 0, so no else needed
+                for cluster in op.ClusterNames {
+                    if len(op.RecordNames) == 0 {
+                        switch (op.Command) {
+                        case "POST":
+                                handle_cluster_creation(strings.to_upper(collection), strings.to_upper(cluster))
+                                break
+                        case "FETCH":
+                                str = handle_cluster_fetch(collection, cluster)
+                                break
+                        case "DELETE":
+                                handle_cluster_delete(collection, cluster)
+                                break
                         }
-                        for record, record_index in op.RecordNames {
+                    }
+                    for record, record_index in op.RecordNames {
+                        switch (op.Command) {
+                        case "POST":
                             for value in op.RecordValues[record_index] {
                                 record_info: map[string]string
                                 if len(op.RecordValues) > record_index {
@@ -677,31 +698,22 @@ handle_payload_response :: proc(payload: [dynamic]T.AgentResponse, payloadType: 
                                 }
                                 handle_record_creation(strings.to_upper(collection), strings.to_upper(cluster), strings.to_upper(record), record_info)
                             }
-                        }
-                    }
-                }
-            } else if op.Command == "FETCH" {
-                for collection in op.CollectionNames {
-                    str: string
-                    found := false
-                    if len(op.ClusterNames) == 0 {
-                        str = handle_collection_fetch(collection)
-                    }
-
-                    for cluster in op.ClusterNames {
-                        if len(op.RecordNames) == 0 {
-                            str = handle_cluster_fetch(collection, cluster)
-                        }
-                        for record in op.RecordNames {
-                            record, found := handle_record_fetch(collection, cluster, record)
+                            break
+                        case "FETCH":
+                            r, found := handle_record_fetch(collection, cluster, record)
                             if found {
-                                fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
+                                fmt.printfln("\t%s :%s: %s\n", r.name, r.type, r.value)
                                 fmt.println("\t^^^\t^^^\t^^^")
                                 fmt.println("\tName\tType\tValue\n\n")
                             }
+                            break
+                        case "DELETE":
+                            handle_record_delete(collection, cluster, record)
+                            break
                         }
                     }
-
+                }
+                if op.Command == "FETCH" || op.Command == "DELETE" {
                     security.ENCRYPT_COLLECTION(
                         collection,
                         .STANDARD_PUBLIC,
