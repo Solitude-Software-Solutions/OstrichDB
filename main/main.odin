@@ -40,6 +40,7 @@ main :: proc() {
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
 		config.main()
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
 	}
 	log_runtime_event("OstrichDB Started", "")
 
@@ -49,6 +50,7 @@ main :: proc() {
 	//Randomly choose which project description to display in the startup art
 	chosenDescription := rand.choice(const.project_descriptions)
 	fmt.println(fmt.tprintf( ostrich_art, chosenDescription, BLUE, version, RESET))
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 
 	 value:= data.GET_RECORD_VALUE(SYSTEM_CONFIG_PATH, SYSTEM_CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
 		if value == "true"{
@@ -57,20 +59,6 @@ main :: proc() {
 		    OstrichEngine.Initialized = false
 		}
 
-
-// fmt.println("GET_RECORD_VALUE result: ", success)
-	// if success ==false{ //in the event that the record cant be retireved, try decrypting the file first then try again
-// 	    DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-// 			val:= data.GET_RECORD_VALUE(SYSTEM_CONFIG_PATH, SYSTEM_CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
-// // 			if val == "true"{
-// //             ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes,false,)
-// //             log_runtime_event("OstrichDB Engine Initialized", "")
-// 		}else{
-// 		    OstrichEngine.Initialized = false
-// 		}
-// 	}else {
-// 	        ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes,false,)
-// 	}
 
 	fmt.println("Starting OstrichDB DBMS")
 	engine.START_OSTRICHDB_ENGINE()

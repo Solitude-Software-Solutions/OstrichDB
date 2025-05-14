@@ -72,7 +72,7 @@ ENCRYPT_COLLECTION :: proc(
 		break
 	case .USER_HISTORY_PRIVATE:
 		//Private History Collection
-		file = utils.concat_user_history_path(types.user.username.Value)
+		file = utils.concat_user_history_path(colName)
 		break
 	case .SYSTEM_ID_PRIVATE:
 		//Private ID Collection

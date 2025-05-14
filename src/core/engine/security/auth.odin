@@ -67,8 +67,11 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	    return false
 	}
 
-	// Read that file to ensure there is a cluster with the entered userName
-    usersClusterExists := data.CHECK_IF_CLUSTER_EXISTS(utils.concat_user_credential_path(userNameInput), userNameInput )
+	usersCredentialFile := utils.concat_user_credential_path(userNameInput)
+
+	// Decrypt and read that file to ensure there is a cluster with the entered userName
+	TRY_TO_DECRYPT(userNameInput, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+    usersClusterExists := data.CHECK_IF_CLUSTER_EXISTS(usersCredentialFile, userNameInput )
     if !usersClusterExists{
         fmt.printfln(
 		"An important cluster within a core file was not found. OstrichDB could not authroize you...",)
@@ -78,15 +81,6 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		log_err("Cluster not found in user.credential.ostrichdb core file", #procedure)
 	    return false
     }
-
-	usersCredentialFile := utils.concat_user_credential_path(userNameInput)
-
-	//decrypt the user secure collection
-	decSuccess, _ := DECRYPT_COLLECTION(
-		userNameInput,
-		.USER_CREDENTIALS_PRIVATE,
-		types.system_user.m_k.valAsBytes,
-	)
 
 	userRole := data.GET_RECORD_VALUE(usersCredentialFile, userNameInput, "identifier", "role")
 	if userRole == "admin" {
@@ -120,8 +114,9 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		"store_method",
 	)
 	//POST-MESHING START=======================================================================================================
-
-	//get the password input from the user
+	//After storing values into the sessions memory, re-encrypt the user.credentials.ostrichdb file
+	ENCRYPT_COLLECTION(userNameInput, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes,false)
+		//get the password input from the user
 	fmt.printfln("Please enter your %spassword%s:", BOLD, RESET)
 	libc.system("stty -echo")
 	passwordInput := get_input(true)
@@ -140,7 +135,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		return false
 	}
 
-	//conver the return algo method string to an int
+	//convert the return algo method string to an int
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
