@@ -125,14 +125,8 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 					return result
 				}
 			case false:
-				fmt.printfln("Sign in failed. Please try again.")
-				security.ENCRYPT_COLLECTION(
-					"",
-					.SYSTEM_CONFIG_PRIVATE,
-					types.system_user.m_k.valAsBytes,
-					false,
-				)
-				continue
+				fmt.printfln("%sSign-in failed.%s  Please try again.", utils.RED, utils.RESET)
+				return 1
 			}
 		}
 	}
