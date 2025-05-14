@@ -26,64 +26,63 @@ APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	using utils
 	using const
 
-	// histBuf: [1024]byte
-	// //append the last command to the history buffer
-	// current_user.commandHistory.cHistoryCount = data.GET_RECORD_COUNT_WITHIN_CLUSTER(
-	// 	"history",
-	// 	current_user.username.Value,
-	// 	false,
-	// )
+	histBuf: [1024]byte
 
-	// // History Collection file size limit.
-	// // Doesnt measure bytes of the file but instead
-	// // the num of records of the users command history cluster
-	// //
+	systemUserMK:=system_user.m_k.valAsBytes
+	currentUserName:= current_user.username.Value
 
-	// security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	// limitOn := data.GET_RECORD_VALUE(
-	// 	const.CONFIG_PATH,
-	// 	const.CONFIG_CLUSTER,
-	// 	types.Token[.BOOLEAN],
-	// 	const.LIMIT_HISTORY,
-	// )
-	// security.ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+	//append the last command to the history buffer
+	current_user.commandHistory.cHistoryCount = data.GET_RECORD_COUNT_WITHIN_CLUSTER(
+		utils.concat_user_history_path(currentUserName),
+		currentUserName,
+		false,
+	)
 
-	// if limitOn == "true" {
-	// 	limitReached := CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET(&current_user)
-	// 	if limitReached {
-	// 		if PURGE_USERS_HISTORY_CLUSTER(current_user.username.Value) {
-	// 			//set the count back to 0
-	// 			current_user.commandHistory.cHistoryCount = 0
-	// 		}
-	// 	}
-	// }
+	security.TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+	limitOn := data.GET_RECORD_VALUE(
+		concat_user_config_collection_name(currentUserName),
+		concat_user_config_cluster_name(currentUserName),
+		types.Token[.BOOLEAN],
+		LIMIT_HISTORY,
+	)
+	security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
 
-	// histCountStr := strconv.itoa(histBuf[:], current_user.commandHistory.cHistoryCount)
-	// recordName := fmt.tprintf("%s%s", "history_", histCountStr)
+	if limitOn == "true" {
+		limitReached := CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET(&current_user)
+		if limitReached {
+			if PURGE_USERS_HISTORY_CLUSTER(currentUserName) {
+				//set the count back to 0
+				current_user.commandHistory.cHistoryCount = 0
+			}
+		}
+	}
 
-	// //append the last command to the history file
-	// data.CREATE_RECORD(
-	// 	const.HISTORY_PATH,
-	// 	current_user.username.Value,
-	// 	strings.to_upper(recordName),
-	// 	strings.to_upper(strings.clone(input)),
-	// 	"COMMAND",
-	// )
+	histCountStr := strconv.itoa(histBuf[:], current_user.commandHistory.cHistoryCount)
+	recordName := fmt.tprintf("%s%s", "history_", histCountStr)
 
-	// //get value of the command that was just stored as a record
-	// historyRecordValue := data.GET_RECORD_VALUE(
-	// 	const.HISTORY_PATH,
-	// 	current_user.username.Value,
-	// 	"COMMAND",
-	// 	strings.to_upper(recordName),
-	// )
+	//append the last command to the history file
+	data.CREATE_RECORD(
+	    utils.concat_user_history_path(currentUserName),
+		currentUserName,
+		strings.to_upper(recordName),
+		strings.to_upper(strings.clone(input)),
+		"COMMAND",
+	)
 
-	// //append the command from the file to the command history buffer
-	// append(&current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
+	//get value of the command that was just stored as a record
+	historyRecordValue := data.GET_RECORD_VALUE(
+		utils.concat_user_history_path(currentUserName),
+		currentUserName,
+		"COMMAND",
+		strings.to_upper(recordName),
+	)
+
+	//append the command from the file to the command history buffer
+	append(&current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
 
 
 	// //update the history file size, date last modified and checksum
-	UPDATE_METADATA_FIELD_AFTER_OPERATION(utils.concat_user_history_path(types.current_user.username.Value))
+	UPDATE_METADATA_FIELD_AFTER_OPERATION(utils.concat_user_history_path(currentUserName))
 }
 
 
@@ -304,6 +303,7 @@ CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> boo
 	}
 	return limitReached
 }
+
 //used for the history command,
 //reads over the passed in collection file and
 //the specified cluster and stores the value of each record into the array

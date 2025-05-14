@@ -77,13 +77,12 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 					"User Signed In",
 					"User successfully logged into OstrichDB",
 				)
-
+				currentUserName:= types.current_user.username.Value
 				//Check to see if the server AUTO_SERVE config value is true. If so start server
-				security.DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-
+				security.TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 				autoServeConfigValue := data.GET_RECORD_VALUE(
-					SYSTEM_CONFIG_PATH,
-					SYSTEM_CONFIG_CLUSTER,
+					utils.concat_user_config_collection_name(currentUserName),
+					utils.concat_user_config_cluster_name(currentUserName),
 					types.Token[.BOOLEAN],
 					AUTO_SERVE,
 				)
@@ -96,11 +95,8 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						"1. Enter 'kill' or 'quit' to stop the server and be returned to the OstrichDB command line",
 					)
 					fmt.println("2. Use command: 'SET CONFIG AUTO_SERVE TO false'\n\n")
-					security.ENCRYPT_COLLECTION(
-						"",
-						.SYSTEM_CONFIG_PRIVATE,
-						types.system_user.m_k.valAsBytes,
-					)
+					security.ENCRYPT_COLLECTION(types.current_user.username.Value, .USER_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+
 					//Auto-server loop
 					serverDone := server.START_OSTRICH_SERVER(&types.OstrichServer)
 					if serverDone == 0 {
@@ -113,11 +109,8 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 				} else {
 					// if the AUTO_SERVE config value is false, then continue starting command line
-					security.ENCRYPT_COLLECTION(
-						"",
-						.SYSTEM_CONFIG_PRIVATE,
-						types.system_user.m_k.valAsBytes,
-					)
+					security.ENCRYPT_COLLECTION(types.current_user.username.Value, .USER_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+
 					fmt.println("Starting command line")
 					result := START_COMMAND_LINE()
 					return result
@@ -146,19 +139,19 @@ START_COMMAND_LINE :: proc() -> int {
 
 		fmt.print(const.ostCarrat, "\t")
 		input := utils.get_input(false)
-
-		DECRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+		currentUserName := current_user.username.Value
+		fmt.println("currentUserName: ", currentUserName)
+		TRY_TO_DECRYPT(currentUserName, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 		APPEND_COMMAND_TO_HISTORY(input)
-		ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+		ENCRYPT_COLLECTION(currentUserName, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 		cmd := PARSE_COMMAND(input)
 		// fmt.println("cmd: ", cmd) //Debugging DO NOT DELETE
 
 
 		//check if  the LIMIT_SESSION_TIME config is enabled.
-		DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-		userName:= current_user.username.Value
-		sessionLimitValue:= data.GET_RECORD_VALUE(utils.concat_user_config_collection_name(userName),utils.concat_user_config_cluster_name(userName) ,Token[.BOOLEAN],LIMIT_SESSION_TIME)
-		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		sessionLimitValue:= data.GET_RECORD_VALUE(utils.concat_user_config_collection_name(currentUserName),utils.concat_user_config_cluster_name(currentUserName) ,Token[.BOOLEAN],LIMIT_SESSION_TIME)
+		ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 
 		if sessionLimitValue == "true"{
 		  //Check to ensure that BEFORE the next command is executed, the max session time hasnt been met
