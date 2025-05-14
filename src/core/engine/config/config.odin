@@ -165,7 +165,7 @@ APPEND_ALL_CONFIGS_TO_CONFIG_FILE :: proc(configFileType:types.CollectionType, f
 		    if APPEND_CONFIG_RECORD(configFileType,HELP_IS_VERBOSE, "false", Token[.BOOLEAN], fn[0]) == 0 {
 		    successCount += 1
 		    }
-		    if APPEND_CONFIG_RECORD(configFileType,AUTO_SERVE, "true", Token[.BOOLEAN],fn[0]) == 0 { 	//server mode on by default while working on it
+		    if APPEND_CONFIG_RECORD(configFileType,AUTO_SERVE, "false", Token[.BOOLEAN],fn[0]) == 0 { 	//server mode off by default
 		    successCount += 1
 		    }
 		    if APPEND_CONFIG_RECORD(configFileType,SUPPRESS_ERRORS, "false", Token[.BOOLEAN],fn[0]) == 0 {
