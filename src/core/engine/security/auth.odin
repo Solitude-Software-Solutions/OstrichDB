@@ -120,7 +120,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	)
 	//POST-MESHING START=======================================================================================================
 	//After storing values into the sessions memory, re-encrypt the user.credentials.ostrichdb file
-	ENCRYPT_COLLECTION(userNameInput, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes,false)
+	ENCRYPT_COLLECTION(userNameInput, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
 		//get the password input from the user
 	fmt.printfln("Please enter your %spassword%s:", BOLD, RESET)
 	libc.system("stty -echo")
@@ -217,19 +217,19 @@ RUN_USER_LOGOUT :: proc(param: int) {
 		{
 		case 0:
 			//Logging out but keeps program running
-			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 		case 1:
 			//Exiting
-			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)
 		}
 		break
 	case false:
-		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 		types.USER_SIGNIN_STATUS = true
 		fmt.printfln("You have NOT been logged out.")
 		break

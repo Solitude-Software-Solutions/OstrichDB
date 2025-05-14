@@ -98,7 +98,7 @@ CSV__IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool
 		desiredColName,
 		.STANDARD_PUBLIC,
 		types.current_user.m_k.valAsBytes,
-		false,
+
 	)
 
 	if encryptSuccess != 0 {

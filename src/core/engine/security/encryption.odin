@@ -46,8 +46,7 @@ Decryption process :
 ENCRYPT_COLLECTION :: proc(
 	colName: string,
 	colType: types.CollectionType,
-	key: []u8,
-	checkingEncryptStatus: bool,
+	key: []u8
 ) -> (
 	success: int,
 	encData: []u8,

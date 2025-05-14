@@ -100,7 +100,6 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						"",
 						.SYSTEM_CONFIG_PRIVATE,
 						types.system_user.m_k.valAsBytes,
-						false,
 					)
 					//Auto-server loop
 					serverDone := server.START_OSTRICH_SERVER(&types.OstrichServer)
@@ -118,7 +117,6 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						"",
 						.SYSTEM_CONFIG_PRIVATE,
 						types.system_user.m_k.valAsBytes,
-						false,
 					)
 					fmt.println("Starting command line")
 					result := START_COMMAND_LINE()
@@ -151,7 +149,7 @@ START_COMMAND_LINE :: proc() -> int {
 
 		DECRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 		APPEND_COMMAND_TO_HISTORY(input)
-		ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 		cmd := PARSE_COMMAND(input)
 		// fmt.println("cmd: ", cmd) //Debugging DO NOT DELETE
 
@@ -160,7 +158,7 @@ START_COMMAND_LINE :: proc() -> int {
 		DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 		userName:= current_user.username.Value
 		sessionLimitValue:= data.GET_RECORD_VALUE(utils.concat_user_config_collection_name(userName),utils.concat_user_config_cluster_name(userName) ,Token[.BOOLEAN],LIMIT_SESSION_TIME)
-		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, true,)
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
 
 		if sessionLimitValue == "true"{
 		  //Check to ensure that BEFORE the next command is executed, the max session time hasnt been met

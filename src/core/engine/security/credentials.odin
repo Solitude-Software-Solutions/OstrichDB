@@ -80,10 +80,10 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	)
 
 	//Encrypt the the system id, user credentials,configs & history collections
-	ENCRYPT_COLLECTION(user.username.Value, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION(user.username.Value, .USER_CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION(user.username.Value, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, system_user.m_k.valAsBytes, false)
+	ENCRYPT_COLLECTION(user.username.Value, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(user.username.Value, .USER_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(user.username.Value, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, system_user.m_k.valAsBytes)
 
 
 	fmt.println("Please re-launch OstrichDB...")
@@ -213,7 +213,7 @@ CREATE_NEW_USER_PASSWORD :: proc() -> string {
 
 	buf: [256]byte
 	show_current_step("Set Up Password", "3", "4")
-	fmt.printfln("Please enter a password for %s%s%s :", BOLD_UNDERLINE,user.username.Value, RESET)
+	fmt.printfln("Please enter a password for %s%s%s:", BOLD_UNDERLINE,user.username.Value, RESET)
 	input := utils.get_input(true)
 
 	isStrongPassword := check_password_strength(input)
@@ -241,7 +241,7 @@ CONFIRM_NEW_USER_PASSWORD :: proc(p: string) -> string {
 	show_current_step("Confirm Password", "4", "4")
 	buf: [256]byte
 
-	fmt.printfln("Please re-enter the password for %s%s%s :", BOLD_UNDERLINE,user.username.Value, RESET)
+	fmt.printfln("Please re-enter the password for %s%s%s:", BOLD_UNDERLINE,user.username.Value, RESET)
 	input := utils.get_input(true)
 	confirmation: string
 

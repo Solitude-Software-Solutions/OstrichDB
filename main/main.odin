@@ -40,7 +40,7 @@ main :: proc() {
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
 		config.main()
-		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 	}
 	log_runtime_event("OstrichDB Started", "")
 

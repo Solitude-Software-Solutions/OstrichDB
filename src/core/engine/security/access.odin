@@ -280,29 +280,27 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
 			.USER_CREDENTIALS_PRIVATE,
-			types.system_user.m_k.valAsBytes,
-			false,
+			types.system_user.m_k.valAsBytes
 		)
 		break
 	case:
 		// If the permission check fails, re-encrypt the "working" and "secure" collections
 		#partial switch (colType) {
 		case .SYSTEM_CONFIG_PRIVATE:
-			ENCRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes)
 			break
 		case .ISOLATED_PUBLIC:
-			ENCRYPT_COLLECTION(colName, .ISOLATED_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION(colName, .ISOLATED_PUBLIC, types.current_user.m_k.valAsBytes)
 			break
 
 		case:
-			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 			break
 		}
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
 			.USER_CREDENTIALS_PRIVATE,
 			types.system_user.m_k.valAsBytes,
-			false,
 		)
 		return -1
 	}
