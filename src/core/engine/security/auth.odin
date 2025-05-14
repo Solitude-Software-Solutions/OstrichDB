@@ -91,10 +91,15 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		user.role.Value = "guest"
 	}
 
-	//Voodoo??
+
+	//Master Key shit
 	userMKStr := data.GET_RECORD_VALUE(usersCredentialFile, userNameInput, "identifier", "m_k")
 	user.m_k.valAsBytes = DECODE_MASTER_KEY(transmute([]byte)userMKStr)
 	user.username.Value = strings.clone(userNameInput)
+	current_user.m_k.valAsStr = user.m_k.valAsStr
+	current_user.m_k.valAsBytes = user.m_k.valAsBytes
+
+
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
@@ -152,31 +157,17 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		current_user.username.Value = strings.clone(userNameInput) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
 
-
-		DECRYPT_COLLECTION("", .USER_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		//Look through the system config and set USER_LOGGED_IN val to true
+		TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 		userLoggedInValue := data.GET_RECORD_VALUE(
-		    utils.concat_user_config_collection_name(userNameInput),
-			utils.concat_user_config_cluster_name(userNameInput),
+            SYSTEM_CONFIG_PATH,
+            SYSTEM_CONFIG_CLUSTER,
 			Token[.BOOLEAN],
 			USER_LOGGED_IN,
 		)
 
-		//Master Key shit
-		mkValueRead := data.GET_RECORD_VALUE(
-			usersCredentialFile,
-			userNameInput,
-			"identifier",
-			"m_k",
-		)
-
-		// mkValueAsBytes := security.OST_M_K_STIRNG_TO_BYTE(mkValueRead)
-		current_user.m_k.valAsStr = user.m_k.valAsStr
-		current_user.m_k.valAsBytes = user.m_k.valAsBytes
-
-
 		if userLoggedInValue == "false" {
-			// config.OST_TOGGLE_CONFIG(const.USER_LOGGED_IN)
-			config.UPDATE_CONFIG_VALUE(.USER_CONFIG_PRIVATE, const.USER_LOGGED_IN, "true",userNameInput)
+			config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, USER_LOGGED_IN, "true")
 		}
 		break
 	case false:
@@ -190,12 +181,6 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		RUN_USER_SIGNIN()
 
 	}
-	ENCRYPT_COLLECTION(
-		userNameInput,
-		.USER_CREDENTIALS_PRIVATE,
-		types.system_user.m_k.valAsBytes,
-		false,
-	)
 
 	return USER_SIGNIN_STATUS
 }
