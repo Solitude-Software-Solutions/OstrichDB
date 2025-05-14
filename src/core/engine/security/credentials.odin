@@ -80,9 +80,9 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	)
 
 	//Encrypt the the system id, user credentials,configs & history collections
-	ENCRYPT_COLLECTION(user.username.Value, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
-	ENCRYPT_COLLECTION(user.username.Value, .USER_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
-	ENCRYPT_COLLECTION(user.username.Value, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(userName, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(userName, .USER_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(userName, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
 	ENCRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, system_user.m_k.valAsBytes)
 
 
