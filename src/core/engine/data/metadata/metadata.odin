@@ -375,8 +375,10 @@ GET_METADATA_FIELD_VALUE :: proc(
 
 	data, readSuccess := utils.read_file(file, #procedure)
 
-	if len(d[0])> 0{ //if there is a passed in d(data) arg then data is equal to that
-        data= d[0]
+	if len(d) != 0{
+	    if len(d[0])> 0{ //if there is a passed in d(data) arg then data is equal to that
+            data= d[0]
+		}
 	}
 
 	if !readSuccess {

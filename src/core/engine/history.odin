@@ -33,9 +33,9 @@ APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	//append the last command to the history buffer
 	current_user.commandHistory.cHistoryCount = data.GET_RECORD_COUNT_WITHIN_CLUSTER(
-		utils.concat_user_history_path(currentUserName),
+	    .USER_HISTORY_PRIVATE,
 		currentUserName,
-		false,
+		concat_user_history_cluster_name(currentUserName),
 	)
 
 	security.TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
@@ -161,12 +161,12 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 
 
 //Used to get rid of data within a user's history cluster once the limit has been reached.
-PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
+PURGE_USERS_HISTORY_CLUSTER :: proc(username: string) -> bool {
 	using const
 	using utils
 
 	// Read the entire file
-	data, readSuccess := os.read_entire_file(utils.concat_user_history_path(types.user.username.Value))
+	data, readSuccess := os.read_entire_file(utils.concat_user_history_path(username))
 	if !readSuccess {
 	errorLocation:= get_caller_location()
 		throw_err(
@@ -200,7 +200,7 @@ PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 		//concatenate the open brace with the cluster
 		cluster := strings.concatenate([]string{openBrace, clusters[i]})
 		//if the cluster name matches the one we want to purge, we need to preserve the cluster's data
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", utils.concat_user_history_cluster_name(username))) {
 			clusterFound = true
 			lines := strings.split(cluster, "\n")
 			append(&newContent, ..transmute([]u8)openBraceWithNewline)

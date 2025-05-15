@@ -208,8 +208,13 @@ CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 //Handles logic for signing out a user and exiting the program
 //param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
 RUN_USER_LOGOUT :: proc(param: int) {
-	security.DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	loggedOut := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE,const.USER_LOGGED_IN, "false")
+    using security
+    using const
+    using types
+
+    systemUserMK := system_user.m_k.valAsBytes
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE,systemUserMK )
+	loggedOut := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, const.USER_LOGGED_IN, "false")
 
 	switch loggedOut {
 	case true:
@@ -217,19 +222,19 @@ RUN_USER_LOGOUT :: proc(param: int) {
 		{
 		case 0:
 			//Logging out but keeps program running
-			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 		case 1:
 			//Exiting
-			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)
 		}
 		break
 	case false:
-		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 		types.USER_SIGNIN_STATUS = true
 		fmt.printfln("You have NOT been logged out.")
 		break
@@ -239,15 +244,18 @@ RUN_USER_LOGOUT :: proc(param: int) {
 
 //shorter version of sign in but exclusively for checking passwords for certain db actions
 VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
-	succesfulValidation := false
-	secCollection := utils.concat_user_credential_path(types.user.username.Value)
+	using types
+    succesfulValidation := false
+	username := user.username.Value
+
+	secCollection := utils.concat_user_credential_path(username)
 
 	//PRE-MESHING START
-	salt := data.GET_RECORD_VALUE(secCollection, types.user.username.Value, "identifier", "salt")
+	salt := data.GET_RECORD_VALUE(secCollection, username, "identifier", "salt")
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
 	providedHash := data.GET_RECORD_VALUE(
 		secCollection,
-		types.user.username.Value,
+		username,
 		"identifier",
 		"hash",
 	)
@@ -258,7 +266,7 @@ VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 
 	algoMethod := data.GET_RECORD_VALUE(
 		secCollection,
-		types.user.username.Value,
+		username,
 		"identifier",
 		"store_method",
 	)
