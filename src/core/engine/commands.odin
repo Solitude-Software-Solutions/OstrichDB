@@ -1,6 +1,7 @@
 package engine
 
 import "../nlp"
+import "../engine/operations"
 import "../../utils"
 import "../benchmark"
 import "../const"
@@ -328,14 +329,14 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case COLLECTION_TIER:
             collectionName := cmd.l_token[0]
-            nlp.handle_collection_creation(collectionName)
+            operations.handle_collection_creation(collectionName)
 			break
 		case CLUSTER_TIER:
 			fn, collectionName, clusterName: string
 
             collectionName = cmd.l_token[0]
             clusterName = cmd.l_token[1]
-            if nlp.handle_cluster_creation(collectionName, clusterName) == -1 {
+            if operations.handle_cluster_creation(collectionName, clusterName) == -1 {
                 return -1
             }
 			break
@@ -345,7 +346,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
-            nlp.handle_record_creation(collectionName, clusterName, recordName, cmd.p_token)
+            operations.handle_record_creation(collectionName, clusterName, recordName, cmd.p_token)
 
 			break
 		case:
@@ -608,7 +609,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
 
-            if nlp.handle_collection_delete(collectionName) == -1 {
+            if operations.handle_collection_delete(collectionName) == -1 {
                 return -1
             }
 
@@ -618,7 +619,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
             cluster := cmd.l_token[1]
             fmt.println(collectionName, cluster)
 
-            if nlp.handle_cluster_delete(collectionName, cluster) == -1 {
+            if operations.handle_cluster_delete(collectionName, cluster) == -1 {
                 return -1
             }
 
@@ -634,7 +635,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
             clusterName := cmd.l_token[1]
             recordName := cmd.l_token[2]
 
-            if nlp.handle_record_delete(collectionName, clusterName, recordName) == -1 {
+            if operations.handle_record_delete(collectionName, clusterName, recordName) == -1 {
                 return -1
             }
 
@@ -660,7 +661,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case COLLECTION_TIER:
 			if len(cmd.l_token) > 0 {
 				collectionName := cmd.l_token[0]
-                str := nlp.handle_collection_fetch(collectionName)
+                str := operations.handle_collection_fetch(collectionName)
                 if str == "" {
                     return -1
                 }
@@ -682,7 +683,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case CLUSTER_TIER:
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
-                clusterContent := nlp.handle_cluster_fetch(collectionName, clusterName)
+                clusterContent := operations.handle_cluster_fetch(collectionName, clusterName)
 
                 if clusterContent == "" {
                     return -1
@@ -707,7 +708,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName = cmd.l_token[1]
 				recordName = cmd.l_token[2]
 
-                record, found := nlp.handle_record_fetch(collectionName, clusterName, recordName)
+                record, found := operations.handle_record_fetch(collectionName, clusterName, recordName)
                 if found {
                     fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
                     fmt.println("\t^^^\t^^^\t^^^")
