@@ -1496,9 +1496,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 
 				result := data.GET_RECORD_COUNT_WITHIN_CLUSTER(
+				    .STANDARD_PUBLIC,
 					strings.clone(collectionName),
 					strings.clone(clusterName),
-					true,
 				)
 				switch result {
 				case -1:
