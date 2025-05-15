@@ -48,7 +48,7 @@ CHECK_IF_SYSTEM_CONFIG_FILE_EXISTS :: proc() -> bool {
 		log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
-		if file.name == "config.ostrichdb" {
+		if file.name == "ostrich.config.ostrichdb" {
 			configExists = true
 		}
 	}

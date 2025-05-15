@@ -51,13 +51,13 @@ main :: proc() {
 	chosenDescription := rand.choice(const.project_descriptions)
 	fmt.println(fmt.tprintf( ostrich_art, chosenDescription, BLUE, version, RESET))
 	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
-
 	 value:= data.GET_RECORD_VALUE(SYSTEM_CONFIG_PATH, SYSTEM_CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
 		if value == "true"{
             OstrichEngine.Initialized = true
 		}else{
 		    OstrichEngine.Initialized = false
 		}
+	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 
 	fmt.println("Starting OstrichDB DBMS CLI")
 	for engine.START_OSTRICHDB_ENGINE() == 1{

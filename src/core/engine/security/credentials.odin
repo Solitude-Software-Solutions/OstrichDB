@@ -54,17 +54,19 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	user.username.Value = userName
 	types.current_user.username.Value = userName
 
-
 	// //store the id to both clusters in the id collection
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
 
 	CREATE_NEW_USERS_PROFILE(userName, userID, salt, hash, storeMethod)
 
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 	//update the engine init value in th system configs
 	engineInit := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, ENGINE_INIT, "true")
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(SYSTEM_CONFIG_PATH)
+	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 
-	switch (engineInit) 
+	switch (engineInit)
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -75,7 +77,6 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 
 	metadata.INIT_METADATA_IN_NEW_COLLECTION(utils.concat_user_history_path(userName))
 	metadata.INIT_METADATA_IN_NEW_COLLECTION(ID_PATH)
-	metadata.INIT_METADATA_IN_NEW_COLLECTION(SYSTEM_CONFIG_PATH)
 	metadata.INIT_METADATA_IN_NEW_COLLECTION(utils.concat_user_credential_path(userName))
 
 	//Create a cluster within the the users history collection
@@ -393,7 +394,7 @@ check_password_strength :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p)) 
+	switch (len(p))
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -430,7 +431,7 @@ check_password_strength :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true) 
+	switch (true)
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true

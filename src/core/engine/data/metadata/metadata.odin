@@ -334,7 +334,7 @@ ASSIGN_EXPLICIT_METADATA_VALUE :: proc(fn: string, field: types.MetadataField, v
 	}
 
 	if !found {
-		fmt.printfln("Metadata field not found in file: ", fn)
+		fmt.printfln("Metadata field %v not found in file: %s ", field ,fn)
 		return
 	}
 
