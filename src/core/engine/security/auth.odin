@@ -67,8 +67,11 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	    return false
 	}
 
-	// Read that file to ensure there is a cluster with the entered userName
-    usersClusterExists := data.CHECK_IF_CLUSTER_EXISTS(utils.concat_user_credential_path(userNameInput), userNameInput )
+	usersCredentialFile := utils.concat_user_credential_path(userNameInput)
+
+	// Decrypt and read that file to ensure there is a cluster with the entered userName
+	TRY_TO_DECRYPT(userNameInput, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+    usersClusterExists := data.CHECK_IF_CLUSTER_EXISTS(usersCredentialFile, userNameInput )
     if !usersClusterExists{
         fmt.printfln(
 		"An important cluster within a core file was not found. OstrichDB could not authroize you...",)
@@ -79,15 +82,6 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	    return false
     }
 
-	usersCredentialFile := utils.concat_user_credential_path(userNameInput)
-
-	//decrypt the user secure collection
-	decSuccess, _ := DECRYPT_COLLECTION(
-		userNameInput,
-		.USER_CREDENTIALS_PRIVATE,
-		types.system_user.m_k.valAsBytes,
-	)
-
 	userRole := data.GET_RECORD_VALUE(usersCredentialFile, userNameInput, "identifier", "role")
 	if userRole == "admin" {
 		user.role.Value = "admin"
@@ -97,10 +91,15 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		user.role.Value = "guest"
 	}
 
-	//Voodoo??
+
+	//Master Key shit
 	userMKStr := data.GET_RECORD_VALUE(usersCredentialFile, userNameInput, "identifier", "m_k")
 	user.m_k.valAsBytes = DECODE_MASTER_KEY(transmute([]byte)userMKStr)
 	user.username.Value = strings.clone(userNameInput)
+	current_user.m_k.valAsStr = user.m_k.valAsStr
+	current_user.m_k.valAsBytes = user.m_k.valAsBytes
+
+
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
@@ -120,8 +119,9 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		"store_method",
 	)
 	//POST-MESHING START=======================================================================================================
-
-	//get the password input from the user
+	//After storing values into the sessions memory, re-encrypt the user.credentials.ostrichdb file
+	ENCRYPT_COLLECTION(userNameInput, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+		//get the password input from the user
 	fmt.printfln("Please enter your %spassword%s:", BOLD, RESET)
 	libc.system("stty -echo")
 	passwordInput := get_input(true)
@@ -140,7 +140,7 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		return false
 	}
 
-	//conver the return algo method string to an int
+	//convert the return algo method string to an int
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
@@ -157,31 +157,17 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		current_user.username.Value = strings.clone(userNameInput) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
 
-
-		DECRYPT_COLLECTION("", .USER_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		//Look through the system config and set USER_LOGGED_IN val to true
+		TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 		userLoggedInValue := data.GET_RECORD_VALUE(
-		    utils.concat_user_config_collection_name(userNameInput),
-			utils.concat_user_config_cluster_name(userNameInput),
+            SYSTEM_CONFIG_PATH,
+            SYSTEM_CONFIG_CLUSTER,
 			Token[.BOOLEAN],
 			USER_LOGGED_IN,
 		)
 
-		//Master Key shit
-		mkValueRead := data.GET_RECORD_VALUE(
-			usersCredentialFile,
-			userNameInput,
-			"identifier",
-			"m_k",
-		)
-
-		// mkValueAsBytes := security.OST_M_K_STIRNG_TO_BYTE(mkValueRead)
-		current_user.m_k.valAsStr = user.m_k.valAsStr
-		current_user.m_k.valAsBytes = user.m_k.valAsBytes
-
-
 		if userLoggedInValue == "false" {
-			// config.OST_TOGGLE_CONFIG(const.USER_LOGGED_IN)
-			config.UPDATE_CONFIG_VALUE(.USER_CONFIG_PRIVATE, const.USER_LOGGED_IN, "true",userNameInput)
+			config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, USER_LOGGED_IN, "true")
 		}
 		break
 	case false:
@@ -195,12 +181,6 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		RUN_USER_SIGNIN()
 
 	}
-	ENCRYPT_COLLECTION(
-		userNameInput,
-		.USER_CREDENTIALS_PRIVATE,
-		types.system_user.m_k.valAsBytes,
-		false,
-	)
 
 	return USER_SIGNIN_STATUS
 }
@@ -228,8 +208,13 @@ CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 //Handles logic for signing out a user and exiting the program
 //param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
 RUN_USER_LOGOUT :: proc(param: int) {
-	security.DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	loggedOut := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE,const.USER_LOGGED_IN, "false")
+    using security
+    using const
+    using types
+
+    systemUserMK := system_user.m_k.valAsBytes
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE,systemUserMK )
+	loggedOut := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, const.USER_LOGGED_IN, "false")
 
 	switch loggedOut {
 	case true:
@@ -237,19 +222,19 @@ RUN_USER_LOGOUT :: proc(param: int) {
 		{
 		case 0:
 			//Logging out but keeps program running
-			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 		case 1:
 			//Exiting
-			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)
 		}
 		break
 	case false:
-		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 		types.USER_SIGNIN_STATUS = true
 		fmt.printfln("You have NOT been logged out.")
 		break
@@ -259,15 +244,18 @@ RUN_USER_LOGOUT :: proc(param: int) {
 
 //shorter version of sign in but exclusively for checking passwords for certain db actions
 VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
-	succesfulValidation := false
-	secCollection := utils.concat_user_credential_path(types.user.username.Value)
+	using types
+    succesfulValidation := false
+	username := user.username.Value
+
+	secCollection := utils.concat_user_credential_path(username)
 
 	//PRE-MESHING START
-	salt := data.GET_RECORD_VALUE(secCollection, types.user.username.Value, "identifier", "salt")
+	salt := data.GET_RECORD_VALUE(secCollection, username, "identifier", "salt")
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
 	providedHash := data.GET_RECORD_VALUE(
 		secCollection,
-		types.user.username.Value,
+		username,
 		"identifier",
 		"hash",
 	)
@@ -278,7 +266,7 @@ VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 
 	algoMethod := data.GET_RECORD_VALUE(
 		secCollection,
-		types.user.username.Value,
+		username,
 		"identifier",
 		"store_method",
 	)

@@ -192,7 +192,7 @@ PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 	defer free(commandOperation)
 
 
-	permissionValue, success := metadata.GET_METADATA_MEMBER_VALUE(
+	permissionValue, success := metadata.GET_METADATA_FIELD_VALUE(
 		colName,
 		"# Permission",
 		colType,
@@ -216,7 +216,7 @@ PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 //Used to check if a collection is already locked before attempting to lock it again
 GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
-	lockStatus, success := metadata.GET_METADATA_MEMBER_VALUE(
+	lockStatus, success := metadata.GET_METADATA_FIELD_VALUE(
 		colName,
 		"# Permission",
 		.STANDARD_PUBLIC,
@@ -280,29 +280,27 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
 			.USER_CREDENTIALS_PRIVATE,
-			types.system_user.m_k.valAsBytes,
-			false,
+			types.system_user.m_k.valAsBytes
 		)
 		break
 	case:
 		// If the permission check fails, re-encrypt the "working" and "secure" collections
 		#partial switch (colType) {
 		case .SYSTEM_CONFIG_PRIVATE:
-			ENCRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes)
 			break
 		case .ISOLATED_PUBLIC:
-			ENCRYPT_COLLECTION(colName, .ISOLATED_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION(colName, .ISOLATED_PUBLIC, types.current_user.m_k.valAsBytes)
 			break
 
 		case:
-			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 			break
 		}
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
 			.USER_CREDENTIALS_PRIVATE,
 			types.system_user.m_k.valAsBytes,
-			false,
 		)
 		return -1
 	}

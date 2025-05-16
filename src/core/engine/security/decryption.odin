@@ -9,6 +9,8 @@ import "core:encoding/hex"
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
+import "../data/metadata"
+import "core:strings"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
@@ -41,14 +43,7 @@ Decryption process :
 3. Use IV, ciphertext, and tag to decrypt data
 */
 
-DECRYPT_COLLECTION :: proc(
-	colName: string,
-	colType: types.CollectionType,
-	key: []u8,
-) -> (
-	success: int,
-	decData: []u8,
-) {
+DECRYPT_COLLECTION :: proc(colName: string, colType: types.CollectionType, key: []u8) -> (success: int, decData: []u8) {
 	file: string
 
 	#partial switch (colType) {
@@ -74,7 +69,7 @@ DECRYPT_COLLECTION :: proc(
 
 	ciphertext, readSuccess := utils.read_file(file, #procedure)
 	if !readSuccess {
-		fmt.println("Failed to read file")
+		fmt.println("Failed to read file: ", file)
 		return -1, nil
 	}
 
@@ -102,19 +97,92 @@ DECRYPT_COLLECTION :: proc(
 	//1. delete the decrypted file
 	//2. Create a new file with the same name
 	//3. Write the decrypted data to that new file
-	 #partial switch(colType){
-	case .USER_CREDENTIALS_PRIVATE:
-	    // buf:= make([]byte ,size_of(decryptedData)) //create a buffer in mem that will hold the decrypted data
-		return 0, decryptedData
-	case:
-	    os.remove(file)
-		writeSuccess := utils.write_to_file(file, decryptedData, #procedure)
-        if !writeSuccess {
-            fmt.println("Failed to write DECRYPTED data to file: ", file)
-           	return -4, nil
-        }
-        break
-	}
+	os.remove(file)
+	writeSuccess := utils.write_to_file(file, decryptedData, #procedure)
+    if !writeSuccess {
+        fmt.println("Failed to write DECRYPTED data to file: ", file)
+       	return -4, nil
+    }
+
 	return 0, decryptedData
 }
 
+TRY_TO_DECRYPT ::proc(colName: string, colType: types.CollectionType, key: []u8) -> (success: int, decData: []u8){
+	file: string
+
+ #partial switch (colType) {
+ case .STANDARD_PUBLIC:
+	 file = utils.concat_standard_collection_name(colName)
+	 break
+ case .USER_CONFIG_PRIVATE:
+	 file = utils.concat_user_config_collection_name(colName)
+	 break
+ case .USER_CREDENTIALS_PRIVATE:
+	 file = utils.concat_user_credential_path(colName)
+	 break
+ case .SYSTEM_CONFIG_PRIVATE:
+	 file = const.SYSTEM_CONFIG_PATH
+	 break
+ case .USER_HISTORY_PRIVATE:
+	 file = utils.concat_user_history_path(types.current_user.username.Value)
+	 break
+ case .SYSTEM_ID_PRIVATE:
+	 file = const.ID_PATH
+	 break
+ }
+
+ ciphertext, readSuccess := utils.read_file(file, utils.get_caller_location().procedure)
+ if !readSuccess {
+	 fmt.println("Failed to read file: ", file)
+	 return -1, nil
+ }
+
+ // We need to decrypt the entire file first
+ n := len(ciphertext) - aes.GCM_IV_SIZE - aes.GCM_TAG_SIZE
+ if n <= 0 {
+	 fmt.println("File too small to decrypt: ", file)
+	 return -2, nil
+ }
+
+ aad: []u8 = nil
+ decryptedData := make([]u8, n) // Allocate for the entire decrypted content
+ iv := ciphertext[:aes.GCM_IV_SIZE] // IV is the first 16 bytes
+ encryptedData := ciphertext[aes.GCM_IV_SIZE:][:n] // The entire encrypted data after IV
+ tag := ciphertext[aes.GCM_IV_SIZE + n:] // Tag is at the end
+
+ gcmContext: aes.Context_GCM
+ aes.init_gcm(&gcmContext, key) // Initialize the GCM context with the key
+
+ if !aes.open_gcm(&gcmContext, decryptedData, iv, aad, encryptedData, tag) {
+	 delete(decryptedData)
+	 fmt.println("Failed to decrypt data in file: ", file)
+	 return -3, nil
+ }
+
+ aes.reset_gcm(&gcmContext)
+
+ // Now that we have the entire decrypted content, extract just the metadata header (first 62 bytes or up to the first 62 bytes)
+ headerSize := min(350, len(decryptedData))
+ headerData := make([]u8, headerSize)
+ copy(headerData, decryptedData[:headerSize])
+ defer delete(headerData)
+
+ // Check the encryption state directly from the header content
+ content := string(headerData)
+ lines := strings.split(content, "\n")
+
+ for line in lines {
+	 if strings.has_prefix(line, "# Encryption State:") {
+		 parts := strings.split(line, ": ")
+		 if len(parts) >= 2 {
+			 value := strings.trim_space(parts[1])
+			 break
+		 }
+	 }
+ }
+
+ delete(decryptedData)
+ res,_:=DECRYPT_COLLECTION(colName, colType, types.system_user.m_k.valAsBytes)
+
+ return 0, headerData
+}

@@ -76,7 +76,7 @@ CREATE_AND_FILL_PRIVATE_ID_COLLECTION :: proc() {
 	CREATE_CLUSTER_BLOCK(const.ID_PATH, cluTwoid, USER_ID_CLUSTER)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", cluTwoid), 0)
 
-	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(ID_PATH)
 }
 
 //appends either a user id or a cluster id to their respective clusters in the private id collection
@@ -89,7 +89,7 @@ APPEND_ID_TO_ID_COLLECTION :: proc(idStr: string, idType: int) {
 	switch (idType)
 	{
 	case 0:
-		id.clusterIdCount = GET_RECORD_COUNT_WITHIN_CLUSTER("ids", CLUSTER_ID_CLUSTER, false)
+		id.clusterIdCount = GET_RECORD_COUNT_WITHIN_CLUSTER(.SYSTEM_ID_PRIVATE,"", CLUSTER_ID_CLUSTER)
 
 		idCountStr := strconv.itoa(idBuf[:], id.clusterIdCount)
 		recordName := fmt.tprintf("%s%s", "clusterID_", idCountStr)
@@ -103,7 +103,7 @@ APPEND_ID_TO_ID_COLLECTION :: proc(idStr: string, idType: int) {
 		)
 		break
 	case 1:
-		id.userIdCount = GET_RECORD_COUNT_WITHIN_CLUSTER("ids", USER_ID_CLUSTER, false)
+		id.userIdCount = GET_RECORD_COUNT_WITHIN_CLUSTER(.SYSTEM_ID_PRIVATE, "", USER_ID_CLUSTER,)
 
 		idCountStr := strconv.itoa(idBuf[:], id.userIdCount)
 		recordName := fmt.tprintf("%s%s", "userID_", idCountStr)
@@ -254,7 +254,6 @@ SCAN_ID_COLLECTION_FOR_ID_VALUE :: proc(cn, rt, rv: string) -> (string, bool) {
 		lines := strings.split(cluster, "\n")
 		for line in lines {
 			line := strings.trim_space(line)
-			// fmt.println("line: ", line)
 			value = strings.trim_space(strings.split(line, ":")[0])
 			if strings.has_suffix(line, fmt.tprintf(": %s", rv)) {
 				return strings.clone(value), true

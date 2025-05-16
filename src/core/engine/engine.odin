@@ -56,10 +56,11 @@ INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 //Session timer, sign in, and command line
 START_OSTRICHDB_ENGINE :: proc() -> int {
 	using const
+	using types
 
 	//Initialize data integrity system
-	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
-	switch (types.OstrichEngine.Initialized)
+	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&data_integrity_checks)
+	switch (OstrichEngine.Initialized)
 	{
 	case false:
 		//Continue with engine initialization
@@ -77,14 +78,14 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 					"User Signed In",
 					"User successfully logged into OstrichDB",
 				)
-
+				currentUserName:= current_user.username.Value
+				systemUserMK := system_user.m_k.valAsBytes
 				//Check to see if the server AUTO_SERVE config value is true. If so start server
-				security.DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-
+				security.TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
 				autoServeConfigValue := data.GET_RECORD_VALUE(
-					SYSTEM_CONFIG_PATH,
-					SYSTEM_CONFIG_CLUSTER,
-					types.Token[.BOOLEAN],
+					utils.concat_user_config_collection_name(currentUserName),
+					utils.concat_user_config_cluster_name(currentUserName),
+					Token[.BOOLEAN],
 					AUTO_SERVE,
 				)
 				if strings.contains(autoServeConfigValue, "true") {
@@ -96,14 +97,10 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						"1. Enter 'kill' or 'quit' to stop the server and be returned to the OstrichDB command line",
 					)
 					fmt.println("2. Use command: 'SET CONFIG AUTO_SERVE TO false'\n\n")
-					security.ENCRYPT_COLLECTION(
-						"",
-						.SYSTEM_CONFIG_PRIVATE,
-						types.system_user.m_k.valAsBytes,
-						false,
-					)
+					security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+
 					//Auto-server loop
-					serverDone := server.START_OSTRICH_SERVER(&types.OstrichServer)
+					serverDone := server.START_OSTRICH_SERVER(&OstrichServer)
 					if serverDone == 0 {
 						fmt.println("\n\n")
 						cmdLineDone := START_COMMAND_LINE()
@@ -114,25 +111,15 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 				} else {
 					// if the AUTO_SERVE config value is false, then continue starting command line
-					security.ENCRYPT_COLLECTION(
-						"",
-						.SYSTEM_CONFIG_PRIVATE,
-						types.system_user.m_k.valAsBytes,
-						false,
-					)
+					security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+
 					fmt.println("Starting command line")
 					result := START_COMMAND_LINE()
 					return result
 				}
 			case false:
-				fmt.printfln("Sign in failed. Please try again.")
-				security.ENCRYPT_COLLECTION(
-					"",
-					.SYSTEM_CONFIG_PRIVATE,
-					types.system_user.m_k.valAsBytes,
-					false,
-				)
-				continue
+				fmt.printfln("%sSign-in failed.%s  Please try again.", utils.RED, utils.RESET)
+				return 1
 			}
 		}
 	}
@@ -148,25 +135,27 @@ START_COMMAND_LINE :: proc() -> int {
 	result := 0
 	fmt.println("Welcome to the OstrichDB DBMS Command Line")
 	utils.log_runtime_event("Entered DBMS command line", "")
-	for types.USER_SIGNIN_STATUS == true {
+	for USER_SIGNIN_STATUS == true {
 		//Command line start
 		buf: [1024]byte
 
-		fmt.print(const.ostCarrat, "\t")
-		input := utils.get_input(false)
+		fmt.print(ostCarrat, "\t")
 
-		DECRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+		input := utils.get_input(false)
+		currentUserName := current_user.username.Value
+		systemUserMK := system_user.m_k.valAsBytes
+
+		TRY_TO_DECRYPT(currentUserName, .USER_HISTORY_PRIVATE, systemUserMK)
 		APPEND_COMMAND_TO_HISTORY(input)
-		ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION(currentUserName, .USER_HISTORY_PRIVATE, systemUserMK)
 		cmd := PARSE_COMMAND(input)
-		// fmt.println("cmd: ", cmd) //Debugging DO NOT DELETE
+		// fmt.println("DEBUG: cmd: ", cmd) //Debugging DO NOT DELETE
 
 
 		//check if  the LIMIT_SESSION_TIME config is enabled.
-		DECRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-		userName:= current_user.username.Value
-		sessionLimitValue:= data.GET_RECORD_VALUE(utils.concat_user_config_collection_name(userName),utils.concat_user_config_cluster_name(userName) ,Token[.BOOLEAN],LIMIT_SESSION_TIME)
-		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, true,)
+		TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+		sessionLimitValue:= data.GET_RECORD_VALUE(utils.concat_user_config_collection_name(currentUserName),utils.concat_user_config_cluster_name(currentUserName) ,Token[.BOOLEAN],LIMIT_SESSION_TIME)
+		ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
 
 		if sessionLimitValue == "true"{
 		  //Check to ensure that BEFORE the next command is executed, the max session time hasnt been met

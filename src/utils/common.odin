@@ -27,8 +27,8 @@ read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
 			get_err_msg(.CANNOT_READ_FILE),
 			errorLocation
 		)
-		throw_err(error)
-		log_err(fmt.tprintf("Error reading file %s", filepath), procedure)
+		fmt.println("Internal Error reading file: ", filepath)
+		log_err(fmt.tprintf("Internal Error reading file %s", filepath), procedure)
 		return nil, false
 	}
 	return data, true
@@ -96,6 +96,9 @@ concat_user_config_cluster_name ::proc(username:string) -> string{
 
 concat_user_credential_path ::proc(username:string) -> string{
     return strings.clone(fmt.tprintf("%s%s/%s",const.USERS_PATH, username, const.USER_CREDENTIAL_FILE_NAME))
+}
+concat_user_history_cluster_name ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s_OSTRICH_HISTORY", username))
 }
 concat_user_history_path ::proc(username:string) -> string{
     return strings.clone(fmt.tprintf("%s%s/%s",const.USERS_PATH, username, const.USER_HISTORY_FILE_NAME))
