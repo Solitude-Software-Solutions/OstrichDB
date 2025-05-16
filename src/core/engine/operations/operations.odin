@@ -282,6 +282,127 @@ handle_record_creation :: proc(collectionName, clusterName, recordName: string, 
     return 1
 }
 
+handle_record_update :: proc(collectionName, clusterName, recordName, rValue: string) -> int {
+    if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
+        fmt.printfln(
+            "Collection: %s%s%s does not exist.",
+            utils.BOLD_UNDERLINE,
+            collectionName,
+            utils.RESET,
+        )
+        return -1
+    }
+
+    security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
+        collectionName,
+        T.Token[.SET],
+        .STANDARD_PUBLIC,
+    )
+
+    fmt.printfln(
+        "Setting record: %s%s%s to %s%s%s",
+        utils.BOLD_UNDERLINE,
+        recordName,
+        utils.RESET,
+        utils.BOLD_UNDERLINE,
+        rValue,
+        utils.RESET,
+    )
+
+    file := utils.concat_standard_collection_name(collectionName)
+
+    setValueSuccess := data.SET_RECORD_VALUE(
+        file,
+        clusterName,
+        recordName,
+        strings.clone(rValue),
+    )
+
+    //if that records type is one of the following 'special' arrays:
+    // []CHAR, []DATE, []TIME, []DATETIME,etc scan for that type and remove the "" that
+    // each value will have(THANKS ODIN...)
+    rType, _ := data.GET_RECORD_TYPE(file, clusterName, recordName)
+
+    /*
+    Added this because of: https://github.com/Solitude-Software-Solutions/OstrichDB/issues/203
+    I guess its not neeeded, if a user wants to have a single character string record who am I to stop them?
+    Remove at any time if needed - Marshall
+    */
+    if rType == T.Token[.STRING] && len(rValue) == 1 {
+        conversionSuccess := data.CHANGE_RECORD_TYPE(
+            file,
+            clusterName,
+            recordName,
+            rValue,
+            T.Token[.CHAR],
+        )
+        if conversionSuccess {
+            fmt.printfln(
+                "Record with name: %s%s%s converted to type: %sCHAR%s",
+                utils.BOLD_UNDERLINE,
+                recordName,
+                utils.RESET,
+                utils.BOLD_UNDERLINE,
+                utils.RESET,
+            )
+        }
+    }
+
+
+    if rType == T.Token[.NULL] {
+        fmt.printfln(
+            "Cannot a value assign to record: %s%s%s of type %sNULL%s",
+            utils.BOLD_UNDERLINE,
+            recordName,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            utils.RESET,
+        )
+
+        return 0
+    }
+
+    if rType == T.Token[.CHAR_ARRAY] ||
+       rType == T.Token[.DATE_ARRAY] ||
+       rType == T.Token[.TIME_ARRAY] ||
+       rType == T.Token[.DATETIME_ARRAY] ||
+       rType == T.Token[.UUID_ARRAY] {
+        data.MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
+    }
+
+    if setValueSuccess {
+        fmt.printfln(
+            "Successfully set record: %s%s%s to %s%s%s",
+            utils.BOLD_UNDERLINE,
+            recordName,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            rValue,
+            utils.RESET,
+        )
+    } else {
+        fmt.printfln(
+            "Failed to set record: %s%s%s to %s%s%s",
+            utils.BOLD_UNDERLINE,
+            recordName,
+            utils.RESET,
+            utils.BOLD_UNDERLINE,
+            rValue,
+            utils.RESET,
+        )
+    }
+
+    fn := utils.concat_standard_collection_name(collectionName)
+    metadata.UPDATE_METADATA_AFTER_OPERATIONS(fn)
+    security.ENCRYPT_COLLECTION(
+        collectionName,
+        .STANDARD_PUBLIC,
+        T.current_user.m_k.valAsBytes,
+        false,
+    )
+    return 1
+}
+
 handle_collection_fetch :: proc(collectionName: string) -> string {
     //check that the collection even exists
     if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {

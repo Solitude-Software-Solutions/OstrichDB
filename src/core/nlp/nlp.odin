@@ -70,6 +70,7 @@ runner :: proc() ->int {
 	}
 
     response := string(init_nlp(database_data))
+    fmt.println(response)
     if strings.contains(response, "is_general_ostrichdb_information_query") {
         agentResponseType = 0
         // Try to parse as a general information response
@@ -186,13 +187,31 @@ handle_payload_operations :: proc(val: T.AgentResponse) {
                 switch (op.Command) {
                 case "POST":
                     for value in op.RecordValues[record_index] {
-                        record_info: map[string]string
-                        if len(op.RecordValues) > record_index {
-                            record_info[T.Token[.WITH]] = value
-                            // if values are present the types will be as well
-                            record_info[T.Token[.OF_TYPE]] = op.RecordTypes[record_index]
+                        fn := utils.concat_standard_collection_name(collection)
+                        // need to modify some code so that the decryption and re-encryption are not done every time
+                        security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collection, T.Token[.NEW], .STANDARD_PUBLIC)
+                        exists := data.CHECK_IF_SPECIFIC_RECORD_EXISTS(fn, strings.to_upper(cluster), strings.to_upper(record))
+                        security.ENCRYPT_COLLECTION(
+                            collection,
+                            .STANDARD_PUBLIC,
+                            T.current_user.m_k.valAsBytes,
+                            false,
+                        )
+                        // need to update so that an error message is not printed if false
+                        // (which would be on record creation)
+                        if exists {
+                            // if found then update the value
+                            operations.handle_record_update(strings.to_upper(collection), strings.to_upper(cluster), strings.to_upper(record), value)
+                        } else {
+                            // If not found, then create it
+                            record_info: map[string]string
+                            if len(op.RecordValues) > record_index {
+                                record_info[T.Token[.WITH]] = value
+                                // if values are present the types will be as well
+                                record_info[T.Token[.OF_TYPE]] = op.RecordTypes[record_index]
+                            }
+                            operations.handle_record_creation(strings.to_upper(collection), strings.to_upper(cluster), strings.to_upper(record), record_info)
                         }
-                        operations.handle_record_creation(strings.to_upper(collection), strings.to_upper(cluster), strings.to_upper(record), record_info)
                     }
                     break
                 case "FETCH":
