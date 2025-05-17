@@ -116,7 +116,7 @@ GET_CLUSTER_ID :: proc(fn: string, cn: string) -> (ID: i64) {
 		return 0
 	} else {
 		//secure file
-		secCollection := concat_secure_collection_name(cn)
+		secCollection := concat_user_credential_path(cn)
 
 		data, readSuccess := os.read_entire_file(secCollection)
 		if !readSuccess {

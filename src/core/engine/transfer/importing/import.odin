@@ -170,7 +170,7 @@ GET_IMPORT_FILE_INFO :: proc() -> (name: string, fullPath: string, size: i64, im
 		)
 	}
 
-	info := metadata.GET_FS(input)
+	info := metadata.GET_FILE_INFO(input)
 	size = info.size
 	name = info.name
 	fullPath = info.fullpath

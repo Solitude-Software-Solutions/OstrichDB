@@ -93,12 +93,12 @@ CSV__IMPORT_CSV_FILE :: proc(name: string, fullPath: ..string) -> (success: bool
 		}
 	}
 
-	metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(collectionPath)
 	encryptSuccess, _ := security.ENCRYPT_COLLECTION(
 		desiredColName,
 		.STANDARD_PUBLIC,
 		types.current_user.m_k.valAsBytes,
-		false,
+
 	)
 
 	if encryptSuccess != 0 {

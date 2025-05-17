@@ -132,10 +132,10 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// Shows the current users past command history
 	case .HISTORY:
 		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
-		DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		DECRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		commandHistory := push_records_to_array(types.current_user.username.Value)
 
-		ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		for cmd, index in commandHistory {
 			fmt.printfln("%d: %s", index + 1, cmd)
 		}
@@ -329,7 +329,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case COLLECTION_TIER:
             collectionName := cmd.l_token[0]
-            operations.handle_collection_creation(collectionName)
+            operations.handle_collection_creation(collectionName)			
 			break
 		case CLUSTER_TIER:
 			fn, collectionName, clusterName: string
@@ -346,8 +346,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
-            operations.handle_record_creation(collectionName, clusterName, recordName, cmd.p_token)
-
+      operations.handle_record_creation(collectionName, clusterName, recordName, cmd.p_token)
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Location> <Parameters>")
@@ -430,7 +429,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					newName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
+
 				)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: RENAME <old_name> TO <new_name>")
@@ -485,7 +484,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					fn := concat_standard_collection_name(collectionName)
 
-					UPDATE_METADATA_AFTER_OPERATIONS(fn)
+					UPDATE_METADATA_FIELD_AFTER_OPERATION(fn)
 				} else {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
@@ -505,7 +504,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case RECORD_TIER:
@@ -596,7 +595,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		}
@@ -627,7 +626,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case RECORD_TIER:
@@ -643,7 +642,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case:
@@ -677,7 +676,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			break
 		case CLUSTER_TIER:
@@ -695,7 +693,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			break
 		case RECORD_TIER:
@@ -727,7 +724,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			break
 		case:
@@ -751,60 +747,61 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
                     return -1
                 }
             }
+
 			break
 		case 1: //Not using the COLLECTION_TIER constant here.  Technically the value is the same but the verbage will confuse me and others :) - Marshall
-			switch (cmd.t_token) {
-			case Token[.CONFIG]:
-				log_runtime_event("Used SET command", "")
-				if Token[.TO] in cmd.p_token {
-					configName := cmd.l_token[0]
-					value := cmd.p_token[Token[.TO]]
+			// switch (cmd.t_token) {
+			// case Token[.CONFIG]:
+			// 	log_runtime_event("Used SET command", "")
+			// 	if Token[.TO] in cmd.p_token {
+			// 		configName := cmd.l_token[0]
+			// 		value := cmd.p_token[Token[.TO]]
 
-					EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK("", Token[.SET], .CONFIG_PRIVATE)
+			// 		EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK("", Token[.SET], .CONFIG_PRIVATE)
 
-					for key, val in cmd.p_token {
-						value = strings.to_lower(val)
-					}
+			// 		for key, val in cmd.p_token {
+			// 			value = strings.to_lower(val)
+			// 		}
 
-					switch (configName)
-					{
-					case "HELP_IS_VERBOSE", "SUPPRESS_ERRORS","LIMIT_HISTORY", "AUTO_SERVE","LIMIT_SESSION_TIME":
-					if value == "true" || value == "false" {
-						fmt.printfln(
-							"Setting config: %s%s%s to %s%s%s",
-							BOLD_UNDERLINE,
-							configName,
-							RESET,
-							BOLD_UNDERLINE,
-							value,
-							RESET,
-						)
-						success := config.UPDATE_CONFIG_VALUE(configName, value)
-						if success == false {
-							fmt.printfln("%sFailed%s to set %s%s%s configuration to %s%s%s", RED, RESET, BOLD_UNDERLINE, configName, RESET, BOLD_UNDERLINE, value, RESET)
-						} else {
-						    AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 4)
-							AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
-							fmt.printfln("%sSuccessfully%s set %s%s%s configuration to %s%s%s", GREEN, RESET, BOLD_UNDERLINE, configName, RESET, BOLD_UNDERLINE, value, RESET)
-						}
-						break
-					} else {
-						fmt.printfln("%sInvalid value provided.%s Configuration values can only be: 'true' or 'false'",RED, RESET)
-					}
-					break
-					case:
-						fmt.printfln(
-							"%sInvalid configuration name provided%s Valid configuration names are:\nHELP_IS_VERBOSE\nSUPPRESS_ERRORS\nLIMIT_HISTORY\nAUTO_SERVE, LIMIT_SESSION_TIME\n",
-						)
-					}
-				} else {
-					fmt.printfln(
-						"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
-					)
-				}
-				ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.current_user.m_k.valAsBytes, false)
-				break
-			}
+			// 		switch (configName)
+			// 		{
+			// 		case "HELP_IS_VERBOSE", "SUPPRESS_ERRORS","LIMIT_HISTORY", "AUTO_SERVE","LIMIT_SESSION_TIME":
+			// 		if value == "true" || value == "false" {
+			// 			fmt.printfln(
+			// 				"Setting config: %s%s%s to %s%s%s",
+			// 				BOLD_UNDERLINE,
+			// 				configName,
+			// 				RESET,
+			// 				BOLD_UNDERLINE,
+			// 				value,
+			// 				RESET,
+			// 			)
+			// 			success := config.UPDATE_CONFIG_VALUE(configName, value)
+			// 			if success == false {
+			// 				fmt.printfln("%sFailed%s to set %s%s%s configuration to %s%s%s", RED, RESET, BOLD_UNDERLINE, configName, RESET, BOLD_UNDERLINE, value, RESET)
+			// 			} else {
+			// 			    ASSIGN_EXPLICIT_METADATA_VALUE(CONFIG_PATH, 4)
+			// 				ASSIGN_EXPLICIT_METADATA_VALUE(CONFIG_PATH, 5)
+			// 				fmt.printfln("%sSuccessfully%s set %s%s%s configuration to %s%s%s", GREEN, RESET, BOLD_UNDERLINE, configName, RESET, BOLD_UNDERLINE, value, RESET)
+			// 			}
+			// 			break
+			// 		} else {
+			// 			fmt.printfln("%sInvalid value provided.%s Configuration values can only be: 'true' or 'false'",RED, RESET)
+			// 		}
+			// 		break
+			// 		case:
+			// 			fmt.printfln(
+			// 				"%sInvalid configuration name provided%s Valid configuration names are:\nHELP_IS_VERBOSE\nSUPPRESS_ERRORS\nLIMIT_HISTORY\nAUTO_SERVE, LIMIT_SESSION_TIME\n",
+			// 			)
+			// 		}
+			// 	} else {
+			// 		fmt.printfln(
+			// 			"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
+			// 		)
+			// 	}
+			// 	ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.current_user.m_k.valAsBytes)
+			// 	break
+			// }
 		case:
 			//if the length of the token is not 3 or 1, then the SET command is invalid
 			fmt.printfln(
@@ -896,7 +893,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
 				)
 			} else {
 				fmt.printfln(
@@ -932,9 +928,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 
 				result := data.GET_RECORD_COUNT_WITHIN_CLUSTER(
+				    .STANDARD_PUBLIC,
 					strings.clone(collectionName),
 					strings.clone(clusterName),
-					true,
 				)
 				switch result {
 				case -1:
@@ -987,7 +983,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
 				)
 			} else if len(cmd.l_token) == 1  { 	//TODO: 12 March, 2025 THIS WHOLE BLOCK IS FUCKED FOR SOME REASON - MARSHALL
 				//in the event the user is counting all records in a collection
@@ -1051,7 +1046,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
 				)
 			} else {
 				fmt.printfln(
@@ -1097,7 +1091,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 				file := concat_standard_collection_name(collectionName)
-				UPDATE_METADATA_AFTER_OPERATIONS(file)
+				UPDATE_METADATA_FIELD_AFTER_OPERATION(file)
 				break
 			case false:
 				fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
@@ -1107,7 +1101,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case CLUSTER_TIER:
@@ -1158,7 +1152,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case RECORD_TIER:
@@ -1213,7 +1207,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		}
@@ -1257,7 +1251,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case CLUSTER_TIER:
@@ -1301,7 +1295,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			break
 		case RECORD_TIER:
@@ -1346,7 +1339,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
+
 				)
 
 		case:
@@ -1413,7 +1406,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 
 		} else {
@@ -1510,7 +1503,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
+
 				)
 			} else {
 				fmt.printfln(
@@ -1572,9 +1565,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			ENCRYPT_COLLECTION(
 				isolatedColName,
-				.ISOLATE_PUBLIC,
+				.ISOLATED_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case:
@@ -1712,7 +1705,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			//next make sure the "locker" is an admin
 			DECRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 			)
 			isAdmin := security.CHECK_ADMIN_STATUS(&types.current_user)
@@ -1787,12 +1780,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			ENCRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
-				false,
+
 			)
 
-			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 			break
 		case 2:
 			colName := cmd.l_token[0]
@@ -1826,7 +1819,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			cmd.l_token[0],
 			.STANDARD_PUBLIC,
 			types.current_user.m_k.valAsBytes,
-			false,
+
 		)
 		break
 	case .UNLOCK:
@@ -1839,7 +1832,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			DECRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 			)
 			collectionAlreadyLocked := security.GET_COLLECTION_LOCK_STATUS(colName)
@@ -1871,7 +1864,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						)
 						return 1
 					case true:
-						currentPerm, err := metadata.GET_METADATA_MEMBER_VALUE(
+						currentPerm, err := metadata.GET_METADATA_FIELD_VALUE(
 							colName,
 							"# Permission",
 							.STANDARD_PUBLIC,
@@ -1889,16 +1882,16 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			ENCRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
-				false,
+
 			)
 
 			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case:
@@ -1914,7 +1907,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				colName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			if encSuccess == 0 {
 				fmt.printfln(

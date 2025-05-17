@@ -27,8 +27,8 @@ read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
 			get_err_msg(.CANNOT_READ_FILE),
 			errorLocation
 		)
-		throw_err(error)
-		log_err(fmt.tprintf("Error reading file %s", filepath), procedure)
+		fmt.println("Internal Error reading file: ", filepath)
+		log_err(fmt.tprintf("Internal Error reading file %s", filepath), procedure)
 		return nil, false
 	}
 	return data, true
@@ -86,19 +86,25 @@ concat_standard_collection_name :: proc(colFileName: string) -> string {
 	)
 }
 
-//helper that concats a collections name to the standard collection path for secure collections.
-concat_secure_collection_name :: proc(userName: string) -> string {
-	if strings.contains(userName, "secure_") {
-		return strings.clone(
-			fmt.tprintf("%s%s%s", const.SECURE_COLLECTION_PATH, userName, const.OST_EXT),
-		)
-	} else {
-		return strings.clone(
-			fmt.tprintf("%ssecure_%s%s", const.SECURE_COLLECTION_PATH, userName, const.OST_EXT),
-		)
-	}
-
+concat_user_config_collection_name :: proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s%s/%s",const.USERS_PATH, username, const.USER_CONFIGS_FILE_NAME))
 }
+
+concat_user_config_cluster_name ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s_OSTRICH_CONFIGS", username))
+}
+
+concat_user_credential_path ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s%s/%s",const.USERS_PATH, username, const.USER_CREDENTIAL_FILE_NAME))
+}
+concat_user_history_cluster_name ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s_OSTRICH_HISTORY", username))
+}
+concat_user_history_path ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s%s/%s",const.USERS_PATH, username, const.USER_HISTORY_FILE_NAME))
+}
+
+
 
 //helper to get users input from the command line
 get_input :: proc(isPassword: bool) -> string {

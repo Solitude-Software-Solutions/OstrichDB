@@ -34,13 +34,13 @@ main :: proc() {
 	utils.main()
 
 
-	configFound := config.CHECK_IF_CONFIG_FILE_EXISTS()
+	configFound := config.CHECK_IF_SYSTEM_CONFIG_FILE_EXISTS()
 	switch (configFound)
 	{
 	case false:
 		fmt.println("Config file not found.\n Generating config file")
 		config.main()
-
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 	}
 	log_runtime_event("OstrichDB Started", "")
 
@@ -50,27 +50,17 @@ main :: proc() {
 	//Randomly choose which project description to display in the startup art
 	chosenDescription := rand.choice(const.project_descriptions)
 	fmt.println(fmt.tprintf( ostrich_art, chosenDescription, BLUE, version, RESET))
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	 value:= data.GET_RECORD_VALUE(SYSTEM_CONFIG_PATH, SYSTEM_CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
+		if value == "true"{
+            OstrichEngine.Initialized = true
+		}else{
+		    OstrichEngine.Initialized = false
+		}
+	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 
-	//Check if the config collection is already encrypted
-	isEncrypted, _ := ENCRYPT_COLLECTION(
-		"",
-		.CONFIG_PRIVATE,
-		types.system_user.m_k.valAsBytes,
-		true,
-	)
-
-	if isEncrypted == 2 {
-		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	fmt.println("Starting OstrichDB DBMS CLI")
+	for engine.START_OSTRICHDB_ENGINE() == 1{
+	    engine.START_OSTRICHDB_ENGINE()
 	}
-
-
-	if data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT) == "true" {
-		OstrichEngine.Initialized = true
-		log_runtime_event("OstrichDB Engine Initialized", "")
-	} else {
-		OstrichEngine.Initialized = false
-	}
-	fmt.println("Starting OstrichDB DBMS")
-	engine.START_OSTRICHDB_ENGINE()
-
 }

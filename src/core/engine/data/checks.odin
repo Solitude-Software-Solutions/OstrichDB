@@ -48,7 +48,7 @@ VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 
 	Severity_Code = 0
 	data_integrity_checks.File_Size.Compliant = true
-	fileInfo := metadata.GET_FS(concat_standard_collection_name(fn))
+	fileInfo := metadata.GET_FILE_INFO(concat_standard_collection_name(fn))
 	fileSize := fileInfo.size
 
 	if fileSize > MAX_FILE_SIZE {
@@ -64,16 +64,16 @@ VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 
 	data_integrity_checks.File_Format.Compliant = true
 	clusterScanSuccess, invalidClusterFound := SCAN_CLUSTER_STRUCTURE(fn)
-	headerScanSuccess, invalidHeaderFound := metadata.SCAN_METADATA_HEADER_FORMAT(fn)
+	// headerScanSuccess, invalidHeaderFound := metadata.SCAN_METADATA_HEADER_FORMAT(fn)
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
 		utils.log_err("Cluster structure is not compliant", #procedure)
 		data_integrity_checks.File_Format.Compliant = false
 
 	}
-	if headerScanSuccess != 0 || invalidHeaderFound == true {
-		utils.log_err("Header format is not compliant", #procedure)
-		data_integrity_checks.File_Format.Compliant = false
-	}
+	// if headerScanSuccess != 0 || invalidHeaderFound == true {
+	// 	utils.log_err("Header format is not compliant", #procedure)
+	// 	data_integrity_checks.File_Format.Compliant = false
+	// }
 	return data_integrity_checks.File_Format.Compliant
 }
 

@@ -27,31 +27,30 @@ APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	using const
 
 	histBuf: [1024]byte
+
+	systemUserMK:=system_user.m_k.valAsBytes
+	currentUserName:= current_user.username.Value
+
 	//append the last command to the history buffer
 	current_user.commandHistory.cHistoryCount = data.GET_RECORD_COUNT_WITHIN_CLUSTER(
-		"history",
-		current_user.username.Value,
-		false,
+	    .USER_HISTORY_PRIVATE,
+		currentUserName,
+		concat_user_history_cluster_name(currentUserName),
 	)
 
-	// History Collection file size limit.
-	// Doesnt measure bytes of the file but instead
-	// the num of records of the users command history cluster
-	//
-
-	security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	security.TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
 	limitOn := data.GET_RECORD_VALUE(
-		const.CONFIG_PATH,
-		const.CONFIG_CLUSTER,
+		concat_user_config_collection_name(currentUserName),
+		concat_user_config_cluster_name(currentUserName),
 		types.Token[.BOOLEAN],
-		const.LIMIT_HISTORY,
+		LIMIT_HISTORY,
 	)
-	security.ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+	security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
 
 	if limitOn == "true" {
 		limitReached := CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET(&current_user)
 		if limitReached {
-			if PURGE_USERS_HISTORY_CLUSTER(current_user.username.Value) {
+			if PURGE_USERS_HISTORY_CLUSTER(currentUserName) {
 				//set the count back to 0
 				current_user.commandHistory.cHistoryCount = 0
 			}
@@ -63,8 +62,8 @@ APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	//append the last command to the history file
 	data.CREATE_RECORD(
-		const.HISTORY_PATH,
-		current_user.username.Value,
+	    utils.concat_user_history_path(currentUserName),
+		currentUserName,
 		strings.to_upper(recordName),
 		strings.to_upper(strings.clone(input)),
 		"COMMAND",
@@ -72,8 +71,8 @@ APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 
 	//get value of the command that was just stored as a record
 	historyRecordValue := data.GET_RECORD_VALUE(
-		const.HISTORY_PATH,
-		current_user.username.Value,
+		utils.concat_user_history_path(currentUserName),
+		currentUserName,
 		"COMMAND",
 		strings.to_upper(recordName),
 	)
@@ -82,8 +81,8 @@ APPEND_COMMAND_TO_HISTORY :: proc(input: string) {
 	append(&current_user.commandHistory.cHistoryValues, strings.clone(historyRecordValue))
 
 
-	//update the history file size, date last modified and checksum
-	UPDATE_METADATA_AFTER_OPERATIONS(const.HISTORY_PATH)
+	// //update the history file size, date last modified and checksum
+	UPDATE_METADATA_FIELD_AFTER_OPERATION(utils.concat_user_history_path(currentUserName))
 }
 
 
@@ -91,7 +90,7 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 	using const
 	using utils
 
-	data, readSuccess := os.read_entire_file(HISTORY_PATH)
+	data, readSuccess := os.read_entire_file(utils.concat_user_credential_path(types.current_user.username.Value))
 	defer delete(data)
 	if !readSuccess {
 	errorLocation:= get_caller_location()
@@ -140,7 +139,7 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 		log_err("Error finding cluster in collection", #procedure)
 		return false
 	}
-	writeSuccess := os.write_entire_file(HISTORY_PATH, newContent[:])
+	writeSuccess := os.write_entire_file(utils.concat_user_credential_path(types.user.username.Value), newContent[:])
 	if !writeSuccess {
 	errorLocation:= get_caller_location()
 		throw_err(
@@ -162,12 +161,12 @@ ERASE_HISTORY_CLUSTER :: proc(userName: string) -> bool {
 
 
 //Used to get rid of data within a user's history cluster once the limit has been reached.
-PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
+PURGE_USERS_HISTORY_CLUSTER :: proc(username: string) -> bool {
 	using const
 	using utils
 
 	// Read the entire file
-	data, readSuccess := os.read_entire_file(const.HISTORY_PATH)
+	data, readSuccess := os.read_entire_file(utils.concat_user_history_path(username))
 	if !readSuccess {
 	errorLocation:= get_caller_location()
 		throw_err(
@@ -201,7 +200,7 @@ PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 		//concatenate the open brace with the cluster
 		cluster := strings.concatenate([]string{openBrace, clusters[i]})
 		//if the cluster name matches the one we want to purge, we need to preserve the cluster's data
-		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", cn)) {
+		if strings.contains(cluster, fmt.tprintf("cluster_name :identifier: %s", utils.concat_user_history_cluster_name(username))) {
 			clusterFound = true
 			lines := strings.split(cluster, "\n")
 			append(&newContent, ..transmute([]u8)openBraceWithNewline)
@@ -255,7 +254,7 @@ PURGE_USERS_HISTORY_CLUSTER :: proc(cn: string) -> bool {
 		return false
 	}
 	//write the new content to the collection file
-	writeSuccess := os.write_entire_file(const.HISTORY_PATH, newContent[:])
+	writeSuccess := os.write_entire_file(utils.concat_user_history_path(types.current_user.username.Value), newContent[:])
 	if !writeSuccess {
 	errorLocation:= get_caller_location()
 		throw_err(
@@ -304,6 +303,7 @@ CHECK_IF_USER_COMMAND_HISTORY_LIMIT_MET :: proc(currentUser: ^types.User) -> boo
 	}
 	return limitReached
 }
+
 //used for the history command,
 //reads over the passed in collection file and
 //the specified cluster and stores the value of each record into the array
@@ -312,7 +312,7 @@ push_records_to_array :: proc(cn: string) -> [dynamic]string {
 	histBuf: [1024]byte
 
 
-	data, readSuccess := utils.read_file(const.HISTORY_PATH, #procedure)
+	data, readSuccess := utils.read_file(utils.concat_user_history_path(types.current_user.username.Value), #procedure)
 	defer delete(data)
 	if !readSuccess {
 		return records

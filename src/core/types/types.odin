@@ -234,15 +234,18 @@ CommandOperation :: struct {
 }
 
 CollectionType :: enum {
-	STANDARD_PUBLIC = 0, //Enc/Dec with users master key
-	SECURE_PRIVATE  = 1, //Enc/Dec with users master key even though its private
-	CONFIG_PRIVATE  = 2, //Enc/Dec with systems master key
-	HISTORY_PRIVATE = 3, //Enc/Dec with systems master key
-	ID_PRIVATE      = 4, //Enc/Dec with systems master key
-	ISOLATE_PUBLIC  = 5, //Enc/Dec with users master key
-	//Todo: Add backup, and benchmark
+    //All PUBLIC collections will be encrypted & decrypted with the USERS master key
+	STANDARD_PUBLIC = 0,
+	ISOLATED_PUBLIC  = 1,
+	BACKUP_PUBLIC = 2,
+	USER_CREDENTIALS_PRIVATE  = 3, //Encrypted & decrypted with the USERS master key even though its private
+	//The remaining PRIVATE collections will be encrypted & decrypted with the SYSYTEMS master key
+	USER_CONFIG_PRIVATE = 4,
+	USER_HISTORY_PRIVATE = 5,
+	SYSTEM_CONFIG_PRIVATE  = 6,
+	SYSTEM_ID_PRIVATE   = 7,
+	BENCHMARK_PRIVATE = 8
 }
-
 
 Record :: struct {
 	name:  string,
@@ -381,12 +384,14 @@ Message_Color: string //used in checks.odin
 Severity_Code: int //used in checks.odin
 
 
-Metadata_Header_Body := [5]string {
-	"# File Format Version: ",
-	"# Date of Creation: ",
-	"# Date Last Modified: ",
-	"# File Size: ",
-	"# Checksum: ",
+MetadataField :: enum {
+    ENCRYPTION_STATE = 0,
+    FILE_FORMAT_VERSION = 1,
+    PERMISSION = 2,
+    DATE_CREATION = 3,
+    DATE_MODIFIED = 4,
+    FILE_SIZE = 5,
+    CHECKSUM = 6,
 }
 
 //Server Stuff Below
@@ -561,6 +566,9 @@ AgentOperationQueryResponse :: struct {
 }
 
 AgentGeneralInformationQueryResponse :: struct {
-    IsGeneralInformationQuery:       bool   `json:"general_ostrichdb_information_query_made"`,
+  IsGeneralInformationQuery:       bool   `json:"general_ostrichdb_information_query_made"`,
 	GeneralInformationQueryResponse: string `json:"general_query_answer"`,
 }
+
+TempBuffer: []byte
+

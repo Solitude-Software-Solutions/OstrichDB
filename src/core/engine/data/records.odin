@@ -72,6 +72,10 @@ CHECK_IF_SPECIFIC_RECORD_EXISTS :: proc(fn, cn, rn: string) -> bool {
 //appends a line to the end of a cluster with the data thats passed in
 //fn-filename, cn-clustername,id-cluster id, rn-record name, rd-record data
 CREATE_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i64) -> int {
+    // fmt.println("DEBUG: CREATE_RECORD getting() fn: ", fn) //debugging
+    // fmt.println("DEBUG: CREATE_RECORD getting() cn : ", cn) //debugging
+    // fmt.println("DEBUG: CREATE_RECORD getting() rn : ", rn) //debugging
+    // fmt.println("DEBUG: CREATE_RECORD getting(): ", fn) //debugging
 	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
 	if !readSuccess {
@@ -207,6 +211,7 @@ CREATE_AND_APPEND_PRIVATE_RECORD :: proc(fn, cn, rn, rd, rType: string, ID: ..i6
 
 // // get the value from the right side of a key value
 GET_RECORD_VALUE :: proc(fn, cn, rType, rn: string) -> string {
+    // fmt.println("DEBUG: GET_RECORD_VALUE() looking for file: ",fn)//debugging
 	data, readSuccess := utils.read_file(fn, #procedure)
 	defer delete(data)
 	if !readSuccess {
@@ -1185,14 +1190,23 @@ ERASE_RECORD :: proc(fn: string, cn: string, rn: string, isOnServer: bool) -> bo
 //reads over the passed in collection file and the specified cluster and returns the number of records in that cluster
 //excluding the cluster_name and cluster_id records. potential way of doing this would be to get all of them and just subtract 2
 //the isCounting param is set to true if this proc is being called during the COUNT command
-GET_RECORD_COUNT_WITHIN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int {
+GET_RECORD_COUNT_WITHIN_CLUSTER :: proc(colType:types.CollectionType,fn, cn: string) -> int {
 	collectionPath: string
-	if isCounting == true {
-		collectionPath = utils.concat_standard_collection_name(fn)
+    //TODO:need to have this take in collection types then make a switch case modifyig the path...
+    //TODO:need to have this take in collection types then make a switch case modifyig the path...
+    //TODO:need to have this take in collection types then make a switch case modifyig the path...
+    #partial switch(colType){
+    case .STANDARD_PUBLIC:
+        collectionPath = utils.concat_standard_collection_name(fn)
+        break
+    case .USER_HISTORY_PRIVATE:
+        collectionPath = utils.concat_user_history_path(fn)
+        break
+    case .SYSTEM_ID_PRIVATE:
+        collectionPath = const.ID_PATH
+        //Dont think we will need other case but if we do add them below
+    }
 
-	} else if isCounting == false {
-		collectionPath = fmt.tprintf("%s%s%s", const.PRIVATE_PATH, fn, const.OST_EXT)
-	}
 
 	data, readSuccess := utils.read_file(collectionPath, #procedure)
 	if !readSuccess {
@@ -1231,7 +1245,7 @@ GET_RECORD_COUNT_WITHIN_CLUSTER :: proc(fn, cn: string, isCounting: bool) -> int
 		fn,
 		utils.RESET,
 	)
-	return -1
+	return -2
 }
 
 //reads over the passed in collection file and returns the number of records in that collection

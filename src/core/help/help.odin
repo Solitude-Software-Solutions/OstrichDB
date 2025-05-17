@@ -72,7 +72,8 @@ SET_HELP_MODE :: proc() -> bool {
 	using types
 	using utils
 
-	value := data.GET_RECORD_VALUE(CONFIG_PATH, CONFIG_CLUSTER, Token[.BOOLEAN], HELP_IS_VERBOSE)
+	userName:= types.current_user.username.Value
+	value := data.GET_RECORD_VALUE(utils.concat_user_config_collection_name(userName), utils.concat_user_config_cluster_name(userName), Token[.BOOLEAN], HELP_IS_VERBOSE)
 
 	switch (value)
 	{
