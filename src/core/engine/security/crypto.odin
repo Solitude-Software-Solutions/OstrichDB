@@ -13,7 +13,8 @@ import "core:strings"
 Author: Marshall A Burns
 GitHub: @SchoolyB
 License: Apache License 2.0 (see LICENSE file for details)
-Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+Copyright (c) 2024-2025 Marshall A Burns and Solitude Software Solutions LLC
+Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
 File Description:
             Contains logic for hashing passwords and generating salts.
@@ -123,7 +124,7 @@ SELECT_ALGORITHM :: proc(choice: int, p: string, isInitializing: bool) -> []u8 {
 
 	x := choice
 	hashedPassword: []u8
-	switch (x) 
+	switch (x)
 	{
 	case 1:
 		for i := 0; i < 1; i += 1 {
