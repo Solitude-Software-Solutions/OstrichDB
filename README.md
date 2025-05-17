@@ -20,7 +20,7 @@ OstrichDB is a lightweight document-based NoSQL/NoJSON database management syste
 - Dot Notation Syntax when using the serverless CLI
 - Command Chaining
 - Built-in benchmarking, configurations, and user command history
-- macOS & Linux Support
+- Exclusive macOS Support
 
 ## **Installation**
 
@@ -61,7 +61,7 @@ OstrichDB is a lightweight document-based NoSQL/NoJSON database management syste
 #### **Steps:**
 1. Use curl to download the latest release:
    ```bash
-   curl -o install.sh https://raw.githubusercontent.com/Solitude-Software-Solutions/OstrichDB/8a0825c5e5f275e4ade7266aee6675890fc32fe5/scripts/install.sh
+   curl -o install.sh https://raw.githubusercontent.com/Solitude-Software-Solutions/OstrichDB/27b7074f9a4b33fa15254e0e93996d67afc5f84c/scripts/install.sh
    ```
 
 2. Make the script executable:
@@ -292,6 +292,7 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
 - OstrichDB web application
+- Linux support
 - Windows support
 - External API support for even more programming languages!
 - Integration with the planned Feather query language!
