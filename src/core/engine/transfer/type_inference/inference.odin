@@ -1,8 +1,8 @@
-package transfer
+package type_inference
 
-import "../../../utils"
-import "../../const"
-import "../../types"
+import "../../../../utils"
+import "../../../const"
+import "../../../types"
 import "core:encoding/csv"
 import "core:fmt"
 import "core:os"

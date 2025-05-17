@@ -24,12 +24,11 @@ CREATE_SERVER_LOG_FILE :: proc() -> int {
 		0o666,
 	)
 	if creationSuccess != 0 {
+	errorLocation:= utils.get_caller_location()
 		error := utils.new_err(
 			.CANNOT_CREATE_FILE,
 			utils.get_err_msg(.CANNOT_CREATE_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error)
 		utils.log_err("Error creating server log file", #procedure)
@@ -57,16 +56,17 @@ SET_SERVER_EVENT_INFORMATION :: proc(
 	newEvent.isRequestEvent = isRequestEvent
 	newEvent.Route.p = path
 	newEvent.Route.m = method
+	newEvent.methodAsStr = fmt.tprintf("%d",method)
 
 	return newEvent^
 }
 
 PRINT_SERVER_EVENT_INFORMATION :: proc(event: types.ServerEvent) {
-	fmt.println("Event Name: ", event.Name)
-	fmt.println("Event Description: ", event.Description)
-	fmt.println("Event Type: ", event.Type)
-	fmt.println("Event Timestamp: ", event.Timestamp)
-	fmt.println("Event is a request: ", event.isRequestEvent)
+	fmt.println("Server Event Name: ", event.Name)
+	fmt.println("Server Event Description: ", event.Description)
+	fmt.println("Server Event Type: ", event.Type)
+	fmt.println("Server Event Timestamp: ", event.Timestamp)
+	fmt.println("Server Event is a request: ", event.isRequestEvent)
 	if event.isRequestEvent == true {
 		fmt.println("Path used in request event: ", event.Route.p)
 		fmt.println("Method used in request event: ", event.Route.m)
@@ -75,37 +75,40 @@ PRINT_SERVER_EVENT_INFORMATION :: proc(event: types.ServerEvent) {
 }
 
 //Takes in an event and writes the events data to the log file
-LOG_AND_PRINT_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
-	PRINT_SERVER_EVENT_INFORMATION(event)
+LOG_SERVER_EVENT :: proc(event: types.ServerEvent) -> int {
 
-	//Logging shit
-	logMsg := fmt.tprintf(
-		"Server Event Triggered: ",
-		event.Name,
-		"\n",
-		"Server Event Time: ",
-		event.Timestamp,
-		"\n",
-		"Server Event Description: ",
-		event.Description,
-		"\n",
-		"Server Event Type: ",
-		event.Type,
-		"\n",
-		"Server Event is a Request Event: ",
-		event.isRequestEvent,
-		"\n",
-	)
+    eventTriggered:= fmt.tprintf("Server Event Triggered: '%s'\n",event.Name)
+    eventTime:= fmt.tprintf("Server Event Time: '%v'\n", event.Timestamp)
+    eventDesc:= fmt.tprintf("Server Event Description: '%s'\n", event.Description)
+    eventType:= fmt.tprintf("Server Event Type: '%v'\n", event.Type,)
+    eventIsReq := fmt.tprintf("Server Event is a Request Event: '%v'\n", event.isRequestEvent,)
+    logMsg := strings.concatenate([]string{eventTriggered, eventTime, eventDesc, eventType, eventIsReq, })
+
 	concatLogMsg: string
+	someVar:string
 	if event.isRequestEvent == true {
-		routeInfo := fmt.tprintf(
-			"Server Event Route Path: ",
-			event.Route.p,
-			"\n",
-			"Server Event Route Method: ",
-			event.Route.m,
-		)
-		concatLogMsg = strings.concatenate([]string{logMsg, routeInfo})
+	    switch(event.Route.m){
+		case .HEAD:
+            someVar = "HEAD"
+            break
+	    case .GET:
+			someVar = "GET"
+			break
+		case .DELETE:
+		    someVar =  "DELETE"
+			break
+		case .POST:
+            someVar  = "POST"
+            break
+		case .PUT:
+            someVar = "PUT"
+            break
+
+	}
+	routePath:= fmt.tprintf("Server Event Route Path: '%s'\n", event.Route.p,)
+	routeMethod:= fmt.tprintf("Server Event Route Method: '%s'\n", someVar)
+
+	concatLogMsg = strings.concatenate([]string{logMsg, routePath, routeMethod, "\n\n"})
 	}
 
 	LogMessage := transmute([]u8)concatLogMsg

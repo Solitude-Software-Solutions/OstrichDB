@@ -25,12 +25,11 @@ CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	srcPath := utils.concat_standard_collection_name(src)
 	f, readSuccess := os.read_entire_file(srcPath)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_custom_err(error1, "Could not read collection file for backup")
 		log_err("Could not read collection file for backup", #procedure)
@@ -47,12 +46,11 @@ CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	c, creationSuccess := os.open(destFullPath, os.O_CREATE | os.O_RDWR, 0o666)
 	defer os.close(c)
 	if creationSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_CREATE_FILE,
 			get_err_msg(.CANNOT_CREATE_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_custom_err(error1, "Could not create collection file for backup")
 		log_err("Could not create backup collection file", #procedure)
@@ -60,12 +58,11 @@ CREATE_BACKUP_COLLECTION :: proc(dest: string, src: string) -> bool {
 	}
 	w, writeSuccess := os.write(c, data)
 	if writeSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_WRITE_TO_FILE,
 			get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_custom_err(error1, "Could not write to collection file for backup")
 		log_err("Could not write to collection file for backup", #procedure)

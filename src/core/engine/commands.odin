@@ -1,10 +1,11 @@
 package engine
 
 import "../nlp"
+import "../engine/operations"
 import "../../utils"
 import "../benchmark"
 import "../const"
-import "../engine/transfer"
+import "../engine/transfer/importing"
 import "../help"
 import "../server"
 import "../types"
@@ -20,6 +21,10 @@ import "core:strings"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
+
+Contributors:
+    @CobbCoding1
+
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
@@ -28,7 +33,6 @@ File Description:
             commands. Results are returned to the engine that is
             running the main loop.
 *********************************************************/
-
 
 EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	using metadata
@@ -41,18 +45,18 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	//Handle command chaining
 	if cmd.isChained {
 		fmt.println("Executing chained commands...")
-		
+
 		// Split the raw input by the && operator
 		commandArr := strings.split(cmd.rawInput, "&&")
-		result := 1 
-		
+		result := 1
+
 		// Execute each command in sequence
 		for command in commandArr {
 			trimmedCommand := strings.trim_space(command)
 			if len(trimmedCommand) > 0 {
 				parsedCmd := PARSE_COMMAND(trimmedCommand)
 				cmdResult := EXECUTE_COMMAND(&parsedCmd)
-				
+
 				// If any command fails, return that failure code
 				if cmdResult <= 0 {
 					result = cmdResult
@@ -60,11 +64,15 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				}
 			}
 		}
-		
+
 		return result
 	}
 
+	//Parser memory cleanup
 	defer delete(cmd.l_token)
+	defer delete(cmd.p_token)
+	defer delete(cmd.rawInput)
+
 	#partial switch (cmd.c_token)
 	{
 	//=======================<SINGLE-TOKEN COMMANDS>=======================//
@@ -98,7 +106,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		libc.system("kill -9 $(lsof -ti :8042) 2>/dev/null")
 		libc.system("stty echo")
 		fmt.printfln("Launching OstrichDB server...")
-		serverResult := server.START_OSTRICH_SERVER(&ServerConfig)
+		serverResult := server.START_OSTRICH_SERVER(&OstrichServer)
 		if serverResult == 0 {
 			fmt.printfln("Server stopped. Returning to OstrichDB command line...")
 		} else {
@@ -106,7 +114,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		}
 		break
 	case .AGENT: //Used to interact with the OstrichDB ai agent
-	   nlp.main() //TODO: This wont do anything because it requires the server to be running for work to be done
+	   nlp.runner() //TODO: This wont do anything because it requires the server to be running for work to be done
 	// Used to completley destroy the program and all its files, rebuilds after on macOs and Linux
 	case .DESTROY:
 		log_runtime_event("Used DESTROY command", "User requested to destroy OstrichDB.")
@@ -124,10 +132,10 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 	// Shows the current users past command history
 	case .HISTORY:
 		log_runtime_event("Used HISTORY command", "User requested to view the command history.")
-		DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		DECRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		commandHistory := push_records_to_array(types.current_user.username.Value)
 
-		ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .USER_HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
 		for cmd, index in commandHistory {
 			fmt.printfln("%d: %s", index + 1, cmd)
 		}
@@ -137,12 +145,11 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		inputNumber: [1024]byte
 		n, inputSuccess := os.read(os.stdin, inputNumber[:])
 		if inputSuccess != 0 {
+		errorLocation:= get_caller_location()
 			error := new_err(
 				.CANNOT_READ_INPUT,
 				get_err_msg(.CANNOT_READ_INPUT),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			throw_err(error)
 			log_err("Cannot read user input for HISTORY command.", #procedure)
@@ -321,281 +328,25 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		log_runtime_event("Used NEW command", "")
 		switch (len(cmd.l_token)) {
 		case COLLECTION_TIER:
-			exists := data.CHECK_IF_COLLECTION_EXISTS(cmd.l_token[0], 0)
-			switch (exists) {
-			case false:
-				fmt.printf("Creating collection: %s%s%s\n", BOLD_UNDERLINE, cmd.l_token[0], RESET)
-				success := data.CREATE_COLLECTION(cmd.l_token[0], .STANDARD_PUBLIC)
-				if success {
-					fmt.printf(
-						"Collection: %s%s%s created successfully.\n",
-						BOLD_UNDERLINE,
-						cmd.l_token[0],
-						RESET,
-					)
-					fileName := concat_standard_collection_name(cmd.l_token[0])
-					UPDATE_METADATA_UPON_CREATION(fileName)
-
-					ENCRYPT_COLLECTION(
-						cmd.l_token[0],
-						.STANDARD_PUBLIC,
-						types.current_user.m_k.valAsBytes,
-						false,
-					)
-				} else {
-					fmt.printf(
-						"Failed to create collection %s%s%s.\n",
-						BOLD_UNDERLINE,
-						cmd.l_token[0],
-						RESET,
-					)
-					log_runtime_event(
-						"Failed to create collection",
-						"User tried to create a collection but failed.",
-					)
-					log_err("Failed to create new collection", #procedure)
-				}
-				break
-			case true:
-				fmt.printf(
-					"Collection: %s%s%s already exists. Please choose a different name.\n",
-					BOLD_UNDERLINE,
-					cmd.l_token[0],
-					RESET,
-				)
-				log_runtime_event(
-					"Duplicate collection name",
-					"User tried to create a collection with a name that already exists.",
-				)
-				break
-			}
+            collectionName := cmd.l_token[0]
+            operations.handle_collection_creation(collectionName)			
 			break
 		case CLUSTER_TIER:
 			fn, collectionName, clusterName: string
 
-				collectionName = cmd.l_token[0]
-				clusterName = cmd.l_token[1]
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					if data.confirm_auto_operation(Token[.NEW],[]string{collectionName}) == -1{
-					   return -1
-					}else{
-					 data.AUTO_CREATE(COLLECTION_TIER, []string{collectionName})
-					}
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.NEW],
-					.STANDARD_PUBLIC,
-				)
-
-				fmt.printf(
-					"Creating cluster: %s%s%s within collection: %s%s%s\n",
-					BOLD_UNDERLINE,
-					clusterName,
-					RESET,
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
-
-				id := data.GENERATE_ID(true)
-				result := data.CREATE_CLUSTER(collectionName, clusterName, id)
-				data.APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
-
-				switch (result)
-				{
-				case -1:
-					fmt.printfln(
-						"Cluster with name: %s%s%s already exists within collection %s%s%s. Failed to create cluster.",
-						BOLD_UNDERLINE,
-						clusterName,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					ENCRYPT_COLLECTION(
-						cmd.l_token[0],
-						.STANDARD_PUBLIC,
-						types.current_user.m_k.valAsBytes,
-						false,
-					)
-					break
-				case 1, 2, 3:
-					error1 := new_err(
-						.CANNOT_CREATE_CLUSTER,
-						get_err_msg(.CANNOT_CREATE_CLUSTER),
-						#file,
-						#procedure,
-						#line,
-					)
-					throw_custom_err(
-						error1,
-						"Failed to create cluster due to internal OstrichDB error.\n Check logs for more information.",
-					)
-					log_err("Failed to create new cluster.", #procedure)
-					break
-				}
-				fmt.printfln(
-					"Cluster: %s%s%s created successfully.\n",
-					BOLD_UNDERLINE,
-					clusterName,
-					RESET,
-				)
-				fn = concat_standard_collection_name(collectionName)
-				UPDATE_METADATA_AFTER_OPERATIONS(fn)
-
-			ENCRYPT_COLLECTION(
-				cmd.l_token[0],
-				.STANDARD_PUBLIC,
-				types.current_user.m_k.valAsBytes,
-				false,
-			)
+            collectionName = cmd.l_token[0]
+            clusterName = cmd.l_token[1]
+            if operations.handle_cluster_creation(collectionName, clusterName) == -1 {
+                return -1
+            }
 			break
 		case RECORD_TIER:
-			collectionName, clusterName, recordName, rValue: string
+			collectionName, clusterName, recordName: string
 			log_runtime_event("Used NEW RECORD command", "User requested to create a new record.")
 			collectionName = cmd.l_token[0]
 			clusterName = cmd.l_token[1]
 			recordName = cmd.l_token[2]
-
-
-			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-				fmt.printfln(
-					"Collection: %s%s%s does not exist.",
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				if data.confirm_auto_operation(Token[.NEW],[]string{collectionName, clusterName}) == -1{
-				   return -1
-				}else{
-				 data.AUTO_CREATE(COLLECTION_TIER, []string{collectionName})
-				 data.AUTO_CREATE(CLUSTER_TIER, []string{collectionName, clusterName})
-				}
-			}
-
-			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.NEW], .STANDARD_PUBLIC)
-
-
-			if len(recordName) > 64 {
-				fmt.printfln(
-					"Record name: %s%s%s is too long. Please choose a name less than 64 characters.",
-					BOLD_UNDERLINE,
-					recordName,
-					RESET,
-				)
-				return -1
-			}
-			colPath := concat_standard_collection_name(collectionName)
-
-			if Token[.OF_TYPE] in cmd.p_token  {
-				rType, typeSuccess := data.SET_RECORD_TYPE(cmd.p_token[Token[.OF_TYPE]])
-				if typeSuccess == 0 {
-					fmt.printfln(
-						"Creating record: %s%s%s of type: %s%s%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						rType,
-						RESET,
-					)
-
-					if Token[.WITH] in cmd.p_token  && len(cmd.p_token[Token[.WITH]]) != 0{
-					   rValue = cmd.p_token[Token[.WITH]]
-					} else if Token[.WITH] in cmd.p_token  && len(cmd.p_token[Token[.WITH]]) == 0{
-					   fmt.println("%s%sWARNING%s When using the WITH token there must be a value of the assigned type after. Please try again")
-						return 1
-					}
-					//TODO: Need to work on ensuring the value that is provided when using the WITH token is the appropriate type.
-					//Just like i am doing in the SET_RECORD_VALUE() proc....
-
-					recordCreationSuccess := data.CREATE_RECORD(
-						colPath,
-						clusterName,
-						recordName,
-						rValue,
-						rType,
-					)
-					switch (recordCreationSuccess)
-					{
-					case 0:
-						fmt.printfln(
-							"Record: %s%s%s of type: %s%s%s created successfully",
-							BOLD_UNDERLINE,
-							recordName,
-							RESET,
-							BOLD_UNDERLINE,
-							rType,
-							RESET,
-						)
-
-						//IF a records type is NULL, technically it cant hold a value, the word NULL in the value slot
-						// of a record is mostly a placeholder
-						if rType == Token[.NULL] {
-							data.SET_RECORD_VALUE(colPath, clusterName, recordName, Token[.NULL])
-						}
-
-						fn := concat_standard_collection_name(collectionName)
-						UPDATE_METADATA_AFTER_OPERATIONS(fn)
-						break
-					case -1, 1:
-						fmt.printfln(
-							"Failed to create record: %s%s%s of type: %s%s%s",
-							BOLD_UNDERLINE,
-							recordName,
-							RESET,
-							BOLD_UNDERLINE,
-							rType,
-							RESET,
-						)
-						log_runtime_event(
-							"Failed to create record",
-							"User requested to create a record but failed.",
-						)
-						log_err("Failed to create a new record.", #procedure)
-						break
-					}
-				} else {
-					fmt.printfln(
-						"Failed to create record: %s%s%s of type: %s%s%s. Please try again.",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						rType,
-						RESET,
-					)
-				}
-				ENCRYPT_COLLECTION(
-					cmd.l_token[0],
-					.STANDARD_PUBLIC,
-					types.current_user.m_k.valAsBytes,
-					false,
-				)
-			} else {
-				fmt.printfln(
-					"Incomplete command. Correct Usage: NEW <collection_name>.<cluster_name>.<record_name> OF_TYPE <record_type>",
-				)
-				log_runtime_event(
-					"Incomplete NEW RECORD command",
-					"User did not provide a record name or type to create.",
-				)
-			}
+      operations.handle_record_creation(collectionName, clusterName, recordName, cmd.p_token)
 			break
 		case:
 			fmt.printfln("Invalid command structure. Correct Usage: NEW <Location> <Parameters>")
@@ -678,7 +429,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					newName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
+
 				)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: RENAME <old_name> TO <new_name>")
@@ -733,7 +484,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					)
 					fn := concat_standard_collection_name(collectionName)
 
-					UPDATE_METADATA_AFTER_OPERATIONS(fn)
+					UPDATE_METADATA_FIELD_AFTER_OPERATION(fn)
 				} else {
 					fmt.println(
 						"Failed to rename cluster due to internal error. Please check error logs.",
@@ -753,7 +504,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case RECORD_TIER:
@@ -844,7 +595,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		}
@@ -857,185 +608,41 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case COLLECTION_TIER:
 			collectionName := cmd.l_token[0]
 
-			if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-				fmt.printfln(
-					"Collection: %s%s%s does not exist.",
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				return -1
-			}
+            if operations.handle_collection_delete(collectionName) == -1 {
+                return -1
+            }
 
-			EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(collectionName, Token[.ERASE], .STANDARD_PUBLIC)
-
-			if data.ERASE_COLLECTION(collectionName, false) == true {
-				fmt.printfln(
-					"Collection: %s%s%s erased successfully",
-					BOLD_UNDERLINE,
-					cmd.l_token[0],
-					RESET,
-				)
-			} else {
-				fmt.printfln(
-					"Failed to erase collection: %s%s%s",
-					BOLD_UNDERLINE,
-					cmd.l_token[0],
-					RESET,
-				)
-			}
 			break
 		case CLUSTER_TIER:
-			collectionName: string
-			cluster: string
+            collectionName := cmd.l_token[0]
+            cluster := cmd.l_token[1]
+            fmt.println(collectionName, cluster)
 
-				collectionName = cmd.l_token[0]
-				cluster = cmd.l_token[1]
+            if operations.handle_cluster_delete(collectionName, cluster) == -1 {
+                return -1
+            }
 
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.ERASE],
-					.STANDARD_PUBLIC,
-				)
-
-				clusterID := data.GET_CLUSTER_ID(collectionName, cluster)
-				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
-
-				if data.ERASE_CLUSTER(collectionName, cluster, false) == true {
-					fmt.printfln(
-						"Cluster: %s%s%s successfully erased from collection: %s%s%s",
-						BOLD_UNDERLINE,
-						cluster,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					DECRYPT_COLLECTION("", .ID_PRIVATE, types.system_user.m_k.valAsBytes)
-					if data.REMOVE_ID_FROM_ID_COLLECTION(fmt.tprintf("%d", clusterID), false) {
-						ENCRYPT_COLLECTION(
-							"",
-							.ID_PRIVATE,
-							types.system_user.m_k.valAsBytes,
-							false,
-						)
-					} else {
-						ENCRYPT_COLLECTION(
-							"",
-							.ID_PRIVATE,
-							types.system_user.m_k.valAsBytes,
-							false,
-						)
-
-						fmt.printfln(
-							"Failed to erase cluster: %s%s%s from collection: %s%s%s",
-							BOLD_UNDERLINE,
-							cluster,
-							RESET,
-							BOLD_UNDERLINE,
-							collectionName,
-							RESET,
-						)
-					}
-
-				fn := concat_standard_collection_name(collectionName)
-				UPDATE_METADATA_AFTER_OPERATIONS(fn)
-			} else {
-				fmt.println(
-					"Incomplete command. Correct Usage: ERASE <collection_name>.<cluster_name>",
-				)
-				log_runtime_event(
-					"Incomplete ERASE command",
-					"User did not provide a valid cluster name to erase.",
-				)
-			}
 			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case RECORD_TIER:
-			collectionName: string
-			clusterName: string
-			recordName: string
+            collectionName := cmd.l_token[0]
+            clusterName := cmd.l_token[1]
+            recordName := cmd.l_token[2]
 
-				collectionName = cmd.l_token[0]
-				clusterName = cmd.l_token[1]
-				recordName = cmd.l_token[2]
-
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.ERASE],
-					.STANDARD_PUBLIC,
-				)
-
-				clusterID := data.GET_CLUSTER_ID(collectionName, clusterName)
-				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
-				if data.ERASE_RECORD(collectionName, clusterName, recordName, false) == true {
-					fmt.printfln(
-						"Record: %s%s%s successfully erased from cluster: %s%s%s within collection: %s%s%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						clusterName,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-				} else {
-					fmt.printfln(
-						"Failed to erase record: %s%s%s from cluster: %s%s%s within collection: %s%s%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						clusterName,
-						RESET,
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-				}
+            if operations.handle_record_delete(collectionName, clusterName, recordName) == -1 {
+                return -1
+            }
 
 			ENCRYPT_COLLECTION(
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case:
@@ -1053,25 +660,10 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		case COLLECTION_TIER:
 			if len(cmd.l_token) > 0 {
 				collectionName := cmd.l_token[0]
-
-				//check that the collection even exists
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.FETCH],
-					.STANDARD_PUBLIC,
-				)
-
-				str := data.FETCH_COLLECTION(collectionName)
+                str := operations.handle_collection_fetch(collectionName)
+                if str == "" {
+                    return -1
+                }
 				fmt.println(str)
 			} else {
 				fmt.println("Incomplete command. Correct Usage: FETCH <collection_name>")
@@ -1084,37 +676,23 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			break
 		case CLUSTER_TIER:
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
+                clusterContent := operations.handle_cluster_fetch(collectionName, clusterName)
 
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
+                if clusterContent == "" {
+                    return -1
+                }
 
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.FETCH],
-					.STANDARD_PUBLIC,
-				)
-
-				clusterContent := data.FETCH_CLUSTER(collectionName, clusterName)
 				fmt.printfln(clusterContent)
 
 			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			break
 		case RECORD_TIER:
@@ -1127,46 +705,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				clusterName = cmd.l_token[1]
 				recordName = cmd.l_token[2]
 
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
-
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.FETCH],
-					.STANDARD_PUBLIC,
-				)
-
-				// checks := data.HANDLE_INTEGRITY_CHECK_RESULT(collectionName)
-				// switch (checks)
-				// {
-				// case -1:
-				// 	return -1
-				// }
-				record, found := data.FETCH_RECORD(collectionName, clusterName, recordName)
-				fmt.printfln(
-					"Succesfully retrieved record: %s%s%s from cluster: %s%s%s within collection: %s%s%s\n\n",
-					BOLD_UNDERLINE,
-					recordName,
-					RESET,
-					BOLD_UNDERLINE,
-					clusterName,
-					RESET,
-					BOLD_UNDERLINE,
-					collectionName,
-					RESET,
-				)
-				if found {
-					fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
-					fmt.println("\t^^^\t^^^\t^^^")
-					fmt.println("\tName\tType\tValue\n\n")
-				}
+                record, found := operations.handle_record_fetch(collectionName, clusterName, recordName)
+                if found {
+                    fmt.printfln("\t%s :%s: %s\n", record.name, record.type, record.value)
+                    fmt.println("\t^^^\t^^^\t^^^")
+                    fmt.println("\tName\tType\tValue\n\n")
+                }
 			} else {
 				fmt.printfln(
 					"Incomplete command. Correct Usage: FETCH <collection_name>.<cluster_name>.<record_name>",
@@ -1180,7 +724,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			break
 		case:
@@ -1198,257 +741,67 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName := cmd.l_token[0]
 				clusterName := cmd.l_token[1]
 				recordName := cmd.l_token[2]
+                value := cmd.p_token[Token[.TO]] // Get the full string value that was collected by the parser
 
-				if !data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0) {
-					fmt.printfln(
-						"Collection: %s%s%s does not exist.",
-						BOLD_UNDERLINE,
-						collectionName,
-						RESET,
-					)
-					return -1
-				}
+                if operations.handle_record_update(collectionName, clusterName, recordName, value) == -1 {
+                    return -1
+                }
+            }
 
-				EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
-					collectionName,
-					Token[.SET],
-					.STANDARD_PUBLIC,
-				)
-
-				value := cmd.p_token[Token[.TO]] // Get the full string value that was collected by the parser
-				fmt.printfln(
-					"Setting record: %s%s%s to %s%s%s",
-					BOLD_UNDERLINE,
-					recordName,
-					RESET,
-					BOLD_UNDERLINE,
-					value,
-					RESET,
-				)
-
-				file := utils.concat_standard_collection_name(collectionName)
-
-				setValueSuccess := data.SET_RECORD_VALUE(
-					file,
-					clusterName,
-					recordName,
-					strings.clone(value),
-				)
-
-				//if that records type is one of the following 'special' arrays:
-				// []CHAR, []DATE, []TIME, []DATETIME,etc scan for that type and remove the "" that
-				// each value will have(THANKS ODIN...)
-				rType, _ := data.GET_RECORD_TYPE(file, clusterName, recordName)
-
-
-				/*
-			    Added this because of: https://github.com/Solitude-Software-Solutions/OstrichDB/issues/203
-				I guess its not neeeded, if a user wants to have a single character string record who am I to stop them?
-				Remove at any time if needed - Marshall
-				*/
-				if rType == Token[.STRING] && len(value) == 1 {
-					conversionSuccess := data.CHANGE_RECORD_TYPE(
-						file,
-						clusterName,
-						recordName,
-						value,
-						Token[.CHAR],
-					)
-					if conversionSuccess {
-						fmt.printfln(
-							"Record with name: %s%s%s converted to type: %sCHAR%s",
-							BOLD_UNDERLINE,
-							recordName,
-							RESET,
-							BOLD_UNDERLINE,
-							RESET,
-						)
-					}
-				}
-
-
-				if rType == Token[.NULL] {
-					fmt.printfln(
-						"Cannot a value assign to record: %s%s%s of type %sNULL%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						RESET,
-					)
-
-					return 0
-				}
-
-				if rType == Token[.CHAR_ARRAY] ||
-				   rType == Token[.DATE_ARRAY] ||
-				   rType == Token[.TIME_ARRAY] ||
-				   rType == Token[.DATETIME_ARRAY] ||
-				   rType == Token[.UUID_ARRAY] {
-					data.MODIFY_ARRAY_VALUES(file, clusterName, recordName, rType)
-				}
-
-				if setValueSuccess {
-					fmt.printfln(
-						"Successfully set record: %s%s%s to %s%s%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						value,
-						RESET,
-					)
-				} else {
-					fmt.printfln(
-						"Failed to set record: %s%s%s to %s%s%s",
-						BOLD_UNDERLINE,
-						recordName,
-						RESET,
-						BOLD_UNDERLINE,
-						value,
-						RESET,
-					)
-				}
-
-				fn := concat_standard_collection_name(collectionName)
-				UPDATE_METADATA_AFTER_OPERATIONS(fn)
-			}
-			ENCRYPT_COLLECTION(
-				cmd.l_token[0],
-				.STANDARD_PUBLIC,
-				types.current_user.m_k.valAsBytes,
-				false,
-			)
 			break
 		case 1: //Not using the COLLECTION_TIER constant here.  Technically the value is the same but the verbage will confuse me and others :) - Marshall
-			switch (cmd.t_token) {
-			case Token[.CONFIG]:
-				log_runtime_event("Used SET command", "")
-				if Token[.TO] in cmd.p_token {
-					configName := cmd.l_token[0]
-					value := cmd.p_token[Token[.TO]]
+			// switch (cmd.t_token) {
+			// case Token[.CONFIG]:
+			// 	log_runtime_event("Used SET command", "")
+			// 	if Token[.TO] in cmd.p_token {
+			// 		configName := cmd.l_token[0]
+			// 		value := cmd.p_token[Token[.TO]]
 
-					EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK("", Token[.SET], .CONFIG_PRIVATE)
+			// 		EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK("", Token[.SET], .CONFIG_PRIVATE)
 
-					for key, val in cmd.p_token {
-						value = strings.to_lower(val)
-					}
-					fmt.printfln(
-						"Setting config: %s%s%s to %s%s%s",
-						BOLD_UNDERLINE,
-						configName,
-						RESET,
-						BOLD_UNDERLINE,
-						value,
-						RESET,
-					)
-					switch (configName)
-					{
-					case "HELP_VERBOSE":
-						if value == "true" || value == "false" {
-							success := config.UPDATE_CONFIG_VALUE(HELP_IS_VERBOSE, value)
-							if success == false {
-								fmt.printfln("Failed to set HELP config to %s", value)
-							} else {
-								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 4)
-								AUTO_UPDATE_METADATA_VALUE(CONFIG_PATH, 5)
-								fmt.printfln("Successfully set HELP config to %s", value)
-							}
-							help.SET_HELP_MODE()
-						} else {
-							fmt.println(
-								"Invalid value. Valid values for config HELP_VERBOSE are: 'true' or 'false'",
-							)
-						}
-						break
-					case "SUPPRESS_ERRORS":
-						if value == "true" || value == "false" {
-							fmt.printfln(
-								"Setting config: %s%s%s to %s%s%s",
-								BOLD_UNDERLINE,
-								configName,
-								RESET,
-								BOLD_UNDERLINE,
-								value,
-								RESET,
-							)
-							success := config.UPDATE_CONFIG_VALUE(ERROR_SUPPRESSION, value)
-							if success == false {
-								fmt.printfln("Failed to set SUPPRESS_ERRORS config to %s", value)
-							} else {
-								fmt.printfln(
-									"Successfully set SUPPRESS_ERRORS config to %s",
-									value,
-								)
-							}
-							break
-						} else {
-							fmt.println(
-								"Invalid value. Valid values for config SUPPRESS_ERRORS are: 'true' or 'false'",
-							)
-						}
-						break
-					case "LIMIT_HISTORY":
-						if value == "true" || value == "false" {
-							fmt.printfln(
-								"Setting config: %s%s%s to %s%s%s",
-								BOLD_UNDERLINE,
-								configName,
-								RESET,
-								BOLD_UNDERLINE,
-								value,
-								RESET,
-							)
-							success := config.UPDATE_CONFIG_VALUE(LIMIT_HISTORY, value)
-							if success == false {
-								fmt.printfln("Failed to set LIMIT_HISTORY config to %s", value)
-							} else {
-								fmt.printfln("Successfully set LIMIT_HISTORY config to %s", value)
-							}
-							break
-						} else {
-							fmt.println(
-								"Invalid value. Valid values for config LIMIT_HISTORY are: 'true' or 'false'",
-							)
-						}
-						break
-					case "AUTO_SERVE":
-						if value == "true" || value == "false" {
-							fmt.printfln(
-								"Setting config: %s%s%s to %s%s%s",
-								BOLD_UNDERLINE,
-								configName,
-								RESET,
-								BOLD_UNDERLINE,
-								value,
-								RESET,
-							)
-							success := config.UPDATE_CONFIG_VALUE(AUTO_SERVE, value)
-							if success == false {
-								fmt.printfln("Failed to set AUTO_SERVE config to %s", value)
-							} else {
-								fmt.printfln("Successfully set AUTO_SERVE config to %s", value)
-							}
-							break
-						} else {
-							fmt.println(
-								"Invalid value. Valid values for config AUTO_SERVE are: 'true' or 'false'",
-							)
-						}
-						break
-					case:
-						fmt.printfln(
-							"Invalid config name provided. Valid config names are:\nHELP_VERBOSE\nSUPPRESS_ERRORS\nLIMIT_HISTORY\nSERVER_ON\n",
-						)
-					}
-				} else {
-					fmt.printfln(
-						"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
-					)
-				}
-				ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.current_user.m_k.valAsBytes, false)
-				break
-			}
+			// 		for key, val in cmd.p_token {
+			// 			value = strings.to_lower(val)
+			// 		}
+
+			// 		switch (configName)
+			// 		{
+			// 		case "HELP_IS_VERBOSE", "SUPPRESS_ERRORS","LIMIT_HISTORY", "AUTO_SERVE","LIMIT_SESSION_TIME":
+			// 		if value == "true" || value == "false" {
+			// 			fmt.printfln(
+			// 				"Setting config: %s%s%s to %s%s%s",
+			// 				BOLD_UNDERLINE,
+			// 				configName,
+			// 				RESET,
+			// 				BOLD_UNDERLINE,
+			// 				value,
+			// 				RESET,
+			// 			)
+			// 			success := config.UPDATE_CONFIG_VALUE(configName, value)
+			// 			if success == false {
+			// 				fmt.printfln("%sFailed%s to set %s%s%s configuration to %s%s%s", RED, RESET, BOLD_UNDERLINE, configName, RESET, BOLD_UNDERLINE, value, RESET)
+			// 			} else {
+			// 			    ASSIGN_EXPLICIT_METADATA_VALUE(CONFIG_PATH, 4)
+			// 				ASSIGN_EXPLICIT_METADATA_VALUE(CONFIG_PATH, 5)
+			// 				fmt.printfln("%sSuccessfully%s set %s%s%s configuration to %s%s%s", GREEN, RESET, BOLD_UNDERLINE, configName, RESET, BOLD_UNDERLINE, value, RESET)
+			// 			}
+			// 			break
+			// 		} else {
+			// 			fmt.printfln("%sInvalid value provided.%s Configuration values can only be: 'true' or 'false'",RED, RESET)
+			// 		}
+			// 		break
+			// 		case:
+			// 			fmt.printfln(
+			// 				"%sInvalid configuration name provided%s Valid configuration names are:\nHELP_IS_VERBOSE\nSUPPRESS_ERRORS\nLIMIT_HISTORY\nAUTO_SERVE, LIMIT_SESSION_TIME\n",
+			// 			)
+			// 		}
+			// 	} else {
+			// 		fmt.printfln(
+			// 			"Incomplete command. Correct Usage: SET CONFIG <config_name> TO <value>",
+			// 		)
+			// 	}
+			// 	ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.current_user.m_k.valAsBytes)
+			// 	break
+			// }
 		case:
 			//if the length of the token is not 3 or 1, then the SET command is invalid
 			fmt.printfln(
@@ -1540,7 +893,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
 				)
 			} else {
 				fmt.printfln(
@@ -1576,9 +928,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				)
 
 				result := data.GET_RECORD_COUNT_WITHIN_CLUSTER(
+				    .STANDARD_PUBLIC,
 					strings.clone(collectionName),
 					strings.clone(clusterName),
-					true,
 				)
 				switch result {
 				case -1:
@@ -1631,7 +983,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
 				)
 			} else if len(cmd.l_token) == 1  { 	//TODO: 12 March, 2025 THIS WHOLE BLOCK IS FUCKED FOR SOME REASON - MARSHALL
 				//in the event the user is counting all records in a collection
@@ -1695,7 +1046,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
 				)
 			} else {
 				fmt.printfln(
@@ -1741,7 +1091,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					RESET,
 				)
 				file := concat_standard_collection_name(collectionName)
-				UPDATE_METADATA_AFTER_OPERATIONS(file)
+				UPDATE_METADATA_FIELD_AFTER_OPERATION(file)
 				break
 			case false:
 				fmt.printfln("Failed to purge collection: %s%s%s", BOLD, cmd.l_token[0], RESET)
@@ -1751,7 +1101,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case CLUSTER_TIER:
@@ -1802,7 +1152,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case RECORD_TIER:
@@ -1857,7 +1207,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		}
@@ -1901,7 +1251,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case CLUSTER_TIER:
@@ -1945,7 +1295,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			break
 		case RECORD_TIER:
@@ -1990,7 +1339,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					cmd.l_token[0],
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
+
 				)
 
 		case:
@@ -2057,7 +1406,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				collectionName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 
 		} else {
@@ -2154,7 +1503,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 					collectionName,
 					.STANDARD_PUBLIC,
 					types.current_user.m_k.valAsBytes,
-					false,
+
 				)
 			} else {
 				fmt.printfln(
@@ -2216,9 +1565,9 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			ENCRYPT_COLLECTION(
 				isolatedColName,
-				.ISOLATE_PUBLIC,
+				.ISOLATED_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case:
@@ -2308,26 +1657,31 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			)
 		}
 		break
-	// //IMPORT: Imports foreign data formats into OstrichDB. Currently only supports .csv files
+	// //IMPORT: Imports foreign data formats into OstrichDB. Currently supports .csv and .json files
 	case .IMPORT:
-		detected, autoImportSuccess := transfer.AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
+		detected, autoImportSuccess := importing.AUTO_DETECT_AND_HANDLE_IMPORT_FILES()
 		if detected && autoImportSuccess == true {
 			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
 			break
 		} else if detected == true && autoImportSuccess == false { 	//files were detected but user wanted to continue manually or the import failed
-			importSuccess := transfer.HANDLE_IMPORT()
+			fmt.printfln("%sERROR automatically importing data%s\n", RED, RESET)
+			importSuccess := importing.HANDLE_IMPORT()
 			if importSuccess {
 				fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
 			} else {
 				fmt.printfln("%sFailed to import data%s", RED, RESET)
 			}
 			break
+		}else if detected == false && autoImportSuccess ==false{
+		fmt.println("Manually importing data...")
+		importSuccess := importing.HANDLE_IMPORT()
+		if importSuccess {
+			fmt.printfln("%sSuccessfully imported data!%s", GREEN, RESET)
+		} else {
+			fmt.printfln("%sFailed to import data%s", RED, RESET)
 		}
-
-		fmt.println("detected: ", detected)
-		fmt.println("autoImportSuccess: ", autoImportSuccess)
-
-
+		break
+		}
 	case .EXPORT:
 		fmt.println("NOT YET IMPLEMENTED")
 		break
@@ -2351,7 +1705,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			//next make sure the "locker" is an admin
 			DECRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 			)
 			isAdmin := security.CHECK_ADMIN_STATUS(&types.current_user)
@@ -2426,12 +1780,12 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			ENCRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
-				false,
+
 			)
 
-			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 			break
 		case 2:
 			colName := cmd.l_token[0]
@@ -2465,7 +1819,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			cmd.l_token[0],
 			.STANDARD_PUBLIC,
 			types.current_user.m_k.valAsBytes,
-			false,
+
 		)
 		break
 	case .UNLOCK:
@@ -2478,7 +1832,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 
 			DECRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
 			)
 			collectionAlreadyLocked := security.GET_COLLECTION_LOCK_STATUS(colName)
@@ -2510,7 +1864,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 						)
 						return 1
 					case true:
-						currentPerm, err := metadata.GET_METADATA_MEMBER_VALUE(
+						currentPerm, err := metadata.GET_METADATA_FIELD_VALUE(
 							colName,
 							"# Permission",
 							.STANDARD_PUBLIC,
@@ -2528,16 +1882,16 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 			}
 			ENCRYPT_COLLECTION(
 				types.current_user.username.Value,
-				.SECURE_PRIVATE,
+				.USER_CREDENTIALS_PRIVATE,
 				types.system_user.m_k.valAsBytes,
-				false,
+
 			)
 
 			ENCRYPT_COLLECTION(
 				cmd.l_token[0],
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
+
 			)
 			break
 		case:
@@ -2553,7 +1907,6 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 				colName,
 				.STANDARD_PUBLIC,
 				types.current_user.m_k.valAsBytes,
-				false,
 			)
 			if encSuccess == 0 {
 				fmt.printfln(

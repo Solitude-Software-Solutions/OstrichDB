@@ -1,4 +1,4 @@
-package server
+ package server
 import "../../utils"
 import "../const"
 import "../types"
@@ -25,23 +25,30 @@ router: ^types.Router
 isRunning := true
 
 //The isAutoServing flag is added for NLP. Auto serving will be set to true by default.
-START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
+START_OSTRICH_SERVER :: proc(config: ^types.OstrichDB_Server) -> int {
 	using const
 	using types
+
+
 	CREATE_SERVER_LOG_FILE()
 	isRunning = true
+
+	newServerSession:= CREATE_SERVER_SESSION(types.current_user)
+
 	initializedServerStartEvent := SET_SERVER_EVENT_INFORMATION(
-		"Server Start",
+		"Server Session Start",
 		"OstrichDB Server started",
 		ServerEventType.ROUTINE,
-		time.now(),
+		newServerSession.start_timestamp,
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(initializedServerStartEvent)
+
+	PRINT_SERVER_EVENT_INFORMATION(initializedServerStartEvent)
 	router = CREATE_NEW_ROUTER()
 	defer free(router)
+
 
 
 	//OstrichDB GET version static route and server logging
@@ -55,168 +62,241 @@ START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(versionRouteEvent)
+	PRINT_SERVER_EVENT_INFORMATION(versionRouteEvent)
 
 	// HEAD, POST, GET, DELETE dynamic routes for collections as well as server logging
 	ADD_ROUTE_TO_ROUTER(router, .HEAD, C_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
 	addHeadColRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*' dynamic HEAD route to router",
+		give_description("HEAD",C_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addHeadColRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addHeadColRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .POST, C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
 	addPostColRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*' dynamic POST route to router",
+		give_description(methodString[.POST],C_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addPostColRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addPostColRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .GET, C_DYNAMIC_BASE, HANDLE_GET_REQUEST)
 	addGetColRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*' dynamic GET route to router",
+		give_description(methodString[.GET],C_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addGetColRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addGetColRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .DELETE, C_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
 	addDeleteColRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*' dynamic DELETE route to router",
+		give_description(methodString[.DELETE],C_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addDeleteColRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addDeleteColRoute)
 
 
 	// HEAD, POST, GET, DELETE dynamic routes for clusters as well as server logging
 	ADD_ROUTE_TO_ROUTER(router, .HEAD, CL_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
 	addHeadCluRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*' dynamic HEAD route to router",
+		give_description(methodString[.HEAD],CL_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addHeadCluRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addHeadCluRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .POST, CL_DYNAMIC_BASE, HANDLE_POST_REQUEST)
 	addPostCluRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*' dynamic POST route to router",
+		give_description(methodString[.POST],CL_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addPostCluRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addPostCluRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .GET, CL_DYNAMIC_BASE, HANDLE_GET_REQUEST)
 	addGetCluRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*' dynamic GET route to router",
+		give_description(methodString[.GET],CL_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addGetCluRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addGetCluRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .DELETE, CL_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
 	addDeleteCluRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*' dynamic DELETE route to router",
+		give_description(methodString[.DELETE],CL_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addDeleteCluRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addDeleteCluRoute)
 
 
 	// HEAD, POST, GET, DELETE dynamic routes for clusters as well as server logging
 	ADD_ROUTE_TO_ROUTER(router, .HEAD, R_DYNAMIC_BASE, HANDLE_HEAD_REQUEST)
 	addHeadRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*' dynamic HEAD route to router",
+		give_description(methodString[.HEAD],R_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addHeadRecRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addHeadRecRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .POST, R_DYNAMIC_TYPE_QUERY, HANDLE_POST_REQUEST)
 	addPostRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*?type=*' dynamic POST route to router",
+		give_description(methodString[.POST],R_DYNAMIC_TYPE_QUERY),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addPostRecRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addPostRecRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .PUT, R_DYNAMIC_TYPE_VALUE_QUERY, HANDLE_PUT_REQUEST)
 	addPutRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*?type=*&value=*' dynamic PUT route to router",
+		give_description(methodString[.PUT],R_DYNAMIC_TYPE_VALUE_QUERY),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addPutRecRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addPutRecRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .GET, R_DYNAMIC_BASE, HANDLE_GET_REQUEST)
 	addGetRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*' dynamic GET route to router",
+		give_description(methodString[.GET],R_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addGetRecRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addGetRecRoute)
 
 	ADD_ROUTE_TO_ROUTER(router, .DELETE, R_DYNAMIC_BASE, HANDLE_DELETE_REQUEST)
 	addDeleteRecRoute := SET_SERVER_EVENT_INFORMATION(
 		"Add Route",
-		"Added '/c/*/cl/*/r/*' dynamic DELETE route to router",
+		give_description(methodString[.DELETE],R_DYNAMIC_BASE),
 		ServerEventType.ROUTINE,
 		time.now(),
 		false,
 		"",
 		nil,
 	)
-	LOG_AND_PRINT_SERVER_EVENT(addDeleteRecRoute)
+	PRINT_SERVER_EVENT_INFORMATION(addDeleteRecRoute)
+
+
+
+	// POST & GET dynamic routes for collections, clusters and records
+	ADD_ROUTE_TO_ROUTER(router, .POST, BATCH_C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	   addBatchColPostRoute:= SET_SERVER_EVENT_INFORMATION("Add Route",
+				give_description(methodString[.POST],BATCH_C_DYNAMIC_BASE),
+				ServerEventType.ROUTINE,
+			    time.now(),
+				false,
+				"",
+				nil
+		)
+	PRINT_SERVER_EVENT_INFORMATION(addBatchColPostRoute)
+
+	ADD_ROUTE_TO_ROUTER(router, .POST, BATCH_CL_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	   addBatchCluPostRoute:= SET_SERVER_EVENT_INFORMATION("Add Route",
+				give_description(methodString[.POST],BATCH_CL_DYNAMIC_BASE),
+				ServerEventType.ROUTINE,
+			    time.now(),
+				false,
+				"",
+				nil
+		)
+	PRINT_SERVER_EVENT_INFORMATION(addBatchCluPostRoute)
+
+	ADD_ROUTE_TO_ROUTER(router, .POST, BATCH_R_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	   addBatchRPostRoute:= SET_SERVER_EVENT_INFORMATION("Add Route",
+				give_description(methodString[.POST],BATCH_R_DYNAMIC_BASE),
+				ServerEventType.ROUTINE,
+			    time.now(),
+				false,
+				"",
+				nil
+		)
+	PRINT_SERVER_EVENT_INFORMATION(addBatchRPostRoute)
+
+	ADD_ROUTE_TO_ROUTER(router, .GET, BATCH_C_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	   addBatchColGetRoute:= SET_SERVER_EVENT_INFORMATION("Add Route",
+				give_description(methodString[.GET],BATCH_C_DYNAMIC_BASE),
+				ServerEventType.ROUTINE,
+			    time.now(),
+				false,
+				"",
+				nil
+		)
+	PRINT_SERVER_EVENT_INFORMATION(addBatchColGetRoute)
+
+
+	ADD_ROUTE_TO_ROUTER(router, .GET, BATCH_CL_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	   addBatchCluGetRoute:= SET_SERVER_EVENT_INFORMATION("Add Route",
+				give_description(methodString[.GET],BATCH_CL_DYNAMIC_BASE),
+				ServerEventType.ROUTINE,
+			    time.now(),
+				false,
+				"",
+				nil
+		)
+	PRINT_SERVER_EVENT_INFORMATION(addBatchCluGetRoute)
+
+	ADD_ROUTE_TO_ROUTER(router, .GET, BATCH_R_DYNAMIC_BASE, HANDLE_POST_REQUEST)
+	   addBatchRecGetRoute:= SET_SERVER_EVENT_INFORMATION("Add Route",
+				give_description(methodString[.GET],BATCH_R_DYNAMIC_BASE),
+				ServerEventType.ROUTINE,
+			    time.now(),
+				false,
+				"",
+				nil
+		)
+	PRINT_SERVER_EVENT_INFORMATION(addBatchRecGetRoute)
+
+
+
 
 
 	//TODO: Need to come back to batch requests...
@@ -231,7 +311,6 @@ START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 
 	//Assign the first usable OstrichDB port. Default is set to 8042 but might be taken
 	usablePort:= CHECK_IF_PORT_IS_FREE(const.Server_Ports)
-	fmt.println(usablePort)
     for p in const.Server_Ports {
         if p != usablePort{
                 config.port = usablePort
@@ -243,7 +322,6 @@ START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 	endpoint := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, config.port} //listen on all interfaces
 
 
-
 	// Creates and listens on a TCP socket
 	listen_socket, listen_err := net.listen_tcp(endpoint, 5)
 	if listen_err != nil {
@@ -251,8 +329,9 @@ START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 		return -1
 	}
 
+
 	//Start a thread to handle user input for killing the server
-	thread.run(HANDLE_SERVER_KILL_INPUT)
+	thread.run(HANDLE_SERVER_KILL_SWITCH)
 	defer net.close(net.TCP_Socket(listen_socket))
 
 	fmt.printf(
@@ -263,9 +342,23 @@ START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 	)
 	//Main server loop
 	for isRunning {
+		//update the session runtime periodically to check against the limit
+		newServerSession.end_timestamp = time.now()
+		newServerSession.total_runtime = time.diff(newServerSession.start_timestamp, newServerSession.end_timestamp)
+		result:=SERVER_SESSION_LIMIT_MET(newServerSession)
+		if result  {
+		    fmt.printfln("%sWARNING:%s Maximum server session time of 24 hours reached. Shutting down server...", utils.YELLOW, utils.RESET)
+		    isRunning = false
+		    // Ping each possible OstrichDB port and if its running kill it
+		    for port in const.Server_Ports {
+		        portCString := strings.clone_to_cstring(fmt.tprintf("nc -zv localhost %d", port))
+		        libc.system(portCString)
+		    }
+		    break
+		}
+
 		fmt.println("Waiting for new connection...")
 		client_socket, remote_endpoint, accept_err := net.accept_tcp(listen_socket)
-
 
 		if accept_err != nil {
 			fmt.println("Error accepting connection: ", accept_err)
@@ -273,7 +366,12 @@ START_OSTRICH_SERVER :: proc(config: ^types.Server_Config) -> int {
 		}
 		handle_connection(client_socket)
 	}
+	newServerSession.end_timestamp = time.now()
+	newServerSession.total_runtime = time.diff(newServerSession.start_timestamp, newServerSession.end_timestamp)
 	fmt.println("Server stopped successfully")
+	fmt.println("Total server session runtime time was: ", newServerSession.total_runtime)
+	//Destroy the session
+	free(newServerSession)
 	return 0
 }
 
@@ -305,76 +403,107 @@ handle_connection :: proc(socket: net.TCP_Socket) {
 		responseHeaders["Content-Type"] = "text/plain"
 		responseHeaders["Server"] = "OstrichDB"
 
+        defer delete(responseHeaders)
 
-		// Handle the request using router
-		status, responseBody := HANDLE_HTTP_REQUEST(router, method, path, headers)
-		handleRequestEvent := SET_SERVER_EVENT_INFORMATION(
-			"Attempt Request",
-			"Attempting handle request made on the server",
-			types.ServerEventType.ROUTINE,
-			time.now(),
-			true,
-			path,
-			nil,
-		)
-		LOG_AND_PRINT_SERVER_EVENT(handleRequestEvent)
+        m:types.HttpMethod
+
+        switch(method) {
+        case "HEAD":
+            m = .HEAD
+            break
+        case "GET":
+            m = .GET
+            break
+        case "POST":
+            m = .POST
+            break
+        case "PUT":
+            m = .PUT
+            break
+        case "DELETE":
+            m = .DELETE
+            break
+        }
+
+        // Handle the request using router
+        status, responseBody := HANDLE_HTTP_REQUEST(router, method, path, headers)
+        handleRequestEvent := SET_SERVER_EVENT_INFORMATION(
+            "Attempt Request",
+            "Attempting to handle request made over the server",
+            types.ServerEventType.ROUTINE,
+            time.now(),
+            true,
+            path,
+            m,
+        )
+
+        PRINT_SERVER_EVENT_INFORMATION(handleRequestEvent)
+        LOG_SERVER_EVENT(handleRequestEvent)
 
 
-		// Build and send response
-		response := BUILD_HTTP_RESPONSE(status, responseHeaders, responseBody)
-		buildResponseEvent := SET_SERVER_EVENT_INFORMATION(
-			"Build Response",
-			"Attempting build a response for the request",
-			types.ServerEventType.ROUTINE,
-			time.now(),
-			false,
-			"",
-			nil,
-		)
-		LOG_AND_PRINT_SERVER_EVENT(buildResponseEvent)
+        // Build and send response
+        response := BUILD_HTTP_RESPONSE(status, responseHeaders, responseBody)
+        buildResponseEvent := SET_SERVER_EVENT_INFORMATION(
+            "Build Response",
+            "Attempting to build a response for the request",
+            types.ServerEventType.ROUTINE,
+            time.now(),
+            false,
+            path,
+            m,
+        )
+        PRINT_SERVER_EVENT_INFORMATION(buildResponseEvent)
+        LOG_SERVER_EVENT(buildResponseEvent)
 
-		if len(response) == 0 {
-			buildResponseFailEvent := SET_SERVER_EVENT_INFORMATION(
-				"Failed Reponse Build",
-				"Failed to build a response",
-				types.ServerEventType.WARNING,
-				time.now(),
-				false,
-				"",
-				nil,
-			)
-			LOG_AND_PRINT_SERVER_EVENT(buildResponseFailEvent)
-		}
+        if len(response) == 0 {
+            buildResponseFailEvent := SET_SERVER_EVENT_INFORMATION(
+                "Failed Reponse Build",
+                "Failed to build a response",
+                types.ServerEventType.WARNING,
+                time.now(),
+                false,
+                path,
+                m,
+            )
+            PRINT_SERVER_EVENT_INFORMATION(buildResponseFailEvent)
+            LOG_SERVER_EVENT(buildResponseFailEvent)
+        }
 
-		_, write_err := net.send(socket, response)
-		writeResponseToSocket := SET_SERVER_EVENT_INFORMATION(
-			"Write Respone To Socket",
-			"Attempting to write a response to the socket",
-			types.ServerEventType.ROUTINE,
-			time.now(),
-			false,
-			"",
-			nil,
-		)
-		LOG_AND_PRINT_SERVER_EVENT(writeResponseToSocket)
-		if write_err != nil {
-			writeResponseToSocketFail := SET_SERVER_EVENT_INFORMATION(
-				"Failed To Write To Socket",
-				"Failed to write a response to the socket",
-				types.ServerEventType.CRITICAL_ERROR,
-				time.now(),
-				false,
-				"",
-				nil,
-			)
-			LOG_AND_PRINT_SERVER_EVENT(writeResponseToSocketFail)
+        _, write_err := net.send(socket, response)
+        writeResponseToSocket := SET_SERVER_EVENT_INFORMATION(
+            "Write Respone To Socket",
+            "Attempting to write a response to the socket",
+            types.ServerEventType.ROUTINE,
+            time.now(),
+            false,
+            path,
+            m,
+        )
 
-			fmt.println("Error writing to socket:", write_err)
-			return
-		}
+        PRINT_SERVER_EVENT_INFORMATION(writeResponseToSocket)
+        LOG_SERVER_EVENT(writeResponseToSocket)
 
-		fmt.println("Response sent successfully")
-	}
+        if write_err != nil {
+            writeResponseToSocketFail := SET_SERVER_EVENT_INFORMATION(
+                "Failed To Write To Socket",
+                "Failed to write a response to the socket",
+                types.ServerEventType.CRITICAL_ERROR,
+                time.now(),
+                false,
+                path,
+                m,
+            )
+            PRINT_SERVER_EVENT_INFORMATION(writeResponseToSocketFail)
+            LOG_SERVER_EVENT(writeResponseToSocketFail)
+
+            fmt.println("Error writing to socket:", write_err)
+            return
+        }
+
+        fmt.println("Response sent successfully")
+    }
+
+    fmt.println("Connection handler stopping due to server shutdown")
 }
 
 //Looks over all the possible ports that OstrichDB uses. If the first is free, use it, if not use the next available port.
@@ -399,20 +528,25 @@ CHECK_IF_PORT_IS_FREE :: proc(ports: []int) -> int {
 }
 
 
-HANDLE_SERVER_KILL_INPUT :: proc() {
-	utils.show_server_kill_msg()
-	input := utils.get_input(false)
-	if input == "kill" || input == "exit" {
-		fmt.println("Stopping OstrichDB server...")
-		isRunning = false
-		//ping the server to essentially refresh it to ensure it stops thus breaking the server main loop
-		for port in const.Server_Ports{
-		portCString:= strings.clone_to_cstring(fmt.tprintf("nc -zv localhost %d", port))
-		libc.system(portCString )
+HANDLE_SERVER_KILL_SWITCH :: proc() {
+	for isRunning {
+		input := utils.get_input(false)
+		if input == "kill" || input == "exit" {
+			fmt.println("Stopping OstrichDB server...")
+			isRunning = false
+			//ping the server to essentially refresh it to ensure it stops thus breaking the server main loop
+			for port in const.Server_Ports{
+				portCString := strings.clone_to_cstring(fmt.tprintf("nc -zv localhost %d", port))
+				libc.system(portCString)
+			}
+			return
+		} else {
+			fmt.printfln("Invalid input. Type 'kill' or 'exit' to stop the server.")
 		}
-		return
-	} else {
-		fmt.printfln("Invalid input")
-		HANDLE_SERVER_KILL_INPUT()
 	}
+}
+
+
+give_description ::proc(method:string, constant:string) -> string{
+    return strings.clone(fmt.tprintf("Added %s dynamic %s route to router", method, constant),)
 }

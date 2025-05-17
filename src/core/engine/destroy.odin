@@ -70,7 +70,6 @@ DESTROY_EVERYTHING :: proc() {
 		const.PRIVATE_PATH,
 		const.PUBLIC_PATH,
 		const.STANDARD_COLLECTION_PATH,
-		const.SECURE_COLLECTION_PATH,
 		const.LOG_DIR_PATH,
 		"./tmp/",
 	}

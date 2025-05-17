@@ -7,9 +7,14 @@ import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+import "core:path/filepath"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
+
+Contributors:
+    @CobbCoding1
+
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
@@ -28,11 +33,11 @@ main :: proc() {
 	os.make_directory(PRIVATE_PATH)
 	os.make_directory(PUBLIC_PATH)
 	os.make_directory(STANDARD_COLLECTION_PATH)
+	os.make_directory(USERS_PATH)
 	os.make_directory(QUARANTINE_PATH)
 	os.make_directory(BACKUP_PATH)
 	CREATE_AND_FILL_PRIVATE_ID_COLLECTION()
 }
-
 
 //Displays all collections. total also shows size of the data in bytes.
 //Todo: Not really a tree, was implemented before but i took it out because it was fucking up - Marshall
@@ -58,125 +63,143 @@ GET_COLLECTION_TREE :: proc() {
 /*
 Creates a new collection file with metadata within the DB
 standard -  CollectionType.STANDARD_PUBLIC
-secure - CollectionType.SECURE_PRIVATE
+secure - CollectionType.USER_CREDENTIALS_PRIVATE
 config - CollectionType.CONFIG_PRIVATE
-history - CollectionType.HISTORY_PRIVATE
-id - CollectionType.ID_PRIVATE
+history - CollectionType.USER_HISTORY_PRIVATE
+id - CollectionType.SYSTEM_ID_PRIVATE
 */
 CREATE_COLLECTION :: proc(fn: string, colType: types.CollectionType) -> bool {
-	// concat the path and the file name into a string depending on the type of file to create
+    using types
+
 	pathAndName: string
 	#partial switch (colType)
 	{
 	case .STANDARD_PUBLIC:
+	fmt.println("Attempting to create a file with name: ",fn)
 		//standard cluster file
 		if VALIDATE_COLLECTION_NAME(fn) == 1 {
 			return false
 		}
 		collectionPath := utils.concat_standard_collection_name(fn)
+		fmt.println("collectionPath: ", collectionPath)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o666)
-		metadata.APPEND_METADATA_HEADER(collectionPath)
-		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
+
+		metadata.APPEND_METADATA_HEADER_TO_COLLECTION(collectionPath)
+		metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Read-Write",MetadataField.PERMISSION, colType)
+
 		if createSuccess != 0 {
+		errorLocation:= utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating new collection file", #procedure)
 			return false
 		}
-		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
+		metadata.INIT_METADATA_IN_NEW_COLLECTION(collectionPath)
 		defer os.close(createFile)
 		return true
-	case .SECURE_PRIVATE:
+	case .USER_CREDENTIALS_PRIVATE:
 		//secure file
 		if VALIDATE_COLLECTION_NAME(fn) == 1 {
 			return false
 		}
-		collectionPath := fmt.tprintf("%s%s%s", const.SECURE_COLLECTION_PATH, fn, const.OST_EXT)
+		collectionPath := utils.concat_user_credential_path(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
-		metadata.APPEND_METADATA_HEADER(collectionPath)
-		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
+		metadata.APPEND_METADATA_HEADER_TO_COLLECTION(collectionPath)
+		metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Inaccessible", types.MetadataField.PERMISSION, colType)
 		if createSuccess != 0 {
+		errorLocation:= utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating collection file", #procedure)
 			return false
 		}
-		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
+		metadata.INIT_METADATA_IN_NEW_COLLECTION(collectionPath)
 		defer os.close(createFile)
 		return true
 
-	case .CONFIG_PRIVATE:
-		collectionPath := const.CONFIG_PATH
+	case .SYSTEM_CONFIG_PRIVATE:
+		collectionPath := const.SYSTEM_CONFIG_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
-		metadata.APPEND_METADATA_HEADER(collectionPath)
-		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, colType)
+		metadata.APPEND_METADATA_HEADER_TO_COLLECTION(collectionPath)
+		metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Read-Write", MetadataField.PERMISSION, colType)
 		if createSuccess != 0 {
+		errorLocation:= utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating collection file", #procedure)
 			return false
 		}
-		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
+		metadata.INIT_METADATA_IN_NEW_COLLECTION(collectionPath)
 		defer os.close(createFile)
 		return true
-
-	case .HISTORY_PRIVATE:
-		collectionPath := const.HISTORY_PATH
+	case .USER_CONFIG_PRIVATE:
+	collectionPath := utils.concat_user_config_collection_name(fn)
+	createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
+	metadata.APPEND_METADATA_HEADER_TO_COLLECTION(collectionPath)
+	metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Read-Write", MetadataField.PERMISSION, colType)
+	if createSuccess != 0 {
+	errorLocation:= utils.get_caller_location()
+		error1 := utils.new_err(
+			.CANNOT_CREATE_FILE,
+			utils.get_err_msg(.CANNOT_CREATE_FILE),
+			errorLocation
+		)
+		utils.throw_err(error1)
+		utils.log_err("Error creating collection file", #procedure)
+		return false
+	}
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(collectionPath)
+	defer os.close(createFile)
+	return true
+	case .USER_HISTORY_PRIVATE:
+		collectionPath := utils.concat_user_history_path(fn)
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
-		metadata.APPEND_METADATA_HEADER(collectionPath)
-		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
+		metadata.APPEND_METADATA_HEADER_TO_COLLECTION(collectionPath)
+		metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Inaccessible", MetadataField.PERMISSION, colType)
 		if createSuccess != 0 {
+			errorLocation:= utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating collection file", #procedure)
 			return false
 		}
-		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
+		metadata.INIT_METADATA_IN_NEW_COLLECTION(collectionPath)
 		defer os.close(createFile)
 		return true
 
-	case .ID_PRIVATE:
+	case .SYSTEM_ID_PRIVATE:
 		collectionPath := const.ID_PATH
 		createFile, createSuccess := os.open(collectionPath, os.O_CREATE, 0o644)
-		metadata.APPEND_METADATA_HEADER(collectionPath)
-		metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Inaccessible", 1, colType)
+		metadata.APPEND_METADATA_HEADER_TO_COLLECTION(collectionPath)
+		metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Inaccessible", MetadataField.PERMISSION, colType)
 		if createSuccess != 0 {
+		errorLocation := utils.get_caller_location()
 			error1 := utils.new_err(
 				.CANNOT_CREATE_FILE,
 				utils.get_err_msg(.CANNOT_CREATE_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			utils.throw_err(error1)
 			utils.log_err("Error creating collection file", #procedure)
 			return false
 		}
-		metadata.UPDATE_METADATA_UPON_CREATION(collectionPath)
+		metadata.INIT_METADATA_IN_NEW_COLLECTION(collectionPath)
 		defer os.close(createFile)
 		return true
 	}
@@ -217,12 +240,11 @@ ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 				"User entered invalid input",
 				"User entered invalid input when trying to delete collection",
 			)
+			errorLocation:= get_caller_location()
 			error2 := new_err(
 				.INVALID_INPUT,
 				get_err_msg(.INVALID_INPUT),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			)
 			throw_custom_err(error2, "Invalid input. Please type 'yes' or 'no'.")
 			return false
@@ -233,12 +255,11 @@ ERASE_COLLECTION :: proc(fn: string, isOnServer: bool) -> bool {
 	// Delete the file
 	deleteSuccess := os.remove(collectionPath)
 	if deleteSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_DELETE_FILE,
 			get_err_msg(.CANNOT_DELETE_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error deleting collection file", #procedure)
@@ -264,12 +285,11 @@ VALIDATE_COLLECTION_NAME :: proc(fn: string) -> int {
 	//CHECK#2: check if the file already exists
 	existenceCheck, readSuccess := os.read_entire_file_from_filename(fn)
 	if readSuccess {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.FILE_ALREADY_EXISTS,
 			get_err_msg(.FILE_ALREADY_EXISTS),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("collection file already exists", #procedure)
@@ -302,7 +322,7 @@ CHECK_IF_COLLECTION_EXISTS :: proc(fn: string, type: int) -> bool {
 		}
 		break
 	case 1:
-		secCollection, openSuccess := os.open(const.SECURE_COLLECTION_PATH)
+		secCollection, openSuccess := os.open(utils.concat_user_credential_path(types.user.username.Value))
 		secureCollections, readSuccess := os.read_dir(secCollection, -1)
 
 		for collection in secureCollections {
@@ -323,12 +343,11 @@ RENAME_COLLECTION :: proc(old: string, new: string) -> bool {
 
 	file, readSuccess := os.read_entire_file_from_filename(colPath)
 	if !readSuccess {
+	errorLocation:= utils.get_caller_location()
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error1)
 		utils.log_err("Error reading collection file", #procedure)
@@ -361,12 +380,11 @@ FETCH_COLLECTION :: proc(fn: string) -> string {
 	collectionPath := utils.concat_standard_collection_name(fn)
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
+	errorLocation:= utils.get_caller_location()
 		error1 := utils.new_err(
 			.CANNOT_READ_FILE,
 			utils.get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		utils.throw_err(error1)
 		utils.log_err("Error reading collection file", #procedure)
@@ -390,19 +408,6 @@ FETCH_COLLECTION :: proc(fn: string) -> string {
 }
 
 
-//Searches for a secure collection file
-FIND_SECURE_COLLECTION :: proc(fn: string) -> (bool, string) {
-	secDir, e := os.open(const.SECURE_COLLECTION_PATH)
-	files, readDirSuccess := os.read_dir(secDir, -1)
-	found := false
-	for file in files {
-		if file.name == fmt.tprintf("secure_%s%s", fn, const.OST_EXT) {
-
-			found = true
-		}
-	}
-	return found, ""
-}
 
 //gets the number of standard collections
 GET_COLLECTION_COUNT :: proc() -> int {
@@ -431,8 +436,9 @@ PURGE_COLLECTION :: proc(fn: string) -> bool {
 	// Read the entire file
 	data, readSuccess := os.read_entire_file(collectionPath)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), #file, #procedure, #line),
+			new_err(.CANNOT_READ_FILE, get_err_msg(.CANNOT_READ_FILE), errorLocation),
 		)
 		log_err("Error reading collection file", #procedure)
 		return false
@@ -443,8 +449,9 @@ PURGE_COLLECTION :: proc(fn: string) -> bool {
 	content := string(data)
 	headerEndIndex := strings.index(content, const.METADATA_END)
 	if headerEndIndex == -1 {
+	errorLocation:= get_caller_location()
 		throw_err(
-			new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", #file, #procedure, #line),
+			new_err(.FILE_FORMAT_NOT_VALID, "Metadata header not found", errorLocation),
 		)
 		log_err("Invalid collection file format", #procedure)
 		return false
@@ -458,13 +465,12 @@ PURGE_COLLECTION :: proc(fn: string) -> bool {
 	// Write back only the header
 	writeSuccess := os.write_entire_file(collectionPath, transmute([]byte)metaDataHeader)
 	if !writeSuccess {
+	errorLocation:= get_caller_location()
 		throw_err(
 			new_err(
 				.CANNOT_WRITE_TO_FILE,
 				get_err_msg(.CANNOT_WRITE_TO_FILE),
-				#file,
-				#procedure,
-				#line,
+				errorLocation
 			),
 		)
 		log_err("Error writing purged collection file", #procedure)
@@ -479,7 +485,9 @@ PURGE_COLLECTION :: proc(fn: string) -> bool {
 //LOCK foo -n makes the collection inaccessible
 //LOCK foo without a flag makes the collection Inaccessible by default
 LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm: string) {
-	val: string
+	using types
+    val: string
+
 	if flag == "-R" {
 		val = "Read-Only"
 	} else if flag == "-N" {
@@ -489,18 +497,20 @@ LOCK_COLLECTION :: proc(fn: string, flag: string) -> (result: bool, newPerm: str
 		return false, ""
 	}
 	fmt.printfln("%s() is getting... fn:%s, val:%s, flag:%s ", #procedure, fn, val, flag)
-	success := metadata.CHANGE_METADATA_MEMBER_VALUE(fn, val, 1, .STANDARD_PUBLIC)
+	success := metadata.UPDATE_METADATA_MEMBER_VALUE(fn, val, MetadataField.PERMISSION, .STANDARD_PUBLIC)
 	return success, val
 }
 
 //Reverts the permission status of a collection no matter if its in Read-Only or Inaccessible back to Read-Write
 UNLOCK_COLLECTION :: proc(fn, currentPerm: string) -> bool {
+    using types
+
 	success := false
 	if currentPerm == "Inaccessible" {
-		success = metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)
+		success = metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Read-Write", MetadataField.PERMISSION, .STANDARD_PUBLIC)
 		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
 	} else if currentPerm == "Read-Only" {
-		success = metadata.CHANGE_METADATA_MEMBER_VALUE(fn, "Read-Write", 1, .STANDARD_PUBLIC)
+		success = metadata.UPDATE_METADATA_MEMBER_VALUE(fn, "Read-Write", MetadataField.PERMISSION, .STANDARD_PUBLIC)
 		fmt.printfln("Collection %s%s%s unlocked", utils.BOLD_UNDERLINE, fn, utils.RESET)
 	} else {
 		fmt.printfln(

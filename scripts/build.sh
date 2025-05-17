@@ -2,6 +2,10 @@
 
 #Author: Marshall A Burns
 #GitHub: @SchoolyB
+
+#Contributors
+#    @CobbCoding1
+
 #License: Apache License 2.0 (see LICENSE file for details)
 #Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
@@ -35,9 +39,11 @@ if [ -f "src/core/nlp/nlp.${LIB_EXT}" ]; then
 else
     # Go into nlp package and build NLP Go library
     cd "src/core/nlp"
+    touch SYS_INSTRUCTIONS #Needed for CI to pass
     go mod init main
     go mod tidy
     go build -buildmode c-shared -o nlp.${LIB_EXT}
+    odin build nlp.odin -file
     # Go back to root dir
     cd "$DIR/.."
 fi

@@ -18,6 +18,10 @@ import "../nlp"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
+
+Contributors:
+    @CobbCoding1
+
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
@@ -56,11 +60,11 @@ INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 //Session timer, sign in, and command line
 START_OSTRICHDB_ENGINE :: proc() -> int {
 	using const
-
+	using types
 
 	//Initialize data integrity system
-	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&types.data_integrity_checks)
-	switch (types.OstrichEngine.Initialized)
+	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&data_integrity_checks)
+	switch (OstrichEngine.Initialized)
 	{
 	case false:
 		//Continue with engine initialization
@@ -69,12 +73,6 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 	case true:
 		for {
-			security.ENCRYPT_COLLECTION(
-				"",
-				.CONFIG_PRIVATE,
-				types.system_user.m_k.valAsBytes,
-				false,
-			)
 			userSignedIn := security.RUN_USER_SIGNIN()
 			switch (userSignedIn)
 			{
@@ -84,15 +82,14 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 					"User Signed In",
 					"User successfully logged into OstrichDB",
 				)
-
+				currentUserName:= current_user.username.Value
+				systemUserMK := system_user.m_k.valAsBytes
 				//Check to see if the server AUTO_SERVE config value is true. If so start server
-				security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-
-
+				security.TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
 				autoServeConfigValue := data.GET_RECORD_VALUE(
-					CONFIG_PATH,
-					CONFIG_CLUSTER,
-					types.Token[.BOOLEAN],
+					utils.concat_user_config_collection_name(currentUserName),
+					utils.concat_user_config_cluster_name(currentUserName),
+					Token[.BOOLEAN],
 					AUTO_SERVE,
 				)
 				if strings.contains(autoServeConfigValue, "true") {
@@ -104,14 +101,10 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 						"1. Enter 'kill' or 'quit' to stop the server and be returned to the OstrichDB command line",
 					)
 					fmt.println("2. Use command: 'SET CONFIG AUTO_SERVE TO false'\n\n")
-					security.ENCRYPT_COLLECTION(
-						"",
-						.CONFIG_PRIVATE,
-						types.system_user.m_k.valAsBytes,
-						false,
-					)
+					security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+
 					//Auto-server loop
-					serverDone := server.START_OSTRICH_SERVER(&types.ServerConfig)
+					serverDone := server.START_OSTRICH_SERVER(&OstrichServer)
 					if serverDone == 0 {
 						fmt.println("\n\n")
 						cmdLineDone := START_COMMAND_LINE()
@@ -122,25 +115,15 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 				} else {
 					// if the AUTO_SERVE config value is false, then continue starting command line
-					security.ENCRYPT_COLLECTION(
-						"",
-						.CONFIG_PRIVATE,
-						types.system_user.m_k.valAsBytes,
-						false,
-					)
+					security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+
 					fmt.println("Starting command line")
 					result := START_COMMAND_LINE()
 					return result
 				}
 			case false:
-				fmt.printfln("Sign in failed. Please try again.")
-				security.ENCRYPT_COLLECTION(
-					"",
-					.CONFIG_PRIVATE,
-					types.system_user.m_k.valAsBytes,
-					false,
-				)
-				continue
+				fmt.printfln("%sSign-in failed.%s  Please try again.", utils.RED, utils.RESET)
+				return 1
 			}
 		}
 	}
@@ -149,47 +132,57 @@ START_OSTRICHDB_ENGINE :: proc() -> int {
 
 //Command line loop
 START_COMMAND_LINE :: proc() -> int {
+    using const
+    using types
+    using security
+
 	result := 0
 	fmt.println("Welcome to the OstrichDB DBMS Command Line")
 	utils.log_runtime_event("Entered DBMS command line", "")
-	for types.USER_SIGNIN_STATUS == true {
+	for USER_SIGNIN_STATUS == true {
 		//Command line start
 		buf: [1024]byte
 
-		fmt.print(const.ost_carrot, "\t")
+		fmt.print(ostCarrat, "\t")
+
 		input := utils.get_input(false)
+		currentUserName := current_user.username.Value
+		systemUserMK := system_user.m_k.valAsBytes
 
-		security.DECRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes)
+		TRY_TO_DECRYPT(currentUserName, .USER_HISTORY_PRIVATE, systemUserMK)
 		APPEND_COMMAND_TO_HISTORY(input)
-		security.ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION(currentUserName, .USER_HISTORY_PRIVATE, systemUserMK)
 		cmd := PARSE_COMMAND(input)
+		// fmt.println("DEBUG: cmd: ", cmd) //Debugging DO NOT DELETE
 
-		// fmt.println("cmd: ", cmd) //Debugging DO NOT DELETE
 
-		//Check to ensure that before the next command is executed, the max session time hasnt been met
-		sessionDuration := security.GET_SESSION_DURATION()
-		maxDurationMet := security.CHECK_IF_SESSION_DURATION_MAXED(sessionDuration)
-		switch (maxDurationMet)
-		{
-		case false:
-			break
-		case true:
-			security.HANDLE_MAXED_SESSION()
+		//check if  the LIMIT_SESSION_TIME config is enabled.
+		TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+		sessionLimitValue:= data.GET_RECORD_VALUE(utils.concat_user_config_collection_name(currentUserName),utils.concat_user_config_cluster_name(currentUserName) ,Token[.BOOLEAN],LIMIT_SESSION_TIME)
+		ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+
+		if sessionLimitValue == "true"{
+		  //Check to ensure that BEFORE the next command is executed, the max session time hasnt been met
+		  sessionDuration := GET_SESSION_DURATION()
+		  maxDurationMet := CHECK_IF_SESSION_DURATION_MAXED(sessionDuration)
+		  switch (maxDurationMet)
+		  {
+		  case false:
+		      break
+		  case true:
+		      HANDLE_MAXED_SESSION()
+		  }
 		}
-
 		result = EXECUTE_COMMAND(&cmd)
-
-		//Command line end
 	}
 
 	//Re-engage the loop
-	if types.USER_SIGNIN_STATUS == false {
-		security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	if USER_SIGNIN_STATUS == false {
+		// security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 		START_OSTRICHDB_ENGINE()
 	}
 
 	return result
-
 }
 
 //Used to restart the engine

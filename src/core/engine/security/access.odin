@@ -25,7 +25,7 @@ File Description:
 
 //Ensure that the user is an admin before allowing an operation
 CHECK_ADMIN_STATUS :: proc(user: ^types.User) -> bool {
-	secCollection := utils.concat_secure_collection_name(user.username.Value)
+	secCollection := utils.concat_user_credential_path(user.username.Value)
 	userCluster := strings.to_upper(user.username.Value)
 	isAdmin := false
 
@@ -59,7 +59,7 @@ SET_FILE_PERMISSIONS_ON_OS_LEVEL :: proc(fn, permission: string) -> (success:boo
 
 	switch permission {
 	case "Read-Write":
-		mode = R_ONLY_MODE
+		mode = RW_MODE
 	case "Read-Only":
 		mode = R_ONLY_MODE
 	case "Inaccessible":
@@ -192,7 +192,7 @@ PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 	defer free(commandOperation)
 
 
-	permissionValue, success := metadata.GET_METADATA_MEMBER_VALUE(
+	permissionValue, success := metadata.GET_METADATA_FIELD_VALUE(
 		colName,
 		"# Permission",
 		colType,
@@ -216,7 +216,7 @@ PERFORM_PERMISSIONS_CHECK_ON_COLLECTION :: proc(
 //Used to check if a collection is already locked before attempting to lock it again
 GET_COLLECTION_LOCK_STATUS :: proc(colName: string) -> bool {
 	isAlreadyLocked := false
-	lockStatus, success := metadata.GET_METADATA_MEMBER_VALUE(
+	lockStatus, success := metadata.GET_METADATA_FIELD_VALUE(
 		colName,
 		"# Permission",
 		.STANDARD_PUBLIC,
@@ -256,8 +256,8 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 
 	//Decrypt the "working" collection to see what specific permission is set for operations to be performed
 	#partial switch (colType) {
-	case .CONFIG_PRIVATE:
-		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+	case .SYSTEM_CONFIG_PRIVATE:
+		DECRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes)
 		break
 	case:
 		DECRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
@@ -267,7 +267,7 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 	//Decrypt the logged in users secure collection to ensure their role allows for the requested operation to be performed
 	DECRYPT_COLLECTION(
 		types.current_user.username.Value,
-		.SECURE_PRIVATE,
+		.USER_CREDENTIALS_PRIVATE,
 		types.system_user.m_k.valAsBytes,
 	)
 
@@ -279,30 +279,28 @@ EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK :: proc(
 		//If the permission check passes, re-encrypt the "secure" collection and continue with the operation
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
-			.SECURE_PRIVATE,
-			types.system_user.m_k.valAsBytes,
-			false,
+			.USER_CREDENTIALS_PRIVATE,
+			types.system_user.m_k.valAsBytes
 		)
 		break
 	case:
 		// If the permission check fails, re-encrypt the "working" and "secure" collections
 		#partial switch (colType) {
-		case .CONFIG_PRIVATE:
-			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		case .SYSTEM_CONFIG_PRIVATE:
+			ENCRYPT_COLLECTION("", colType, types.system_user.m_k.valAsBytes)
 			break
-		case .ISOLATE_PUBLIC:
-			ENCRYPT_COLLECTION(colName, .ISOLATE_PUBLIC, types.current_user.m_k.valAsBytes, false)
+		case .ISOLATED_PUBLIC:
+			ENCRYPT_COLLECTION(colName, .ISOLATED_PUBLIC, types.current_user.m_k.valAsBytes)
 			break
 
 		case:
-			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION(colName, .STANDARD_PUBLIC, types.current_user.m_k.valAsBytes)
 			break
 		}
 		ENCRYPT_COLLECTION(
 			types.current_user.username.Value,
-			.SECURE_PRIVATE,
+			.USER_CREDENTIALS_PRIVATE,
 			types.system_user.m_k.valAsBytes,
-			false,
 		)
 		return -1
 	}

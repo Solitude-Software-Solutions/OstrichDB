@@ -21,30 +21,30 @@ File Description:
 read_file :: proc(filepath: string, procedure: string) -> ([]byte, bool) {
 	data, success := os.read_entire_file(filepath)
 	if !success {
+	errorLocation := get_caller_location()
 		error := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			procedure,
-			#line,
+			errorLocation
 		)
-		throw_err(error)
-		log_err("Error reading file", procedure)
+		fmt.println("Internal Error reading file: ", filepath)
+		log_err(fmt.tprintf("Internal Error reading file %s", filepath), procedure)
 		return nil, false
 	}
 	return data, true
 }
 
+
+
 // Helper proc that writes data to a file and returns a success boolean
 write_to_file :: proc(filepath: string, data: []byte, procedure: string) -> bool {
 	success := os.write_entire_file(filepath, data)
 	if !success {
+	errorLocation:= get_caller_location()
 		error := new_err(
 			.CANNOT_WRITE_TO_FILE,
 			get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#file,
-			procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error)
 		log_err("Error writing to file", procedure)
@@ -65,12 +65,11 @@ open_file :: proc(
 ) {
 	handle, err := os.open(filepath, flags, mode)
 	if err != 0 {
+		errorLocation := get_caller_location()
 		error := new_err(
 			.CANNOT_OPEN_FILE,
 			get_err_msg(.CANNOT_OPEN_FILE),
-			#file,
-			procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error)
 		log_err("Error opening file", procedure)
@@ -87,19 +86,25 @@ concat_standard_collection_name :: proc(colFileName: string) -> string {
 	)
 }
 
-//helper that concats a collections name to the standard collection path for secure collections.
-concat_secure_collection_name :: proc(userName: string) -> string {
-	if strings.contains(userName, "secure_") {
-		return strings.clone(
-			fmt.tprintf("%s%s%s", const.SECURE_COLLECTION_PATH, userName, const.OST_EXT),
-		)
-	} else {
-		return strings.clone(
-			fmt.tprintf("%ssecure_%s%s", const.SECURE_COLLECTION_PATH, userName, const.OST_EXT),
-		)
-	}
-
+concat_user_config_collection_name :: proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s%s/%s",const.USERS_PATH, username, const.USER_CONFIGS_FILE_NAME))
 }
+
+concat_user_config_cluster_name ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s_OSTRICH_CONFIGS", username))
+}
+
+concat_user_credential_path ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s%s/%s",const.USERS_PATH, username, const.USER_CREDENTIAL_FILE_NAME))
+}
+concat_user_history_cluster_name ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s_OSTRICH_HISTORY", username))
+}
+concat_user_history_path ::proc(username:string) -> string{
+    return strings.clone(fmt.tprintf("%s%s/%s",const.USERS_PATH, username, const.USER_HISTORY_FILE_NAME))
+}
+
+
 
 //helper to get users input from the command line
 get_input :: proc(isPassword: bool) -> string {
@@ -112,11 +117,10 @@ get_input :: proc(isPassword: bool) -> string {
 	}
 	n, err := os.read(os.stdin, buf[:])
 	if err != 0 {
-		fmt.println("Debug: Error occurred")
+		fmt.printfln("%sINTERNAL ERROR%s: OstrichDB failed to read input from command line.", RED, RESET)
 		return ""
 	}
 	result := strings.trim_right(string(buf[:n]), "\r\n")
-	libc.system("stty echo") //show input
 	return strings.clone(result)
 }
 

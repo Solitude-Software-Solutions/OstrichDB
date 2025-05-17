@@ -48,7 +48,7 @@ VALIDATE_FILE_SIZE :: proc(fn: string) -> bool {
 
 	Severity_Code = 0
 	data_integrity_checks.File_Size.Compliant = true
-	fileInfo := metadata.GET_FS(concat_standard_collection_name(fn))
+	fileInfo := metadata.GET_FILE_INFO(concat_standard_collection_name(fn))
 	fileSize := fileInfo.size
 
 	if fileSize > MAX_FILE_SIZE {
@@ -64,16 +64,16 @@ VALIDATE_COLLECTION_FORMAT :: proc(fn: string) -> bool {
 
 	data_integrity_checks.File_Format.Compliant = true
 	clusterScanSuccess, invalidClusterFound := SCAN_CLUSTER_STRUCTURE(fn)
-	headerScanSuccess, invalidHeaderFound := metadata.SCAN_METADATA_HEADER_FORMAT(fn)
+	// headerScanSuccess, invalidHeaderFound := metadata.SCAN_METADATA_HEADER_FORMAT(fn)
 	if clusterScanSuccess != 0 || invalidClusterFound == true {
 		utils.log_err("Cluster structure is not compliant", #procedure)
 		data_integrity_checks.File_Format.Compliant = false
 
 	}
-	if headerScanSuccess != 0 || invalidHeaderFound == true {
-		utils.log_err("Header format is not compliant", #procedure)
-		data_integrity_checks.File_Format.Compliant = false
-	}
+	// if headerScanSuccess != 0 || invalidHeaderFound == true {
+	// 	utils.log_err("Header format is not compliant", #procedure)
+	// 	data_integrity_checks.File_Format.Compliant = false
+	// }
 	return data_integrity_checks.File_Format.Compliant
 }
 
@@ -121,7 +121,7 @@ VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	using types
 	using utils
 
-	checks := [dynamic]bool{} //gets free somewhere else
+	checks := make([dynamic]bool) //gets freed in the parent calling procedure
 	checkOneResult := VALIDATE_IDS(fn)
 	checkTwoResult := VALIDATE_FILE_SIZE(fn)
 	checkThreeResult := VALIDATE_COLLECTION_FORMAT(fn)
@@ -131,12 +131,11 @@ VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	case false:
 		data_integrity_checks.Cluster_IDs.Severity = .MEDIUM
 		Severity_Code = 1
+		errorLocation:= get_caller_location()
 		error1 := utils.new_err(
 			.CLUSTER_IDS_NOT_VALID,
 			get_err_msg(.CLUSTER_IDS_NOT_VALID),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Cluster IDs in collection are not compliant", #procedure)
@@ -147,12 +146,11 @@ VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	case false:
 		data_integrity_checks.File_Size.Severity = .LOW
 		Severity_Code = 0
-		error2 := new_err(
+		errorLocation:= get_caller_location()
+		error2 := utils.new_err(
 			.FILE_SIZE_TOO_LARGE,
 			get_err_msg(.FILE_SIZE_TOO_LARGE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error2)
 		log_err("File size is not compliant", #procedure)
@@ -162,12 +160,11 @@ VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	case false:
 		data_integrity_checks.File_Format.Severity = .HIGH
 		Severity_Code = 2
+		errorLocation:= get_caller_location()
 		error3 := new_err(
 			.FILE_FORMAT_NOT_VALID,
 			get_err_msg(.FILE_FORMAT_NOT_VALID),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error3)
 		log_err("Collection format is not compliant", #procedure)
@@ -177,12 +174,11 @@ VALIDATE_DATA_INTEGRITY :: proc(fn: string) -> (checkStatus: [dynamic]bool) {
 	case false:
 		data_integrity_checks.Checksum.Severity = .HIGH
 		Severity_Code = 2
+		errorLocation:= get_caller_location()
 		error4 := new_err(
 			.INVALID_CHECKSUM,
 			utils.get_err_msg(.INVALID_CHECKSUM),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error4)
 		log_err("Checksum is not compliant", #procedure)

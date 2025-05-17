@@ -234,15 +234,18 @@ CommandOperation :: struct {
 }
 
 CollectionType :: enum {
-	STANDARD_PUBLIC = 0, //Enc/Dec with users master key
-	SECURE_PRIVATE  = 1, //Enc/Dec with users master key even though its private
-	CONFIG_PRIVATE  = 2, //Enc/Dec with systems master key
-	HISTORY_PRIVATE = 3, //Enc/Dec with systems master key
-	ID_PRIVATE      = 4, //Enc/Dec with systems master key
-	ISOLATE_PUBLIC  = 5, //Enc/Dec with users master key
-	//Todo: Add backup, and benchmark
+    //All PUBLIC collections will be encrypted & decrypted with the USERS master key
+	STANDARD_PUBLIC = 0,
+	ISOLATED_PUBLIC  = 1,
+	BACKUP_PUBLIC = 2,
+	USER_CREDENTIALS_PRIVATE  = 3, //Encrypted & decrypted with the USERS master key even though its private
+	//The remaining PRIVATE collections will be encrypted & decrypted with the SYSYTEMS master key
+	USER_CONFIG_PRIVATE = 4,
+	USER_HISTORY_PRIVATE = 5,
+	SYSTEM_CONFIG_PRIVATE  = 6,
+	SYSTEM_ID_PRIVATE   = 7,
+	BENCHMARK_PRIVATE = 8
 }
-
 
 Record :: struct {
 	name:  string,
@@ -381,12 +384,14 @@ Message_Color: string //used in checks.odin
 Severity_Code: int //used in checks.odin
 
 
-Metadata_Header_Body := [5]string {
-	"# File Format Version: ",
-	"# Date of Creation: ",
-	"# Date Last Modified: ",
-	"# File Size: ",
-	"# Checksum: ",
+MetadataField :: enum {
+    ENCRYPTION_STATE = 0,
+    FILE_FORMAT_VERSION = 1,
+    PERMISSION = 2,
+    DATE_CREATION = 3,
+    DATE_MODIFIED = 4,
+    FILE_SIZE = 5,
+    CHECKSUM = 6,
 }
 
 //Server Stuff Below
@@ -394,12 +399,22 @@ Metadata_Header_Body := [5]string {
 //Server Stuff Below
 
 
-ServerConfig := types.Server_Config {
+OstrichServer := types.OstrichDB_Server {
 	port = 8042, //default
+	//session is set upon server startup
 }
 
-Server_Config :: struct {
+OstrichDB_Server :: struct {
 	port: int,
+	session: Server_Session
+}
+
+Server_Session :: struct {
+    Id:                 i64,
+    user:                     User,
+    start_timestamp:     time.Time,
+    end_timestamp:      time.Time,
+    total_runtime:          time.Duration
 }
 
 HttpStatusCode :: enum {
@@ -420,6 +435,14 @@ HttpMethod :: enum {
 	POST,
 	PUT,
 	DELETE,
+}
+
+methodString:=[HttpMethod]string{
+    .HEAD = "HEAD",
+    .GET = "GET",
+    .POST = "POST",
+    .PUT = "PUT",
+    .DELETE = "DELETE"
 }
 
 // m -  method p - path h - headers
@@ -455,12 +478,6 @@ HttpStatusText :: #sparse[HttpStatusCode]string {
 //BATCH OPERATION STUFF
 //BATCH OPERATION STUFF
 //BATCH OPERATION STUFF
-
-
-// OST_BATCH_OPERATION :: proc(batch: BatchRequest, params: [dynamic]string) -> int
-OST_BATCH_COLLECTION_PROC :: proc(names: []string, operation: BatchOperation) -> int //Used for batch operations on collections using the NEW/ERASE/FETCH tokens
-//used when multiple operations are to be performed
-
 BatchOperations :: enum {
 	//Rename is not uncluded because that token will require 2 inputs...ie the old name and new name. these only need 1
 	NEW   = 1,
@@ -498,6 +515,8 @@ Benchmark_Result :: struct {
 	success:        bool,
 }
 
+
+
 //Server logging stuff
 new_event: ServerEvent
 ServerEvent :: struct {
@@ -507,6 +526,7 @@ ServerEvent :: struct {
 	Timestamp:      time.Time,
 	isRequestEvent: bool,
 	Route:          Route,
+	methodAsStr: string, //the http method in the route is an enum, need string of this for other procs... - Marshall
 	StatusCode:     HttpStatusCode,
 }
 
@@ -517,3 +537,38 @@ ServerEventType :: enum {
 	ERROR          = 3,
 	CRITICAL_ERROR = 4,
 }
+
+
+//NLP RELATED TYPES
+AgentResponse :: struct {
+    OperationQueryResponse:        AgentOperationQueryResponse,
+	GeneralInformationQueryResponse: AgentGeneralInformationQueryResponse,
+}
+
+AgentOperationQueryResponse :: struct {
+    Command:               string     `json:"command"`,
+    HTTPRequestMethod:     string     `json:"http_request_method"`,
+    IsBatchRequest:        bool       `json:"is_batch_request"`,
+    BatchDataStructures:   []string   `json:"batch_data_structures"`,
+    TotalCollectionCount:  int        `json:"total_collection_count"`,
+    TotalClusterCount:     int        `json:"total_cluster_count"`,
+    TotalRecordCount:      int        `json:"total_record_count"`,
+    ClustersPerCollection: int        `json:"clusters_per_collection"`,
+    RecordsPerCluster:     int        `json:"records_per_cluster"`,
+    CollectionNames:       []string   `json:"collection_names"`,
+    ClusterNames:          []string   `json:"cluster_names"`,
+    RecordNames:           []string   `json:"record_names"`,
+    RecordTypes:           []string   `json:"record_types"`,
+    // Use string instead of any for records as the AI is
+    // prompted to output strings in the response.
+    // May need to be modified!
+    RecordValues:          [][]string `json:"record_values"`,
+}
+
+AgentGeneralInformationQueryResponse :: struct {
+  IsGeneralInformationQuery:       bool   `json:"general_ostrichdb_information_query_made"`,
+	GeneralInformationQueryResponse: string `json:"general_query_answer"`,
+}
+
+TempBuffer: []byte
+

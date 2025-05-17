@@ -21,21 +21,19 @@ File Description:
 *********************************************************/
 main :: proc() {
 	using data
-
-	CREATE_COLLECTION("", .CONFIG_PRIVATE)
+	CREATE_COLLECTION("", .SYSTEM_CONFIG_PRIVATE)
 	id := GENERATE_ID(true)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", id), 0)
-	CREATE_CLUSTER_BLOCK(const.CONFIG_PATH, id, const.CONFIG_CLUSTER)
-
-	appendSuccess := APPEND_ALL_CONFIG_RECORDS()
+	CREATE_CLUSTER_BLOCK(const.SYSTEM_CONFIG_PATH, id, const.SYSTEM_CONFIG_CLUSTER)
+	appendSuccess := APPEND_ALL_CONFIGS_TO_CONFIG_FILE(types.CollectionType.SYSTEM_CONFIG_PRIVATE)
 	if !appendSuccess {
-		utils.log_err("Failed to append all config records", #procedure)
-		fmt.println("ERROR: Failed to append all config records")
+		utils.log_err("Failed to append system configs", #procedure)
+		fmt.println("ERROR: Failed to append system configs")
 		fmt.println("Please rebuild OstrichDB")
 	}
 }
 
-CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
+CHECK_IF_SYSTEM_CONFIG_FILE_EXISTS :: proc() -> bool {
 	using utils
 	configExists: bool
 	binDir, e := os.open(const.PRIVATE_PATH)
@@ -44,29 +42,41 @@ CHECK_IF_CONFIG_FILE_EXISTS :: proc() -> bool {
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)
 
 	if readDirSuccess != 0 {
-		error1 := new_err(.CANNOT_READ_DIRECTORY, get_err_msg(.CANNOT_READ_DIRECTORY), #file,
-		#procedure,
-		#line,)
+	errorLocation:= get_caller_location()
+		error1 := new_err(.CANNOT_READ_DIRECTORY, get_err_msg(.CANNOT_READ_DIRECTORY),
+		errorLocation)
 		log_err("Error reading directory", #procedure)
 	}
 	for file in foundFiles {
-		if file.name == "config.ostrichdb" {
+		if file.name == "ostrich.config.ostrichdb" {
 			configExists = true
 		}
 	}
 	return configExists
 }
 
-//used to first append config records to the config cluster when the config file is created
+//used to first append config records to the system config cluster when the `ostrich.config.ostrichdb` file is created
 //essentially the same as data.APPEND_RECORD_TO_CLUSTER but explicitly for the config collection file and no print statements.
-APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
+//Args for the fn param are only passed if we are appending to a specific users config file
+APPEND_CONFIG_RECORD :: proc(configFileType: types.CollectionType, rn, rd, rType: string, fn: ..string) -> int {
 	using const
 	using utils
 
-	fn := CONFIG_PATH
-	cn := CONFIG_CLUSTER
+	path, clusterName:string
 
-	data, readSuccess := utils.read_file(fn, #procedure)
+
+	#partial switch(configFileType){
+	case .SYSTEM_CONFIG_PRIVATE:
+	    path = SYSTEM_CONFIG_PATH
+		clusterName=SYSTEM_CONFIG_CLUSTER
+	    break
+	case .USER_CONFIG_PRIVATE:
+	    path =  concat_user_config_collection_name(fn[0])
+		clusterName = concat_user_config_cluster_name(fn[0])
+	    break
+	}
+
+	data, readSuccess := utils.read_file(path, #procedure)
 	defer delete(data)
 	if !readSuccess {
 		return -1
@@ -80,8 +90,8 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	closingBrace := -1
 
 	for i := 0; i < len(lines); i += 1 {
-		if strings.contains(lines[i], cn) {
 			clusterStart = i
+		if strings.contains(lines[i], clusterName) {
 		}
 		if clusterStart != -1 && strings.contains(lines[i], "}") {
 			closingBrace = i
@@ -91,12 +101,11 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 
 	//if the cluster is not found or the structure is invalid, return
 	if clusterStart == -1 || closingBrace == -1 {
+	errorLocation:= get_caller_location()
 		error2 := new_err(
 			.CANNOT_FIND_CLUSTER,
 			get_err_msg(.CANNOT_FIND_CLUSTER),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error2)
 		log_err("Unable to find cluster/valid structure", #procedure)
@@ -108,6 +117,8 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 
 	// Insert the new line and adjust the closing brace
 	newLines := make([dynamic]string, len(lines) + 1)
+	defer delete(newLines)
+
 	copy(newLines[:closingBrace], lines[:closingBrace])
 	newLines[closingBrace] = newLine
 	newLines[closingBrace + 1] = "},"
@@ -116,76 +127,103 @@ APPEND_CONFIG_RECORD :: proc(rn: string, rd: string, rType: string) -> int {
 	}
 
 	newContent := strings.join(newLines[:], "\n")
-	writeSuccess := utils.write_to_file(fn, transmute([]byte)newContent, #procedure)
+	writeSuccess := utils.write_to_file(path, transmute([]byte)newContent, #procedure)
 	if !writeSuccess {
 		return -1
 	}
 	return 0
 }
 
-
-APPEND_ALL_CONFIG_RECORDS :: proc() -> bool {
+//Uses the above proc to append ALL necassary record to either the users personal config file or the sytems config file
+//Args for fn are only needed if its being called for a users personal config file
+APPEND_ALL_CONFIGS_TO_CONFIG_FILE :: proc(configFileType:types.CollectionType, fn: ..string) -> bool {
 	using const
 	using utils
 	using types
 
-	bool := Token[.BOOLEAN]
-
 	successCount := 0
-	// Append all the records to the config cluster
-	if APPEND_CONFIG_RECORD(ENGINE_INIT, "false", bool) == 0 {
-		successCount += 1
-	}
-	if APPEND_CONFIG_RECORD(ENGINE_LOGGING, "false", bool) == 0 {
-		successCount += 1
-	}
-	if APPEND_CONFIG_RECORD(USER_LOGGED_IN, "false", bool) == 0 {
-		successCount += 1
-	}
-	if APPEND_CONFIG_RECORD(HELP_IS_VERBOSE, "false", bool) == 0 {
-		successCount += 1
-	}
-	if APPEND_CONFIG_RECORD(AUTO_SERVE, "true", bool) == 0 { 	//server mode on by default while working on it
-		successCount += 1
-	}
-	if APPEND_CONFIG_RECORD(ERROR_SUPPRESSION, "false", bool) == 0 {
-		successCount += 1
-	}
-	if APPEND_CONFIG_RECORD(LIMIT_HISTORY, "true", bool) == 0 {
-		successCount += 1
-	}
 
-	metadata.UPDATE_METADATA_UPON_CREATION(CONFIG_PATH)
+	#partial switch(configFileType){
+	    case .SYSTEM_CONFIG_PRIVATE:
+			if APPEND_CONFIG_RECORD(configFileType, ENGINE_INIT, "false", Token[.BOOLEAN]) == 0 {
+				successCount += 1
+			}
+			if APPEND_CONFIG_RECORD(configFileType, ENGINE_LOGGING, "false", Token[.BOOLEAN]) == 0 {
+				successCount += 1
+			}
+			if APPEND_CONFIG_RECORD(configFileType, USER_LOGGED_IN, "false", Token[.BOOLEAN]) == 0 {
+				successCount += 1
+			}
 
-	if successCount != 7 {
-		return false
+			metadata.INIT_METADATA_IN_NEW_COLLECTION(SYSTEM_CONFIG_PATH)
+			if successCount == 3 {
+				return true
+			}else{
+			    break
+			}
+		case .USER_CONFIG_PRIVATE:
+		    if APPEND_CONFIG_RECORD(configFileType,HELP_IS_VERBOSE, "false", Token[.BOOLEAN], fn[0]) == 0 {
+		    successCount += 1
+		    }
+		    if APPEND_CONFIG_RECORD(configFileType,AUTO_SERVE, "false", Token[.BOOLEAN],fn[0]) == 0 { 	//server mode off by default
+		    successCount += 1
+		    }
+		    if APPEND_CONFIG_RECORD(configFileType,SUPPRESS_ERRORS, "false", Token[.BOOLEAN],fn[0]) == 0 {
+		    successCount += 1
+		    }
+		    if APPEND_CONFIG_RECORD(configFileType,LIMIT_HISTORY, "true", Token[.BOOLEAN],fn[0]) == 0 {
+		    successCount += 1
+		    }
+		    if APPEND_CONFIG_RECORD(configFileType,LIMIT_SESSION_TIME, "true", Token[.BOOLEAN],fn[0]) == 0{ //CLI session time limit is on by defualt
+		    successCount += 1
+		    }
+			metadata.INIT_METADATA_IN_NEW_COLLECTION(concat_user_config_collection_name(fn[0]))
+			if successCount == 5 {
+				return true
+			}else{
+			    break
+			}
 	}
-	return true
+	return false
 }
 
 
 //used to update a config value when a user uses the SET command
 //essentially the same as the data.SET_RECORD_VALUE proc but explicitly for the config collection file.
-UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
+UPDATE_CONFIG_VALUE :: proc(configFileType: types.CollectionType, rn, rValue: string, fn:..string) -> bool {
 	using const
 	using utils
 	using types
 
-	result := data.CHECK_IF_SPECIFIC_RECORD_EXISTS(CONFIG_PATH, CONFIG_CLUSTER, rn)
+	path, clusterName:string
+
+
+	#partial switch(configFileType){
+	    case .SYSTEM_CONFIG_PRIVATE:
+			path = const.SYSTEM_CONFIG_PATH
+			clusterName =  SYSTEM_CONFIG_CLUSTER
+			break
+		case .USER_CONFIG_PRIVATE:
+		    path = concat_user_config_collection_name(fn[0])
+			clusterName =concat_user_config_cluster_name(fn[0])
+		    break
+	}
+
+	result := data.CHECK_IF_SPECIFIC_RECORD_EXISTS(path, clusterName, rn)
 	if !result {
 		fmt.printfln("Config: %s%s% does not exist", BOLD_UNDERLINE, rn, RESET)
 		return false
 	}
 
 	// Read the collection file
-	res, readSuccess := read_file(CONFIG_PATH, #procedure)
+	res, readSuccess := read_file(path, #procedure)
 	defer delete(res)
 	if !readSuccess {
 		fmt.printfln("Failed to read config file")
 		return false
 	}
 
-	recordType, getTypeSuccess := data.GET_RECORD_TYPE(CONFIG_PATH, CONFIG_CLUSTER, rn)
+	recordType, getTypeSuccess := data.GET_RECORD_TYPE(path, clusterName, rn)
 	//Standard value allocation
 	valueAny: any = 0
 	ok: bool
@@ -194,19 +232,14 @@ UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	case Token[.BOOLEAN]:
 		valueAny, ok = data.CONVERT_RECORD_TO_BOOL(rValue)
 		break
-	case Token[.STRING]:
-		valueAny = rValue
-		ok = true
-		break
 	}
 
 	if ok != true {
+	errorLocation:= get_caller_location()
 		valueTypeError := new_err(
 			.INVALID_VALUE_FOR_EXPECTED_TYPE,
 			get_err_msg(.INVALID_VALUE_FOR_EXPECTED_TYPE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_custom_err(
 			valueTypeError,
@@ -223,7 +256,7 @@ UPDATE_CONFIG_VALUE :: proc(rn, rValue: string) -> bool {
 	}
 
 	// Update the record in the file
-	success := data.UPDATE_RECORD(CONFIG_PATH, CONFIG_CLUSTER, rn, valueAny)
+	success := data.UPDATE_RECORD(path, clusterName, rn, valueAny)
 
 	return success
 }

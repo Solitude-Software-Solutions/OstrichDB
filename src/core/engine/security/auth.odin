@@ -31,39 +31,58 @@ RUN_USER_SIGNIN :: proc() -> bool {
 
 	//get the username input from the user
 	fmt.printfln("Please enter your %susername%s:", BOLD, RESET)
-	n := get_input(false)
+	userNameInput := get_input(false)
+	defer delete(userNameInput)
 
-	userName := n
-	if len(userName) == 0 {
+	userNameInput = strings.to_upper(userNameInput)
+	if len(userNameInput) == 0 {
 		fmt.printfln("Username cannot be empty. Please try again.")
 		log_err("User did not provide a username during authentication", #procedure)
 		log_runtime_event("Blank username", "User did not provide a username duing authentication")
 		return false
 	}
-	usernameCapitalized := strings.to_upper(userName)
-	secCollectionFound, userSecCollection := data.FIND_SECURE_COLLECTION(usernameCapitalized)
-	if secCollectionFound == false {
-		fmt.println(
-			"There is no account within OstrichDB associated with the entered username. Please try again.",
-		)
+
+
+	//Check that a profile with the entered username exists
+	profileFound:= FIND_USERS_PROFILE(userNameInput)
+	if !profileFound{
+	    fmt.println(
+		"There is no account within OstrichDB associated with the entered username. Please try again.",)
 		log_runtime_event(
-			"Invalid username provided",
-			"Invalid username entered during authentication",
-		)
+		"Invalid username provided",
+		"Invalid username entered during authentication",)
 		log_err("User entered a username that does not exist in the database", #procedure)
-		return false
+	    return false
 	}
 
-	secCollection := utils.concat_secure_collection_name(usernameCapitalized)
+	// Check that there is a user.credentials.ostrichdb file within it
+	coreFileFound:= FIND_USERS_CORE_FILE(userNameInput,0)
+	if !coreFileFound{
+	    fmt.printfln(
+		"A profile with the name %s was found but was missing a core file neccassary to authorize.",userNameInput)
+		log_runtime_event(
+		"Missing user.credential.ostrichdb core file",
+		"Valid username but was missing user.credential.ostrichdb core file")
+		log_err("User entered a valid username but OstrichDB could not find that users user.credential.ostrichdb file ", #procedure)
+	    return false
+	}
 
-	//decrypt the user secure collection
-	decSuccess, _ := DECRYPT_COLLECTION(
-		usernameCapitalized,
-		.SECURE_PRIVATE,
-		types.system_user.m_k.valAsBytes,
-	)
+	usersCredentialFile := utils.concat_user_credential_path(userNameInput)
 
-	userRole := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "role")
+	// Decrypt and read that file to ensure there is a cluster with the entered userName
+	TRY_TO_DECRYPT(userNameInput, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+    usersClusterExists := data.CHECK_IF_CLUSTER_EXISTS(usersCredentialFile, userNameInput )
+    if !usersClusterExists{
+        fmt.printfln(
+		"An important cluster within a core file was not found. OstrichDB could not authroize you...",)
+		log_runtime_event(
+		"Cluster not found in user.credential.ostrichdb core file",
+		"",)
+		log_err("Cluster not found in user.credential.ostrichdb core file", #procedure)
+	    return false
+    }
+
+	userRole := data.GET_RECORD_VALUE(usersCredentialFile, userNameInput, "identifier", "role")
 	if userRole == "admin" {
 		user.role.Value = "admin"
 	} else if userRole == "user" {
@@ -72,39 +91,46 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		user.role.Value = "guest"
 	}
 
-	//Voodoo??
-	userMKStr := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "m_k")
+
+	//Master Key shit
+	userMKStr := data.GET_RECORD_VALUE(usersCredentialFile, userNameInput, "identifier", "m_k")
 	user.m_k.valAsBytes = DECODE_MASTER_KEY(transmute([]byte)userMKStr)
-	user.username.Value = strings.clone(usernameCapitalized)
+	user.username.Value = strings.clone(userNameInput)
+	current_user.m_k.valAsStr = user.m_k.valAsStr
+	current_user.m_k.valAsBytes = user.m_k.valAsBytes
+
+
 
 	//PRE-MESHING START=======================================================================================================
 	//get the salt from the cluster that contains the entered username
-	salt := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "salt")
+	salt := data.GET_RECORD_VALUE(usersCredentialFile, userNameInput, "identifier", "salt")
 
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
-	providedHash := data.GET_RECORD_VALUE(secCollection, usernameCapitalized, "identifier", "hash")
+	providedHash := data.GET_RECORD_VALUE(usersCredentialFile, userNameInput, "identifier", "hash")
 	pHashAsBytes := transmute([]u8)providedHash
 
 
 	preMesh := MESH_SALT_AND_HASH(salt, pHashAsBytes)
 	//PRE-MESHING END=========================================================================================================
 	algoMethod := data.GET_RECORD_VALUE(
-		secCollection,
-		usernameCapitalized,
+		usersCredentialFile,
+		userNameInput,
 		"identifier",
 		"store_method",
 	)
 	//POST-MESHING START=======================================================================================================
-
-	//get the password input from the user
+	//After storing values into the sessions memory, re-encrypt the user.credentials.ostrichdb file
+	ENCRYPT_COLLECTION(userNameInput, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+		//get the password input from the user
 	fmt.printfln("Please enter your %spassword%s:", BOLD, RESET)
 	libc.system("stty -echo")
-	n = get_input(true)
+	passwordInput := get_input(true)
+	defer delete(passwordInput)
 
-	enteredPassword := n
+	//Hide input
 	libc.system("stty echo")
 
-	if len(enteredPassword) == 0 {
+	if len(passwordInput) == 0 {
 		fmt.printfln("Password cannot be empty. Please try again.")
 		log_err("User did not provide a password during authentication", #procedure)
 		log_runtime_event(
@@ -114,11 +140,11 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		return false
 	}
 
-	//conver the return algo method string to an int
+	//convert the return algo method string to an int
 	algoAsInt := strconv.atoi(algoMethod)
 
 	//using the hasing algo from the cluster that contains the entered username, hash the entered password
-	newHash := HASH_PASSWORD(enteredPassword, algoAsInt, true, false)
+	newHash := HASH_PASSWORD(passwordInput , algoAsInt, true, false)
 	encodedHash := ENCODE_HASHED_PASSWORD(newHash)
 	postMesh := MESH_SALT_AND_HASH(salt, encodedHash)
 	//POST-MESHING END=========================================================================================================
@@ -126,36 +152,22 @@ RUN_USER_SIGNIN :: proc() -> bool {
 	switch authPassed {
 	case true:
 		fmt.printfln("\n\n%sSucessfully signed in!%s", GREEN, RESET)
-		fmt.printfln("Welcome, %s%s%s!\n", BOLD_UNDERLINE, usernameCapitalized, RESET)
+		fmt.printfln("Welcome, %s%s%s!\n", BOLD_UNDERLINE, userNameInput, RESET)
 		USER_SIGNIN_STATUS = true
-		current_user.username.Value = strings.clone(usernameCapitalized) //set the current user to the user that just signed in for HISTORY command reasons
+		current_user.username.Value = strings.clone(userNameInput) //set the current user to the user that just signed in for HISTORY command reasons
 		current_user.role.Value = strings.clone(userRole)
 
-
-		DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
+		//Look through the system config and set USER_LOGGED_IN val to true
+		TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 		userLoggedInValue := data.GET_RECORD_VALUE(
-			CONFIG_PATH,
-			CONFIG_CLUSTER,
+            SYSTEM_CONFIG_PATH,
+            SYSTEM_CONFIG_CLUSTER,
 			Token[.BOOLEAN],
 			USER_LOGGED_IN,
 		)
 
-		//Master Key shit
-		mkValueRead := data.GET_RECORD_VALUE(
-			secCollection,
-			usernameCapitalized,
-			"identifier",
-			"m_k",
-		)
-
-		// mkValueAsBytes := security.OST_M_K_STIRNG_TO_BYTE(mkValueRead)
-		current_user.m_k.valAsStr = user.m_k.valAsStr
-		current_user.m_k.valAsBytes = user.m_k.valAsBytes
-
-
 		if userLoggedInValue == "false" {
-			// config.OST_TOGGLE_CONFIG(const.USER_LOGGED_IN)
-			config.UPDATE_CONFIG_VALUE(const.USER_LOGGED_IN, "true")
+			config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, USER_LOGGED_IN, "true")
 		}
 		break
 	case false:
@@ -169,14 +181,8 @@ RUN_USER_SIGNIN :: proc() -> bool {
 		RUN_USER_SIGNIN()
 
 	}
-	ENCRYPT_COLLECTION(
-		usernameCapitalized,
-		.SECURE_PRIVATE,
-		types.system_user.m_k.valAsBytes,
-		false,
-	)
-	return USER_SIGNIN_STATUS
 
+	return USER_SIGNIN_STATUS
 }
 
 //meshes the salt and hashed password , returns the mesh
@@ -202,8 +208,13 @@ CROSS_CHECK_MESH :: proc(preMesh: string, postMesh: string) -> bool {
 //Handles logic for signing out a user and exiting the program
 //param - 0 for logging out and staying in the program, 1 for logging out and exiting the program
 RUN_USER_LOGOUT :: proc(param: int) {
-	security.DECRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes)
-	loggedOut := config.UPDATE_CONFIG_VALUE(const.USER_LOGGED_IN, "false")
+    using security
+    using const
+    using types
+
+    systemUserMK := system_user.m_k.valAsBytes
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE,systemUserMK )
+	loggedOut := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, const.USER_LOGGED_IN, "false")
 
 	switch loggedOut {
 	case true:
@@ -211,19 +222,19 @@ RUN_USER_LOGOUT :: proc(param: int) {
 		{
 		case 0:
 			//Logging out but keeps program running
-			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 			types.USER_SIGNIN_STATUS = false
 			fmt.printfln("You have been logged out.")
 		case 1:
 			//Exiting
-			ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+			ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 			fmt.printfln("You have been logged out.")
 			fmt.println("Now Exiting OstrichDB See you soon!\n")
 			os.exit(0)
 		}
 		break
 	case false:
-		ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, types.system_user.m_k.valAsBytes, false)
+		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, systemUserMK)
 		types.USER_SIGNIN_STATUS = true
 		fmt.printfln("You have NOT been logged out.")
 		break
@@ -233,15 +244,18 @@ RUN_USER_LOGOUT :: proc(param: int) {
 
 //shorter version of sign in but exclusively for checking passwords for certain db actions
 VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
-	succesfulValidation := false
-	secCollection := utils.concat_secure_collection_name(types.user.username.Value)
+	using types
+    succesfulValidation := false
+	username := user.username.Value
+
+	secCollection := utils.concat_user_credential_path(username)
 
 	//PRE-MESHING START
-	salt := data.GET_RECORD_VALUE(secCollection, types.user.username.Value, "identifier", "salt")
+	salt := data.GET_RECORD_VALUE(secCollection, username, "identifier", "salt")
 	//get the value of the hash that is currently stored in the cluster that contains the entered username
 	providedHash := data.GET_RECORD_VALUE(
 		secCollection,
-		types.user.username.Value,
+		username,
 		"identifier",
 		"hash",
 	)
@@ -252,7 +266,7 @@ VALIDATE_USER_PASSWORD :: proc(input: string) -> bool {
 
 	algoMethod := data.GET_RECORD_VALUE(
 		secCollection,
-		types.user.username.Value,
+		username,
 		"identifier",
 		"store_method",
 	)
