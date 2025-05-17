@@ -643,14 +643,14 @@ B_CREATE_COLLECTION :: proc(fn: string) -> int {
 
 	createFile, createSuccess := os.open(file, os.O_CREATE, 0o666)
 	defer os.close(createFile)
-	mDataAppended := metadata.APPEND_METADATA_HEADER(file)
+	mDataAppended := metadata.APPEND_METADATA_HEADER_TO_COLLECTION(file)
 	if !mDataAppended {
 		return -1
 	}
 	if createSuccess != 0 {
 		return -2
 	} else {
-		metadata.UPDATE_METADATA_UPON_CREATION(file)
+		metadata.INIT_METADATA_IN_NEW_COLLECTION(file)
 	}
 	return 0
 }
@@ -1163,7 +1163,7 @@ refresh_metadata :: proc(fn: string) {
 	using metadata
 
 	file := concat_benchmark_collection(fn)
-	UPDATE_METADATA_AFTER_OPERATIONS(file)
+	UPDATE_METADATA_FIELD_AFTER_OPERATION(file)
 }
 
 show_benchmark_result :: proc(suite: string, res: types.Benchmark_Result) {

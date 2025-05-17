@@ -15,7 +15,7 @@ File Description:
 
 //Create a new router
 CREATE_NEW_ROUTER :: proc() -> ^types.Router {
-	router := new(types.Router)
+	router := new(types.Router) //Memeory gets free in parent calling procedure
 	router.routes = make([dynamic]types.Route)
 
 	return router
@@ -53,18 +53,25 @@ HANDLE_HTTP_REQUEST :: proc(
 	validMethod: types.HttpMethod
 
 	for route in router.routes {
-		//First match the method
-		if strings.contains(method, "GET") {
-			validMethod = .GET
-		} else if strings.contains(method, "POST") {
-			validMethod = .POST
-		} else if strings.contains(method, "PUT") {
-			validMethod = .PUT
-		} else if strings.contains(method, "DELETE") {
-			validMethod = .DELETE
-		} else if strings.contains(method, "HEAD") {
-			validMethod = .HEAD
-		}
+
+
+	switch(method){
+	case methodString[.HEAD]:
+	    validMethod = .HEAD
+		break
+	case methodString[.GET]:
+	    validMethod = .GET
+		break
+	case methodString[.POST]:
+	    validMethod = .POST
+		break
+	case methodString[.PUT]:
+	    validMethod = .PUT
+		break
+	case methodString[.DELETE]:
+	    validMethod = .DELETE
+		break
+	}
 
 		if route.m != validMethod {
 			continue

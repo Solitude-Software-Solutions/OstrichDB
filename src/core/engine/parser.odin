@@ -12,7 +12,7 @@ License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
 File Description:
-            Ah yes... the parser. Within you can find a poorlu written
+            Ah yes... the parser. Within you can find a poorly written
             state machine that parses the users input into a command.
             Commands are then returned to the caller in engine.odin,
             then executed.
@@ -25,28 +25,9 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 
 	// Check if the input contains command chaining
 	if strings.contains(input, "&&") {
-		// This is a chained command, but we'll only parse the first one
-		// The engine will handle executing the chain
-		cmd := Command {
-			l_token            = make([dynamic]string),
-			p_token            = make(map[string]string),
-			t_token            = "",
-			isChained         = true,
-			rawInput          = strings.clone(input),
-		}
-		
-		// Set the first command as the c_token
-		parts := strings.split(input, "&&")
-		if len(parts) > 0 {
-			firstCmd := strings.trim_space(parts[0])
-			firstTokens := strings.split(strings.trim_space(firstCmd), " ")
-			if len(firstTokens) > 0 {
-				cmd.c_token = convert_string_to_ostrichdb_token(firstTokens[0])
-			}
-		}
-		
-		return cmd
+		return parse_chained_command(input)
 	}
+
 
 	capitalInput := strings.to_upper(input)
 	tokens := strings.split(strings.trim_space(capitalInput), " ")
@@ -59,13 +40,19 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 		rawInput          = strings.clone(input),
 	}
 
+	ParserState :: enum {
+		ExpectingCommand = 0,
+		ExpectingParmeterToken,
+		ExpectingValue,
+	}
+
 	if len(tokens) == 0 {
 		return cmd
 	}
 
 	// Convert first token to TokenType
 	cmd.c_token = convert_string_to_ostrichdb_token(tokens[0])
-	state := 0 //state machine exclusively used for parameter token shit
+	state := ParserState.ExpectingCommand //state machine exclusively used for parameter token shit
 	currentParameterToken := "" //stores the current modifier such as TO
 	collectingString := false
 	stringValue := ""
@@ -83,8 +70,8 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 			continue
 		}
 		switch state {
-		case 0:
-			// Expecting target
+		case .ExpectingCommand:
+			// Expecting command token
 			#partial switch (cmd.c_token)
 			{
 			case TokenType.SET:
@@ -99,7 +86,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 						}
 					}
 				}
-				state = 1
+				state = .ExpectingParmeterToken
 				break
 			case TokenType.WHERE:
 				if token == Token[.CLUSTER] || token == Token[.RECORD] {
@@ -127,7 +114,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 					}
 					break
 				}
-				state = 1
+				state = .ExpectingParmeterToken
 				break
 			case TokenType.BENCHMARK:
 				if strings.contains(token, ".") {
@@ -148,13 +135,13 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 				} else {
 					append(&cmd.l_token, token)
 				}
-				state = 1
+				state = .ExpectingParmeterToken
 			}
-		case 1:
+		case .ExpectingParmeterToken:
 			// Expecting object or modifier
 			if check_if_param_token_is_valid(token) {
 				currentParameterToken = token
-				state = 2
+				state = .ExpectingValue
 			} else {
 				if strings.contains(token, ".") {
 					objTokensSepByDot := strings.split(strings.trim_space(token), ".")
@@ -165,7 +152,7 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 					append(&cmd.l_token, token)
 				}
 			}
-		case 2:
+		case .ExpectingValue:
 			stringValue = token
 			collectingString = true
 		}
@@ -200,6 +187,27 @@ PARSE_COMMAND :: proc(input: string) -> types.Command {
 	return cmd
 }
 
+//Helper proc for parsing chained commands, helps clean up the main parser proc above
+parse_chained_command :: proc(input: string) -> types.Command {
+    cmd := types.Command {
+        l_token = make([dynamic]string),
+        p_token = make(map[string]string),
+        t_token = "",
+        isChained = true,
+        rawInput = strings.clone(input),
+    }
+
+    parts := strings.split(input, "&&")
+    if len(parts) > 0 {
+        firstCmd := strings.trim_space(parts[0])
+        firstTokens := strings.split(strings.trim_space(firstCmd), " ")
+        if len(firstTokens) > 0 {
+            cmd.c_token = convert_string_to_ostrichdb_token(firstTokens[0])
+        }
+    }
+
+    return cmd
+}
 
 //checks if a token is a valid modifier only used in the parser
 check_if_param_token_is_valid :: proc(token: string) -> bool {

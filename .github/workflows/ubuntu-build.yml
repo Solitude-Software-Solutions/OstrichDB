@@ -11,6 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install cURL
+        run: |
+          sudo apt install curl
+
+
       - name: Install Go-lang
         run: |
           sudo apt install golang

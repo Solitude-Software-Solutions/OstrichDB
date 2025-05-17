@@ -31,13 +31,85 @@ SET_FFV :: proc() -> string {
 	return strings.clone(str)
 }
 
+//Creates the file format version file in the temp dir
+CREATE_FFV_FILE :: proc() {
+	using const
+	using utils
 
-//Gets the files size
-GET_FS :: proc(file: string) -> os.File_Info {
-	fileSize, _ := os.stat(file)
-	return fileSize
+	CURRENT_FFV := get_ost_version()
+	os.make_directory(const.TMP_PATH)
+
+	tmpPath := TMP_PATH
+	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF_PATH)
+
+	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
+	defer os.close(file)
+
+	if createSuccess != 0 {
+	errorLocation:= get_caller_location()
+		error1 := new_err(
+			.CANNOT_CREATE_FILE,
+			get_err_msg(.CANNOT_CREATE_FILE),
+			errorLocation
+		)
+		throw_custom_err(error1, "Cannot create file format version file")
+	}
+
+	//close then open the file again to write to it
+	os.close(file)
+
+	f, openSuccess := os.open(pathAndName, os.O_WRONLY, 0o666)
+	defer os.close(f)
+	ffvAsBytes := transmute([]u8)CURRENT_FFV
+	writter, ok := os.write(f, ffvAsBytes)
+	if ok != 0 {
+	errorLocation:= get_caller_location()
+		error1 := utils.new_err(
+			.CANNOT_WRITE_TO_FILE,
+			get_err_msg(.CANNOT_WRITE_TO_FILE),
+			errorLocation
+		)
+		throw_custom_err(error1, "Cannot write to file format version file")
+	}
 }
 
+//Gets the file format version from the file format version file
+GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
+	using const
+	using utils
+
+	FFVF := FFVF_PATH
+	tmpPath := TMP_PATH
+	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF)
+
+	ffvf, openSuccess := os.open(pathAndName)
+	if openSuccess != 0 {
+		log_err("Could not open file format version file", #procedure)
+	}
+	data, e := os.read_entire_file(ffvf)
+	if e == false {
+		log_err("Could not read file format version file", #procedure)
+		return nil
+	}
+	os.close(ffvf)
+	return data
+}
+
+//checks that the FFV tmp file matches the projects version file
+VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
+	FFV := string(GET_FILE_FORMAT_VERSION()) //this is from the .tmp file
+
+	if (strings.compare(FFV, string(utils.get_ost_version())) != 0) {
+		utils.log_err("File format version mismatch", #procedure)
+		return false
+	}
+	return true
+}
+
+GET_FILE_INFO :: proc(file: string) -> os.File_Info {
+	info, _ := os.stat(file)
+	return info
+}
 
 //this will get the size of the file and then subtract the size of the metadata header
 //then return the difference
@@ -117,22 +189,20 @@ GENERATE_CHECKSUM :: proc(fn: string) -> string {
 	return strings.clone(NoWhitespace)
 }
 
-
 //!Only used when to append the meta template upon .ostrichdb file creation NOT modification
 //this appends the metadata header to the file as well as sets the time of creation
-APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
+APPEND_METADATA_HEADER_TO_COLLECTION :: proc(fn: string) -> bool {
 	using const
 	using utils
 
 	rawData, readSuccess := os.read_entire_file(fn)
 	defer delete(rawData)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error readinding collection file", #procedure)
@@ -140,7 +210,7 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	}
 
 	dataAsStr := cast(string)rawData
-	if strings.has_prefix(dataAsStr, "@@@@@@@@@@@@@@@TOP@@@@@@@@@@@@@@@") {
+	if strings.has_prefix(dataAsStr, METADATA_START) {
 		log_err("Metadata header already present", #procedure)
 		return false
 	}
@@ -149,12 +219,11 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 	defer os.close(file)
 
 	if openSuccess != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_OPEN_FILE,
 			get_err_msg(.CANNOT_OPEN_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error opening collection file", #procedure)
@@ -165,12 +234,11 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 
 	writter, ok := os.write(file, blockAsBytes)
 	if ok != 0 {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_WRITE_TO_FILE,
 			get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		log_err("Error writing metadata header to collection file", #procedure)
@@ -180,19 +248,18 @@ APPEND_METADATA_HEADER :: proc(fn: string) -> bool {
 }
 
 
-//fn = file name, param = metadata value to update.
-//1 = File Format Version, 2 = Permission, 3 = Date of Creation, 4 = Date Last Modified, 5 = File Size, 6 = Checksum
-AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
+// Sets the passed in metadata field with an explicit value that is defined within this procedure
+// 0 = Encryption state, 1 = File Format Version, 2 = Permission, 3 = Date of Creation, 4 = Date Last Modified, 5 = File Size, 6 = Checksum
+ASSIGN_EXPLICIT_METADATA_VALUE :: proc(fn: string, field: types.MetadataField, value: string = "") {
 	using utils
 
 	data, readSuccess := os.read_entire_file(fn)
 	if !readSuccess {
+	errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
 		throw_err(error1)
 		return
@@ -205,36 +272,46 @@ AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 
 	//not doing anything with h,m,s yet but its there if needed
 	currentDate, h, m, s := utils.get_date_and_time() // sets the files date of creation(FDOC) or file date last modified(FDLM)
-	fileInfo := GET_FS(fn)
+	fileInfo := GET_FILE_INFO(fn)
 	fileSize := fileInfo.size
 
 	found := false
 	for line, i in lines {
-		switch param {
-		case 1:
+		switch field {
+		case .ENCRYPTION_STATE:
+			if strings.has_prefix(line, "# Encryption State:") {
+				if value != "" {
+					lines[i] = fmt.tprintf("# Encryption State: %s", value)
+				} else {
+					lines[i] = fmt.tprintf("# Encryption State: %d", 0 ) // Default to 0 if no value provided
+				}
+				found = true
+			}
+			break
+		case .FILE_FORMAT_VERSION:
 			if strings.has_prefix(line, "# File Format Version:") {
 				lines[i] = fmt.tprintf("# File Format Version: %s", SET_FFV())
 				found = true
 			}
 			break
-		case 2:
+		case .PERMISSION:
 			if strings.has_prefix(line, "# Permission:") {
 				lines[i] = fmt.tprintf("# Permission: %s", "Read-Write")
 				found = true
 			}
-		case 3:
+		case .DATE_CREATION:
 			if strings.has_prefix(line, "# Date of Creation:") {
 				lines[i] = fmt.tprintf("# Date of Creation: %s", currentDate)
 				found = true
 			}
 			break
-		case 4:
+		case .DATE_MODIFIED:
 			if strings.has_prefix(line, "# Date Last Modified:") {
 				lines[i] = fmt.tprintf("# Date Last Modified: %s", currentDate)
 				found = true
 			}
 			break
-		case 5:
+		case .FILE_SIZE:
 			if strings.has_prefix(line, "# File Size:") {
 				actualSize, _ := SUBTRACT_METADATA_SIZE(fn)
 				if actualSize != -1 {
@@ -245,7 +322,7 @@ AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 				}
 			}
 			break
-		case 6:
+		case .CHECKSUM:
 			if strings.has_prefix(line, "# Checksum:") {
 				lines[i] = fmt.tprintf("# Checksum: %s", GENERATE_CHECKSUM(fn))
 				found = true
@@ -257,7 +334,7 @@ AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	}
 
 	if !found {
-		fmt.printfln("Metadata field not found in file. Proc: %s", #procedure)
+		fmt.printfln("Metadata field %v not found in file: %s ", field ,fn)
 		return
 	}
 
@@ -265,178 +342,12 @@ AUTO_UPDATE_METADATA_VALUE :: proc(fn: string, param: int) {
 	writeSuccess := os.write_entire_file(fn, transmute([]byte)newContent)
 }
 
-//used when creating a new collection file whether public or not
-UPDATE_METADATA_UPON_CREATION :: proc(fn: string) {
-	AUTO_UPDATE_METADATA_VALUE(fn, 1)
-	AUTO_UPDATE_METADATA_VALUE(fn, 3)
-	AUTO_UPDATE_METADATA_VALUE(fn, 4)
-	AUTO_UPDATE_METADATA_VALUE(fn, 5)
-	AUTO_UPDATE_METADATA_VALUE(fn, 6)
-}
-
-
-//Creates the file format version file in the temp dir
-CREATE_FFV_FILE :: proc() {
-	using const
-	using utils
-
-	CURRENT_FFV := get_ost_version()
-	os.make_directory(const.TMP_PATH)
-
-	tmpPath := TMP_PATH
-	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF_PATH)
-
-	file, createSuccess := os.open(pathAndName, os.O_CREATE, 0o666)
-	defer os.close(file)
-
-	if createSuccess != 0 {
-		error1 := new_err(
-			.CANNOT_CREATE_FILE,
-			get_err_msg(.CANNOT_CREATE_FILE),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_custom_err(error1, "Cannot create file format version file")
-	}
-
-	//close then open the file again to write to it
-	os.close(file)
-
-	f, openSuccess := os.open(pathAndName, os.O_WRONLY, 0o666)
-	defer os.close(f)
-	ffvAsBytes := transmute([]u8)CURRENT_FFV
-	writter, ok := os.write(f, ffvAsBytes)
-	if ok != 0 {
-		error1 := utils.new_err(
-			.CANNOT_WRITE_TO_FILE,
-			get_err_msg(.CANNOT_WRITE_TO_FILE),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_custom_err(error1, "Cannot write to file format version file")
-	}
-}
-
-//Gets the file format version from the file format version file
-GET_FILE_FORMAT_VERSION :: proc() -> []u8 {
-	using const
-	using utils
-
-	FFVF := FFVF_PATH
-	tmpPath := TMP_PATH
-	pathAndName := fmt.tprintf("%s%s", tmpPath, FFVF)
-
-	ffvf, openSuccess := os.open(pathAndName)
-	if openSuccess != 0 {
-		log_err("Could not open file format version file", #procedure)
-	}
-	data, e := os.read_entire_file(ffvf)
-	if e == false {
-		log_err("Could not read file format version file", #procedure)
-		return nil
-	}
-	os.close(ffvf)
-	return data
-}
-
-//looks over the metadata header in a collection file and verifies the formatting of it
-SCAN_METADATA_HEADER_FORMAT :: proc(fn: string) -> (scanSuccess: int, invalidHeaderFormat: bool) {
-	using const
-	using utils
-
-	file := concat_standard_collection_name(fn)
-
-	data, readSuccess := read_file(file, #procedure)
-	if !readSuccess {
-		return -1, true
-	}
-
-	content := string(data)
-	lines := strings.split(content, "\n")
-	defer delete(lines)
-
-	// Check if the metadata header is present
-	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
-		utils.log_err("Missing metadata start marker", #procedure)
-		return -2, true
-	}
-
-	// Find the end of metadata section
-	metadataEndIndex := -1
-	for i in 0 ..< len(lines) {
-		if strings.has_prefix(lines[i], "@@@@@@@@@@@@@@@BTM") {
-			metadataEndIndex = i
-			break
-		}
-	}
-
-	if metadataEndIndex == -1 {
-		log_err("Missing metadata end marker", #procedure)
-		return -3, true
-	}
-
-	// Verify the header has the correct number of lines
-	expectedLines := 7 // 5 metadata fields + start and end markers
-	if metadataEndIndex != expectedLines - 1 {
-		log_err("Invalid metadata header length", #procedure)
-		return 4, true
-	}
-
-	// Check each metadata field
-	for i in 1 ..< 5 {
-		if !strings.has_prefix(lines[i], types.Metadata_Header_Body[i - 1]) {
-			log_err(fmt.tprintf("Invalid metadata field format: %s", lines[i]), #procedure)
-			return -5, true
-		}
-	}
-
-	//checks if the file format verion file and the projects version file match
-	versionMatch := VALIDATE_FILE_FORMAT_VERSION()
-	if !versionMatch {
-		log_err("Invalid file format version being used", #procedure)
-		return -6, true
-	}
-
-	ffv_parts := strings.split(lines[1], ": ")
-	if len(ffv_parts) < 2 {
-		log_err("Invalid file format version line format", #procedure)
-		return -7, true
-	}
-	collectionVersionValue := ffv_parts[1]
-
-
-	//compares the collections to the version in the FFV tmp file. Due to alreay checking if the FFV and the project file
-	//match, now have to ensure the collection file matches as well.
-	FFV := GET_FILE_FORMAT_VERSION()
-	if strings.compare(collectionVersionValue, string(FFV)) != 0 {
-		log_err(
-			"File format version in collection file does not match the file format version",
-			#procedure,
-		)
-		return -8, true
-	}
-
-	return 0, false
-}
-
-//checks that the FFV tmp file matches the projects version file
-VALIDATE_FILE_FORMAT_VERSION :: proc() -> bool {
-	FFV := string(GET_FILE_FORMAT_VERSION()) //this is from the .tmp file
-
-	if (strings.compare(FFV, string(utils.get_ost_version())) != 0) {
-		utils.log_err("File format version mismatch", #procedure)
-		return false
-	}
-	return true
-}
 
 //returns the string value of the passed metadata field
 // colType: 1 = public(standard), 2 = history, 3 = config, 4 = ids
-GET_METADATA_MEMBER_VALUE :: proc(
+GET_METADATA_FIELD_VALUE :: proc(
 	fn, field: string,
-	colType: types.CollectionType,
+	colType: types.CollectionType, d: ..[]byte
 ) -> (
 	value: string,
 	err: int,
@@ -449,18 +360,27 @@ GET_METADATA_MEMBER_VALUE :: proc(
 	case .STANDARD_PUBLIC:
 		file = concat_standard_collection_name(fn)
 		break
-	case .CONFIG_PRIVATE:
-		file = CONFIG_PATH
+	case .USER_CONFIG_PRIVATE:
+	    file = concat_user_config_collection_name(fn)
+	case .SYSTEM_CONFIG_PRIVATE:
+		file = SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
-		file = HISTORY_PATH
+	case .USER_HISTORY_PRIVATE:
+		file = utils.concat_user_history_path(types.current_user.username.Value)
 		break
-	case .ID_PRIVATE:
+	case .SYSTEM_ID_PRIVATE:
 		file = ID_PATH
 		break
 	}
 
 	data, readSuccess := utils.read_file(file, #procedure)
+
+	if len(d) != 0{
+	    if len(d[0])> 0{ //if there is a passed in d(data) arg then data is equal to that
+            data= d[0]
+		}
+	}
+
 	if !readSuccess {
 		fmt.println("Error reading file: ", file)
 		utils.log_err("Error reading file", #procedure)
@@ -472,7 +392,6 @@ GET_METADATA_MEMBER_VALUE :: proc(
 	lines := strings.split(content, "\n")
 	defer delete(lines)
 
-	// fmt.println("lines: ", lines)
 	// Check if the metadata header is present
 	if !strings.has_prefix(lines[0], "@@@@@@@@@@@@@@@TOP") {
 		log_err("Missing metadata start marker", #procedure)
@@ -494,7 +413,7 @@ GET_METADATA_MEMBER_VALUE :: proc(
 	}
 
 	// Verify the header has the correct number of lines
-	expectedLines := 8 // 6 metadata fields + start and end markers
+	expectedLines := 9 // 7 metadata fields + start and end markers
 	if metadataEndIndex != expectedLines - 1 {
 		log_err("Invalid metadata header length", #procedure)
 		return "", -3
@@ -512,15 +431,8 @@ GET_METADATA_MEMBER_VALUE :: proc(
 }
 
 
-//Similar to the UPDATE_METADATA_VALUE but updates a value wiht the passed in param
-//member is the metadata field to update
-//For now , only used for the "Permission" field, may add more in the future - Marshall
-// 0 - public, 1 - secure, 2 - config, 3 - history, 4 - id
-CHANGE_METADATA_MEMBER_VALUE :: proc(
-	fn, newValue: string,
-	member: int,
-	colType: types.CollectionType,
-) -> bool {
+//Similar to the ASSIGN_EXPLICIT_METADATA_VALUE  but updates a fields value the passed in newValue
+UPDATE_METADATA_MEMBER_VALUE :: proc(fn, newValue: string,field: types.MetadataField,colType: types.CollectionType, username:..string) -> bool {
 	using utils
 	using const
 
@@ -530,16 +442,22 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 	case .STANDARD_PUBLIC:
 		file = concat_standard_collection_name(fn)
 		break
-	case .SECURE_PRIVATE:
-		file = fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, fn, OST_EXT)
+	case .USER_CONFIG_PRIVATE:
+	    file = concat_user_config_collection_name(fn)
+	case .USER_CREDENTIALS_PRIVATE:
+		file = utils.concat_user_credential_path(fn)
 		break
-	case .CONFIG_PRIVATE:
-		file = CONFIG_PATH
+	case .SYSTEM_CONFIG_PRIVATE:
+		file = SYSTEM_CONFIG_PATH
 		break
-	case .HISTORY_PRIVATE:
-		file = HISTORY_PATH
-		break
-	case .ID_PRIVATE:
+	case .USER_HISTORY_PRIVATE:
+	if len(types.current_user.username.Value) == 0 && len(types.user.username.Value) != 0  {
+		file = utils.concat_user_history_path(types.user.username.Value)
+	}else{
+	    file = utils.concat_user_history_path(types.current_user.username.Value)
+	}
+	break
+	case .SYSTEM_ID_PRIVATE:
 		file = ID_PATH
 		break
 	//TODO: add case for benchmark collection
@@ -548,14 +466,13 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 
 	data, readSuccess := os.read_entire_file(file)
 	if !readSuccess {
-		fmt.printfln("Error reading file: %s", file)
+		errorLocation:= get_caller_location()
 		error1 := new_err(
 			.CANNOT_READ_FILE,
 			get_err_msg(.CANNOT_READ_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation
 		)
+		fmt.println("Cannot read file: ", file)
 		throw_err(error1)
 		return false
 	}
@@ -568,8 +485,14 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 
 	fieldFound := false
 	for line, i in lines {
-		switch member {
-		case 1:
+		#partial switch(field) {
+		case .ENCRYPTION_STATE:
+		if strings.has_prefix(line, "# Encryption State:") {
+			lines[i] = fmt.tprintf("# Encryption State: %s", newValue)
+			fieldFound = true
+		break
+		}
+		case .PERMISSION:
 			if strings.has_prefix(line, "# Permission:") {
 				lines[i] = fmt.tprintf("# Permission: %s", newValue)
 				fieldFound = true
@@ -592,10 +515,21 @@ CHANGE_METADATA_MEMBER_VALUE :: proc(
 }
 
 
+//Assigns all neccesary metadata field values after a collection has been made
+INIT_METADATA_IN_NEW_COLLECTION :: proc(fn: string) {
+    ASSIGN_EXPLICIT_METADATA_VALUE(fn, .ENCRYPTION_STATE)
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .FILE_FORMAT_VERSION)
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .DATE_CREATION)
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .DATE_MODIFIED)
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .FILE_SIZE)
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .CHECKSUM)
+}
+
+
 //Used after most operations on a collection file to update the metadata fields
-UPDATE_METADATA_AFTER_OPERATIONS :: proc(fn: string) {
-	AUTO_UPDATE_METADATA_VALUE(fn, 3) //updates the last time modified
-	AUTO_UPDATE_METADATA_VALUE(fn, 4) //updates the file format version
-	AUTO_UPDATE_METADATA_VALUE(fn, 5) //updates file size
-	AUTO_UPDATE_METADATA_VALUE(fn, 6) //updates the checksum
+UPDATE_METADATA_FIELD_AFTER_OPERATION :: proc(fn: string) {
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .DATE_MODIFIED)
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .FILE_FORMAT_VERSION)
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .FILE_SIZE)
+	ASSIGN_EXPLICIT_METADATA_VALUE(fn, .CHECKSUM)
 }

@@ -1,13 +1,12 @@
 # **OstrichDB**
 
-OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin programming language. It can be run serverless from the command line or deployed in server mode, offering flexibility for different use cases. With a focus on simplicity and straightforward setup, OstrichDB provides an intuitive command structure for managing data using both single and multi-token commands.
+OstrichDB is a lightweight document-based NoSQL/NoJSON database management system written in Odin. It features an intuitive command structure with hierarchical data organization and built-in security, making it ideal for developers seeking a easy-to-use, flexible, high-performance database solution.
 
 
 ---
 
 ## **Key Features**
 
-- Natural Language Processing for fast queries and data retrieval
 - Three Modes of Operation:
   - Serverless Command-line Interface
   - Server Mode with HTTP API
@@ -17,7 +16,7 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 - Database permissions
 - Database encryption & decryption
 - Custom JSON-like Hierarchical Data Structure
-- .CSV file importing
+- .CSV & .JSON file importing
 - Dot Notation Syntax when using the serverless CLI
 - Command Chaining
 - Built-in benchmarking, configurations, and user command history
@@ -32,7 +31,6 @@ OstrichDB is a lightweight, document-based NoSQL DBMS written in the Odin progra
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
 
 #### **Special Cases:**
- - if you wish to use the OstrichDB Natural Language Processor you will need to have [Ollama](https://ollama.com/download) installed
  - If you are an "End User" and plan install OstrichDB on your machine you will need [curl](https://curl.se/) installed
 
 ### Installation For Contributors:
@@ -190,7 +188,7 @@ These operations allow you to perform more complex operations.
 - **`UNLOCK`**: Changes the access mode of a collection to the default Read-Write.
 - **`ENC`** : Encrypts a collection.
 - **`DEC`** : Decrypts a currently encrypted collection.  Use at own discretion.
-- **`IMPORT`**: Allows the user to import a .csv file into OstrichDB. This will create a new collection thay shares the name of the .csv file.
+- **`IMPORT`**: Allows the user to import a .csv or .json files into OstrichDB.
 ---
 
 ### **Parameters**
@@ -245,14 +243,11 @@ When setting a record value, you must specify the records data type by using the
 
 ## **Usage Examples**
    ```bash
-   # Create a new collection:
-   NEW staff
-   # Create a new cluster:
-   NEW staff.engineering
+
    # Create a new record:
-   NEW staff.engineering.team_one OF_TYPE []STRING
-   # Set a record value:
-   SET staff.engineers.team_one TO Alice,Bob,Charlie
+   # Note: If collection staff and cluster engineering do not exist
+   # Don't worry, that will be created all at once!
+   NEW staff.engineering.team_one OF_TYPE []STRING WITH "John","Ana","Wayne"
    # Fetch the record value:
    FETCH staff.engineers.team_one
    # Rename a cluster:
@@ -273,14 +268,16 @@ When setting a record value, you must specify the records data type by using the
 ---
 
 ## **Configs**
-OstrichDB has a configuration file that allows the user to customize the DBMS to their liking.
-- **`HELP_VERBOSE`**: Decide whether help information is simple or verbose. (Default is false)
-- **`ERROR_SUPPRESSION`**: show or hide error messages. (Default is false)
-- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) (Default is true)
+OstrichDB has a configuration file that allows the user to customize certain aspects of the DBMS to their liking.
 
+- **`HELP_IS_VERBOSE`**: Decide whether help information is simple or verbose. Default is `false`
+- **`SUPPRESS_ERRORS`**: Show or hide error messages. Default is `false`
+- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) Default is `true`
+- **`AUTO_SERVE`**: Determines if the built-in OstrichDB server automatically starts the moment the user logs in. Default is `true`
+- **`LIMIT_SESSION_TIME`**: Determines if the CLI session timer is enabled or disabled. If enabled a user can only be logged in for 24hrs. Default is `true`
 
 **Note: ALL configs must be set using the following command:**
-Values can only be `true` or `false`
+Config values can only be `true` or `false`
 
 ```
 SET CONFIG {CONFIG_NAME} TO {VALUE}
@@ -294,7 +291,6 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
   - `EXPORT`: Export data to various formats
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
-- Command chaining for even more complex operations
 - OstrichDB web application
 - Linux support
 - Windows support

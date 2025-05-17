@@ -27,29 +27,6 @@ File Description:
             user accounts.
 *********************************************************/
 
-//Generates the 'secure' directory for storing user credentials.
-GENERATE_SECURE_DIRECTORY :: proc() -> int {
-	using utils
-
-	//perform a check to see if the secure directory already exists to prevent errors and overwriting
-	_, err := os.stat(const.SECURE_COLLECTION_PATH)
-	if err == nil {
-		return 0
-	}
-	createDirSuccess := os.make_directory(const.SECURE_COLLECTION_PATH)
-	if createDirSuccess != 0 {
-		error1 := utils.new_err(
-			.CANNOT_CREATE_DIRECTORY,
-			get_err_msg(.CANNOT_CREATE_DIRECTORY),
-			#file,
-			#procedure,
-			#line,
-		)
-		throw_err(error1)
-		log_err("Error occured while attempting to generate new secure file", #procedure)
-	}
-	return 0
-}
 
 //Handle initial setup of the admin account on first run of the program
 HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
@@ -58,72 +35,38 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 	using const
 
 	buf: [256]byte
-	GENERATE_SECURE_DIRECTORY()
 	GENERATE_USER_ID()
 	fmt.printfln("Welcome to the OstrichDB Database Management System")
 	fmt.printfln("Before getting started please setup your admin account")
 	fmt.printfln("Please enter a username for the admin account")
 
-	inituserName := CREATE_NEW_USERNAME(true)
+	userName := CREATE_NEW_USERNAME()
 	fmt.printfln("Please enter a password for the admin account")
 	fmt.printf(
 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 	)
 	libc.system("stty -echo")
-	initpassword := CREATE_NEW_USER_PASSWORD(true)
-	saltAsString := string(user.salt.valAsBytes)
-	hashAsString := string(user.hashedPassword.valAsBytes)
+	CREATE_NEW_USER_PASSWORD()
+	salt := string(user.salt.valAsBytes)
+	hash := string(user.hashedPassword.valAsBytes)
+	storeMethod := fmt.tprintf("%d", user.store_method)
+	userID := data.GENERATE_ID(true) //for secure clustser, the cluster id is the user id
+	user.username.Value = userName
+	types.current_user.username.Value = userName
 
-	algoMethodAsString := fmt.tprintf("%d", user.store_method)
-	user.user_id = data.GENERATE_ID(true) //for secure clustser, the cluster id is the user id
-
-	CREATE_COLLECTION("", .HISTORY_PRIVATE)
-	//decrypt the id collection so that new cluster IDs can be added upon engine initialization
-	user.username.Value = inituserName
 	// //store the id to both clusters in the id collection
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
 
+	CREATE_NEW_USERS_PROFILE(userName, userID, salt, hash, storeMethod)
 
-	// //Create a cluster in the history collection that will hold this users command history
-	CREATE_CLUSTER_BLOCK(HISTORY_PATH, user.user_id, user.username.Value)
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	//update the engine init value in th system configs
+	engineInit := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, ENGINE_INIT, "true")
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(SYSTEM_CONFIG_PATH)
+	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 
-
-	//Create a secure collection for the user
-	inituserName = fmt.tprintf("secure_%s", inituserName)
-	CREATE_COLLECTION(inituserName, .SECURE_PRIVATE)
-	// GENERATE_MASTER_KEY returns a 32 byte master key that is hex encoded
-	mk := GENERATE_MASTER_KEY()
-	mkAsString := transmute(string)mk //dont worry about this
-	// user.m_k.valAsStr = mkAsString //dont worry about this
-
-	//this value is passed to my encryption and decryption functions. must be 32 bytes
-	user.m_k.valAsBytes = DECODE_MASTER_KEY(mk)
-
-	//Store all the user credentials within the secure collection
-	STORE_USER_CREDENTIALS(
-		inituserName,
-		user.username.Value,
-		user.user_id,
-		"user_name",
-		user.username.Value,
-	)
-	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "role", "admin")
-	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "salt", saltAsString)
-	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "hash", hashAsString)
-	STORE_USER_CREDENTIALS(
-		inituserName,
-		user.username.Value,
-		user.user_id,
-		"store_method",
-		algoMethodAsString,
-	)
-
-	STORE_USER_CREDENTIALS(inituserName, user.username.Value, user.user_id, "m_k", mkAsString)
-
-	engineInit := config.UPDATE_CONFIG_VALUE(ENGINE_INIT, "true")
-
-	switch (engineInit) 
+	switch (engineInit)
 	{
 	case true:
 		USER_SIGNIN_STATUS = true
@@ -132,18 +75,23 @@ HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
 		os.exit(1)
 	}
 
-	metadata.UPDATE_METADATA_UPON_CREATION(HISTORY_PATH)
-	metadata.UPDATE_METADATA_UPON_CREATION(ID_PATH)
-	metadata.UPDATE_METADATA_UPON_CREATION(CONFIG_PATH)
-	metadata.UPDATE_METADATA_UPON_CREATION(
-		fmt.tprintf("%s%s%s", SECURE_COLLECTION_PATH, inituserName, OST_EXT),
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(utils.concat_user_history_path(userName))
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(ID_PATH)
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(utils.concat_user_credential_path(userName))
+
+	//Create a cluster within the the users history collection
+	historyClusterID := data.GENERATE_ID(true)
+	res := CREATE_CLUSTER_BLOCK(
+		utils.concat_user_history_path(userName),
+		historyClusterID,
+		utils.concat_user_history_cluster_name(userName),
 	)
 
-	//Encrypt the the config, history, id, and new users secure collection
-	ENCRYPT_COLLECTION(user.username.Value, .SECURE_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION("", .CONFIG_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION("", .HISTORY_PRIVATE, system_user.m_k.valAsBytes, false)
-	ENCRYPT_COLLECTION("", .ID_PRIVATE, system_user.m_k.valAsBytes, false)
+	//Encrypt the the system id, user credentials,configs & history collections
+	ENCRYPT_COLLECTION(userName, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(userName, .USER_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(userName, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, system_user.m_k.valAsBytes)
 
 
 	fmt.println("Please re-launch OstrichDB...")
@@ -165,175 +113,152 @@ GENERATE_USER_ID :: proc() -> i64 {
 
 //Prompts user to select a username, ensures it not too long/short or taken, then returns the username
 //the isInitializing param will be false when if creating an account post engine initialization,
-CREATE_NEW_USERNAME :: proc(isInitializing: bool) -> string {
+CREATE_NEW_USERNAME :: proc() -> string {
 	using types
 	using utils
 
-	show_current_step("Set Up Username", "1", "3")
+	show_current_step("Set Up Username", "1", "4")
 	buf: [256]byte
 	input := utils.get_input(false)
 
-
-	if len(input) > 0 {
-		enteredStr := input
-
-		//trim the string of any whitespace or newline characters at the beginning and end
-		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
-
-		//At the first instance of a space in the username, warn then prompt again
-		for r in enteredStr {
-			if r == ' ' {
-				fmt.printfln(
-					"%sWARNING:%s The entered username: %s%s%s contains spaces. Please enter a username that does NOT contain spaces.\n",
-					utils.YELLOW,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					enteredStr,
-					utils.RESET,
-				)
-				CREATE_NEW_USERNAME(true)
-			}
-		}
-
-		// Ensure there are no invalid special characters in the username
-		for r in enteredStr {
-			if r == '!' ||
-			   r == '@' ||
-			   r == '#' ||
-			   r == '$' ||
-			   r == '%' ||
-			   r == '^' ||
-			   r == '&' ||
-			   r == '.' ||
-			   r == '*' ||
-			   r == '_' ||
-			   r == '(' ||
-			   r == ')' ||
-			   r == '+' ||
-			   r == '=' ||
-			   r == '[' ||
-			   r == ']' ||
-			   r == '{' ||
-			   r == '}' ||
-			   r == '|' ||
-			   r == ';' ||
-			   r == ':' ||
-			   r == '"' ||
-			   r == '\'' ||
-			   r == '<' ||
-			   r == '>' ||
-			   r == ',' ||
-			   r == '/' ||
-			   r == '?' {
-				fmt.printfln(
-					"%sWARNING:%s The entered username: %s%s%s contains special characters. Please enter a username that does NOT contain special characters.",
-					utils.YELLOW,
-					utils.RESET,
-					utils.BOLD_UNDERLINE,
-					enteredStr,
-					utils.RESET,
-				)
-				fmt.println("The only valid special character is '-'.\n")
-				CREATE_NEW_USERNAME(true)
-			}
-		}
-
-
-		if (len(enteredStr) > 32) {
+	//At the first instance of a space in the username, warn then prompt again
+	for r in input {
+		if r == ' ' {
 			fmt.printfln(
-				"Username is too long. Please enter a username that is 32 characters or less",
+				"%sWARNING:%s The entered username: %s%s%s contains spaces. Please enter a username that does NOT contain spaces.\n",
+				utils.YELLOW,
+				utils.RESET,
+				utils.BOLD_UNDERLINE,
+				input,
+				utils.RESET,
 			)
-			if isInitializing == true {
-				CREATE_NEW_USERNAME(true)
-			} else if isInitializing == false {
-				CREATE_NEW_USERNAME(false)
-			}
-		} else if (len(enteredStr) < 2) {
-			fmt.printfln(
-				"Username is too short. Please enter a username that is 2 characters or more",
-			)
-			if isInitializing == true {
-				CREATE_NEW_USERNAME(true)
-			} else if isInitializing == false {
-				CREATE_NEW_USERNAME(false)
-			}
-		} else {
-			if isInitializing == true {
-				user.username.Value = strings.clone(enteredStr)
-				user.username.Length = len(enteredStr)
-			} else if isInitializing == false {
-				new_user.username.Value = strings.clone(enteredStr)
-				new_user.username.Length = len(enteredStr)
-			}
+			CREATE_NEW_USERNAME()
 		}
-
-	}
-	if isInitializing == false {
-		return strings.clone(strings.to_upper(new_user.username.Value))
 	}
 
-	return strings.clone(strings.to_upper(user.username.Value))
+	// Ensure there are no invalid special characters in the username
+	for r in input {
+		if r == '!' ||
+		   r == '@' ||
+		   r == '#' ||
+		   r == '$' ||
+		   r == '%' ||
+		   r == '^' ||
+		   r == '&' ||
+		   r == '.' ||
+		   r == '*' ||
+		   r == '_' ||
+		   r == '(' ||
+		   r == ')' ||
+		   r == '+' ||
+		   r == '=' ||
+		   r == '[' ||
+		   r == ']' ||
+		   r == '{' ||
+		   r == '}' ||
+		   r == '|' ||
+		   r == ';' ||
+		   r == ':' ||
+		   r == '"' ||
+		   r == '\'' ||
+		   r == '<' ||
+		   r == '>' ||
+		   r == ',' ||
+		   r == '/' ||
+		   r == '?' {
+			fmt.printfln(
+				"%sWARNING:%s The entered username: %s%s%s contains special characters. Please enter a username that does NOT contain special characters.",
+				utils.YELLOW,
+				utils.RESET,
+				utils.BOLD_UNDERLINE,
+				input,
+				utils.RESET,
+			)
+			fmt.println("The only valid special character is '-'.\n")
+			CREATE_NEW_USERNAME()
+		}
+	}
+
+
+	if len(input) > 32{
+		fmt.printfln("Username is too long. Please enter a username that is 32 characters or less")
+		CREATE_NEW_USERNAME()
+	}else if len(input) < 2{
+		fmt.printfln("Username is too short. Please enter a username that is 2 characters or more")
+		CREATE_NEW_USERNAME()
+	}
+
+
+
+	if CONFIRM_NEW_USERNAME(strings.to_upper(input)) {
+		user.username.Value = strings.clone(input)
+		user.username.Length = len(input)
+	} else {
+		fmt.printfln("%sUsernames did not match. Please try again.%s", RED, RESET)
+		CREATE_NEW_USERNAME()
+	}
+
+	return strings.clone(strings.to_upper(input))
 }
 
+CONFIRM_NEW_USERNAME :: proc(username: string) -> (match: bool) {
+	using utils
+	match = false
+	show_current_step("Confirm Username", "2", "4")
+	fmt.println("Please re-enter your username")
+
+	confirmation := get_input(false)
+
+	if username == strings.to_upper(confirmation) {
+		match = true
+	}
+	return match
+}
 
 //Prompts the user for a password, checks if it is strong enough, then calls the confirm password proc
 //the isInitializing param will be false when if creating an account post engine initialization,
-CREATE_NEW_USER_PASSWORD :: proc(isInitializing: bool) -> string {
+CREATE_NEW_USER_PASSWORD :: proc() -> string {
 	using types
 	using utils
 
-	utils.show_current_step("Set Up Password", "2", "3")
 	buf: [256]byte
+	show_current_step("Set Up Password", "3", "4")
+	fmt.printfln("Please enter a password for %s%s%s:", BOLD_UNDERLINE, user.username.Value, RESET)
 	input := utils.get_input(true)
-	enteredStr: string
 
-	if len(input) > 0 {
-		enteredStr = input
-		//trim the string of any whitespace or newline characters
+	isStrongPassword := check_password_strength(input)
 
-		//Shoutout to the OdinLang Discord for helping me with this...
-		enteredStr = strings.trim_right_proc(enteredStr, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
-		if (isInitializing == true) {
-			user.password.Value = enteredStr
-		} else if (isInitializing == false) {
-			new_user.password.Value = enteredStr
-		}
-	}
-
-	strongPassword := check_password_strength(enteredStr)
-
-	switch strongPassword 
-	{
+	switch isStrongPassword {
 	case true:
-		CONFIRM_NEW_USER_PASSWORD(enteredStr, isInitializing)
+		CONFIRM_NEW_USER_PASSWORD(input)
 		break
 	case false:
 		fmt.printfln("Please try again")
-		CREATE_NEW_USER_PASSWORD(isInitializing)
+		CREATE_NEW_USER_PASSWORD()
 		break
 	}
 
-	return strings.clone(enteredStr)
+	return strings.clone(input)
 }
 
 //Takes in p as password and compares it to the confirmation password
 //if the passwords do not match, the user is prompted to re-enter the password
 //the isInitializing param will be false when if creating an account post engine initialization,
-CONFIRM_NEW_USER_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
+CONFIRM_NEW_USER_PASSWORD :: proc(p: string) -> string {
 	using types
 	using utils
 
-	utils.show_current_step("Confirm Password", "3", "3")
+	show_current_step("Confirm Password", "4", "4")
 	buf: [256]byte
 
-	fmt.printfln("Re-enter the password:")
+	fmt.printfln(
+		"Please re-enter the password for %s%s%s:",
+		BOLD_UNDERLINE,
+		user.username.Value,
+		RESET,
+	)
 	input := utils.get_input(true)
 	confirmation: string
-
 
 	if len(input) > 0 {
 		confirmation = input
@@ -341,54 +266,46 @@ CONFIRM_NEW_USER_PASSWORD :: proc(p: string, isInitializing: bool) -> string {
 
 		//Shoutout to the OdinLang Discord for helping me with this...
 		confirmation = strings.trim_right_proc(confirmation, proc(r: rune) -> bool {
-			return r == '\r' || r == '\n'
-		})
+				return r == '\r' || r == '\n'
+			})
 	}
 	if p != confirmation {
 		fmt.printfln("Passwords do not match. Please try again")
-		CREATE_NEW_USER_PASSWORD(isInitializing)
+		CREATE_NEW_USER_PASSWORD()
 	} else {
-
-		if isInitializing == true {
-			user.password.Length = len(p)
-			user.password.Value = strings.clone(p)
-			user.hashedPassword.valAsBytes = HASH_PASSWORD(p, 0, false, true)
-
-			encodedPassword := ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
-			user.hashedPassword.valAsBytes = encodedPassword
-
-		} else if isInitializing == false {
-			new_user.password.Length = len(p)
-			new_user.password.Value = strings.clone(p)
-			new_user.hashedPassword.valAsBytes = HASH_PASSWORD(p, 0, false, false)
-
-			encodedPassword := ENCODE_HASHED_PASSWORD(new_user.hashedPassword.valAsBytes)
-			new_user.hashedPassword.valAsBytes = encodedPassword
-			return new_user.password.Value
-		}
+		user.password.Length = len(p)
+		user.password.Value = strings.clone(p)
+		user.hashedPassword.valAsBytes = HASH_PASSWORD(p, 0, false, true)
+		encodedPassword := ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
+		user.hashedPassword.valAsBytes = encodedPassword
 	}
 	libc.system("stty echo")
 	return strings.clone(types.user.password.Value)
 }
 
 //Stores the entered user credentials in the users secure collection file/cluster
-// cn- cluster name, id- cluster id, rn- record name, rd- record data
-STORE_USER_CREDENTIALS :: proc(fn: string, cn: string, id: i64, rn: string, rd: string) -> int {
+// The file(collection) and clustername will always be the same value when this is called
+// id- cluster id, rn- record name, rd- record data
+STORE_USER_CREDENTIALS :: proc(
+	fileAndClusterName: string,
+	id: i64,
+	rn: string,
+	rd: string,
+) -> int {
 	using metadata
 	using const
 	using utils
 
-	secureFilePath := concat_secure_collection_name(fn)
+	secureFilePath := concat_user_credential_path(fileAndClusterName)
 
 	file, openSuccess := os.open(secureFilePath, os.O_APPEND | os.O_WRONLY, 0o666)
 	defer os.close(file)
 	if openSuccess != 0 {
+		errorLocation := get_caller_location()
 		error1 := utils.new_err(
 			.CANNOT_OPEN_FILE,
 			utils.get_err_msg(.CANNOT_OPEN_FILE),
-			#file,
-			#procedure,
-			#line,
+			errorLocation,
 		)
 		throw_err(error1)
 		log_err("Error opening user credentials file", #procedure)
@@ -396,10 +313,17 @@ STORE_USER_CREDENTIALS :: proc(fn: string, cn: string, id: i64, rn: string, rd: 
 	defer os.close(file)
 
 
-	data.CREATE_CLUSTER_BLOCK(secureFilePath, id, cn)
-	data.CREATE_AND_APPEND_PRIVATE_RECORD(secureFilePath, cn, rn, rd, "identifier", id)
+	data.CREATE_CLUSTER_BLOCK(secureFilePath, id, fileAndClusterName)
+	data.CREATE_AND_APPEND_PRIVATE_RECORD(
+		secureFilePath,
+		fileAndClusterName,
+		rn,
+		rd,
+		"identifier",
+		id,
+	)
 
-	UPDATE_METADATA_AFTER_OPERATIONS(secureFilePath)
+	UPDATE_METADATA_FIELD_AFTER_OPERATION(secureFilePath)
 	return 0
 }
 
@@ -472,7 +396,7 @@ check_password_strength :: proc(p: string) -> bool {
 
 
 	// //check for the length of the password
-	switch (len(p)) 
+	switch (len(p))
 	{
 	case 0:
 		fmt.printfln("Password cannot be empty. Please enter a password")
@@ -509,7 +433,7 @@ check_password_strength :: proc(p: string) -> bool {
 		}
 	}
 
-	switch (true) 
+	switch (true)
 	{
 	case longEnough && hasNumber && hasSpecial && hasUpper:
 		strong = true
@@ -525,6 +449,48 @@ check_password_strength :: proc(p: string) -> bool {
 	}
 
 	return strong
+}
+
+CREATE_NEW_USERS_PROFILE :: proc(userName: string, id: i64, salt, hash, storeMethod: string) {
+	using data
+	using types
+	using const
+
+	//Create a directory and a credentials collection for the user
+	os.make_directory(fmt.tprintf("%s/%s/", USERS_PATH, userName))
+	CREATE_COLLECTION(userName, .USER_CREDENTIALS_PRIVATE)
+
+	//Create the users own command(query) history collection
+	CREATE_COLLECTION(userName, .USER_HISTORY_PRIVATE)
+
+	//Create the users own collection backup directory
+	os.make_directory(fmt.tprintf("%s/%s/backups/", USERS_PATH, userName))
+
+	//Create the users own config collection
+	CREATE_COLLECTION(userName, .USER_CONFIG_PRIVATE)
+	CREATE_CLUSTER_BLOCK(
+		utils.concat_user_config_collection_name(userName),
+		user.user_id,
+		utils.concat_user_config_cluster_name(userName),
+	)
+	config.APPEND_ALL_CONFIGS_TO_CONFIG_FILE(types.CollectionType.USER_CONFIG_PRIVATE, userName)
+
+	// GENERATE_MASTER_KEY returns a 32 byte master key that is hex encoded
+	mk := GENERATE_MASTER_KEY()
+	mkAsString := transmute(string)mk //dont worry about this
+	// user.m_k.valAsStr = mkAsString //dont worry about this
+
+	//this value is passed to my encryption and decryption functions. must be 32 bytes
+	user.m_k.valAsBytes = DECODE_MASTER_KEY(mk)
+
+	//Store all the user credentials within the secure collection
+	STORE_USER_CREDENTIALS(userName, user.user_id, "user_name", userName)
+	STORE_USER_CREDENTIALS(userName, user.user_id, "role", "admin")
+	STORE_USER_CREDENTIALS(userName, user.user_id, "salt", salt)
+	STORE_USER_CREDENTIALS(userName, user.user_id, "hash", hash)
+	STORE_USER_CREDENTIALS(userName, user.user_id, "store_method", storeMethod)
+	STORE_USER_CREDENTIALS(userName, user.user_id, "m_k", mkAsString)
+
 }
 
 // creates a new user account post engine initialization
@@ -587,7 +553,7 @@ check_password_strength :: proc(p: string) -> bool {
 // 		return 1
 // 	}
 
-// 	result := data.CREATE_COLLECTION(newColName, .SECURE_PRIVATE)
+// 	result := data.CREATE_COLLECTION(newColName, .USER_CREDENTIALS_PRIVATE)
 // 	fmt.printf(
 // 		"Passwords MUST: \n 1. Be least 8 characters \n 2. Contain at least one uppercase letter \n 3. Contain at least one number \n 4. Contain at least one special character \n",
 // 	)
@@ -658,4 +624,59 @@ check_if_username_is_banned :: proc(un: string) -> bool {
 		}
 	}
 	return false
+}
+
+//Searches the `{root}/private/users` dir for a sub dir for with the passed in username
+FIND_USERS_PROFILE :: proc(username: string) -> bool {
+	using const
+	found := false
+
+	//Look for a dir with the passed in username
+	userDir, _ := os.open(USERS_PATH, 0)
+	userProfiles, readDirError := os.read_dir(userDir, -1)
+	for profile in userProfiles {
+		if profile.is_dir {
+			if profile.name == username {
+				found = true
+				break
+			}
+		}
+	}
+
+	return found
+}
+
+//looks over the passed in users dir for the passed in files if found, return true. Assumes the user does exist
+//Each users should have the following core files in their profile:
+//- user.config.ostrichdb
+//- user.credentials.ostrichdb
+//- user.history.ostrichdb
+FIND_USERS_CORE_FILE :: proc(username: string, fileToFind: int) -> bool {
+	using const
+	found := false
+	fileName: string
+
+	switch (fileToFind) {
+	case 0:
+		fileName = USER_CREDENTIAL_FILE_NAME
+		break
+	case 1:
+		fileName = USER_CONFIGS_FILE_NAME
+		break
+	case 2:
+		fileName = USER_HISTORY_FILE_NAME
+		break
+	}
+
+	userProfileDir, _ := os.open(fmt.tprintf("%s/%s", USERS_PATH, username), 0)
+	coreFiles, readDirError := os.read_dir(userProfileDir, -1)
+	for coreFile in coreFiles {
+		if coreFile.name == fileName {
+			found = true
+			break
+		}
+	}
+
+
+	return found
 }
