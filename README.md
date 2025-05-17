@@ -31,7 +31,6 @@ OstrichDB is a lightweight document-based NoSQL/NoJSON database management syste
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
 
 #### **Special Cases:**
- - if you wish to use the OstrichDB Natural Language Processor you will need to have [Ollama](https://ollama.com/download) installed
  - If you are an "End User" and plan install OstrichDB on your machine you will need [curl](https://curl.se/) installed
 
 ### Installation For Contributors:
@@ -244,8 +243,8 @@ When setting a record value, you must specify the records data type by using the
 
 ## **Usage Examples**
    ```bash
-   
-   # Create a new record: 
+
+   # Create a new record:
    # Note: If collection staff and cluster engineering do not exist
    # Don't worry, that will be created all at once!
    NEW staff.engineering.team_one OF_TYPE []STRING WITH "John","Ana","Wayne"

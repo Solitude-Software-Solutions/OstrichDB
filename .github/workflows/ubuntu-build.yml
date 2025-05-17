@@ -15,9 +15,6 @@ jobs:
         run: |
           sudo apt install curl
 
-      - name: Install Ollama
-        run: |
-          curl -fsSL https://ollama.com/install.sh | sh
 
       - name: Install Go-lang
         run: |

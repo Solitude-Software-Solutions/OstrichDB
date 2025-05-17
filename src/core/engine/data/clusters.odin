@@ -11,6 +11,10 @@ import "core:strings"
 /********************************************************
 Author: Marshall A Burns
 GitHub: @SchoolyB
+
+Contributors:
+    @CobbCoding1
+
 License: Apache License 2.0 (see LICENSE file for details)
 Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
 
@@ -453,13 +457,15 @@ ERASE_CLUSTER :: proc(fn: string, cn: string, isOnServer: bool) -> bool {
 		input := utils.get_input(false)
 
 		cap := strings.to_upper(input)
+        fmt.println(cap)
 
 		switch cap {
 		case Token[.NO]:
 			log_runtime_event("User canceled deletion", "User canceled deletion of database")
 			return false
-		case Token[.NO]:
-		// Continue with deletion
+		case Token[.YES]:
+            // Continue with deletion
+            break
 		case:
 			log_runtime_event(
 				"User entered invalid input",
