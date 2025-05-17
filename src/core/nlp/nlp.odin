@@ -69,7 +69,6 @@ runner :: proc() ->int {
 	}
 
     response := string(init_nlp(database_data))
-    fmt.println(response)
     if strings.contains(response, "is_general_ostrichdb_information_query") {
         agentResponseType = 0
         // Try to parse as a general information response
