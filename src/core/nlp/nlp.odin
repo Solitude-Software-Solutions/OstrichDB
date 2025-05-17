@@ -64,7 +64,6 @@ runner :: proc() ->int {
                 nameWithoutExtension,
                 .STANDARD_PUBLIC,
                 T.current_user.m_k.valAsBytes,
-                false,
             )
         }
 	}
@@ -195,7 +194,6 @@ handle_payload_operations :: proc(val: T.AgentResponse) {
                             collection,
                             .STANDARD_PUBLIC,
                             T.current_user.m_k.valAsBytes,
-                            false,
                         )
                         // need to update so that an error message is not printed if false
                         // (which would be on record creation)
@@ -233,7 +231,6 @@ handle_payload_operations :: proc(val: T.AgentResponse) {
                 collection,
                 .STANDARD_PUBLIC,
                 T.current_user.m_k.valAsBytes,
-                false,
             )
             fmt.println(str)
         }

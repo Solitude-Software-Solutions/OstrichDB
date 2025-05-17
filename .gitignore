@@ -17,7 +17,6 @@ src/core/nlp/main
 src/core/nlp/nlp
 *go.sum
 *go.mod
-SYS_INSTRUCTIONS
 *ModelFile
 *.py
 #Ignore NLP libs and executables

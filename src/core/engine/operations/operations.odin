@@ -1,4 +1,4 @@
-package operations 
+package operations
 
 import "core:os"
 import "core:fmt"
@@ -25,13 +25,12 @@ handle_collection_creation :: proc(collectionName: string) {
                 utils.RESET,
             )
             fileName := utils.concat_standard_collection_name(collectionName)
-            metadata.UPDATE_METADATA_UPON_CREATION(fileName)
+            metadata.INIT_METADATA_IN_NEW_COLLECTION(fileName)
 
             security.ENCRYPT_COLLECTION(
                 collectionName,
                 T.CollectionType.STANDARD_PUBLIC,
                 T.current_user.m_k.valAsBytes,
-                false,
             )
         } else {
             fmt.printf(
@@ -117,9 +116,8 @@ handle_cluster_creation :: proc(collectionName: string, clusterName: string) -> 
         )
         security.ENCRYPT_COLLECTION(
             collectionName,
-           T.CollectionType.STANDARD_PUBLIC,
+            T.CollectionType.STANDARD_PUBLIC,
             T.current_user.m_k.valAsBytes,
-            false,
         )
         break
     case 1, 2, 3:
@@ -143,13 +141,12 @@ handle_cluster_creation :: proc(collectionName: string, clusterName: string) -> 
         utils.RESET,
     )
     fn := utils.concat_standard_collection_name(collectionName)
-    metadata.UPDATE_METADATA_AFTER_OPERATIONS(fn)
+    metadata.UPDATE_METADATA_FIELD_AFTER_OPERATION(fn)
 
     security.ENCRYPT_COLLECTION(
         collectionName,
         T.CollectionType.STANDARD_PUBLIC,
         T.current_user.m_k.valAsBytes,
-        false,
     )
     return 1
 }
@@ -234,7 +231,7 @@ handle_record_creation :: proc(collectionName, clusterName, recordName: string, 
                 }
 
                 fn := utils.concat_standard_collection_name(collectionName)
-                metadata.UPDATE_METADATA_AFTER_OPERATIONS(fn)
+                metadata.UPDATE_METADATA_FIELD_AFTER_OPERATION(fn)
                 break
             case -1, 1:
                 fmt.printfln(
@@ -268,7 +265,6 @@ handle_record_creation :: proc(collectionName, clusterName, recordName: string, 
             collectionName,
             .STANDARD_PUBLIC,
             T.current_user.m_k.valAsBytes,
-            false,
         )
     } else {
         fmt.printfln(
@@ -393,12 +389,11 @@ handle_record_update :: proc(collectionName, clusterName, recordName, rValue: st
     }
 
     fn := utils.concat_standard_collection_name(collectionName)
-    metadata.UPDATE_METADATA_AFTER_OPERATIONS(fn)
+    metadata.UPDATE_METADATA_FIELD_AFTER_OPERATION(fn)
     security.ENCRYPT_COLLECTION(
         collectionName,
         .STANDARD_PUBLIC,
         T.current_user.m_k.valAsBytes,
-        false,
     )
     return 1
 }
@@ -412,7 +407,7 @@ handle_collection_fetch :: proc(collectionName: string) -> string {
             collectionName,
             utils.RESET,
         )
-        return "" 
+        return ""
     }
 
     security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
@@ -433,7 +428,7 @@ handle_cluster_fetch :: proc(collectionName, clusterName: string) -> string {
             collectionName,
             utils.RESET,
         )
-        return "" 
+        return ""
     }
 
     security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
@@ -454,7 +449,7 @@ handle_record_fetch :: proc(collectionName, clusterName, recordName: string) -> 
             collectionName,
             utils.RESET,
         )
-        return T.Record{}, false 
+        return T.Record{}, false
     }
 
     security.EXECUTE_COMMAND_LINE_PERMISSIONS_CHECK(
@@ -539,20 +534,19 @@ handle_cluster_delete :: proc(collectionName, cluster: string) -> int {
             collectionName,
             utils.RESET,
         )
-        security.DECRYPT_COLLECTION("", .ID_PRIVATE, T.system_user.m_k.valAsBytes)
+        security.DECRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, T.system_user.m_k.valAsBytes)
         if data.REMOVE_ID_FROM_ID_COLLECTION(fmt.tprintf("%d", clusterID), false) {
             security.ENCRYPT_COLLECTION(
                 "",
-                .ID_PRIVATE,
+                .SYSTEM_ID_PRIVATE,
                 T.system_user.m_k.valAsBytes,
-                false,
+
             )
         } else {
             security.ENCRYPT_COLLECTION(
                 "",
-                .ID_PRIVATE,
+                .SYSTEM_ID_PRIVATE,
                 T.system_user.m_k.valAsBytes,
-                false,
             )
 
             fmt.printfln(
@@ -576,7 +570,7 @@ handle_cluster_delete :: proc(collectionName, cluster: string) -> int {
     }
 
     fn := utils.concat_standard_collection_name(collectionName)
-    metadata.UPDATE_METADATA_AFTER_OPERATIONS(fn)
+    metadata.UPDATE_METADATA_FIELD_AFTER_OPERATION(fn)
     return 1
 }
 

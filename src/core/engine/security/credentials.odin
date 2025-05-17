@@ -179,14 +179,16 @@ CREATE_NEW_USERNAME :: proc() -> string {
 		}
 	}
 
-	switch (len(input)) {
-	case len(input) > 32:
+
+	if len(input) > 32{
 		fmt.printfln("Username is too long. Please enter a username that is 32 characters or less")
 		CREATE_NEW_USERNAME()
-	case len(input) < 2:
+	}else if len(input) < 2{
 		fmt.printfln("Username is too short. Please enter a username that is 2 characters or more")
 		CREATE_NEW_USERNAME()
 	}
+
+
 
 	if CONFIRM_NEW_USERNAME(strings.to_upper(input)) {
 		user.username.Value = strings.clone(input)
