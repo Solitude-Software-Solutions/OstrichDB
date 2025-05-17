@@ -26,7 +26,8 @@ Contributors:
     @CobbCoding1
 
 License: Apache License 2.0 (see LICENSE file for details)
-Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+Copyright (c) 2024-2025 Marshall A Burns and Solitude Software Solutions LLC
+Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
 File Description:
             This file contains the logic that handles and executes
@@ -329,7 +330,7 @@ EXECUTE_COMMAND :: proc(cmd: ^types.Command) -> int {
 		switch (len(cmd.l_token)) {
 		case COLLECTION_TIER:
             collectionName := cmd.l_token[0]
-            operations.handle_collection_creation(collectionName)			
+            operations.handle_collection_creation(collectionName)
 			break
 		case CLUSTER_TIER:
 			fn, collectionName, clusterName: string

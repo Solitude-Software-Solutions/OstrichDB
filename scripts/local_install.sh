@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Author: Marshall A Burns
-# GitHub: @SchoolyB
-# License: Apache License 2.0 (see LICENSE file for details)
-# Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+#Author: Marshall A Burns
+#GitHub: @SchoolyB
+#License: Apache License 2.0 (see LICENSE file for details)
+#Copyright (c) 2024-2025 Marshall A Burns and Solitude Software Solutions LLC
+#Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
 # STEP 1: Jump to line 24 then update the path
 # STEP 2: Save the script then run it!

@@ -3,7 +3,8 @@
 #Author: Marshall A Burns
 #GitHub: @SchoolyB
 #License: Apache License 2.0 (see LICENSE file for details)
-#Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+#Copyright (c) 2024-2025 Marshall A Burns and Solitude Software Solutions LLC
+#Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
 # Note: The OstrichDB program only uses this script when in DEV_MODE and using the OstrichDB REBUILD command
 # If you are a developer use the `local_build.sh` or `local_build_run.sh` scripts

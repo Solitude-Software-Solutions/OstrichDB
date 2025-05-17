@@ -27,14 +27,15 @@ when ODIN_OS == .Linux {
     }
 }
 /********************************************************
-Authors: Marshall A Burns
-GitHub: @SchoolyB
+Author: Isaac Cobb
+GitHub: @CobbCoding1
 
 Contributors:
-    @CobbCoding1
+    @SchoolyB
 
 License: Apache License 2.0 (see LICENSE file for details)
-Copyright (c) 2024-Present Marshall A Burns and Solitude Software Solutions LLC
+Copyright (c) 2024-2025 Marshall A Burns and Solitude Software Solutions LLC
+Copyright (c) 2025-Present Archetype Dynamics, Inc.
 
 File Description:
             This file is used to achieve 2 things.

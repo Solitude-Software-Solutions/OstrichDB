@@ -10,6 +10,21 @@ import "../../engine/data"
 import "../../engine/security"
 import "../../engine/data/metadata"
 import T "../../types"
+/********************************************************
+Author: Isaac Cobb
+GitHub: @CobbCoding1
+
+Contributors:
+    @SchoolyB
+
+License: Apache License 2.0 (see LICENSE file for details)
+Copyright (c) 2024-2025 Marshall A Burns and Solitude Software Solutions LLC
+Copyright (c) 2025-Present Archetype Dynamics, Inc.
+
+File Description:
+            Contains logic for performing operations on data within the
+            engine.
+*********************************************************/
 
 handle_collection_creation :: proc(collectionName: string) {
     exists := data.CHECK_IF_COLLECTION_EXISTS(collectionName, 0)
