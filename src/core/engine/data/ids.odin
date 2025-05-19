@@ -68,6 +68,7 @@ CREATE_AND_FILL_PRIVATE_ID_COLLECTION :: proc() {
 	   CHECK_IF_CLUSTER_EXISTS(ID_PATH, USER_ID_CLUSTER) == true {
 		return
 	}
+
 	//create a cluster for cluster ids
 	CREATE_CLUSTER_BLOCK(const.ID_PATH, cluOneid, CLUSTER_ID_CLUSTER)
 	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", cluOneid), 0)

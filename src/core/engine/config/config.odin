@@ -38,6 +38,10 @@ CHECK_IF_SYSTEM_CONFIG_FILE_EXISTS :: proc() -> bool {
 	using utils
 	configExists: bool
 	binDir, e := os.open(const.PRIVATE_PATH)
+    if e != nil {
+        fmt.eprintln("Could not open config file")
+        os.exit(1)
+    }
 	defer os.close(binDir)
 
 	foundFiles, readDirSuccess := os.read_dir(binDir, -1)

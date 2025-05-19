@@ -57,6 +57,79 @@ INIT_DATA_INTEGRITY_CHECK_SYSTEM :: proc(checks: ^types.Data_Integrity_Checks) -
 
 }
 
+start_bindings_engine :: proc(username, password: string) -> int {
+	using const
+	using types
+
+	//Initialize data integrity system
+	INIT_DATA_INTEGRITY_CHECK_SYSTEM(&data_integrity_checks)
+	switch (OstrichEngine.Initialized)
+	{
+	case false:
+		//Continue with engine initialization
+		security.handle_bindings_setup(username, password)
+		break
+
+	case true:
+		for {
+			userSignedIn := security.RUN_USER_SIGNIN()
+			switch (userSignedIn)
+			{
+			case true:
+				security.START_SESSION_TIMER()
+				utils.log_runtime_event(
+					"User Signed In",
+					"User successfully logged into OstrichDB",
+				)
+				currentUserName:= current_user.username.Value
+				systemUserMK := system_user.m_k.valAsBytes
+				//Check to see if the server AUTO_SERVE config value is true. If so start server
+				security.TRY_TO_DECRYPT(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+				autoServeConfigValue := data.GET_RECORD_VALUE(
+					utils.concat_user_config_collection_name(currentUserName),
+					utils.concat_user_config_cluster_name(currentUserName),
+					Token[.BOOLEAN],
+					AUTO_SERVE,
+				)
+				if strings.contains(autoServeConfigValue, "true") {
+					fmt.println("The OstrichDB server is starting...\n")
+					fmt.println(
+						"If you do not want the server to automatically start by default follow the instructions below:",
+					)
+					fmt.println(
+						"1. Enter 'kill' or 'quit' to stop the server and be returned to the OstrichDB command line",
+					)
+					fmt.println("2. Use command: 'SET CONFIG AUTO_SERVE TO false'\n\n")
+					security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+
+					//Auto-server loop
+					serverDone := server.START_OSTRICH_SERVER(&OstrichServer)
+					if serverDone == 0 {
+						fmt.println("\n\n")
+						cmdLineDone := START_COMMAND_LINE()
+						if cmdLineDone == 0 {
+							return cmdLineDone
+						}
+					}
+
+				} else {
+					// if the AUTO_SERVE config value is false, then continue starting command line
+					security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+
+					fmt.println("Starting command line")
+					result := START_COMMAND_LINE()
+					return result
+				}
+			case false:
+				fmt.printfln("%sSign-in failed.%s  Please try again.", utils.RED, utils.RESET)
+				return 1
+			}
+		}
+	}
+	return 0
+
+}
+
 //Starts the OstrichDB engine:
 //Session timer, sign in, and command line
 START_OSTRICHDB_ENGINE :: proc() -> int {

@@ -24,16 +24,14 @@ File Description:
             The the main entry point for the OstrichDB DBMS.
 *********************************************************/
 
-main :: proc() {
+init_config :: proc() {
 	using const
 	using utils
 	using types
 	using security
 
-
 	data.main()
 	utils.main()
-
 
 	configFound := config.CHECK_IF_SYSTEM_CONFIG_FILE_EXISTS()
 	switch (configFound)
@@ -43,6 +41,39 @@ main :: proc() {
 		config.main()
 		ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
 	}
+}
+
+check_if_init :: proc() {
+	using const
+	using utils
+	using types
+	using security
+
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	value:= data.GET_RECORD_VALUE(SYSTEM_CONFIG_PATH, SYSTEM_CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
+	if value == "true"{
+        OstrichEngine.Initialized = true
+	}else{
+	    OstrichEngine.Initialized = false
+	}
+	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+}
+
+ostrichdb_init :: proc(username, password: string) {
+    init_config()
+    check_if_init()
+	for engine.start_bindings_engine(username, password) == 1{
+	    engine.start_bindings_engine(username, password)
+	}
+}
+
+main :: proc() {
+	using const
+	using utils
+	using types
+	using security
+
+    init_config()
 	log_runtime_event("OstrichDB Started", "")
 
 	//Print the Ostrich logo and version
@@ -51,14 +82,8 @@ main :: proc() {
 	//Randomly choose which project description to display in the startup art
 	chosenDescription := rand.choice(const.project_descriptions)
 	fmt.println(fmt.tprintf( ostrich_art, chosenDescription, BLUE, version, RESET))
-	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
-	 value:= data.GET_RECORD_VALUE(SYSTEM_CONFIG_PATH, SYSTEM_CONFIG_CLUSTER, Token[.BOOLEAN], ENGINE_INIT)
-		if value == "true"{
-            OstrichEngine.Initialized = true
-		}else{
-		    OstrichEngine.Initialized = false
-		}
-	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+
+    check_if_init()
 
 	fmt.println("Starting OstrichDB DBMS CLI")
 	for engine.START_OSTRICHDB_ENGINE() == 1{

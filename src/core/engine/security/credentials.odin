@@ -28,6 +28,70 @@ File Description:
             user accounts.
 *********************************************************/
 
+handle_bindings_setup :: proc(userName, password: string) -> int {
+	using types
+	using data
+	using const
+
+	buf: [256]byte
+	GENERATE_USER_ID()
+
+
+	user.username.Value = userName
+	types.current_user.username.Value = userName
+
+    user.password.Length = len(password)
+    user.password.Value = strings.clone(password)
+    user.hashedPassword.valAsBytes = HASH_PASSWORD(password, 0, false, true)
+    encodedPassword := ENCODE_HASHED_PASSWORD(user.hashedPassword.valAsBytes)
+    user.hashedPassword.valAsBytes = encodedPassword
+
+	salt := string(user.salt.valAsBytes)
+	hash := string(user.hashedPassword.valAsBytes)
+
+	storeMethod := fmt.tprintf("%d", user.store_method)
+	userID := data.GENERATE_ID(true) //for secure clustser, the cluster id is the user id
+
+	// //store the id to both clusters in the id collection
+	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 0)
+	APPEND_ID_TO_ID_COLLECTION(fmt.tprintf("%d", user.user_id), 1)
+
+	CREATE_NEW_USERS_PROFILE(userName, userID, salt, hash, storeMethod)
+
+	TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	//update the engine init value in th system configs
+	engineInit := config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, ENGINE_INIT, "true")
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(SYSTEM_CONFIG_PATH)
+	ENCRYPT_COLLECTION("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+
+	switch (engineInit)
+	{
+	case true:
+		USER_SIGNIN_STATUS = true
+	case false:
+		fmt.printfln("Error toggling config")
+		os.exit(1)
+	}
+
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(utils.concat_user_history_path(userName))
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(ID_PATH)
+	metadata.INIT_METADATA_IN_NEW_COLLECTION(utils.concat_user_credential_path(userName))
+
+	//Create a cluster within the the users history collection
+	historyClusterID := data.GENERATE_ID(true)
+	res := CREATE_CLUSTER_BLOCK(
+		utils.concat_user_history_path(userName),
+		historyClusterID,
+		utils.concat_user_history_cluster_name(userName),
+	)
+
+	//Encrypt the the system id, user credentials,configs & history collections
+	ENCRYPT_COLLECTION(userName, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(userName, .USER_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION(userName, .USER_HISTORY_PRIVATE, system_user.m_k.valAsBytes)
+	ENCRYPT_COLLECTION("", .SYSTEM_ID_PRIVATE, system_user.m_k.valAsBytes)
+    return 0;
+}
 
 //Handle initial setup of the admin account on first run of the program
 HANDLE_FIRST_TIME_ACCOUNT_SETUP :: proc() -> int {
