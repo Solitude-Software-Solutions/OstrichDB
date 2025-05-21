@@ -72,7 +72,7 @@ start_bindings_engine :: proc(username, password: string) -> int {
 
 	case true:
 		for {
-			userSignedIn := security.RUN_USER_SIGNIN()
+			userSignedIn := security.handle_bindings_signin(username, password)
 			switch (userSignedIn)
 			{
 			case true:
@@ -114,11 +114,8 @@ start_bindings_engine :: proc(username, password: string) -> int {
 
 				} else {
 					// if the AUTO_SERVE config value is false, then continue starting command line
-					security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
-
-					fmt.println("Starting command line")
-					result := START_COMMAND_LINE()
-					return result
+					// security.ENCRYPT_COLLECTION(currentUserName, .USER_CONFIG_PRIVATE, systemUserMK)
+                    return 0
 				}
 			case false:
 				fmt.printfln("%sSign-in failed.%s  Please try again.", utils.RED, utils.RESET)

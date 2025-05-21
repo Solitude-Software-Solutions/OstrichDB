@@ -24,6 +24,155 @@ File Description:
             Contains logic for handling user authentication.
 *********************************************************/
 
+handle_bindings_signin :: proc(username, password: string) -> bool {
+	using const
+	using types
+	using utils
+
+	upper_username := strings.to_upper(username)
+	if len(upper_username) == 0 {
+		fmt.printfln("Username cannot be empty. Please try again.")
+		log_err("User did not provide a username during authentication", #procedure)
+		log_runtime_event("Blank username", "User did not provide a username duing authentication")
+		return false
+	}
+
+
+	//Check that a profile with the entered username exists
+	profileFound:= FIND_USERS_PROFILE(upper_username)
+	if !profileFound{
+	    fmt.println(
+		"There is no account within OstrichDB associated with the entered username. Please try again.",)
+		log_runtime_event(
+		"Invalid username provided",
+		"Invalid username entered during authentication",)
+		log_err("User entered a username that does not exist in the database", #procedure)
+	    return false
+	}
+
+	// Check that there is a user.credentials.ostrichdb file within it
+	coreFileFound:= FIND_USERS_CORE_FILE(upper_username,0)
+	if !coreFileFound{
+	    fmt.printfln(
+		"A profile with the name %s was found but was missing a core file neccassary to authorize.",upper_username)
+		log_runtime_event(
+		"Missing user.credential.ostrichdb core file",
+		"Valid username but was missing user.credential.ostrichdb core file")
+		log_err("User entered a valid username but OstrichDB could not find that users user.credential.ostrichdb file ", #procedure)
+	    return false
+	}
+
+	usersCredentialFile := utils.concat_user_credential_path(upper_username)
+
+	// Decrypt and read that file to ensure there is a cluster with the entered userName
+	TRY_TO_DECRYPT(upper_username, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+    usersClusterExists := data.CHECK_IF_CLUSTER_EXISTS(usersCredentialFile, upper_username )
+    if !usersClusterExists{
+        fmt.printfln(
+		"An important cluster within a core file was not found. OstrichDB could not authroize you...",)
+		log_runtime_event(
+		"Cluster not found in user.credential.ostrichdb core file",
+		"",)
+		log_err("Cluster not found in user.credential.ostrichdb core file", #procedure)
+	    return false
+    }
+
+	userRole := data.GET_RECORD_VALUE(usersCredentialFile, upper_username, "identifier", "role")
+	if userRole == "admin" {
+		user.role.Value = "admin"
+	} else if userRole == "user" {
+		user.role.Value = "user"
+	} else if userRole == "guest" {
+		user.role.Value = "guest"
+	}
+
+
+	//Master Key shit
+	userMKStr := data.GET_RECORD_VALUE(usersCredentialFile, upper_username, "identifier", "m_k")
+	user.m_k.valAsBytes = DECODE_MASTER_KEY(transmute([]byte)userMKStr)
+	user.username.Value = strings.clone(upper_username)
+	current_user.m_k.valAsStr = user.m_k.valAsStr
+	current_user.m_k.valAsBytes = user.m_k.valAsBytes
+
+
+
+	//PRE-MESHING START=======================================================================================================
+	//get the salt from the cluster that contains the entered username
+	salt := data.GET_RECORD_VALUE(usersCredentialFile, upper_username, "identifier", "salt")
+
+	//get the value of the hash that is currently stored in the cluster that contains the entered username
+	providedHash := data.GET_RECORD_VALUE(usersCredentialFile, upper_username, "identifier", "hash")
+	pHashAsBytes := transmute([]u8)providedHash
+
+
+	preMesh := MESH_SALT_AND_HASH(salt, pHashAsBytes)
+	//PRE-MESHING END=========================================================================================================
+	algoMethod := data.GET_RECORD_VALUE(
+		usersCredentialFile,
+		upper_username,
+		"identifier",
+		"store_method",
+	)
+	//POST-MESHING START=======================================================================================================
+	//After storing values into the sessions memory, re-encrypt the user.credentials.ostrichdb file
+	ENCRYPT_COLLECTION(upper_username, .USER_CREDENTIALS_PRIVATE, system_user.m_k.valAsBytes)
+		//get the password input from the user
+
+	if len(password) == 0 {
+		fmt.printfln("Password cannot be empty. Please try again.")
+		log_err("User did not provide a password during authentication", #procedure)
+		log_runtime_event(
+			"Blank password provided",
+			"User did not provide a password during authentication",
+		)
+		return false
+	}
+
+	//convert the return algo method string to an int
+	algoAsInt := strconv.atoi(algoMethod)
+
+	//using the hasing algo from the cluster that contains the entered username, hash the entered password
+	newHash := HASH_PASSWORD(password , algoAsInt, true, false)
+	encodedHash := ENCODE_HASHED_PASSWORD(newHash)
+	postMesh := MESH_SALT_AND_HASH(salt, encodedHash)
+	//POST-MESHING END=========================================================================================================
+	authPassed := CROSS_CHECK_MESH(preMesh, postMesh)
+	switch authPassed {
+	case true:
+		fmt.printfln("\n\n%sSucessfully signed in!%s", GREEN, RESET)
+		fmt.printfln("Welcome, %s%s%s!\n", BOLD_UNDERLINE, upper_username, RESET)
+		USER_SIGNIN_STATUS = true
+		current_user.username.Value = strings.clone(upper_username) //set the current user to the user that just signed in for HISTORY command reasons
+		current_user.role.Value = strings.clone(userRole)
+
+		//Look through the system config and set USER_LOGGED_IN val to true
+		TRY_TO_DECRYPT("", .SYSTEM_CONFIG_PRIVATE, system_user.m_k.valAsBytes)
+		userLoggedInValue := data.GET_RECORD_VALUE(
+            SYSTEM_CONFIG_PATH,
+            SYSTEM_CONFIG_CLUSTER,
+			Token[.BOOLEAN],
+			USER_LOGGED_IN,
+		)
+
+		if userLoggedInValue == "false" {
+			config.UPDATE_CONFIG_VALUE(.SYSTEM_CONFIG_PRIVATE, USER_LOGGED_IN, "true")
+		}
+		break
+	case false:
+		fmt.printfln("%sAuth Failed. Password was incorrect please try again.%s", RED, RESET)
+		types.USER_SIGNIN_STATUS = false
+		log_runtime_event(
+			"Authentication failed",
+			"User entered incorrect password during authentication",
+		)
+		log_err("User failed to authenticate with the provided credentials", #procedure)
+		RUN_USER_SIGNIN()
+
+	}
+
+	return USER_SIGNIN_STATUS
+}
+
 //This beffy S.O.B handles user authentication
 RUN_USER_SIGNIN :: proc() -> bool {
 	using const
