@@ -68,6 +68,8 @@ start_bindings_engine :: proc(username, password: string) -> int {
 	case false:
 		//Continue with engine initialization
 		security.handle_bindings_setup(username, password)
+        OstrichEngine.Initialized = true
+        start_bindings_engine(username, password)
 		break
 
 	case true:

@@ -67,6 +67,10 @@ ostrichdb_init :: proc(username, password: string) {
 	}
 }
 
+ostrichdb_exit :: proc() {
+    security.RUN_USER_LOGOUT(1)
+}
+
 main :: proc() {
 	using const
 	using utils

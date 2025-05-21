@@ -16,7 +16,7 @@ init :: proc "c" (username, password: cstring) {
 @(export, link_name = "ostrichdb_exit")
 exit :: proc "c" () {
     context = runtime.default_context()
-    // operations.exit()
+    main.ostrichdb_exit()
 }
 
 @(export, link_name = "ostrichdb_nlp_run")
@@ -44,16 +44,19 @@ create_record :: proc "c" (collectionName, clusterName, recordName: cstring, p_t
     operations.handle_record_creation(cast(string)collectionName, cast(string)clusterName, cast(string)recordName, p_token)
 }
 
+// Allocates, needs to be freed by user
 @(export, link_name = "ostrichdb_fetch_collection")
-fetch_collection :: proc "c" (collectionName: cstring) {
+fetch_collection :: proc "c" (collectionName: cstring) -> cstring {
     context = runtime.default_context()
-    operations.handle_collection_fetch(cast(string)collectionName)
+    str := operations.handle_collection_fetch(cast(string)collectionName)
+    return strings.clone_to_cstring(str)
 }
 
 @(export, link_name = "ostrichdb_fetch_cluster")
-fetch_cluster :: proc "c" (collectionName, clusterName: cstring) {
+fetch_cluster :: proc "c" (collectionName, clusterName: cstring) -> cstring {
     context = runtime.default_context()
-    operations.handle_cluster_fetch(cast(string)collectionName, cast(string)clusterName)
+    str := operations.handle_cluster_fetch(cast(string)collectionName, cast(string)clusterName)
+    return strings.clone_to_cstring(str)
 }
 
 @(export, link_name = "ostrichdb_fetch_record")
