@@ -1,26 +1,26 @@
-# **OstrichDB**
+# **OstrichDB CLI**
 
-OstrichDB is a lightweight document-based NoSQL/NoJSON database management system written in Odin. It features an intuitive command structure with hierarchical data organization and built-in security, making it ideal for developers seeking a easy-to-use, flexible, high-performance database solution.
+Built atop the from scratch OstrichDB engine the OstrichDB CLI is a lightweight yet powerful database management tool for use directly in your terminal! Written in [Odin](https://odin-lang.org/), It features an intuitive query structure, hierarchical data organization, and built-in security systems making it ideal for anyone seeking a easy-to-use, flexible, high-performance database solution.
 
 
 ---
 
 ## **Key Features**
 
-- Three Modes of Operation:
-  - Serverless Command-line Interface
-  - Server Mode with HTTP API
-  - Server Mode with the built-in natural language processor
+- Three Ways To Interact:
+  - Manually enter queries Command-line Interface
+  - Enable the built-in HTTP server and interact via a client in your favorite language
+  - (Experimental) Use natural language queries to quickly interact with your data!  
 - User Authentication
 - User Role-Based Access
 - Database permissions
 - Database encryption & decryption
-- Custom JSON-like Hierarchical Data Structure
+- Custom Hierarchical Data Structure
 - .CSV & .JSON file importing
 - Dot Notation Syntax when using the serverless CLI
 - Command Chaining
 - Built-in benchmarking, configurations, and user command history
-- Exclusive macOS Support
+- macOS & Linux Support
 
 ## **Installation**
 
