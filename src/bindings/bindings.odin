@@ -6,6 +6,13 @@ import "base:runtime"
 import "../core/nlp"
 import "../../main"
 import "../core/engine/operations"
+import "../core/types"
+
+CRecord :: struct {
+	name:  cstring,
+	type:  cstring,
+	value: cstring,
+}
 
 @(export, link_name = "ostrichdb_init")
 init :: proc "c" (username, password: cstring) {
@@ -19,6 +26,7 @@ exit :: proc "c" () {
     main.ostrichdb_exit()
 }
 
+// TODO
 @(export, link_name = "ostrichdb_nlp_run")
 nlp_run :: proc "c" () -> int {
     context = runtime.default_context()
@@ -39,8 +47,11 @@ create_cluster :: proc "c" (collectionName, clusterName: cstring) {
 
 // I'm not sure how to call this from C with the map type yet
 @(export, link_name = "ostrichdb_create_record")
-create_record :: proc "c" (collectionName, clusterName, recordName: cstring, p_token: map[string]string) {
+create_record :: proc "c" (collectionName, clusterName, recordName: cstring, record: CRecord) {
     context = runtime.default_context()
+    p_token: map[string]string
+    p_token[types.Token[.OF_TYPE]] = cast(string)record.type
+    p_token[types.Token[.WITH]] = cast(string)record.value
     operations.handle_record_creation(cast(string)collectionName, cast(string)clusterName, cast(string)recordName, p_token)
 }
 
@@ -60,7 +71,12 @@ fetch_cluster :: proc "c" (collectionName, clusterName: cstring) -> cstring {
 }
 
 @(export, link_name = "ostrichdb_fetch_record")
-fetch_record :: proc "c" (collectionName, clusterName, recordName: cstring) {
+fetch_record :: proc "c" (collectionName, clusterName, recordName: cstring) -> CRecord {
     context = runtime.default_context()
-    operations.handle_record_fetch(cast(string)collectionName, cast(string)clusterName, cast(string)recordName)
+    record, exists := operations.handle_record_fetch(cast(string)collectionName, cast(string)clusterName, cast(string)recordName)
+    if !exists {
+        return CRecord{}
+    }
+    c_record := CRecord{strings.clone_to_cstring(record.name), strings.clone_to_cstring(record.type), strings.clone_to_cstring(record.value)}
+    return c_record
 }
