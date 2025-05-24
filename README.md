@@ -32,6 +32,7 @@ OstrichDB is a lightweight document-based NoSQL/NoJSON database management syste
 
 #### **Special Cases:**
  - If you are an "End User" and plan install OstrichDB on your machine you will need [curl](https://curl.se/) installed
+ - If you would like to run OstrichDB in a docker container, please see steps below
 
 ### Installation For Contributors:
 #### **Steps:**
@@ -101,6 +102,28 @@ You can run the executable by double clicking it or running it from the terminal
     ./path/to/.ostrichdb/ostrichdb
     ```
 
+### Running OstrichDB using docker:
+#### **Steps:**
+1. Make sure you have docker installed: https://docs.docker.com/engine/install/
+
+2. Build the container
+    ```bash
+    docker compose build
+    ```
+    Alternatively, build and run the container in detached mode
+    ```bash
+    docker compose up -d
+    ```
+3. Start OstrichDB
+    ```bash
+    docker exec -it ostrichdb /app/main.bin
+    ```
+*Note: You can find data for OstrichDB in `.ostrichdb/data` in the project's directory, which is mapped to `/data` inside the container.
+You can also change the port mapping to the host machine by updating the `docker-compose.yml` file in case port 8080 is already in use, i.e.
+```
+ports:
+  - "8089:8080"  
+```
 
 
 ---

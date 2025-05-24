@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  ostrichdb:
+    build: .
+    container_name: ostrichdb
+    stdin_open: true 
+    tty: true        
+    ports:
+      - "8080:8080"  
+    volumes:
+      - ./.ostrichdb/data:/data
