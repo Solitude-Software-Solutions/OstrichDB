@@ -8,9 +8,9 @@ Built from scratch, the OstrichDB engine powers the OstrichDB CLI—a lightweigh
 ## **Key Features**
 
 - Three Ways To Interact:
-  - Manually enter queries Command-line Interface
+  - Manually enter queries via the Command-line Interface
   - Enable the built-in HTTP server and interact via a client in your favorite language
-  - (Experimental) Use natural language queries to quickly interact with your data!  
+  - (Experimental) Use natural language queries to quickly interact with your data!(Requries a bit of setup)
 - User Authentication
 - User Role-Based Access
 - Database permissions
@@ -30,11 +30,8 @@ Built from scratch, the OstrichDB engine powers the OstrichDB CLI—a lightweigh
 - The [Odin](https://odin-lang.org/) programming language installed, built, and properly set in the system's PATH. Ideal Odin Version: `dev-2024-11:764c32fd3`
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
 
-#### **Special Cases:**
- - If you are an "End User" and plan install OstrichDB on your machine you will need [curl](https://curl.se/) installed
- - If you would like to run OstrichDB in a docker container, please see steps below
 
-### Installation For Contributors:
+### Building and Running The OstrichDB CLI Locally:
 #### **Steps:**
 
 1. **Clone the Repository**:
@@ -42,7 +39,7 @@ Built from scratch, the OstrichDB engine powers the OstrichDB CLI—a lightweigh
    git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
    ```
 
-2. **Navigate to the OstrichDB Directory**:
+2. **Navigate to the root directory of the OstrichDB CLI project**:
    ```bash
    cd path/to/OstrichDB
    ```
@@ -58,55 +55,16 @@ Built from scratch, the OstrichDB engine powers the OstrichDB CLI—a lightweigh
    ```
 
 
-### Installation For End Users:
+### Building and Running The OstrichDB CLI in a Docker Container:
 #### **Steps:**
-1. Use curl to download the latest release:
+1. **Ensure that you have Docker installed**: https://docs.docker.com/engine/install/
+
+2. **Navigate to the root directory of the OstrichDB CLI project**:
    ```bash
-   curl -o install.sh https://raw.githubusercontent.com/Solitude-Software-Solutions/OstrichDB/27b7074f9a4b33fa15254e0e93996d67afc5f84c/scripts/install.sh
+   cd /path/to/OstrichDB
    ```
 
-2. Make the script executable:
-    ```bash
-    chmod +x install.sh
-    ```
-3. Run the script:
-    ```bash
-    ./install.sh
-    ```
-4. Find and run the OstrichDB executable:
-*Note: This will be located in a directory called `.ostrichdb` in the same directory as the install script.*
-You can run the executable by double clicking it or running it from the terminal with the following command:
-    ```bash
-    ./path/to/.ostrichdb/ostrichdb
-    ```
-
-
-### Installing From Source:
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
-   ```
-
-2. **Navigate to the OstrichDB Directory**:
-   ```bash
-   cd path/to/OstrichDB
-   ```
-3. Open the `local_install.sh` script and follow the directions at the top of the file.
-4. Run the script:
-   ```bash
-   ./local_install.sh
-   ```
-5. Find you installed OstrichDB executable in the `.ostrichdb` directory in the same directory you chose to install OstrichDB in via the `local_install.sh` script.
-6. Run the executable by double clicking it or running it from the terminal with the following command:
-    ```bash
-    ./path/to/.ostrichdb/ostrichdb
-    ```
-
-### Running OstrichDB using docker:
-#### **Steps:**
-1. Make sure you have docker installed: https://docs.docker.com/engine/install/
-
-2. Build the container
+3. **Build the Docker container**:
     ```bash
     docker compose build
     ```
@@ -114,7 +72,7 @@ You can run the executable by double clicking it or running it from the terminal
     ```bash
     docker compose up -d
     ```
-3. Start OstrichDB
+4. **Run the OstrichDB CLI**
     ```bash
     docker exec -it ostrichdb /app/main.bin
     ```
@@ -122,9 +80,8 @@ You can run the executable by double clicking it or running it from the terminal
 You can also change the port mapping to the host machine by updating the `docker-compose.yml` file in case port 8080 is already in use, i.e.
 ```
 ports:
-  - "8089:8080"  
+  - "8089:8080"
 ```
-
 
 ---
 
