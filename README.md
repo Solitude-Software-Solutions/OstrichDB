@@ -1,26 +1,26 @@
-# **OstrichDB**
+# **OstrichDB CLI**
 
-OstrichDB is a lightweight document-based NoSQL/NoJSON database management system written in Odin. It features an intuitive command structure with hierarchical data organization and built-in security, making it ideal for developers seeking a easy-to-use, flexible, high-performance database solution.
+Built from scratch, the OstrichDB engine powers the OstrichDB CLI—a lightweight yet powerful database management tool for your terminal. Written in [Odin](https://odin-lang.org/), it features an intuitive query structure, hierarchical data organization, and built-in security systems, making it ideal for anyone seeking an easy-to-use, flexible, high-performance database solution.
 
 
 ---
 
 ## **Key Features**
 
-- Three Modes of Operation:
-  - Serverless Command-line Interface
-  - Server Mode with HTTP API
-  - Server Mode with the built-in natural language processor
+- Three Ways To Interact:
+  - Manually enter queries via the Command-line Interface
+  - Enable the built-in HTTP server and interact via a client in your favorite language
+  - (Experimental) Use natural language queries to quickly interact with your data!(Requries a bit of setup)
 - User Authentication
 - User Role-Based Access
 - Database permissions
 - Database encryption & decryption
-- Custom JSON-like Hierarchical Data Structure
+- Custom Hierarchical Data Structure
 - .CSV & .JSON file importing
 - Dot Notation Syntax when using the serverless CLI
-- Command Chaining
-- Built-in benchmarking, configurations, and user command history
-- Exclusive macOS Support
+- Query Chaining
+- Built-in benchmarking, configurations, and user query history
+- macOS & Linux Support
 
 ## **Installation**
 
@@ -30,10 +30,8 @@ OstrichDB is a lightweight document-based NoSQL/NoJSON database management syste
 - The [Odin](https://odin-lang.org/) programming language installed, built, and properly set in the system's PATH. Ideal Odin Version: `dev-2024-11:764c32fd3`
 *Note: You can achieve the previous step by following the [Odin Installation Guide](https://odin-lang.org/docs/install/)*
 
-#### **Special Cases:**
- - If you are an "End User" and plan install OstrichDB on your machine you will need [curl](https://curl.se/) installed
 
-### Installation For Contributors:
+### Building and Running The OstrichDB CLI Locally:
 #### **Steps:**
 
 1. **Clone the Repository**:
@@ -41,7 +39,7 @@ OstrichDB is a lightweight document-based NoSQL/NoJSON database management syste
    git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
    ```
 
-2. **Navigate to the OstrichDB Directory**:
+2. **Navigate to the root directory of the OstrichDB CLI project**:
    ```bash
    cd path/to/OstrichDB
    ```
@@ -57,51 +55,33 @@ OstrichDB is a lightweight document-based NoSQL/NoJSON database management syste
    ```
 
 
-### Installation For End Users:
+### Building and Running The OstrichDB CLI in a Docker Container:
 #### **Steps:**
-1. Use curl to download the latest release:
+1. **Ensure that you have Docker installed**: https://docs.docker.com/engine/install/
+
+2. **Navigate to the root directory of the OstrichDB CLI project**:
    ```bash
-   curl -o install.sh https://raw.githubusercontent.com/Solitude-Software-Solutions/OstrichDB/27b7074f9a4b33fa15254e0e93996d67afc5f84c/scripts/install.sh
+   cd /path/to/OstrichDB
    ```
 
-2. Make the script executable:
+3. **Build the Docker container**:
     ```bash
-    chmod +x install.sh
+    docker compose build
     ```
-3. Run the script:
+    Alternatively, build and run the container in detached mode
     ```bash
-    ./install.sh
+    docker compose up -d
     ```
-4. Find and run the OstrichDB executable:
-*Note: This will be located in a directory called `.ostrichdb` in the same directory as the install script.*
-You can run the executable by double clicking it or running it from the terminal with the following command:
+4. **Run the OstrichDB CLI**
     ```bash
-    ./path/to/.ostrichdb/ostrichdb
+    docker exec -it ostrichdb /app/main.bin
     ```
-
-
-### Installing From Source:
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/Solitude-Software-Solutions/OstrichDB.git
-   ```
-
-2. **Navigate to the OstrichDB Directory**:
-   ```bash
-   cd path/to/OstrichDB
-   ```
-3. Open the `local_install.sh` script and follow the directions at the top of the file.
-4. Run the script:
-   ```bash
-   ./local_install.sh
-   ```
-5. Find you installed OstirchDB executable in the `.ostrichdb` directory in the same directory you chose to install OstrichDB in via the `local_install.sh` script.
-6. Run the executable by double clicking it or running it from the terminal with the following command:
-    ```bash
-    ./path/to/.ostrichdb/ostrichdb
-    ```
-
-
+*Note: You can find data for OstrichDB in `.ostrichdb/data` in the project's directory, which is mapped to `/data` inside the container.
+You can also change the port mapping to the host machine by updating the `docker-compose.yml` file in case port 8080 is already in use, i.e.
+```
+ports:
+  - "8089:8080"
+```
 
 ---
 
@@ -116,38 +96,37 @@ OstrichDB organizes data into three levels:
 
 ---
 
-## **Command Structure (CLPs)**
+## **Query Structure (CLPs)**
 
-In OstrichDB, commands are typically broken into **three types of tokens**, called **CLPs**, to improve readability and ensure clear instructions.
+From the OstrichDB CLI, queries are typically broken into **three types of tokens**, called **CLPs**, to improve readability and ensure clear instructions.
 
-**Note:** Not all commands require all 3 tokens.
-
+**Note:** Not all queries require all 3 tokens.
 
 1. **(C)ommand Token**: Specifies the operation to perform (e.g., `NEW`, `ERASE`, `RENAME`).
-2. **(L)ocation Token**: The dot notation path that the command will be performed on (e.g., `foo.bar.baz`).
-3. **(P)arameter Token(s)**: Additional parameters that change the behavior of the command (e.g., `TO`, `OF_TYPE`).
+2. **(L)ocation Token**: The path using dot notation that the query will be performed on (e.g., `foo.bar.baz`).
+3. **(P)arameter Token(s)**: Additional parameters that change the behavior of the query (e.g., `TO`, `OF_TYPE`).
 
 ---
 
-### **Command Walkthrough**
+### **Query Walkthrough**
 
 ```bash
 NEW foo.bar.baz OF_TYPE []STRING
 ```
 Explanation:
-- **`NEW`**: Create a new object (Command token).
-- **`foo`**: The fisrt object always points to a collection. (Location token). Note: If there is only 1 object given, its a collection.
-- **`bar`**: The second object always to a cluster within the collection. (Location token).
-- **`baz`**: The third object is always a record within the cluster. (Location token).
+- **`NEW`**: Create a new data structure (Command token).
+- **`foo`**: The first data structure always points to a collection. (Location token).
+- **`bar`**: The second data structure always to a cluster within the collection. (Location token).
+- **`baz`**: The third data structure is always a record within the cluster. (Location token).
 - **`OF_TYPE`**: Specifies the data type of the record (Parameter token). Note: Only records are given data types.
-- **`[]STRING`**: The record will be an array of strings (Parameter token).
+- **`[]STRING`**: Token mapped to the Parameter token that precedes it. The record will be an array of strings.
 
 ---
 
-## **Supported Commands**
+## **Supported Command Tokens**
 
 ### **Single-Token Operations**
-These operations perform a task without any additional arguments.
+These tokens perform a task without any additional arguments.
 
 - **`AGENT`**: Starts the OstrichDB natural language processor. Requires the server to be running in another terminal.
 - **`VERSION`**: Displays the current version of OstrichDB.
@@ -160,13 +139,13 @@ These operations perform a task without any additional arguments.
 - **`TREE`**: Displays the entire data structure in a tree format.
 - **`CLEAR`**: Clears the console screen.
 - **`HISTORY`**: Shows the current users command history.
-- **`DESTROY`**: Completley destorys the entire DBMS. Including all databases, users, configs, and logs.
+- **`DESTROY`**: Completeley destorys the entire DBMS. Including all databases, users, configs, and logs.
 - **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
 
 ---
 
-### **Multi-Token Operations**
-These operations allow you to perform more complex operations.
+### **Multi-Token Tokens**
+These tokens are used to construct queries and require one or more additional tokens.
 
 - **`NEW`**: Create a new collection, cluster, record, or user.
 - **`ERASE`**: Delete a collection, cluster, or record.
@@ -174,13 +153,13 @@ These operations allow you to perform more complex operations.
 - **`FETCH`**: Retrieve data from a collection, cluster, or record.
 - **`SET`**: Assign a value to a record or configuration.
 - **`BACKUP`**: Create a backup of a specific collection.
-- **`PURGE`**: Removes all data from an object while maintining the object structure.
+- **`PURGE`**: Removes all data from an object while maintaining the object structure.
 - **`COUNT`**: Returns the number of objects within a scope. Paired with the plural form of the object type (e.g., `RECORDS`, `CLUSTERS`).
 - **`SIZE_OF`**: Returns the size in bytes of an object.
 - **`TYPE_OF`**: Returns the type of a record.
 - **`CHANGE_TYPE`**: Allows you to change the type of a record.
 - **`HELP`**: Displays help information for a specific token.
-- **`ISOLATE`**: Quarentines a collection file. Preventing any further changes to the file
+- **`ISOLATE`**: Quarantines a collection file. Preventing any further changes to the file
 - **`WHERE`**: Searches for the location of a single or several record(s) or cluster(s). DOES NOT WORK WITH COLLECTIONS.
 - **`VALIDATE`**: Validates a collection file for any errors or corruption.
 - **`BENCHMARK`**: Runs a benchmark test on the DBMS to test performance. Can be run with or without parameters.
@@ -192,14 +171,14 @@ These operations allow you to perform more complex operations.
 ---
 
 ### **Parameters**
-Modifiers adjust the behavior of commands. The current supported modifiers are:
+Modifiers adjust the behavior of queries. The current supported modifiers are:
 
 - **`OF_TYPE`**: Specifies the type of a new record (e.g., INT, STR, []BOOL)
 - **`WITH`**: Used to assign a value to a record in the same command you are creating it(e.g `NEW {collection_name}.{cluster_name}.{record_name} OF_TYPE {record_type} WITH {record_value}`)
 - **`TO`**: Used to assign a new value or name to a data structure or config(e.g `RENAME {old_collection_name} to {new_collection_name}`)
 
-### **Command Chaining**
-OstrichDB supports command chaining, allowing you to execute multiple commands in sequence with a single input. Commands are separated by the `&&` operator, and they will be executed in the order they appear.
+### **Query Chaining**
+OstrichDB supports query chaining, allowing you to execute multiple queries in sequence with a single input. To chain queries together add the `&&` operator at the end of each valid query, and they will be executed in the order they appear.
 
 Example:
 ```bash
@@ -272,11 +251,11 @@ OstrichDB has a configuration file that allows the user to customize certain asp
 
 - **`HELP_IS_VERBOSE`**: Decide whether help information is simple or verbose. Default is `false`
 - **`SUPPRESS_ERRORS`**: Show or hide error messages. Default is `false`
-- **`LIMIT_HISTORY`**: Ensure whether a users command history does or does not exceed the built in limit(100) Default is `true`
+- **`LIMIT_HISTORY`**: Ensure whether a users query history does or does not exceed the built in limit(100) Default is `true`
 - **`AUTO_SERVE`**: Determines if the built-in OstrichDB server automatically starts the moment the user logs in. Default is `true`
 - **`LIMIT_SESSION_TIME`**: Determines if the CLI session timer is enabled or disabled. If enabled a user can only be logged in for 24hrs. Default is `true`
 
-**Note: ALL configs must be set using the following command:**
+**Note: ALL configs must be set using the following query:**
 Config values can only be `true` or `false`
 
 ```
@@ -286,13 +265,13 @@ SET CONFIG {CONFIG_NAME} TO {VALUE}
 ---
 ## **Future Plans**
 
+- A new and improved engine!
 - More configuration options
-- Several new command tokens:
+- Several new Command tokens:
   - `EXPORT`: Export data to various formats
   - `RESTORE`: Restores a collection backup in the place of the original collection
   - `MERGE`: Combine multiple collections or clusters into one
 - OstrichDB web application
-- Linux support
 - Windows support
 - External API support for even more programming languages!
 - Integration with the planned Feather query language!
